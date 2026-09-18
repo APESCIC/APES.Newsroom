@@ -16,6 +16,10 @@ export type SharedAuth = {
 export type SharedPageProps = {
     appName: string;
     auth: SharedAuth;
+    currentRelease?: {
+        version: string;
+        slug: string;
+    } | null;
     devTools?: boolean;
     flash?: { status?: string | null };
     errors?: Record<string, string>;

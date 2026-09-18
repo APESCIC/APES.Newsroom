@@ -10,6 +10,10 @@
         <changefreq>daily</changefreq>
     </url>
     @endforeach
+    <url>
+        <loc>{{ url('/change-log-hub') }}</loc>
+        <changefreq>weekly</changefreq>
+    </url>
     @foreach ($posts as $post)
     <url>
         <loc>{{ url('/articles/'.$post->slug) }}</loc>

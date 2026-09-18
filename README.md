@@ -36,8 +36,8 @@ and completion evidence. Agents and contributors must follow
 
 ## Product capabilities
 
-- Public home, channel, article, author, tag, archive, search, RSS, and sitemap
-  surfaces for the three APES channels.
+- Public home, channel, article, author, tag, archive, search, RSS, sitemap,
+  and Change Log Hub surfaces for the three APES channels.
 - Versioned Editor.js content with staff drafts, review, scheduling, publishing,
   preview, revisions, redirects, and SEO controls.
 - Password, verification, reset, and magic-link journeys for public accounts;
@@ -80,8 +80,10 @@ php artisan serve
 
 Use `npm run dev` instead of the production build while editing frontend code.
 For Redis, OpenLDAP, and OIDC integration, follow
-[`docs/local-dev.md`](docs/local-dev.md). Never commit `.env`, API tokens,
-passwords, personal data, production exports, or application logs.
+[`docs/local-dev.md`](docs/local-dev.md). For publishing release notes to the
+public Change Log Hub, follow [`docs/change-log-hub.md`](docs/change-log-hub.md).
+Never commit `.env`, API tokens, passwords, personal data, production exports,
+or application logs.
 
 ## Testing
 
