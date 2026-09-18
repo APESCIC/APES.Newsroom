@@ -17,7 +17,9 @@ type Reactions = {
     mine: string[];
 };
 
-type Article = {
+type ArticleTag = string | { name: string; slug: string };
+
+export type Article = {
     title: string;
     slug: string;
     excerpt: string | null;
@@ -29,8 +31,62 @@ type Article = {
     published_at: string | null;
     meta_title: string;
     meta_description: string | null;
-    tags?: Array<string | { name: string; slug: string }>;
+    tags?: ArticleTag[];
+    hero_image: string | null;
+    hero_image_alt: string | null;
+    hero_image_caption: string | null;
+    hero_image_credit: string | null;
+    canonical_url: string | null;
+    url: string;
 };
+
+export function articleCanonicalUrl(article: Pick<Article, 'canonical_url' | 'url' | 'slug'>): string {
+    return article.canonical_url || article.url || `/articles/${article.slug}`;
+}
+
+function articleStructuredData(article: Article, canonicalUrl: string): Record<string, unknown> {
+    const data: Record<string, unknown> = {
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: article.title,
+        author: { '@type': 'Person', name: article.author },
+        datePublished: article.published_at,
+        url: canonicalUrl,
+    };
+
+    if (article.hero_image) {
+        data.image = article.hero_image;
+    }
+
+    return data;
+}
+
+function ArticleHero({ article }: { article: Article }) {
+    if (!article.hero_image) {
+        return null;
+    }
+
+    const caption = article.hero_image_caption?.trim() ?? '';
+    const credit = article.hero_image_credit?.trim() ?? '';
+
+    return (
+        <figure className="article-hero mt-6 overflow-hidden">
+            <img
+                src={article.hero_image}
+                alt={article.hero_image_alt ?? ''}
+                className="h-auto w-full max-w-full object-cover"
+                sizes="(min-width: 48rem) 48rem, 100vw"
+                decoding="async"
+            />
+            {(caption || credit) && (
+                <figcaption className="mt-2 text-sm text-muted">
+                    {caption ? <p>{caption}</p> : null}
+                    {credit ? <p className="image-credit">{credit}</p> : null}
+                </figcaption>
+            )}
+        </figure>
+    );
+}
 
 const reactionLabels: Record<string, string> = {
     helpful: 'Helpful',
@@ -66,23 +122,25 @@ export default function ArticleShow({
         router.post(`/articles/${article.slug}/reactions`, { type }, { preserveScroll: true });
     };
 
+    const canonicalUrl = articleCanonicalUrl(article);
+
     return (
         <PublicLayout>
             <Head title={article.meta_title}>
                 <meta name="description" content={article.meta_description ?? ''} />
                 {preview && <meta name="robots" content="noindex,nofollow" />}
+                <link rel="canonical" href={canonicalUrl} />
                 <meta property="og:title" content={article.meta_title} />
                 <meta property="og:description" content={article.meta_description ?? ''} />
                 <meta property="og:type" content="article" />
-                <script type="application/ld+json">
-                    {JSON.stringify({
-                        '@context': 'https://schema.org',
-                        '@type': 'Article',
-                        headline: article.title,
-                        author: { '@type': 'Person', name: article.author },
-                        datePublished: article.published_at,
-                    })}
-                </script>
+                <meta property="og:url" content={canonicalUrl} />
+                {article.hero_image && <meta property="og:image" content={article.hero_image} />}
+                <meta name="twitter:card" content={article.hero_image ? 'summary_large_image' : 'summary'} />
+                <meta name="twitter:title" content={article.meta_title} />
+                <meta name="twitter:description" content={article.meta_description ?? ''} />
+                <meta name="twitter:url" content={canonicalUrl} />
+                {article.hero_image && <meta name="twitter:image" content={article.hero_image} />}
+                <script type="application/ld+json">{JSON.stringify(articleStructuredData(article, canonicalUrl))}</script>
             </Head>
             {preview && (
                 <div className="bg-amber-100 px-4 py-2 text-center text-sm text-amber-900">Preview — not indexed</div>
@@ -131,6 +189,7 @@ export default function ArticleShow({
                                 })}
                             </ul>
                         )}
+                        <ArticleHero article={article} />
                         <div
                             className="prose mt-8 max-w-none"
                             dangerouslySetInnerHTML={{ __html: article.html }}

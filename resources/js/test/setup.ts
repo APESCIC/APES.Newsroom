@@ -14,6 +14,7 @@ type MockLinkProps = {
 
 type MockHeadProps = {
     children?: ReactNode;
+    title?: string;
     [key: string]: unknown;
 };
 
@@ -29,7 +30,13 @@ vi.mock('@inertiajs/react', async () => {
     const { getInertiaMock } = await import('./inertia');
 
     return {
-        Head: ({ children }: MockHeadProps) => React.createElement(React.Fragment, null, children),
+        Head: ({ children, title }: MockHeadProps) =>
+            React.createElement(
+                'div',
+                { 'data-testid': 'document-head' },
+                title ? React.createElement('title', null, title) : null,
+                children,
+            ),
         Link: (props: MockLinkProps) => {
             const { as = 'a', children, href, method, ...attributes } = props;
             void method;
