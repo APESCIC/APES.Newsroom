@@ -18,4 +18,5 @@ export type SharedPageProps = {
     auth: SharedAuth;
     devTools?: boolean;
     flash?: { status?: string | null };
+    errors?: Record<string, string>;
 };

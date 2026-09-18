@@ -1,5 +1,5 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { FormEventHandler, useEffect, useRef, useState } from 'react';
+import { FormEventHandler, useCallback, useEffect, useRef, useState } from 'react';
 import type { OutputData } from '@editorjs/editorjs';
 import EditorJsField from '../../../Components/editor/EditorJsField';
 
@@ -51,9 +51,102 @@ type PostForm = {
     canonical_url: string;
     email_on_publish: boolean;
     mailing_lists: string[];
-    tags: string[];
+    tags_text: string;
     expected_updated_at: string;
 };
+
+type FormErrors = Record<string, string>;
+
+const INLINE_ERROR_FIELDS = [
+    'conflict',
+    'title',
+    'slug',
+    'channel',
+    'excerpt',
+    'tags',
+    'content',
+    'hero_image',
+    'hero_image_alt',
+    'hero_image_caption',
+    'hero_image_credit',
+    'meta_title',
+    'meta_description',
+    'canonical_url',
+    'email_on_publish',
+    'mailing_lists',
+    'expected_updated_at',
+] as const;
+
+function formFromPost(post: PostData | null, channels: Channel[]): PostForm {
+    return {
+        title: post?.title ?? '',
+        slug: post?.slug ?? '',
+        excerpt: post?.excerpt ?? '',
+        content: post?.content ?? emptyContent,
+        channel: post?.channel ?? channels[0]?.value ?? 'apes_cic',
+        hero_image: post?.hero_image ?? '',
+        hero_image_alt: post?.hero_image_alt ?? '',
+        hero_image_caption: post?.hero_image_caption ?? '',
+        hero_image_credit: post?.hero_image_credit ?? '',
+        meta_title: post?.meta_title ?? '',
+        meta_description: post?.meta_description ?? '',
+        canonical_url: post?.canonical_url ?? '',
+        email_on_publish: post?.email_on_publish ?? false,
+        mailing_lists: post?.mailing_lists ?? [],
+        tags_text: (post?.tags ?? []).join(', '),
+        expected_updated_at: post?.updated_at ?? '',
+    };
+}
+
+function parseTags(value: string): string[] {
+    return value
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter(Boolean);
+}
+
+function reconcileSavedForm(current: PostForm, submitted: PostForm, authoritative: PostForm): PostForm {
+    return Object.fromEntries(
+        Object.entries(authoritative).map(([key, value]) => {
+            const field = key as keyof PostForm;
+            const changedSinceSubmit = JSON.stringify(current[field]) !== JSON.stringify(submitted[field]);
+
+            return [field, field === 'expected_updated_at' || !changedSinceSubmit ? value : current[field]];
+        }),
+    ) as PostForm;
+}
+
+function mergeErrors(pageErrors: FormErrors | undefined, formErrors: FormErrors): FormErrors {
+    return { ...(pageErrors ?? {}), ...formErrors };
+}
+
+function fieldError(errors: FormErrors, field: string): string | undefined {
+    if (errors[field]) {
+        return errors[field];
+    }
+
+    const nested = Object.entries(errors).find(([key]) => key.startsWith(`${field}.`));
+
+    return nested?.[1];
+}
+
+function leftoverErrors(errors: FormErrors): Array<[string, string]> {
+    return Object.entries(errors).filter(([key]) => {
+        return !INLINE_ERROR_FIELDS.some((field) => key === field || key.startsWith(`${field}.`));
+    });
+}
+
+function FieldError({ message }: { message?: string }) {
+    if (!message) {
+        return null;
+    }
+
+    return (
+        <p className="text-sm text-red-600" role="alert">
+            {message}
+        </p>
+    );
+}
 
 export default function PostEdit({
     post,
@@ -69,41 +162,69 @@ export default function PostEdit({
     revisions: Revision[];
 }) {
     const isNew = post === null;
-    const { errors } = usePage().props as { errors: Record<string, string> };
+    const page = usePage();
+    const pageErrors = (page.props as { errors?: FormErrors }).errors;
     const [scheduleAt, setScheduleAt] = useState(post?.scheduled_for ?? '');
     const [rejectNotes, setRejectNotes] = useState('');
-    const [tagInput, setTagInput] = useState((post?.tags ?? []).join(', '));
     const autosaveTimer = useRef<number | null>(null);
+    const previousPostId = useRef<number | null>(post?.id ?? null);
 
-    const { data, setData, post: submitPost, patch, processing, transform } = useForm<PostForm>({
-        title: post?.title ?? '',
-        slug: post?.slug ?? '',
-        excerpt: post?.excerpt ?? '',
-        content: post?.content ?? emptyContent,
-        channel: post?.channel ?? channels[0]?.value ?? 'apes_cic',
-        hero_image: post?.hero_image ?? '',
-        hero_image_alt: post?.hero_image_alt ?? '',
-        hero_image_caption: post?.hero_image_caption ?? '',
-        hero_image_credit: post?.hero_image_credit ?? '',
-        meta_title: post?.meta_title ?? '',
-        meta_description: post?.meta_description ?? '',
-        canonical_url: post?.canonical_url ?? '',
-        email_on_publish: post?.email_on_publish ?? false,
-        mailing_lists: post?.mailing_lists ?? [],
-        tags: post?.tags ?? [],
-        expected_updated_at: post?.updated_at ?? '',
-    });
+    const {
+        data,
+        setData,
+        post: submitPost,
+        patch,
+        processing,
+        transform,
+        setDefaults,
+        isDirty,
+        errors: formErrors,
+    } = useForm<PostForm>(formFromPost(post, channels));
 
-    transform((form) => ({
-        ...form,
-        tags: tagInput
-            .split(',')
-            .map((t) => t.trim())
-            .filter(Boolean),
-    }));
+    const errors = mergeErrors(pageErrors, formErrors as FormErrors);
+    const hasErrors = Object.keys(errors).length > 0;
+    const extraErrors = leftoverErrors(errors);
+
+    transform(({ tags_text: tagsText, ...form }) => ({ ...form, tags: parseTags(tagsText) }));
 
     useEffect(() => {
-        if (isNew || !post) {
+        const nextPostId = post?.id ?? null;
+        if (nextPostId === null || previousPostId.current === nextPostId) {
+            return;
+        }
+
+        previousPostId.current = nextPostId;
+        const authoritativeForm = formFromPost(post, channels);
+        setData(authoritativeForm);
+        setDefaults(authoritativeForm);
+        setScheduleAt(post?.scheduled_for ?? '');
+    }, [channels, post, setData, setDefaults]);
+
+    const saveExisting = useCallback(
+        (submittedData: PostForm) => {
+            if (!post) {
+                return;
+            }
+
+            patch(`/staff/posts/${post.id}`, {
+                preserveScroll: true,
+                onSuccess: (successPage) => {
+                    const savedPost = (successPage.props as { post?: PostData }).post;
+                    if (!savedPost?.updated_at) {
+                        return;
+                    }
+
+                    const authoritativeForm = formFromPost(savedPost, channels);
+                    setDefaults(authoritativeForm);
+                    setData((current) => reconcileSavedForm(current, submittedData, authoritativeForm));
+                },
+            });
+        },
+        [channels, patch, post, setData, setDefaults],
+    );
+
+    useEffect(() => {
+        if (isNew || !post || !isDirty || processing || hasErrors) {
             return;
         }
 
@@ -112,7 +233,7 @@ export default function PostEdit({
         }
 
         autosaveTimer.current = window.setTimeout(() => {
-            patch(`/staff/posts/${post.id}`, { preserveScroll: true });
+            saveExisting(data);
         }, 8000);
 
         return () => {
@@ -120,14 +241,14 @@ export default function PostEdit({
                 window.clearTimeout(autosaveTimer.current);
             }
         };
-    }, [data, isNew, post, patch]);
+    }, [data, hasErrors, isDirty, isNew, post, processing, saveExisting]);
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         if (isNew) {
             submitPost('/staff/posts');
         } else {
-            patch(`/staff/posts/${post.id}`);
+            saveExisting(data);
         }
     };
 
@@ -135,7 +256,7 @@ export default function PostEdit({
         setData(
             'mailing_lists',
             data.mailing_lists.includes(value)
-                ? data.mailing_lists.filter((l) => l !== value)
+                ? data.mailing_lists.filter((list) => list !== value)
                 : [...data.mailing_lists, value],
         );
     };
@@ -170,10 +291,19 @@ export default function PostEdit({
                     </p>
                 )}
                 {errors.conflict && (
-                    <p className="mt-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800">
+                    <p className="mt-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
                         {errors.conflict}
                     </p>
                 )}
+                {extraErrors.map(([key, message]) => (
+                    <p
+                        key={key}
+                        className="mt-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800"
+                        role="alert"
+                    >
+                        {message}
+                    </p>
+                ))}
 
                 <form onSubmit={submit} className="mt-8 flex flex-col gap-4">
                     <div>
@@ -185,7 +315,7 @@ export default function PostEdit({
                             required
                             className="w-full rounded border px-3 py-2"
                         />
-                        {errors.title && <p className="text-sm text-red-600">{errors.title}</p>}
+                        <FieldError message={errors.title} />
                     </div>
                     <div>
                         <label htmlFor="slug">Slug</label>
@@ -195,6 +325,7 @@ export default function PostEdit({
                             onChange={(e) => setData('slug', e.target.value)}
                             className="w-full rounded border px-3 py-2"
                         />
+                        <FieldError message={errors.slug} />
                     </div>
                     <div>
                         <label htmlFor="channel">Channel</label>
@@ -204,12 +335,13 @@ export default function PostEdit({
                             onChange={(e) => setData('channel', e.target.value)}
                             className="w-full rounded border px-3 py-2"
                         >
-                            {channels.map((c) => (
-                                <option key={c.value} value={c.value}>
-                                    {c.label}
+                            {channels.map((channel) => (
+                                <option key={channel.value} value={channel.value}>
+                                    {channel.label}
                                 </option>
                             ))}
                         </select>
+                        <FieldError message={errors.channel} />
                     </div>
                     <div>
                         <label htmlFor="excerpt">Excerpt</label>
@@ -220,15 +352,17 @@ export default function PostEdit({
                             rows={2}
                             className="w-full rounded border px-3 py-2"
                         />
+                        <FieldError message={errors.excerpt} />
                     </div>
                     <div>
                         <label htmlFor="tags">Tags (comma-separated)</label>
                         <input
                             id="tags"
-                            value={tagInput}
-                            onChange={(e) => setTagInput(e.target.value)}
+                            value={data.tags_text}
+                            onChange={(e) => setData('tags_text', e.target.value)}
                             className="w-full rounded border px-3 py-2"
                         />
+                        <FieldError message={fieldError(errors, 'tags')} />
                     </div>
                     <div>
                         <label htmlFor="body">Body</label>
@@ -236,7 +370,7 @@ export default function PostEdit({
                             initialData={data.content}
                             onChange={(content) => setData('content', content)}
                         />
-                        {errors.content && <p className="text-sm text-red-600">{errors.content}</p>}
+                        <FieldError message={errors.content} />
                     </div>
 
                     <fieldset className="flex flex-col gap-3 border-t pt-4">
@@ -247,24 +381,28 @@ export default function PostEdit({
                             onChange={(e) => setData('hero_image', e.target.value)}
                             className="w-full rounded border px-3 py-2"
                         />
+                        <FieldError message={errors.hero_image} />
                         <input
                             placeholder="Alt text"
                             value={data.hero_image_alt}
                             onChange={(e) => setData('hero_image_alt', e.target.value)}
                             className="w-full rounded border px-3 py-2"
                         />
+                        <FieldError message={errors.hero_image_alt} />
                         <input
                             placeholder="Caption"
                             value={data.hero_image_caption}
                             onChange={(e) => setData('hero_image_caption', e.target.value)}
                             className="w-full rounded border px-3 py-2"
                         />
+                        <FieldError message={errors.hero_image_caption} />
                         <input
                             placeholder="Credit"
                             value={data.hero_image_credit}
                             onChange={(e) => setData('hero_image_credit', e.target.value)}
                             className="w-full rounded border px-3 py-2"
                         />
+                        <FieldError message={errors.hero_image_credit} />
                     </fieldset>
 
                     <fieldset className="flex flex-col gap-3 border-t pt-4">
@@ -275,6 +413,7 @@ export default function PostEdit({
                             onChange={(e) => setData('meta_title', e.target.value)}
                             className="w-full rounded border px-3 py-2"
                         />
+                        <FieldError message={errors.meta_title} />
                         <textarea
                             placeholder="Meta description"
                             value={data.meta_description}
@@ -282,12 +421,14 @@ export default function PostEdit({
                             rows={2}
                             className="w-full rounded border px-3 py-2"
                         />
+                        <FieldError message={errors.meta_description} />
                         <input
                             placeholder="Canonical URL"
                             value={data.canonical_url}
                             onChange={(e) => setData('canonical_url', e.target.value)}
                             className="w-full rounded border px-3 py-2"
                         />
+                        <FieldError message={errors.canonical_url} />
                     </fieldset>
 
                     <fieldset className="flex flex-col gap-3 border-t pt-4">
@@ -300,6 +441,7 @@ export default function PostEdit({
                             />
                             Email this post on publish
                         </label>
+                        <FieldError message={errors.email_on_publish} />
                         {data.email_on_publish && (
                             <div className="flex flex-col gap-2 pl-6">
                                 {mailingLists.map((list) => (
@@ -314,7 +456,9 @@ export default function PostEdit({
                                 ))}
                             </div>
                         )}
+                        <FieldError message={fieldError(errors, 'mailing_lists')} />
                     </fieldset>
+                    <FieldError message={errors.expected_updated_at} />
 
                     <div className="flex flex-wrap gap-2 border-t pt-4">
                         <button type="submit" disabled={processing} className="rounded bg-apes-primary px-4 py-2 text-white">
