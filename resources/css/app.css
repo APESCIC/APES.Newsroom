@@ -463,6 +463,19 @@
     margin-block: 1rem;
 }
 
+.article-hero {
+    max-width: 100%;
+}
+
+.article-hero img {
+    display: block;
+}
+
+.image-credit {
+    font-size: 0.875rem;
+    color: var(--color-muted);
+}
+
 .prose h2,
 .prose h3,
 .prose h4 {
