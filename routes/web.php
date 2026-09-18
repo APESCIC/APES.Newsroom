@@ -2,6 +2,7 @@
 
 use App\Enums\Role;
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\Admin\GhostContentImportController;
 use App\Http\Controllers\Admin\GhostMembersImportController;
 use App\Http\Controllers\Admin\ModerationController;
 use App\Http\Controllers\ArchiveController;
@@ -88,6 +89,16 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Admin->value])
         Route::get('/imports/ghost-members', [GhostMembersImportController::class, 'index'])->name('imports.ghost-members');
         Route::post('/imports/ghost-members', [GhostMembersImportController::class, 'upload'])->name('imports.ghost-members.upload');
         Route::get('/imports/ghost-members/{run}/report', [GhostMembersImportController::class, 'report'])->name('imports.ghost-members.report');
+    });
+
+Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::get('/imports/ghost-content', [GhostContentImportController::class, 'index'])->name('imports.ghost-content');
+        Route::post('/imports/ghost-content', [GhostContentImportController::class, 'upload'])->name('imports.ghost-content.upload');
+        Route::post('/imports/ghost-content/{run}/confirm', [GhostContentImportController::class, 'confirm'])->name('imports.ghost-content.confirm');
+        Route::get('/imports/ghost-content/{run}/report', [GhostContentImportController::class, 'report'])->name('imports.ghost-content.report');
     });
 
 Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
