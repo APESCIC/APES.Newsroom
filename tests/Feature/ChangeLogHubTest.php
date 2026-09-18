@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Release;
 use App\Models\User;
+use Database\Seeders\ReleaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -16,6 +17,9 @@ class ChangeLogHubTest extends TestCase
     {
         parent::setUp();
         $this->withoutVite();
+        // RefreshDatabase also runs the baseline seed migration; clear so each
+        // feature test can control published/current release fixtures.
+        Release::query()->delete();
     }
 
     public function test_public_hub_lists_only_published_releases(): void
@@ -177,5 +181,24 @@ class ChangeLogHubTest extends TestCase
             ->assertRedirect(route('admin.releases.index'));
 
         $this->assertDatabaseMissing('releases', ['id' => $release->id]);
+    }
+
+    public function test_seed_migration_upserts_baseline_releases(): void
+    {
+        (new ReleaseSeeder)->run();
+
+        $this->assertDatabaseHas('releases', [
+            'slug' => 'release-v111',
+            'version' => 'v1.1.1',
+            'is_current' => true,
+            'is_published' => true,
+        ]);
+        $this->assertDatabaseCount('releases', 3);
+
+        $this->get('/change-log-hub')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('releases', 3)
+                ->where('current.version', 'v1.1.1'));
     }
 }
