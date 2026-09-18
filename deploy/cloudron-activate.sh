@@ -2,8 +2,8 @@
 #
 # Runs INSIDE the Cloudron LAMP app container (via `cloudron exec`), never
 # on the GitHub Actions runner. Takes a release identifier (short git SHA)
-# that has already been uploaded to /app/data/releases/<sha> by the
-# "Cloudron Push to App" GitHub Action, and activates it.
+# that has already been uploaded to /app/data/releases/<id> by the
+# "Deploy to Cloudron (beta)" GitHub Action, and activates it.
 #
 # Responsible for exactly the "run migrations ... activate atomically"
 # part of the guarded deploy sequence in issue #3. Backup, upload, restart,
@@ -13,7 +13,10 @@
 # leaves the previous release live and serving traffic.
 #
 # Usage (run as root inside the container, as `cloudron exec` does):
-#   bash /app/data/releases/<sha>/deploy/cloudron-activate.sh <sha>
+#   bash /app/data/releases/<id>/deploy/cloudron-activate.sh <id>
+#
+# <id> is typically <short-sha>-<github-run-id> so same-commit redeploys
+# never sync into an already-activated release directory.
 
 set -euo pipefail
 
