@@ -14,9 +14,9 @@ use App\Models\PostRevision;
 use App\Models\Redirect;
 use App\Models\Tag;
 use App\Services\Audit\AuditLogger;
-use App\Services\EditorJs\BlockRenderer;
 use App\Services\EditorJs\BlockValidator;
 use App\Services\Mailing\CampaignService;
+use App\Services\Publishing\PublicArticlePresenter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -29,7 +29,6 @@ class PostController extends Controller
 {
     public function __construct(
         private readonly BlockValidator $validator,
-        private readonly BlockRenderer $renderer,
         private readonly CampaignService $campaigns,
         private readonly AuditLogger $audit,
     ) {}
@@ -302,12 +301,12 @@ class PostController extends Controller
         return back();
     }
 
-    public function preview(Request $request, Post $post): Response
+    public function preview(Request $request, Post $post, PublicArticlePresenter $articles): Response
     {
         $this->authorizeEdit($post);
 
         return Inertia::render('Articles/Show', [
-            'article' => $this->articlePayload($post),
+            'article' => $articles->payload($post),
             'preview' => true,
             'comments' => [],
             'reactions' => [
@@ -416,23 +415,5 @@ class PostController extends Controller
             'value' => $list->value,
             'label' => $list->label(),
         ])->all();
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function articlePayload(Post $post): array
-    {
-        return [
-            'title' => $post->title,
-            'slug' => $post->slug,
-            'excerpt' => $post->excerpt,
-            'html' => $this->renderer->toHtml($post->content ?? ['blocks' => []]),
-            'channel' => $post->channel->label(),
-            'author' => $post->author->name,
-            'published_at' => $post->published_at?->toIso8601String(),
-            'meta_title' => $post->meta_title ?? $post->title,
-            'meta_description' => $post->meta_description ?? $post->excerpt,
-        ];
     }
 }
