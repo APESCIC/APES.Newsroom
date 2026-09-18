@@ -71,8 +71,8 @@ function SectionList({ title, items }: { title: string; items: string[] }) {
 
     return (
         <section className="mt-5">
-            <h3 className="text-base font-semibold text-on-glass">{title}</h3>
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-on-glass-muted">
+            <h3 className="text-base font-semibold text-body">{title}</h3>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted">
                 {items.map((item) => (
                     <li key={item}>{item}</li>
                 ))}
@@ -99,21 +99,21 @@ function ReleaseCard({
             onToggle={(event) => onToggle(release.slug, event.currentTarget.open)}
         >
             <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-6">
-                <span className="release-version text-lg font-semibold text-on-glass">{release.version}</span>
-                <span className="release-date text-sm text-on-glass-muted">{formatDate(release.released_at)}</span>
+                <span className="release-version text-lg font-semibold text-body">{release.version}</span>
+                <span className="release-date text-sm text-muted">{formatDate(release.released_at)}</span>
             </summary>
-            <div className="release-body border-t border-white/15 px-5 py-5 sm:px-6">
+            <div className="release-body border-t border-border px-5 py-5 sm:px-6">
                 <div className="flex flex-wrap gap-2">
-                    <span className="rounded-control bg-white/15 px-2.5 py-1 text-xs font-semibold tracking-wide text-on-glass uppercase">
+                    <span className="rounded-control border border-border bg-brand-ink/5 px-2.5 py-1 text-xs font-semibold tracking-wide text-body uppercase">
                         Version {release.version}
                     </span>
-                    <span className="rounded-control bg-white/15 px-2.5 py-1 text-xs font-semibold tracking-wide text-on-glass uppercase">
+                    <span className="rounded-control border border-border bg-brand-ink/5 px-2.5 py-1 text-xs font-semibold tracking-wide text-body uppercase">
                         {release.channel_label}
                     </span>
                     {release.change_types.map((type) => (
                         <span
                             key={type}
-                            className="rounded-control bg-brand-teal/25 px-2.5 py-1 text-xs font-semibold tracking-wide text-on-glass uppercase"
+                            className="rounded-control bg-brand-teal/15 px-2.5 py-1 text-xs font-semibold tracking-wide text-body uppercase"
                         >
                             {labelize(type)}
                         </span>
@@ -121,7 +121,7 @@ function ReleaseCard({
                     {release.topic_tags.map((tag) => (
                         <span
                             key={tag}
-                            className="rounded-control bg-white/10 px-2.5 py-1 text-xs font-semibold tracking-wide text-on-glass-muted uppercase"
+                            className="rounded-control border border-border bg-brand-ink/5 px-2.5 py-1 text-xs font-semibold tracking-wide text-muted uppercase"
                         >
                             {labelize(tag)}
                         </span>
@@ -129,8 +129,8 @@ function ReleaseCard({
                 </div>
 
                 <section className="mt-5">
-                    <h3 className="text-base font-semibold text-on-glass">Summary</h3>
-                    <p className="mt-2 text-sm text-on-glass-muted">{release.summary}</p>
+                    <h3 className="text-base font-semibold text-body">Summary</h3>
+                    <p className="mt-2 text-sm text-muted">{release.summary}</p>
                 </section>
 
                 <SectionList title="Detailed changes" items={release.detailed_changes} />
@@ -335,7 +335,7 @@ export default function ChangeLogHubIndex({
 
                 <section className="mt-8 flex flex-col gap-4" aria-label="Releases">
                     {visibleReleases.length === 0 ? (
-                        <p className="glass-form-panel px-5 py-8 text-center text-on-glass-muted">
+                        <p className="glass-form-panel px-5 py-8 text-center text-muted">
                             No releases match your search or filters.
                         </p>
                     ) : (
