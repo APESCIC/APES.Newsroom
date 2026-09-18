@@ -3,8 +3,10 @@
 namespace App\Http\Middleware;
 
 use App\Enums\Role;
+use App\Models\Release;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use Throwable;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -43,10 +45,35 @@ class HandleInertiaRequests extends Middleware
                     'accessAdmin' => $request->user()?->role->atLeast(Role::Admin) ?? false,
                 ],
             ],
+            'currentRelease' => fn () => $this->currentReleasePayload(),
             'devTools' => app()->environment('local'),
             'flash' => [
                 'status' => fn () => $request->session()->get('status'),
             ],
+        ];
+    }
+
+    /**
+     * @return array{version: string, slug: string}|null
+     */
+    private function currentReleasePayload(): ?array
+    {
+        try {
+            $release = Release::query()
+                ->published()
+                ->where('is_current', true)
+                ->first(['version', 'slug']);
+        } catch (Throwable) {
+            return null;
+        }
+
+        if ($release === null) {
+            return null;
+        }
+
+        return [
+            'version' => $release->version,
+            'slug' => $release->slug,
         ];
     }
 }
