@@ -26,10 +26,25 @@ class GhostContentImporter
     ) {}
 
     /**
+     * True when the decoded JSON looks like a Ghost Admin content export.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    public function isGhostContentExport(array $payload): bool
+    {
+        return isset($payload['db'][0]['data']) && is_array($payload['db'][0]['data']);
+    }
+
+    /**
      * @return array<string, mixed>
      */
-    public function import(string $jsonPath, ?string $mediaPath = null, bool $dryRun = true, ?User $actor = null): array
-    {
+    public function import(
+        string $jsonPath,
+        ?string $mediaPath = null,
+        bool $dryRun = true,
+        ?User $actor = null,
+        ?ImportRun $existingRun = null,
+    ): array {
         // Hard guard: imports must never trigger outbound mail.
         Mail::fake();
 
@@ -43,8 +58,12 @@ class GhostContentImporter
             throw new RuntimeException('Ghost content export is not valid JSON.');
         }
 
+        if (! $this->isGhostContentExport($payload) && ! isset($payload['data']) && ! isset($payload['posts'])) {
+            throw new RuntimeException('File is not a Ghost content JSON export.');
+        }
+
         $data = $this->extractData($payload);
-        $run = ImportRun::create([
+        $run = $existingRun ?? ImportRun::create([
             'type' => 'ghost_content',
             'status' => 'running',
             'dry_run' => $dryRun,
@@ -53,6 +72,17 @@ class GhostContentImporter
             'actor_id' => $actor?->id,
             'started_at' => now(),
         ]);
+
+        if ($existingRun) {
+            $run->update([
+                'status' => 'running',
+                'dry_run' => $dryRun,
+                'source_path' => $jsonPath,
+                'source_checksum' => $checksum,
+                'started_at' => now(),
+                'finished_at' => null,
+            ]);
+        }
 
         $report = [
             'posts' => ['seen' => 0, 'created' => 0, 'updated' => 0, 'skipped' => 0],
