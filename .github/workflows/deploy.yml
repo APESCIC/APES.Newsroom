@@ -41,9 +41,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Include run_id so re-deploying the same git SHA never sync-pushes into an
+      # already-activated release directory (activate replaces storage/app with a
+      # symlink to shared storage; cloudron sync then fails with cross-device link).
       - name: Resolve release identifier
         id: release
-        run: echo "sha=$(git rev-parse --short=12 HEAD)" >> "$GITHUB_OUTPUT"
+        run: echo "sha=$(git rev-parse --short=12 HEAD)-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2

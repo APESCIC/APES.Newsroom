@@ -17,12 +17,12 @@ authorized operations even when following this document.
 ```
 /app/data/
   releases/
-    <git-sha>/            one directory per deploy, immutable once activated
+    <git-sha>-<run-id>/   one directory per deploy (run id avoids same-SHA collisions), immutable once activated
   shared/
     .env                  persists across every release (holds APP_KEY)
     storage/app/          user-uploaded files, persists across releases
     storage/logs/         persists across releases
-  current -> releases/<git-sha>   atomic symlink; Apache serves current/public
+  current -> releases/<git-sha>-<run-id>   atomic symlink; Apache serves current/public
   previous_release        text file: what `current` pointed to before the last activation
   run.sh                  starts the queue worker on every app boot/restart
   PHP_VERSION              "8.4"
@@ -101,8 +101,10 @@ rather than automatic on every push, while the pipeline is unproven.
 4. `cloudron backup create --app ...` - one blocking app-level backup
    before anything touches the server.
 5. `cloudron sync push` uploads `release/` to
-   `/app/data/releases/<short-sha>/`.
-6. `cloudron exec ... deploy/cloudron-activate.sh <sha>` - inside the
+   `/app/data/releases/<short-sha>-<run-id>/` (the Actions run id keeps
+   each deploy path unique so re-running against the same commit does not
+   overwrite an already-activated tree whose `storage/app` is a symlink).
+6. `cloudron exec ... deploy/cloudron-activate.sh <id>` - inside the
    container: links the persistent `.env` and `storage/app`/`storage/logs`
    into the new release, runs `artisan migrate --force`, caches
    config/routes/views, then atomically repoints `/app/data/current`.
