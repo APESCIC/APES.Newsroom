@@ -29,12 +29,12 @@ function article(overrides: Partial<Article> = {}): Article {
     };
 }
 
-function documentHead() {
-    return screen.getByTestId('document-head');
+function headEl(selector: string) {
+    return document.querySelector(selector);
 }
 
 function structuredData() {
-    const script = documentHead().querySelector('script[type="application/ld+json"]');
+    const script = document.querySelector('script[type="application/ld+json"]');
     expect(script).not.toBeNull();
 
     return JSON.parse(script?.textContent ?? '{}') as Record<string, unknown>;
@@ -68,29 +68,13 @@ describe('public article hero media and social metadata', () => {
         expect(figure).toHaveTextContent('Morning light in the enclosure');
         expect(figure).toHaveTextContent('APES CIC / Jane Keeper');
 
-        const head = documentHead();
-        expect(head.querySelector('link[rel="canonical"]')).toHaveAttribute(
-            'href',
-            'https://canonical.example/hero-story',
-        );
-        expect(head.querySelector('meta[property="og:url"]')).toHaveAttribute(
-            'content',
-            'https://canonical.example/hero-story',
-        );
-        expect(head.querySelector('meta[property="og:image"]')).toHaveAttribute(
-            'content',
-            'https://example.test/hero.jpg',
-        );
-        expect(head.querySelector('meta[name="twitter:url"]')).toHaveAttribute(
-            'content',
-            'https://canonical.example/hero-story',
-        );
-        expect(head.querySelector('meta[name="twitter:image"]')).toHaveAttribute(
-            'content',
-            'https://example.test/hero.jpg',
-        );
-        expect(head.querySelector('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
-        expect(head.querySelector('meta[name="robots"]')).toBeNull();
+        expect(headEl('link[rel="canonical"]')).toHaveAttribute('href', 'https://canonical.example/hero-story');
+        expect(headEl('meta[property="og:url"]')).toHaveAttribute('content', 'https://canonical.example/hero-story');
+        expect(headEl('meta[property="og:image"]')).toHaveAttribute('content', 'https://example.test/hero.jpg');
+        expect(headEl('meta[name="twitter:url"]')).toHaveAttribute('content', 'https://canonical.example/hero-story');
+        expect(headEl('meta[name="twitter:image"]')).toHaveAttribute('content', 'https://example.test/hero.jpg');
+        expect(headEl('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
+        expect(headEl('meta[name="robots"]')).toBeNull();
 
         expect(structuredData()).toMatchObject({
             '@type': 'Article',
@@ -116,13 +100,12 @@ describe('public article hero media and social metadata', () => {
         expect(screen.queryByRole('figure')).not.toBeInTheDocument();
         expect(within(screen.getByRole('article')).queryByRole('img')).not.toBeInTheDocument();
 
-        const head = documentHead();
-        expect(head.querySelector('link[rel="canonical"]')).toHaveAttribute('href', articleUrl);
-        expect(head.querySelector('meta[property="og:url"]')).toHaveAttribute('content', articleUrl);
-        expect(head.querySelector('meta[property="og:image"]')).toBeNull();
-        expect(head.querySelector('meta[name="twitter:url"]')).toHaveAttribute('content', articleUrl);
-        expect(head.querySelector('meta[name="twitter:image"]')).toBeNull();
-        expect(head.querySelector('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary');
+        expect(headEl('link[rel="canonical"]')).toHaveAttribute('href', articleUrl);
+        expect(headEl('meta[property="og:url"]')).toHaveAttribute('content', articleUrl);
+        expect(headEl('meta[property="og:image"]')).toBeNull();
+        expect(headEl('meta[name="twitter:url"]')).toHaveAttribute('content', articleUrl);
+        expect(headEl('meta[name="twitter:image"]')).toBeNull();
+        expect(headEl('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary');
 
         const data = structuredData();
         expect(data.url).toBe(articleUrl);
@@ -130,15 +113,27 @@ describe('public article hero media and social metadata', () => {
         expect(articleCanonicalUrl(article({ canonical_url: null }))).toBe(articleUrl);
     });
 
+    it('omits figcaption when caption and credit are absent', () => {
+        render(
+            <ArticleShow
+                article={article({
+                    hero_image_caption: null,
+                    hero_image_credit: null,
+                })}
+            />,
+        );
+
+        const figure = screen.getByRole('img', { name: 'A capuchin monkey in habitat' }).closest('figure');
+        expect(figure).not.toBeNull();
+        expect(figure?.querySelector('figcaption')).toBeNull();
+    });
+
     it('keeps preview pages noindex and still emits canonical metadata', () => {
         render(<ArticleShow article={article()} preview />);
 
         expect(screen.getByText('Preview — not indexed')).toBeInTheDocument();
-        expect(documentHead().querySelector('meta[name="robots"]')).toHaveAttribute('content', 'noindex,nofollow');
-        expect(documentHead().querySelector('link[rel="canonical"]')).toHaveAttribute(
-            'href',
-            'https://canonical.example/hero-story',
-        );
+        expect(headEl('meta[name="robots"]')).toHaveAttribute('content', 'noindex,nofollow');
+        expect(headEl('link[rel="canonical"]')).toHaveAttribute('href', 'https://canonical.example/hero-story');
     });
 
     it('renders untrusted caption and credit as text, not markup', () => {
