@@ -15,7 +15,7 @@
 | Privilege escalation | Ranked roles; fail-closed LDAP reconciliation; route `role:` middleware; AuthzMatrix tests |
 | XSS via Editor.js | Server `BlockValidator` allowlist; escaped `BlockRenderer`; XSS feature tests |
 | CSRF | Laravel CSRF + Inertia; session cookies |
-| Campaign spam / PECR breach | Double opt-in; suppressions; unsubscribe headers; import paths call `Mail::fake()` / never notify |
+| Campaign spam / PECR breach | Double opt-in; suppressions; unsubscribe headers; import paths force `mail.default=array` for the run / never notify |
 | Open redirects | Redirect table only; fixed status codes; no user-controlled open redirect helper |
 | Session fixation / theft | HTTPS (Cloudron), secure cookies, short sessions |
 | Dependency vulns | CI `composer audit` / `npm audit` |

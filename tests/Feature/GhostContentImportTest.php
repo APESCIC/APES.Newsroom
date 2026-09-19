@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Post;
 use App\Models\Tag;
 use App\Models\User;
+use App\Services\Import\GhostContentImporter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Mail;
@@ -75,5 +76,19 @@ class GhostContentImportTest extends TestCase
         $this->assertTrue((bool) $post->needs_import_review);
         $types = collect($post->content['blocks'])->pluck('type');
         $this->assertTrue($types->contains('paragraph') || $types->contains('legacy'));
+    }
+
+    public function test_sequential_imports_in_same_process_do_not_break_mail_guard(): void
+    {
+        // Simulates queue:work handling dry-run then confirm without a fresh process (#137).
+        User::factory()->admin()->create();
+        $importer = app(GhostContentImporter::class);
+        $mailerBefore = config('mail.default');
+
+        $importer->import($this->fixture(), null, true);
+        $importer->import($this->fixture(), null, false);
+
+        $this->assertSame(2, Post::query()->count());
+        $this->assertSame($mailerBefore, config('mail.default'));
     }
 }

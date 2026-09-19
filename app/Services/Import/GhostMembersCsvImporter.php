@@ -12,12 +12,13 @@ use App\Models\MailingListSubscription;
 use App\Models\Suppression;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use RuntimeException;
 
 class GhostMembersCsvImporter
 {
+    use SuppressesOutboundMail;
+
     /**
      * Labels that constitute evidence for all-three-list activation.
      *
@@ -34,86 +35,86 @@ class GhostMembersCsvImporter
      */
     public function import(string $csvPath, bool $dryRun = true, ?User $actor = null, ?ImportRun $existingRun = null): array
     {
-        Mail::fake();
+        return $this->withoutOutboundMail(function () use ($csvPath, $dryRun, $actor, $existingRun) {
+            if (! is_file($csvPath)) {
+                throw new RuntimeException("Ghost members CSV not found: {$csvPath}");
+            }
 
-        if (! is_file($csvPath)) {
-            throw new RuntimeException("Ghost members CSV not found: {$csvPath}");
-        }
-
-        $checksum = hash_file('sha256', $csvPath);
-        $run = $existingRun ?? ImportRun::create([
-            'type' => 'ghost_members_csv',
-            'status' => 'running',
-            'dry_run' => $dryRun,
-            'source_path' => $csvPath,
-            'source_checksum' => $checksum,
-            'actor_id' => $actor?->id,
-            'started_at' => now(),
-        ]);
-
-        if ($existingRun) {
-            $run->update([
+            $checksum = hash_file('sha256', $csvPath);
+            $run = $existingRun ?? ImportRun::create([
+                'type' => 'ghost_members_csv',
                 'status' => 'running',
                 'dry_run' => $dryRun,
+                'source_path' => $csvPath,
+                'source_checksum' => $checksum,
+                'actor_id' => $actor?->id,
                 'started_at' => now(),
             ]);
-        }
 
-        $report = [
-            'members' => ['seen' => 0, 'contacts_created' => 0, 'contacts_updated' => 0],
-            'subscriptions' => ['activated' => 0, 'held_for_reconfirm' => 0, 'unsubscribed' => 0],
-            'consent_events' => 0,
-            'suppressions' => 0,
-            'warnings' => [],
-        ];
-
-        try {
-            $handle = fopen($csvPath, 'rb');
-            if ($handle === false) {
-                throw new RuntimeException('Unable to open CSV.');
+            if ($existingRun) {
+                $run->update([
+                    'status' => 'running',
+                    'dry_run' => $dryRun,
+                    'started_at' => now(),
+                ]);
             }
 
-            $headers = fgetcsv($handle);
-            if ($headers === false) {
-                throw new RuntimeException('CSV is empty.');
-            }
+            $report = [
+                'members' => ['seen' => 0, 'contacts_created' => 0, 'contacts_updated' => 0],
+                'subscriptions' => ['activated' => 0, 'held_for_reconfirm' => 0, 'unsubscribed' => 0],
+                'consent_events' => 0,
+                'suppressions' => 0,
+                'warnings' => [],
+            ];
 
-            $headers = array_map(fn ($h) => Str::of((string) $h)->lower()->trim()->toString(), $headers);
-            $this->assertHeaders($headers);
-
-            while (($row = fgetcsv($handle)) !== false) {
-                if ($this->rowIsEmpty($row)) {
-                    continue;
+            try {
+                $handle = fopen($csvPath, 'rb');
+                if ($handle === false) {
+                    throw new RuntimeException('Unable to open CSV.');
                 }
 
-                $member = array_combine($headers, array_pad($row, count($headers), null));
-                if ($member === false) {
-                    $report['warnings'][] = 'Malformed CSV row skipped.';
-
-                    continue;
+                $headers = fgetcsv($handle);
+                if ($headers === false) {
+                    throw new RuntimeException('CSV is empty.');
                 }
 
-                $this->importMember($member, $dryRun, $report);
+                $headers = array_map(fn ($h) => Str::of((string) $h)->lower()->trim()->toString(), $headers);
+                $this->assertHeaders($headers);
+
+                while (($row = fgetcsv($handle)) !== false) {
+                    if ($this->rowIsEmpty($row)) {
+                        continue;
+                    }
+
+                    $member = array_combine($headers, array_pad($row, count($headers), null));
+                    if ($member === false) {
+                        $report['warnings'][] = 'Malformed CSV row skipped.';
+
+                        continue;
+                    }
+
+                    $this->importMember($member, $dryRun, $report);
+                }
+
+                fclose($handle);
+
+                $run->update([
+                    'status' => 'completed',
+                    'report' => $report,
+                    'finished_at' => now(),
+                ]);
+            } catch (\Throwable $e) {
+                $report['warnings'][] = $e->getMessage();
+                $run->update([
+                    'status' => 'failed',
+                    'report' => $report,
+                    'finished_at' => now(),
+                ]);
+                throw $e;
             }
 
-            fclose($handle);
-
-            $run->update([
-                'status' => 'completed',
-                'report' => $report,
-                'finished_at' => now(),
-            ]);
-        } catch (\Throwable $e) {
-            $report['warnings'][] = $e->getMessage();
-            $run->update([
-                'status' => 'failed',
-                'report' => $report,
-                'finished_at' => now(),
-            ]);
-            throw $e;
-        }
-
-        return $report;
+            return $report;
+        });
     }
 
     /**
