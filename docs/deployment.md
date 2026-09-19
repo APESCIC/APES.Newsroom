@@ -84,6 +84,34 @@ These happen once, outside of CI, before the first deploy can work.
    - `CLOUDRON_APP_ORIGIN_HOST` - the beta hostname the health check
      should curl, e.g. `beta.apesnews.org.uk`
 
+## Cloud Agent / local Cloudron CLI
+
+Cloud Agents (and local ops) can use the same Cloudron API without running
+the full GitHub deploy workflow:
+
+1. Install the CLI (user-writable prefix; avoids root `npm -g`):
+
+   ```bash
+   npm install --prefix "$HOME/.local" cloudron@^9
+   export PATH="$HOME/.local/node_modules/.bin:$PATH"
+   cloudron --version
+   ```
+
+2. Provide secrets `CLOUDRON_FQDN`, `CLOUDRON_TOKEN`, `CLOUDRON_APP_ID`
+   (and optionally `CLOUDRON_APP_ORIGIN_HOST`) — the same values as the
+   `beta` GitHub Environment. Never commit tokens.
+
+3. Use the wrapper:
+
+   ```bash
+   ./scripts/cloudron.sh restart
+   ./scripts/cloudron.sh exec -- printenv | grep CLOUDRON_REDIS
+   ```
+
+`scripts/cloudron.sh` requires those env vars and forwards to `cloudron`
+with `--server` / `--token` / `--app`. Restarting the app re-runs
+`/app/data/run.sh` and starts the queue worker again.
+
 ## What a deploy actually does
 
 Trigger: Actions tab -> "Deploy to Cloudron (beta)" -> Run workflow, typing
