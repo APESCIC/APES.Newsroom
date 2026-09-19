@@ -13,13 +13,14 @@ use App\Models\User;
 use App\Services\EditorJs\BlockValidator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
 class GhostContentImporter
 {
+    use SuppressesOutboundMail;
+
     public function __construct(
         private readonly GhostHtmlConverter $converter,
         private readonly BlockValidator $validator,
@@ -45,86 +46,85 @@ class GhostContentImporter
         ?User $actor = null,
         ?ImportRun $existingRun = null,
     ): array {
-        // Hard guard: imports must never trigger outbound mail.
-        Mail::fake();
+        return $this->withoutOutboundMail(function () use ($jsonPath, $mediaPath, $dryRun, $actor, $existingRun) {
+            if (! is_file($jsonPath)) {
+                throw new RuntimeException("Ghost content export not found: {$jsonPath}");
+            }
 
-        if (! is_file($jsonPath)) {
-            throw new RuntimeException("Ghost content export not found: {$jsonPath}");
-        }
+            $checksum = hash_file('sha256', $jsonPath);
+            $payload = json_decode(File::get($jsonPath), true);
+            if (! is_array($payload)) {
+                throw new RuntimeException('Ghost content export is not valid JSON.');
+            }
 
-        $checksum = hash_file('sha256', $jsonPath);
-        $payload = json_decode(File::get($jsonPath), true);
-        if (! is_array($payload)) {
-            throw new RuntimeException('Ghost content export is not valid JSON.');
-        }
+            if (! $this->isGhostContentExport($payload) && ! isset($payload['data']) && ! isset($payload['posts'])) {
+                throw new RuntimeException('File is not a Ghost content JSON export.');
+            }
 
-        if (! $this->isGhostContentExport($payload) && ! isset($payload['data']) && ! isset($payload['posts'])) {
-            throw new RuntimeException('File is not a Ghost content JSON export.');
-        }
-
-        $data = $this->extractData($payload);
-        $run = $existingRun ?? ImportRun::create([
-            'type' => 'ghost_content',
-            'status' => 'running',
-            'dry_run' => $dryRun,
-            'source_path' => $jsonPath,
-            'source_checksum' => $checksum,
-            'actor_id' => $actor?->id,
-            'started_at' => now(),
-        ]);
-
-        if ($existingRun) {
-            $run->update([
+            $data = $this->extractData($payload);
+            $run = $existingRun ?? ImportRun::create([
+                'type' => 'ghost_content',
                 'status' => 'running',
                 'dry_run' => $dryRun,
                 'source_path' => $jsonPath,
                 'source_checksum' => $checksum,
+                'actor_id' => $actor?->id,
                 'started_at' => now(),
-                'finished_at' => null,
             ]);
-        }
 
-        $report = [
-            'posts' => ['seen' => 0, 'created' => 0, 'updated' => 0, 'skipped' => 0],
-            'tags' => ['seen' => 0, 'created' => 0, 'updated' => 0],
-            'authors' => ['seen' => 0, 'mapped' => 0, 'created' => 0],
-            'media' => ['copied' => 0, 'missing' => 0],
-            'redirects' => ['created' => 0, 'collisions' => 0, 'loops' => 0],
-            'needs_review' => [],
-            'warnings' => [],
-        ];
+            if ($existingRun) {
+                $run->update([
+                    'status' => 'running',
+                    'dry_run' => $dryRun,
+                    'source_path' => $jsonPath,
+                    'source_checksum' => $checksum,
+                    'started_at' => now(),
+                    'finished_at' => null,
+                ]);
+            }
 
-        try {
-            $authorMap = $this->importAuthors($data['users'] ?? [], $dryRun, $report);
-            $tagMap = $this->importTags($data['tags'] ?? [], $dryRun, $report);
-            $this->importPosts(
-                $data['posts'] ?? [],
-                $data['posts_tags'] ?? [],
-                $data['posts_authors'] ?? [],
-                $authorMap,
-                $tagMap,
-                $mediaPath,
-                $dryRun,
-                $report,
-            );
-            $this->importRedirects($data['redirects'] ?? [], $dryRun, $report);
+            $report = [
+                'posts' => ['seen' => 0, 'created' => 0, 'updated' => 0, 'skipped' => 0],
+                'tags' => ['seen' => 0, 'created' => 0, 'updated' => 0],
+                'authors' => ['seen' => 0, 'mapped' => 0, 'created' => 0],
+                'media' => ['copied' => 0, 'missing' => 0],
+                'redirects' => ['created' => 0, 'collisions' => 0, 'loops' => 0],
+                'needs_review' => [],
+                'warnings' => [],
+            ];
 
-            $run->update([
-                'status' => 'completed',
-                'report' => $report,
-                'finished_at' => now(),
-            ]);
-        } catch (\Throwable $e) {
-            $report['warnings'][] = $e->getMessage();
-            $run->update([
-                'status' => 'failed',
-                'report' => $report,
-                'finished_at' => now(),
-            ]);
-            throw $e;
-        }
+            try {
+                $authorMap = $this->importAuthors($data['users'] ?? [], $dryRun, $report);
+                $tagMap = $this->importTags($data['tags'] ?? [], $dryRun, $report);
+                $this->importPosts(
+                    $data['posts'] ?? [],
+                    $data['posts_tags'] ?? [],
+                    $data['posts_authors'] ?? [],
+                    $authorMap,
+                    $tagMap,
+                    $mediaPath,
+                    $dryRun,
+                    $report,
+                );
+                $this->importRedirects($data['redirects'] ?? [], $dryRun, $report);
 
-        return $report;
+                $run->update([
+                    'status' => 'completed',
+                    'report' => $report,
+                    'finished_at' => now(),
+                ]);
+            } catch (\Throwable $e) {
+                $report['warnings'][] = $e->getMessage();
+                $run->update([
+                    'status' => 'failed',
+                    'report' => $report,
+                    'finished_at' => now(),
+                ]);
+                throw $e;
+            }
+
+            return $report;
+        });
     }
 
     /**
