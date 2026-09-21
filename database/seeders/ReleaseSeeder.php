@@ -14,8 +14,8 @@ class ReleaseSeeder extends Seeder
             'version' => 'v1.0.0',
             'previous_version' => null,
             'released_at' => '2026-08-06',
-            'channel' => ReleaseChannel::Stable,
-            'version_type' => 'major stable',
+            'channel' => ReleaseChannel::Beta,
+            'version_type' => 'major beta',
             'theme' => 'Public Newsroom launch',
             'is_current' => false,
             'is_published' => true,
@@ -38,7 +38,7 @@ class ReleaseSeeder extends Seeder
             'version_decision' => [
                 'Previous version: none (initial public release)',
                 'New version: v1.0.0',
-                'Version type: major stable',
+                'Version type: major beta',
                 'Reason for version bump: first public Newsroom release after Ghost cutover',
             ],
             'validation' => [
@@ -53,8 +53,8 @@ class ReleaseSeeder extends Seeder
             'version' => 'v1.1.0',
             'previous_version' => 'v1.0.0',
             'released_at' => '2026-09-18',
-            'channel' => ReleaseChannel::Stable,
-            'version_type' => 'minor stable',
+            'channel' => ReleaseChannel::Beta,
+            'version_type' => 'minor beta',
             'theme' => 'Admin Ghost content import',
             'is_current' => false,
             'is_published' => true,
@@ -77,7 +77,7 @@ class ReleaseSeeder extends Seeder
             'version_decision' => [
                 'Previous version: v1.0.0',
                 'New version: v1.1.0',
-                'Version type: minor stable',
+                'Version type: minor beta',
                 'Reason for version bump: new admin import capability without changing public IA',
             ],
             'validation' => [
@@ -92,8 +92,8 @@ class ReleaseSeeder extends Seeder
             'version' => 'v1.1.1',
             'previous_version' => 'v1.1.0',
             'released_at' => '2026-09-18',
-            'channel' => ReleaseChannel::Stable,
-            'version_type' => 'patch stable',
+            'channel' => ReleaseChannel::Beta,
+            'version_type' => 'patch beta',
             'theme' => 'Change Log Hub',
             'is_current' => true,
             'is_published' => true,
@@ -118,7 +118,7 @@ class ReleaseSeeder extends Seeder
             'version_decision' => [
                 'Previous version: v1.1.0',
                 'New version: v1.1.1',
-                'Version type: patch stable',
+                'Version type: patch beta',
                 'Reason for version bump: new public transparency surface without changing article publishing architecture',
             ],
             'validation' => [

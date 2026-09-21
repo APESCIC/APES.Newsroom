@@ -190,8 +190,20 @@ class ChangeLogHubTest extends TestCase
         $this->assertDatabaseHas('releases', [
             'slug' => 'release-v111',
             'version' => 'v1.1.1',
+            'channel' => 'beta',
+            'version_type' => 'patch beta',
             'is_current' => true,
             'is_published' => true,
+        ]);
+        $this->assertDatabaseHas('releases', [
+            'slug' => 'release-v100',
+            'channel' => 'beta',
+            'version_type' => 'major beta',
+        ]);
+        $this->assertDatabaseHas('releases', [
+            'slug' => 'release-v110',
+            'channel' => 'beta',
+            'version_type' => 'minor beta',
         ]);
         $this->assertDatabaseCount('releases', 3);
 
@@ -199,6 +211,20 @@ class ChangeLogHubTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->has('releases', 3)
-                ->where('current.version', 'v1.1.1'));
+                ->where('current.version', 'v1.1.1')
+                ->where('current.channel', 'beta')
+                ->where('current.channel_label', 'Beta'));
+    }
+
+    public function test_admin_create_form_defaults_to_beta_while_in_beta(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)->get('/admin/releases/new')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Admin/Releases/Edit')
+                ->where('releasesInBeta', true)
+                ->where('release', null));
     }
 }

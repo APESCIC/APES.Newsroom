@@ -33,6 +33,19 @@ Local/`php artisan db:seed` loads Newsroom releases from **v1.0.0** forward via
 `Database\Seeders\ReleaseSeeder`. Do not seed apes.org.uk CIC website history
 into this hub.
 
+## Beta period
+
+While Newsroom is in beta, every Change Log Hub release uses the **Beta**
+channel (including seeded history). Admin create forms default to Beta when
+`NEWSROOM_RELEASES_IN_BETA=true` (see `config/newsroom.php` / `.env.example`).
+
+When leaving beta:
+
+1. Set `NEWSROOM_RELEASES_IN_BETA=false` in the environment.
+2. Author new Stable releases from Admin → Releases as usual.
+3. Leave historical Beta rows as Beta — they correctly describe pre-stable
+   releases.
+
 ## Optional metadata mirrors
 
 If you also maintain a root `CHANGELOG` or GitHub Release for the same version,
