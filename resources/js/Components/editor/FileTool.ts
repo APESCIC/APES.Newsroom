@@ -1,3 +1,5 @@
+import { uploadStaffMedia } from './uploadStaffMedia';
+
 type FileData = {
     url: string;
     title?: string;
@@ -5,7 +7,7 @@ type FileData = {
 };
 
 /**
- * URL-based file attachment block matching the server allowlist (#73).
+ * File attachment block with URL input or trusted staff upload (#73 / #75).
  */
 export default class FileTool {
     static get toolbox() {
@@ -55,7 +57,39 @@ export default class FileTool {
             this.data.size = size.value;
         });
 
-        this.wrapper.append(url, title, size);
+        const status = document.createElement('p');
+        status.className = 'ce-file__status';
+        status.hidden = true;
+
+        const picker = document.createElement('input');
+        picker.type = 'file';
+        picker.accept = '.pdf,.zip,.txt,.doc,.docx,.jpg,.jpeg,.png,.webp,.gif';
+        picker.addEventListener('change', async () => {
+            const file = picker.files?.[0];
+            if (!file) {
+                return;
+            }
+
+            status.hidden = false;
+            status.textContent = `Uploading ${file.name}…`;
+
+            try {
+                const payload = await uploadStaffMedia(file, 'file');
+                this.data.url = payload.file?.url ?? '';
+                this.data.title = payload.file?.title ?? file.name;
+                this.data.size = payload.file?.size ?? '';
+                url.value = this.data.url;
+                title.value = this.data.title ?? '';
+                size.value = this.data.size ?? '';
+                status.textContent = 'Upload complete.';
+            } catch (error) {
+                status.textContent = error instanceof Error ? error.message : 'Upload failed.';
+            } finally {
+                picker.value = '';
+            }
+        });
+
+        this.wrapper.append(url, title, size, picker, status);
         return this.wrapper;
     }
 

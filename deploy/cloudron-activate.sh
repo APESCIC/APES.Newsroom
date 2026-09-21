@@ -102,6 +102,10 @@ echo "==> Running database migrations"
 echo "==> Syncing Change Log Hub releases from changelog/releases"
 "${WWW_DATA_PHP[@]}" "${RELEASE_DIR}/artisan" newsroom:sync-releases --no-interaction
 
+echo "==> Ensuring public/storage symlink for uploaded media"
+"${WWW_DATA_PHP[@]}" "${RELEASE_DIR}/artisan" storage:link --force --no-interaction \
+    || ln -sfn ../storage/app/public "${RELEASE_DIR}/public/storage"
+
 echo "==> Caching config/routes/views for the new release"
 "${WWW_DATA_PHP[@]}" "${RELEASE_DIR}/artisan" config:cache
 "${WWW_DATA_PHP[@]}" "${RELEASE_DIR}/artisan" route:cache
