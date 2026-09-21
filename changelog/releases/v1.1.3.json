@@ -1,0 +1,22 @@
+{
+  "version": "v1.1.3",
+  "released_at": "2026-09-21",
+  "previous_version": "v1.1.2",
+  "theme": "Editor Markdown/HTML",
+  "change_types": ["added"],
+  "topic_tags": ["public-facing"],
+  "summary": "Staff can author Markdown or HTML blocks in the Editor.js composer; the server sanitizes markup before public articles render it.",
+  "detailed_changes": [
+    "Added a Markdown/HTML markup block in the staff post editor.",
+    "Server converts Markdown and strips unsafe HTML (scripts, handlers, disallowed tags) before save.",
+    "Public article renderer outputs the sanitized stored HTML for markup blocks."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff/posts/new, /staff/posts/{id}/edit, public /articles/{slug}",
+    "User groups affected: staff editors; public readers of articles with markup blocks",
+    "Public impact: new Markdown/HTML content can appear on published articles after review/publish",
+    "Internal impact: editors gain a dedicated markup block; no Stripe or upload changes"
+  ],
+  "pr": 0
+}

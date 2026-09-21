@@ -14,6 +14,7 @@ import BookmarkTool from './BookmarkTool';
 import CalloutTool from './CalloutTool';
 import FileTool from './FileTool';
 import GalleryTool from './GalleryTool';
+import MarkupTool from './MarkupTool';
 import ProductTool from './ProductTool';
 import ToggleTool from './ToggleTool';
 import VideoTool from './VideoTool';
@@ -104,6 +105,7 @@ export default function EditorJsField({ initialData, onChange }: Props) {
                 bookmark: BookmarkTool,
                 product: ProductTool,
                 toggle: ToggleTool,
+                markup: MarkupTool,
                 linkTool: {
                     class: LinkTool,
                     config: {

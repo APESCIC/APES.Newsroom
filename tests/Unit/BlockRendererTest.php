@@ -122,4 +122,25 @@ class BlockRendererTest extends TestCase
         $this->assertStringContainsString('<summary>More info</summary>', $html);
         $this->assertStringContainsString('Details here', $html);
     }
+
+    public function test_markup_renders_sanitized_html_from_markdown(): void
+    {
+        $document = (new BlockValidator)->validate([
+            'blocks' => [[
+                'type' => 'markup',
+                'data' => [
+                    'format' => 'markdown',
+                    'source' => "## Hello\n\nWorld",
+                ],
+            ]],
+        ]);
+
+        $html = (new BlockRenderer)->toHtml($document);
+
+        $this->assertStringContainsString('class="markup-block"', $html);
+        $this->assertStringContainsString('data-format="markdown"', $html);
+        $this->assertStringContainsString('<h2>Hello</h2>', $html);
+        $this->assertStringContainsString('<p>World</p>', $html);
+        $this->assertStringContainsString($document['blocks'][0]['data']['html'], $html);
+    }
 }

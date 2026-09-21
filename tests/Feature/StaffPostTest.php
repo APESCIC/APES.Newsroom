@@ -308,4 +308,52 @@ class StaffPostTest extends TestCase
             ],
         ])->assertSessionHasErrors('content');
     }
+
+    public function test_staff_can_create_draft_with_markup_block(): void
+    {
+        $staff = User::factory()->staff()->create();
+
+        $response = $this->actingAs($staff)->post('/staff/posts', [
+            'title' => 'Markup Article',
+            'slug' => 'markup-article',
+            'excerpt' => 'With markup',
+            'channel' => 'apes_cic',
+            'content' => [
+                'blocks' => [[
+                    'type' => 'markup',
+                    'data' => [
+                        'format' => 'markdown',
+                        'source' => "## Lead\n\nBody text",
+                    ],
+                ]],
+            ],
+        ]);
+
+        $response->assertRedirect();
+        $post = Post::query()->where('slug', 'markup-article')->first();
+        $this->assertNotNull($post);
+        $this->assertSame('markup', $post->content['blocks'][0]['type']);
+        $this->assertSame('markdown', $post->content['blocks'][0]['data']['format']);
+        $this->assertStringContainsString('<h2>Lead</h2>', $post->content['blocks'][0]['data']['html']);
+    }
+
+    public function test_markup_with_script_is_rejected_on_create(): void
+    {
+        $staff = User::factory()->staff()->create();
+
+        $this->actingAs($staff)->post('/staff/posts', [
+            'title' => 'Bad Markup',
+            'slug' => 'bad-markup',
+            'channel' => 'apes_cic',
+            'content' => [
+                'blocks' => [[
+                    'type' => 'markup',
+                    'data' => [
+                        'format' => 'html',
+                        'source' => '<script>alert(1)</script>',
+                    ],
+                ]],
+            ],
+        ])->assertSessionHasErrors('content');
+    }
 }
