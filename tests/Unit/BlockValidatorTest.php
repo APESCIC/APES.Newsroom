@@ -255,4 +255,46 @@ class BlockValidatorTest extends TestCase
             ]],
         ]);
     }
+
+    public function test_markup_markdown_and_html_are_validated(): void
+    {
+        $result = (new BlockValidator)->validate([
+            'blocks' => [
+                [
+                    'type' => 'markup',
+                    'data' => [
+                        'format' => 'markdown',
+                        'source' => "## Title\n\nParagraph",
+                    ],
+                ],
+                [
+                    'type' => 'markup',
+                    'data' => [
+                        'format' => 'html',
+                        'source' => '<p>Hello <em>world</em></p>',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertSame('markup', $result['blocks'][0]['type']);
+        $this->assertSame('markdown', $result['blocks'][0]['data']['format']);
+        $this->assertStringContainsString('<h2>Title</h2>', $result['blocks'][0]['data']['html']);
+        $this->assertSame('<p>Hello <em>world</em></p>', $result['blocks'][1]['data']['html']);
+    }
+
+    public function test_markup_rejects_script(): void
+    {
+        $this->expectException(ValidationException::class);
+
+        (new BlockValidator)->validate([
+            'blocks' => [[
+                'type' => 'markup',
+                'data' => [
+                    'format' => 'html',
+                    'source' => '<p onclick="alert(1)">x</p>',
+                ],
+            ]],
+        ]);
+    }
 }

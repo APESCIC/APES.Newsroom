@@ -29,6 +29,7 @@ class BlockValidator
         'bookmark',
         'product',
         'toggle',
+        'markup',
         'linkTool',
         'embed',
         'legacy',
@@ -111,6 +112,7 @@ class BlockValidator
             'bookmark' => ['type' => $type, 'data' => $this->validateBookmark($data, $index)],
             'product' => ['type' => $type, 'data' => $this->validateProduct($data, $index)],
             'toggle' => ['type' => $type, 'data' => $this->validateToggle($data, $index)],
+            'markup' => ['type' => $type, 'data' => $this->validateMarkup($data, $index)],
             'linkTool' => ['type' => $type, 'data' => $this->validateLink($data, $index)],
             'embed' => ['type' => $type, 'data' => $this->validateEmbed($data, $index)],
             'legacy' => ['type' => $type, 'data' => $this->validateLegacy($data, $index)],
@@ -472,6 +474,18 @@ class BlockValidator
         ];
     }
 
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, string>
+     */
+    private function validateMarkup(array $data, int $index): array
+    {
+        $format = strtolower((string) ($data['format'] ?? 'markdown'));
+        $source = (string) ($data['source'] ?? $data['text'] ?? '');
+
+        return (new MarkupSanitizer)->sanitize($format, $source, $index);
+    }
+
     private function requireHttpUrl(string $url, int $index, string $context): string
     {
         if ($url === '' || ! filter_var($url, FILTER_VALIDATE_URL)) {
@@ -567,7 +581,7 @@ class BlockValidator
         }
 
         return [
-            'html' => strip_tags($html, '<p><br><strong><em><ul><ol><li><a><h2><h3><h4><blockquote><img><figure><figcaption><table><thead><tbody><tr><th><td><hr>'),
+            'html' => (new MarkupSanitizer)->stripToAllowlist($html),
             'needs_review' => true,
             'note' => $this->sanitizeText($data['note'] ?? 'Imported legacy HTML', $index, 'legacy note'),
         ];

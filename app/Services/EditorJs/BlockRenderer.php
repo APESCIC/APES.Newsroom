@@ -45,11 +45,27 @@ class BlockRenderer
             'bookmark' => $this->renderBookmark($data),
             'product' => $this->renderProduct($data),
             'toggle' => $this->renderToggle($data),
+            'markup' => $this->renderMarkup($data),
             'linkTool' => '<p><a href="'.e($data['link'] ?? '').'" rel="noopener noreferrer">'.e($data['meta']['title'] ?? $data['link'] ?? '').'</a></p>',
             'embed' => $this->renderEmbed($data),
             'legacy' => $this->renderLegacy($data),
             default => '',
         };
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function renderMarkup(array $data): string
+    {
+        $html = (string) ($data['html'] ?? '');
+
+        if ($html === '') {
+            return '';
+        }
+
+        // Already sanitized by BlockValidator / MarkupSanitizer — do not escape tags.
+        return '<div class="markup-block" data-format="'.e((string) ($data['format'] ?? '')).'">'.$html.'</div>';
     }
 
     /**
