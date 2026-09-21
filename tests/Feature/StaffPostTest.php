@@ -172,4 +172,71 @@ class StaffPostTest extends TestCase
             'expected_updated_at' => $post->updated_at?->toIso8601String(),
         ])->assertSessionHasErrors('content');
     }
+
+    public function test_staff_can_create_draft_with_gallery_video_and_audio(): void
+    {
+        $staff = User::factory()->staff()->create();
+
+        $response = $this->actingAs($staff)->post('/staff/posts', [
+            'title' => 'Media Article',
+            'slug' => 'media-article',
+            'excerpt' => 'With rich media',
+            'channel' => 'apes_cic',
+            'content' => [
+                'blocks' => [
+                    [
+                        'type' => 'gallery',
+                        'data' => [
+                            'items' => [
+                                [
+                                    'url' => 'https://cdn.example.com/a.jpg',
+                                    'alt' => 'A photo',
+                                ],
+                            ],
+                        ],
+                    ],
+                    [
+                        'type' => 'video',
+                        'data' => [
+                            'url' => 'https://cdn.example.com/clip.mp4',
+                        ],
+                    ],
+                    [
+                        'type' => 'audio',
+                        'data' => [
+                            'url' => 'https://cdn.example.com/track.mp3',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect();
+        $post = Post::query()->where('slug', 'media-article')->first();
+        $this->assertNotNull($post);
+        $this->assertSame('gallery', $post->content['blocks'][0]['type']);
+        $this->assertSame('video', $post->content['blocks'][1]['type']);
+        $this->assertSame('audio', $post->content['blocks'][2]['type']);
+    }
+
+    public function test_malformed_gallery_is_rejected_on_create(): void
+    {
+        $staff = User::factory()->staff()->create();
+
+        $this->actingAs($staff)->post('/staff/posts', [
+            'title' => 'Bad Gallery',
+            'slug' => 'bad-gallery',
+            'channel' => 'apes_cic',
+            'content' => [
+                'blocks' => [[
+                    'type' => 'gallery',
+                    'data' => [
+                        'items' => [
+                            ['url' => 'https://cdn.example.com/a.jpg', 'alt' => ''],
+                        ],
+                    ],
+                ]],
+            ],
+        ])->assertSessionHasErrors('content');
+    }
 }
