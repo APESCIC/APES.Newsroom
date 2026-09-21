@@ -41,11 +41,94 @@ class BlockRenderer
             'gallery' => $this->renderGallery($data),
             'video' => $this->renderVideo($data),
             'audio' => $this->renderAudio($data),
+            'file' => $this->renderFile($data),
+            'bookmark' => $this->renderBookmark($data),
+            'product' => $this->renderProduct($data),
+            'toggle' => $this->renderToggle($data),
             'linkTool' => '<p><a href="'.e($data['link'] ?? '').'" rel="noopener noreferrer">'.e($data['meta']['title'] ?? $data['link'] ?? '').'</a></p>',
             'embed' => $this->renderEmbed($data),
             'legacy' => $this->renderLegacy($data),
             default => '',
         };
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function renderFile(array $data): string
+    {
+        $url = e($data['url'] ?? '');
+
+        if ($url === '') {
+            return '';
+        }
+
+        $label = e($data['title'] ?? $data['url'] ?? 'Download');
+        $size = ($data['size'] ?? '') !== ''
+            ? ' <span class="file-size">'.e((string) $data['size']).'</span>'
+            : '';
+
+        return "<p class=\"file-block\"><a href=\"{$url}\" rel=\"noopener noreferrer\">{$label}</a>{$size}</p>";
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function renderBookmark(array $data): string
+    {
+        $url = e($data['url'] ?? '');
+
+        if ($url === '') {
+            return '';
+        }
+
+        $title = e($data['title'] ?? $data['url'] ?? '');
+        $description = ($data['description'] ?? '') !== ''
+            ? '<p class="bookmark-description">'.e((string) $data['description']).'</p>'
+            : '';
+        $image = ($data['image'] ?? '') !== ''
+            ? '<img src="'.e((string) $data['image']).'" alt="" loading="lazy" />'
+            : '';
+
+        return "<aside class=\"bookmark\"><a href=\"{$url}\" rel=\"noopener noreferrer\">{$image}<span class=\"bookmark-title\">{$title}</span></a>{$description}</aside>";
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function renderProduct(array $data): string
+    {
+        $title = e($data['title'] ?? '');
+
+        if ($title === '') {
+            return '';
+        }
+
+        $description = ($data['description'] ?? '') !== ''
+            ? '<p>'.e((string) $data['description']).'</p>'
+            : '';
+        $price = ($data['priceLabel'] ?? '') !== ''
+            ? '<p class="product-price">'.e((string) $data['priceLabel']).'</p>'
+            : '';
+
+        $heading = $title;
+
+        if (($data['url'] ?? '') !== '') {
+            $heading = '<a href="'.e((string) $data['url']).'" rel="noopener noreferrer">'.$title.'</a>';
+        }
+
+        return "<aside class=\"product\"><h3 class=\"product-title\">{$heading}</h3>{$description}{$price}</aside>";
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function renderToggle(array $data): string
+    {
+        $title = e($data['title'] ?? '');
+        $content = e($data['content'] ?? '');
+
+        return "<details class=\"toggle\"><summary>{$title}</summary><div class=\"toggle-content\">{$content}</div></details>";
     }
 
     /**

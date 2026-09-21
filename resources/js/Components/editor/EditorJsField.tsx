@@ -10,8 +10,12 @@ import Quote from '@editorjs/quote';
 import Table from '@editorjs/table';
 import { useEffect, useRef } from 'react';
 import AudioTool from './AudioTool';
+import BookmarkTool from './BookmarkTool';
 import CalloutTool from './CalloutTool';
+import FileTool from './FileTool';
 import GalleryTool from './GalleryTool';
+import ProductTool from './ProductTool';
+import ToggleTool from './ToggleTool';
 import VideoTool from './VideoTool';
 
 function csrfToken(): string {
@@ -96,6 +100,10 @@ export default function EditorJsField({ initialData, onChange }: Props) {
                 gallery: GalleryTool,
                 video: VideoTool,
                 audio: AudioTool,
+                file: FileTool,
+                bookmark: BookmarkTool,
+                product: ProductTool,
+                toggle: ToggleTool,
                 linkTool: {
                     class: LinkTool,
                     config: {
