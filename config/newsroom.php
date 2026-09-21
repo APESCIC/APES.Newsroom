@@ -27,4 +27,28 @@ return [
 
     'changelog_path' => env('NEWSROOM_CHANGELOG_PATH'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Editor.js trusted media uploads (#75)
+    |--------------------------------------------------------------------------
+    |
+    | Staff-only multipart uploads to the public disk. Sizes are Laravel KB.
+    |
+    */
+
+    'editor_uploads' => [
+        'disk' => 'public',
+        'path_prefix' => 'editor',
+        'kinds' => [
+            'image' => [
+                'mimes' => ['jpg', 'jpeg', 'png', 'webp', 'gif'],
+                'max_kb' => 5120,
+            ],
+            'file' => [
+                'mimes' => ['pdf', 'zip', 'txt', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'webp', 'gif'],
+                'max_kb' => 10240,
+            ],
+        ],
+    ],
+
 ];

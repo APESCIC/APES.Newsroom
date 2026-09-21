@@ -1,0 +1,22 @@
+{
+  "version": "v1.1.4",
+  "released_at": "2026-09-21",
+  "previous_version": "v1.1.3",
+  "theme": "Editor trusted uploads",
+  "change_types": ["added"],
+  "topic_tags": ["public-facing"],
+  "summary": "Staff can upload images and files into Editor.js blocks; uploads are stored on the public disk and referenced by absolute storage URLs.",
+  "detailed_changes": [
+    "Added POST /staff/media/upload for authenticated staff (image and file kinds with size/MIME limits).",
+    "Wired Editor.js image uploadByFile and a File block file picker; by-URL helpers remain.",
+    "Ensured deploy activate creates the public/storage symlink so uploaded media is served."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff/posts/new, /staff/posts/{id}/edit, /storage/editor/*, deploy activate",
+    "User groups affected: staff editors; public readers of articles that include uploaded media",
+    "Public impact: published articles may reference newly uploaded images/files under /storage/editor",
+    "Internal impact: staff no longer need external hosts for basic image/file blocks"
+  ],
+  "pr": 181
+}

@@ -18,6 +18,7 @@ import MarkupTool from './MarkupTool';
 import ProductTool from './ProductTool';
 import ToggleTool from './ToggleTool';
 import VideoTool from './VideoTool';
+import { uploadStaffMedia } from './uploadStaffMedia';
 
 function csrfToken(): string {
     return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
@@ -87,9 +88,7 @@ export default function EditorJsField({ initialData, onChange }: Props) {
                                 return postJson('/staff/media/by-url', { url });
                             },
                             async uploadByFile(file: File) {
-                                return Promise.reject(
-                                    new Error(`File upload is not configured (${file.name}). Use image by URL.`),
-                                );
+                                return uploadStaffMedia(file, 'image');
                             },
                         },
                         captionPlaceholder: 'Caption',

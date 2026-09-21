@@ -132,6 +132,7 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
         Route::post('/posts/{post}/campaign/test-send', [StaffCampaignController::class, 'testSend'])->name('posts.campaign.test');
         Route::post('/media/by-url', [StaffMediaController::class, 'byUrl'])->name('media.by-url');
         Route::post('/media/link-meta', [StaffMediaController::class, 'linkMeta'])->name('media.link-meta');
+        Route::post('/media/upload', [StaffMediaController::class, 'upload'])->name('media.upload');
     });
 
 require __DIR__.'/auth.php';
