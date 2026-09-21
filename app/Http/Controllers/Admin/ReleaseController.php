@@ -50,6 +50,7 @@ class ReleaseController extends Controller
             'release' => null,
             'changeTypes' => Release::CHANGE_TYPES,
             'topicTags' => Release::TOPIC_TAGS,
+            'releasesInBeta' => (bool) config('newsroom.releases_in_beta', true),
         ]);
     }
 
@@ -100,6 +101,7 @@ class ReleaseController extends Controller
             ],
             'changeTypes' => Release::CHANGE_TYPES,
             'topicTags' => Release::TOPIC_TAGS,
+            'releasesInBeta' => (bool) config('newsroom.releases_in_beta', true),
         ]);
     }
 

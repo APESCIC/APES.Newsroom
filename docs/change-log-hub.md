@@ -1,40 +1,55 @@
 # Updating the Change Log Hub
 
 The public [Change Log Hub](/change-log-hub) reads published rows from the
-`releases` table. Keep it in sync when you cut a Newsroom release.
+`releases` table. Those rows are **synced from the repository** on every
+deploy.
 
-## When to update
+## Authoring a release (required for user-facing PRs)
 
-Create or edit a release note whenever you ship a user-visible or operationally
-notable change that should appear in public release history (features, fixes,
-compliance/accessibility work, and similar).
+1. Copy [`changelog/releases/_template.json`](../changelog/releases/_template.json)
+   to `changelog/releases/vX.Y.Z.json` (filename must match `version`).
+2. Fill the required fields:
+   - `version` (e.g. `v1.2.3`)
+   - `summary`
+   - `detailed_changes` (array of strings)
+   - `change_types` — one or more of: `added`, `changed`, `fixed`, `removed`, `security`
+   - `topic_tags` — one or more of: `compliance`, `accessibility`, `public-facing`, `internal-only`
+3. Optionally set `theme`, `affected_areas`, `released_at`, `previous_version`,
+   `pr`, or full `version_decision` / `validation` lists.
+4. Open the PR. CI runs `php artisan newsroom:check-pr-changelog` and fails if
+   the entry is missing or invalid.
+5. Merge, then deploy beta as usual. Activate runs
+   `php artisan newsroom:sync-releases` after migrate so the hub updates.
 
-## How to update
+Bump patch for routine shipping PRs; use minor/major when the change warrants
+it. Routine PRs should change **exactly one** version file; CI warns if more
+than one entry changes, and fails if none do (unless skipped).
 
-1. Sign in as an **admin** (or super admin).
-2. Open **Admin → Releases** (`/admin/releases`).
-3. Create a new release (or edit a draft).
-4. Fill the structured sections used on the public cards:
-   - Summary
-   - Detailed changes (one item per line)
-   - Affected areas
-   - Version decision
-   - Validation
-5. Set change-type and topic tags so filter chips work.
-6. Mark **Published**.
-7. Mark **Mark as current release** for the live version (clears the previous
-   current flag).
-8. Confirm the footer shows `Website version: … · Change Log Hub` and the hub
-   lists the new card.
+### Skipping the gate
 
-## Seeded baseline
+Label the PR `skip-changelog` for non-user-facing work (docs-only, CI, chores
+that do not affect public or staff product surfaces).
 
-Local/`php artisan db:seed` loads Newsroom releases from **v1.0.0** forward via
-`Database\Seeders\ReleaseSeeder`. Do not seed apes.org.uk CIC website history
-into this hub.
+## How sync works
 
-## Optional metadata mirrors
+- Source of truth: `changelog/releases/*.json` (files starting with `_` are
+  ignored).
+- Command: `php artisan newsroom:sync-releases`
+- Deploy: [`deploy/cloudron-activate.sh`](../deploy/cloudron-activate.sh) runs
+  sync after migrate.
+- Channel / version type: set from `NEWSROOM_RELEASES_IN_BETA` (see
+  `config/newsroom.php`). Authors do not pick Stable while in beta.
+- Highest semver in the directory becomes the current footer version.
+- Admin → Releases remains for emergencies; matching file-backed versions are
+  overwritten on the next sync.
 
-If you also maintain a root `CHANGELOG` or GitHub Release for the same version,
-keep the hub summary consistent with those notes. Automation is not required for
-v1.1.1; admin authoring is the source of truth for the public hub.
+## Local seed
+
+`php artisan db:seed` (and the baseline release migrations) call the same sync
+loader via `Database\Seeders\ReleaseSeeder`.
+
+## Beta period
+
+While `NEWSROOM_RELEASES_IN_BETA=true`, synced releases use the **Beta**
+channel. Set it to `false` when leaving beta; historical Beta rows stay Beta
+unless you rewrite their JSON and re-sync.

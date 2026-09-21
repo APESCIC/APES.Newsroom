@@ -9,15 +9,15 @@ function release(overrides: Partial<PublicRelease> = {}): PublicRelease {
         version: 'v1.1.1',
         previous_version: 'v1.1.0',
         released_at: '2026-09-18',
-        channel: 'stable',
-        channel_label: 'Stable',
-        version_type: 'patch stable',
+        channel: 'beta',
+        channel_label: 'Beta',
+        version_type: 'patch beta',
         theme: 'Change Log Hub',
         is_current: true,
         slug: 'release-v111',
         change_types: ['added'],
         topic_tags: ['public-facing'],
-        tags: ['added', 'public-facing', 'stable', 'current'],
+        tags: ['added', 'public-facing', 'beta', 'current'],
         summary: 'Added the Change Log Hub.',
         detailed_changes: ['Shipped /change-log-hub'],
         affected_areas: ['Website: APES Newsroom'],
@@ -66,7 +66,12 @@ describe('ChangeLogHubIndex', () => {
     });
 
     it('filters by chip and search text', () => {
-        const current = release();
+        const current = release({
+            channel: 'stable',
+            channel_label: 'Stable',
+            version_type: 'patch stable',
+            tags: ['added', 'public-facing', 'stable', 'current'],
+        });
         render(
             <ChangeLogHubIndex
                 releases={[current, betaRelease()]}

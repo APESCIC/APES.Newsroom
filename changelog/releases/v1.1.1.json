@@ -1,0 +1,35 @@
+{
+  "version": "v1.1.1",
+  "released_at": "2026-09-18",
+  "previous_version": "v1.1.0",
+  "theme": "Change Log Hub",
+  "change_types": ["added"],
+  "topic_tags": ["public-facing", "compliance"],
+  "summary": "Added a public Change Log Hub with searchable, filterable release cards, admin authoring, and footer version discovery matching the apes.org.uk hub UX.",
+  "detailed_changes": [
+    "Introduced release records with structured Summary, Detailed changes, Affected areas, Version decision, and Validation sections.",
+    "Shipped /change-log-hub with hero, breadcrumbs, search, filter chips, expand/collapse, and deep links.",
+    "Added admin CRUD for release notes and seeded Newsroom releases from v1.0.0 forward.",
+    "Surfaced the current website version and Change Log Hub link in the public footer."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /change-log-hub, /admin/releases, public footer, sitemap",
+    "Files changed: Release model/migration, hub page, admin pages, shared Inertia props, docs",
+    "User groups affected: public visitors, staff/admins maintaining release notes",
+    "Public impact: visitors can review Newsroom release history with the same hub behaviours as apes.org.uk",
+    "Internal impact: maintainers author releases in admin instead of hardcoding HTML"
+  ],
+  "version_decision": [
+    "Previous version: v1.1.0",
+    "New version: v1.1.1",
+    "Version type: patch beta",
+    "Reason for version bump: new public transparency surface without changing article publishing architecture"
+  ],
+  "validation": [
+    "Checks run: PHPUnit feature tests, frontend typecheck/lint, hub filter/search behaviour tests",
+    "Manual checks completed: public hub UX review against the reference Change Log Hub",
+    "Known limitations: VERSION/CHANGELOG sync remains a manual maintainer process for this pass",
+    "Rollback notes: unpublish or remove release records and hub route if the surface must be withdrawn"
+  ]
+}

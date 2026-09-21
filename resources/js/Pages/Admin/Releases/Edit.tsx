@@ -22,11 +22,11 @@ type ReleaseForm = {
     validation_text: string;
 };
 
-const emptyRelease = (): ReleaseForm => ({
+const emptyRelease = (releasesInBeta: boolean): ReleaseForm => ({
     version: '',
     previous_version: '',
     released_at: new Date().toISOString().slice(0, 10),
-    channel: 'stable',
+    channel: releasesInBeta ? 'beta' : 'stable',
     version_type: '',
     theme: '',
     is_current: false,
@@ -57,13 +57,15 @@ export default function ReleaseEdit({
     release,
     changeTypes,
     topicTags,
+    releasesInBeta = true,
 }: {
     release: ReleaseForm | null;
     changeTypes: string[];
     topicTags: string[];
+    releasesInBeta?: boolean;
 }) {
     const editing = Boolean(release?.id);
-    const form = useForm<ReleaseForm>(release ?? emptyRelease());
+    const form = useForm<ReleaseForm>(release ?? emptyRelease(releasesInBeta));
 
     const submit: FormEventHandler = (event) => {
         event.preventDefault();
@@ -138,8 +140,8 @@ export default function ReleaseEdit({
                             value={form.data.channel}
                             onChange={(e) => form.setData('channel', e.target.value)}
                         >
-                            <option value="stable">Stable</option>
                             <option value="beta">Beta</option>
+                            <option value="stable">Stable</option>
                         </select>
                         <FieldError message={form.errors.channel} />
                     </div>
@@ -150,7 +152,7 @@ export default function ReleaseEdit({
                         <input
                             id="version_type"
                             className="form-input mt-1 w-full"
-                            placeholder="patch stable"
+                            placeholder={releasesInBeta ? 'patch beta' : 'patch stable'}
                             value={form.data.version_type}
                             onChange={(e) => form.setData('version_type', e.target.value)}
                         />
