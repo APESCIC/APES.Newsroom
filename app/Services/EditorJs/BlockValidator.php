@@ -22,6 +22,9 @@ class BlockValidator
         'table',
         'delimiter',
         'callout',
+        'gallery',
+        'video',
+        'audio',
         'linkTool',
         'embed',
         'legacy',
@@ -97,6 +100,9 @@ class BlockValidator
             'table' => ['type' => $type, 'data' => $this->validateTable($data, $index)],
             'delimiter' => ['type' => $type, 'data' => new \stdClass],
             'callout' => ['type' => $type, 'data' => $this->validateCallout($data, $index)],
+            'gallery' => ['type' => $type, 'data' => $this->validateGallery($data, $index)],
+            'video' => ['type' => $type, 'data' => $this->validateVideo($data, $index)],
+            'audio' => ['type' => $type, 'data' => $this->validateAudio($data, $index)],
             'linkTool' => ['type' => $type, 'data' => $this->validateLink($data, $index)],
             'embed' => ['type' => $type, 'data' => $this->validateEmbed($data, $index)],
             'legacy' => ['type' => $type, 'data' => $this->validateLegacy($data, $index)],
@@ -251,6 +257,125 @@ class BlockValidator
         return [
             'text' => $this->sanitizeText($data['text'] ?? '', $index, 'callout'),
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function validateGallery(array $data, int $index): array
+    {
+        $rawItems = $data['items'] ?? [];
+
+        if (! is_array($rawItems) || $rawItems === []) {
+            throw ValidationException::withMessages([
+                'content' => "Gallery at index {$index} requires at least one item.",
+            ]);
+        }
+
+        $items = [];
+
+        foreach ($rawItems as $itemIndex => $item) {
+            if (! is_array($item)) {
+                throw ValidationException::withMessages([
+                    'content' => "Gallery item {$itemIndex} at index {$index} is malformed.",
+                ]);
+            }
+
+            $url = $this->requireHttpUrl((string) ($item['url'] ?? ''), $index, "gallery item {$itemIndex} URL");
+            $alt = $this->sanitizeText($item['alt'] ?? '', $index, "gallery item {$itemIndex} alt");
+
+            if ($alt === '') {
+                throw ValidationException::withMessages([
+                    'content' => "Gallery item {$itemIndex} at index {$index} requires alt text.",
+                ]);
+            }
+
+            $normalized = [
+                'url' => $url,
+                'alt' => $alt,
+            ];
+
+            $caption = $this->sanitizeText($item['caption'] ?? '', $index, "gallery item {$itemIndex} caption");
+
+            if ($caption !== '') {
+                $normalized['caption'] = $caption;
+            }
+
+            $items[] = $normalized;
+        }
+
+        $result = ['items' => $items];
+        $caption = $this->sanitizeText($data['caption'] ?? '', $index, 'gallery caption');
+
+        if ($caption !== '') {
+            $result['caption'] = $caption;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function validateVideo(array $data, int $index): array
+    {
+        $result = [
+            'url' => $this->requireHttpUrl((string) ($data['url'] ?? ''), $index, 'video URL'),
+        ];
+
+        $caption = $this->sanitizeText($data['caption'] ?? '', $index, 'video caption');
+
+        if ($caption !== '') {
+            $result['caption'] = $caption;
+        }
+
+        $poster = trim((string) ($data['poster'] ?? ''));
+
+        if ($poster !== '') {
+            $result['poster'] = $this->requireHttpUrl($poster, $index, 'video poster URL');
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function validateAudio(array $data, int $index): array
+    {
+        $result = [
+            'url' => $this->requireHttpUrl((string) ($data['url'] ?? ''), $index, 'audio URL'),
+        ];
+
+        $caption = $this->sanitizeText($data['caption'] ?? '', $index, 'audio caption');
+
+        if ($caption !== '') {
+            $result['caption'] = $caption;
+        }
+
+        return $result;
+    }
+
+    private function requireHttpUrl(string $url, int $index, string $context): string
+    {
+        if ($url === '' || ! filter_var($url, FILTER_VALIDATE_URL)) {
+            throw ValidationException::withMessages([
+                'content' => "{$context} at index {$index} must be a valid URL.",
+            ]);
+        }
+
+        $scheme = strtolower((string) (parse_url($url, PHP_URL_SCHEME) ?? ''));
+
+        if (! in_array($scheme, ['http', 'https'], true)) {
+            throw ValidationException::withMessages([
+                'content' => "{$context} at index {$index} must use http or https.",
+            ]);
+        }
+
+        return $url;
     }
 
     /**

@@ -38,11 +38,85 @@ class BlockRenderer
             'table' => $this->renderTable($data),
             'delimiter' => '<hr />',
             'callout' => '<aside class="callout">'.e($data['text'] ?? '').'</aside>',
+            'gallery' => $this->renderGallery($data),
+            'video' => $this->renderVideo($data),
+            'audio' => $this->renderAudio($data),
             'linkTool' => '<p><a href="'.e($data['link'] ?? '').'" rel="noopener noreferrer">'.e($data['meta']['title'] ?? $data['link'] ?? '').'</a></p>',
             'embed' => $this->renderEmbed($data),
             'legacy' => $this->renderLegacy($data),
             default => '',
         };
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function renderGallery(array $data): string
+    {
+        $itemsHtml = '';
+
+        foreach ($data['items'] ?? [] as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $url = e($item['url'] ?? '');
+            $alt = e($item['alt'] ?? '');
+            $caption = ($item['caption'] ?? '') !== ''
+                ? '<figcaption>'.e((string) $item['caption']).'</figcaption>'
+                : '';
+
+            $itemsHtml .= "<li><figure><img src=\"{$url}\" alt=\"{$alt}\" loading=\"lazy\" />{$caption}</figure></li>";
+        }
+
+        if ($itemsHtml === '') {
+            return '';
+        }
+
+        $caption = ($data['caption'] ?? '') !== ''
+            ? '<figcaption>'.e((string) $data['caption']).'</figcaption>'
+            : '';
+
+        return "<figure class=\"gallery\"><ul class=\"gallery-items\">{$itemsHtml}</ul>{$caption}</figure>";
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function renderVideo(array $data): string
+    {
+        $url = e($data['url'] ?? '');
+
+        if ($url === '') {
+            return '';
+        }
+
+        $poster = ($data['poster'] ?? '') !== ''
+            ? ' poster="'.e((string) $data['poster']).'"'
+            : '';
+        $caption = ($data['caption'] ?? '') !== ''
+            ? '<figcaption>'.e((string) $data['caption']).'</figcaption>'
+            : '';
+
+        return "<figure class=\"video\"><video src=\"{$url}\"{$poster} controls preload=\"metadata\"></video>{$caption}</figure>";
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function renderAudio(array $data): string
+    {
+        $url = e($data['url'] ?? '');
+
+        if ($url === '') {
+            return '';
+        }
+
+        $caption = ($data['caption'] ?? '') !== ''
+            ? '<figcaption>'.e((string) $data['caption']).'</figcaption>'
+            : '';
+
+        return "<figure class=\"audio\"><audio src=\"{$url}\" controls preload=\"metadata\"></audio>{$caption}</figure>";
     }
 
     /**

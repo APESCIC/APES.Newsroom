@@ -9,7 +9,10 @@ import Paragraph from '@editorjs/paragraph';
 import Quote from '@editorjs/quote';
 import Table from '@editorjs/table';
 import { useEffect, useRef } from 'react';
+import AudioTool from './AudioTool';
 import CalloutTool from './CalloutTool';
+import GalleryTool from './GalleryTool';
+import VideoTool from './VideoTool';
 
 function csrfToken(): string {
     return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
@@ -90,6 +93,9 @@ export default function EditorJsField({ initialData, onChange }: Props) {
                 table: Table,
                 delimiter: Delimiter,
                 callout: CalloutTool,
+                gallery: GalleryTool,
+                video: VideoTool,
+                audio: AudioTool,
                 linkTool: {
                     class: LinkTool,
                     config: {
