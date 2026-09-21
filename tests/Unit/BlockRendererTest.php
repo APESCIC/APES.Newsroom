@@ -69,4 +69,57 @@ class BlockRendererTest extends TestCase
 
         $this->assertSame('<p>Keep me</p>', $html);
     }
+
+    public function test_file_bookmark_product_and_toggle_render_safe_html(): void
+    {
+        $document = (new BlockValidator)->validate([
+            'blocks' => [
+                [
+                    'type' => 'file',
+                    'data' => [
+                        'url' => 'https://cdn.example.com/guide.pdf',
+                        'title' => 'Guide',
+                        'size' => '1.2 MB',
+                    ],
+                ],
+                [
+                    'type' => 'bookmark',
+                    'data' => [
+                        'url' => 'https://example.com/article',
+                        'title' => 'Article',
+                        'description' => 'A summary',
+                        'image' => 'https://cdn.example.com/og.jpg',
+                    ],
+                ],
+                [
+                    'type' => 'product',
+                    'data' => [
+                        'title' => 'Tote bag',
+                        'description' => 'Cotton',
+                        'url' => 'https://shop.example.com/tote',
+                        'priceLabel' => '£12',
+                    ],
+                ],
+                [
+                    'type' => 'toggle',
+                    'data' => [
+                        'title' => 'More info',
+                        'content' => 'Details here',
+                    ],
+                ],
+            ],
+        ]);
+
+        $html = (new BlockRenderer)->toHtml($document);
+
+        $this->assertStringContainsString('class="file-block"', $html);
+        $this->assertStringContainsString('href="https://cdn.example.com/guide.pdf"', $html);
+        $this->assertStringContainsString('class="bookmark"', $html);
+        $this->assertStringContainsString('src="https://cdn.example.com/og.jpg"', $html);
+        $this->assertStringContainsString('class="product"', $html);
+        $this->assertStringContainsString('>£12</p>', $html);
+        $this->assertStringContainsString('<details class="toggle">', $html);
+        $this->assertStringContainsString('<summary>More info</summary>', $html);
+        $this->assertStringContainsString('Details here', $html);
+    }
 }

@@ -25,6 +25,10 @@ class BlockValidator
         'gallery',
         'video',
         'audio',
+        'file',
+        'bookmark',
+        'product',
+        'toggle',
         'linkTool',
         'embed',
         'legacy',
@@ -103,6 +107,10 @@ class BlockValidator
             'gallery' => ['type' => $type, 'data' => $this->validateGallery($data, $index)],
             'video' => ['type' => $type, 'data' => $this->validateVideo($data, $index)],
             'audio' => ['type' => $type, 'data' => $this->validateAudio($data, $index)],
+            'file' => ['type' => $type, 'data' => $this->validateFile($data, $index)],
+            'bookmark' => ['type' => $type, 'data' => $this->validateBookmark($data, $index)],
+            'product' => ['type' => $type, 'data' => $this->validateProduct($data, $index)],
+            'toggle' => ['type' => $type, 'data' => $this->validateToggle($data, $index)],
             'linkTool' => ['type' => $type, 'data' => $this->validateLink($data, $index)],
             'embed' => ['type' => $type, 'data' => $this->validateEmbed($data, $index)],
             'legacy' => ['type' => $type, 'data' => $this->validateLegacy($data, $index)],
@@ -357,6 +365,111 @@ class BlockValidator
         }
 
         return $result;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function validateFile(array $data, int $index): array
+    {
+        $result = [
+            'url' => $this->requireHttpUrl((string) ($data['url'] ?? ''), $index, 'file URL'),
+        ];
+
+        $title = $this->sanitizeText($data['title'] ?? '', $index, 'file title');
+
+        if ($title !== '') {
+            $result['title'] = $title;
+        }
+
+        $size = $this->sanitizeText($data['size'] ?? '', $index, 'file size');
+
+        if ($size !== '') {
+            $result['size'] = $size;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function validateBookmark(array $data, int $index): array
+    {
+        $result = [
+            'url' => $this->requireHttpUrl((string) ($data['url'] ?? ''), $index, 'bookmark URL'),
+        ];
+
+        $title = $this->sanitizeText($data['title'] ?? '', $index, 'bookmark title');
+
+        if ($title !== '') {
+            $result['title'] = $title;
+        }
+
+        $description = $this->sanitizeText($data['description'] ?? '', $index, 'bookmark description');
+
+        if ($description !== '') {
+            $result['description'] = $description;
+        }
+
+        $image = trim((string) ($data['image'] ?? ''));
+
+        if ($image !== '') {
+            $result['image'] = $this->requireHttpUrl($image, $index, 'bookmark image URL');
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function validateProduct(array $data, int $index): array
+    {
+        $title = $this->sanitizeText($data['title'] ?? '', $index, 'product title');
+
+        if ($title === '') {
+            throw ValidationException::withMessages([
+                'content' => "Product at index {$index} requires a title.",
+            ]);
+        }
+
+        $result = ['title' => $title];
+
+        $description = $this->sanitizeText($data['description'] ?? '', $index, 'product description');
+
+        if ($description !== '') {
+            $result['description'] = $description;
+        }
+
+        $url = trim((string) ($data['url'] ?? ''));
+
+        if ($url !== '') {
+            $result['url'] = $this->requireHttpUrl($url, $index, 'product URL');
+        }
+
+        $priceLabel = $this->sanitizeText($data['priceLabel'] ?? '', $index, 'product price label');
+
+        if ($priceLabel !== '') {
+            $result['priceLabel'] = $priceLabel;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, string>
+     */
+    private function validateToggle(array $data, int $index): array
+    {
+        return [
+            'title' => $this->sanitizeText($data['title'] ?? '', $index, 'toggle title'),
+            'content' => $this->sanitizeText($data['content'] ?? '', $index, 'toggle content'),
+        ];
     }
 
     private function requireHttpUrl(string $url, int $index, string $context): string

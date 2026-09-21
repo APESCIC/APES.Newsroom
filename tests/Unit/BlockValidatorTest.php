@@ -168,4 +168,91 @@ class BlockValidatorTest extends TestCase
             ]],
         ]);
     }
+
+    public function test_file_bookmark_product_and_toggle_are_validated(): void
+    {
+        $result = (new BlockValidator)->validate([
+            'blocks' => [
+                [
+                    'type' => 'file',
+                    'data' => [
+                        'url' => 'https://cdn.example.com/guide.pdf',
+                        'title' => 'Guide',
+                        'size' => '1.2 MB',
+                    ],
+                ],
+                [
+                    'type' => 'bookmark',
+                    'data' => [
+                        'url' => 'https://example.com/article',
+                        'title' => 'Article',
+                        'description' => 'A summary',
+                        'image' => 'https://cdn.example.com/og.jpg',
+                    ],
+                ],
+                [
+                    'type' => 'product',
+                    'data' => [
+                        'title' => 'Tote bag',
+                        'description' => 'Cotton',
+                        'url' => 'https://shop.example.com/tote',
+                        'priceLabel' => '£12',
+                    ],
+                ],
+                [
+                    'type' => 'toggle',
+                    'data' => [
+                        'title' => 'More info',
+                        'content' => 'Details here',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertSame('file', $result['blocks'][0]['type']);
+        $this->assertSame('bookmark', $result['blocks'][1]['type']);
+        $this->assertSame('product', $result['blocks'][2]['type']);
+        $this->assertSame('toggle', $result['blocks'][3]['type']);
+        $this->assertSame('Guide', $result['blocks'][0]['data']['title']);
+        $this->assertSame('£12', $result['blocks'][2]['data']['priceLabel']);
+    }
+
+    public function test_file_requires_http_url(): void
+    {
+        $this->expectException(ValidationException::class);
+
+        (new BlockValidator)->validate([
+            'blocks' => [[
+                'type' => 'file',
+                'data' => ['url' => 'javascript:alert(1)'],
+            ]],
+        ]);
+    }
+
+    public function test_product_requires_title(): void
+    {
+        $this->expectException(ValidationException::class);
+
+        (new BlockValidator)->validate([
+            'blocks' => [[
+                'type' => 'product',
+                'data' => ['title' => ''],
+            ]],
+        ]);
+    }
+
+    public function test_bookmark_rejects_non_http_image(): void
+    {
+        $this->expectException(ValidationException::class);
+
+        (new BlockValidator)->validate([
+            'blocks' => [[
+                'type' => 'bookmark',
+                'data' => [
+                    'url' => 'https://example.com/a',
+                    'image' => 'javascript:alert(1)',
+                ],
+            ]],
+        ]);
+    }
 }

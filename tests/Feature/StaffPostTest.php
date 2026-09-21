@@ -239,4 +239,73 @@ class StaffPostTest extends TestCase
             ],
         ])->assertSessionHasErrors('content');
     }
+
+    public function test_staff_can_create_draft_with_file_bookmark_product_and_toggle(): void
+    {
+        $staff = User::factory()->staff()->create();
+
+        $response = $this->actingAs($staff)->post('/staff/posts', [
+            'title' => 'Cards Article',
+            'slug' => 'cards-article',
+            'excerpt' => 'With cards',
+            'channel' => 'apes_cic',
+            'content' => [
+                'blocks' => [
+                    [
+                        'type' => 'file',
+                        'data' => [
+                            'url' => 'https://cdn.example.com/guide.pdf',
+                            'title' => 'Guide',
+                        ],
+                    ],
+                    [
+                        'type' => 'bookmark',
+                        'data' => [
+                            'url' => 'https://example.com/article',
+                            'title' => 'Article',
+                        ],
+                    ],
+                    [
+                        'type' => 'product',
+                        'data' => [
+                            'title' => 'Tote bag',
+                            'priceLabel' => '£12',
+                        ],
+                    ],
+                    [
+                        'type' => 'toggle',
+                        'data' => [
+                            'title' => 'More',
+                            'content' => 'Details',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect();
+        $post = Post::query()->where('slug', 'cards-article')->first();
+        $this->assertNotNull($post);
+        $this->assertSame('file', $post->content['blocks'][0]['type']);
+        $this->assertSame('bookmark', $post->content['blocks'][1]['type']);
+        $this->assertSame('product', $post->content['blocks'][2]['type']);
+        $this->assertSame('toggle', $post->content['blocks'][3]['type']);
+    }
+
+    public function test_malformed_product_is_rejected_on_create(): void
+    {
+        $staff = User::factory()->staff()->create();
+
+        $this->actingAs($staff)->post('/staff/posts', [
+            'title' => 'Bad Product',
+            'slug' => 'bad-product',
+            'channel' => 'apes_cic',
+            'content' => [
+                'blocks' => [[
+                    'type' => 'product',
+                    'data' => ['title' => ''],
+                ]],
+            ],
+        ])->assertSessionHasErrors('content');
+    }
 }
