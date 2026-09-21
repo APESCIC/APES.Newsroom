@@ -1,0 +1,33 @@
+{
+  "version": "v1.1.0",
+  "released_at": "2026-09-18",
+  "previous_version": "v1.0.0",
+  "theme": "Admin Ghost content import",
+  "change_types": ["added"],
+  "topic_tags": ["internal-only"],
+  "summary": "Added the admin Ghost content JSON import path so staff can dry-run and confirm content imports without committing export files to the repository.",
+  "detailed_changes": [
+    "Added admin upload, dry-run, and confirm flow for Ghost content JSON (and optional media zip).",
+    "Queued import processing with audit logging and report download for review.",
+    "Kept member, newsletter, and Stripe data out of this content import path."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom admin workspace",
+    "Page or route: /admin/imports/ghost-content",
+    "User groups affected: staff and admins performing imports",
+    "Public impact: none directly; enables safer content reconciliation",
+    "Internal impact: import runs are reviewable before confirm"
+  ],
+  "version_decision": [
+    "Previous version: v1.0.0",
+    "New version: v1.1.0",
+    "Version type: minor beta",
+    "Reason for version bump: new admin import capability without changing public IA"
+  ],
+  "validation": [
+    "Checks run: feature tests for admin Ghost content import",
+    "Manual checks completed: upload/dry-run/confirm path review",
+    "Known limitations: applying a specific export remains an operational step (#61)",
+    "Rollback notes: remove import UI/routes and unused import runs if required"
+  ]
+}

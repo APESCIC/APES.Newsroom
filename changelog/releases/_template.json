@@ -1,0 +1,16 @@
+{
+  "version": "vX.Y.Z",
+  "summary": "One-sentence public summary of what this release ships.",
+  "detailed_changes": [
+    "Concrete change one.",
+    "Concrete change two."
+  ],
+  "change_types": ["added"],
+  "topic_tags": ["public-facing"],
+  "theme": "Optional short highlight label",
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /example"
+  ],
+  "pr": 0
+}

@@ -1,0 +1,22 @@
+{
+  "version": "v1.1.2",
+  "released_at": "2026-09-21",
+  "previous_version": "v1.1.1",
+  "theme": "PR changelog sync",
+  "change_types": ["added", "changed"],
+  "topic_tags": ["public-facing", "compliance"],
+  "summary": "Change Log Hub notes are authored as repo JSON on each user-facing PR and synced into the public hub automatically on deploy.",
+  "detailed_changes": [
+    "Added changelog/releases/*.json as the source of truth for published hub releases.",
+    "Added php artisan newsroom:sync-releases and run it from Cloudron activate after migrate.",
+    "Added a CI gate that requires a changelog entry (or skip-changelog) before merge."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /change-log-hub, deploy activate, CI",
+    "User groups affected: public visitors reading the hub; contributors shipping PRs",
+    "Public impact: hub updates on each deploy that includes new changelog JSON",
+    "Internal impact: PR authors add a structured entry instead of Admin CRUD for routine releases"
+  ],
+  "pr": 178
+}

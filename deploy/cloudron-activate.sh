@@ -99,6 +99,9 @@ fi
 echo "==> Running database migrations"
 "${WWW_DATA_PHP[@]}" "${RELEASE_DIR}/artisan" migrate --force --no-interaction
 
+echo "==> Syncing Change Log Hub releases from changelog/releases"
+"${WWW_DATA_PHP[@]}" "${RELEASE_DIR}/artisan" newsroom:sync-releases --no-interaction
+
 echo "==> Caching config/routes/views for the new release"
 "${WWW_DATA_PHP[@]}" "${RELEASE_DIR}/artisan" config:cache
 "${WWW_DATA_PHP[@]}" "${RELEASE_DIR}/artisan" route:cache

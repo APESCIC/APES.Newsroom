@@ -109,3 +109,36 @@ jobs:
           name: frontend-build
           path: public/build
           retention-days: 7
+
+  changelog:
+    name: Changelog gate
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, xml, curl, redis, pdo_sqlite, bcmath, intl, zip
+          coverage: none
+          tools: composer:v2
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate --ansi
+
+      - name: Require changelog entry (or skip-changelog label)
+        env:
+          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: >
+          php artisan newsroom:check-pr-changelog
+          --base=origin/${{ github.base_ref }}
+          --labels="${PR_LABELS}"
