@@ -18,5 +18,5 @@
     "Public impact: hub updates on each deploy that includes new changelog JSON",
     "Internal impact: PR authors add a structured entry instead of Admin CRUD for routine releases"
   ],
-  "pr": 178
+  "pr": 179
 }
