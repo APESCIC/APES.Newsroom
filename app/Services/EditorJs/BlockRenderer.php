@@ -133,7 +133,8 @@ class BlockRenderer
             $heading = '<a href="'.e((string) $data['url']).'" rel="noopener noreferrer">'.$title.'</a>';
         }
 
-        return "<aside class=\"product\"><h3 class=\"product-title\">{$heading}</h3>{$description}{$price}</aside>";
+        // Non-heading title avoids skipped levels under the article h1.
+        return "<aside class=\"product\"><p class=\"product-title\"><strong>{$heading}</strong></p>{$description}{$price}</aside>";
     }
 
     /**
@@ -142,6 +143,11 @@ class BlockRenderer
     private function renderToggle(array $data): string
     {
         $title = e($data['title'] ?? '');
+
+        if ($title === '') {
+            return '';
+        }
+
         $content = e($data['content'] ?? '');
 
         return "<details class=\"toggle\"><summary>{$title}</summary><div class=\"toggle-content\">{$content}</div></details>";
@@ -160,12 +166,17 @@ class BlockRenderer
             }
 
             $url = e($item['url'] ?? '');
+
+            if ($url === '') {
+                continue;
+            }
+
             $alt = e($item['alt'] ?? '');
             $caption = ($item['caption'] ?? '') !== ''
-                ? '<figcaption>'.e((string) $item['caption']).'</figcaption>'
+                ? '<span class="gallery-item-caption">'.e((string) $item['caption']).'</span>'
                 : '';
 
-            $itemsHtml .= "<li><figure><img src=\"{$url}\" alt=\"{$alt}\" loading=\"lazy\" />{$caption}</figure></li>";
+            $itemsHtml .= "<li><img src=\"{$url}\" alt=\"{$alt}\" loading=\"lazy\" />{$caption}</li>";
         }
 
         if ($itemsHtml === '') {
@@ -193,11 +204,13 @@ class BlockRenderer
         $poster = ($data['poster'] ?? '') !== ''
             ? ' poster="'.e((string) $data['poster']).'"'
             : '';
-        $caption = ($data['caption'] ?? '') !== ''
-            ? '<figcaption>'.e((string) $data['caption']).'</figcaption>'
+        $rawCaption = trim((string) ($data['caption'] ?? ''));
+        $caption = $rawCaption !== ''
+            ? '<figcaption>'.e($rawCaption).'</figcaption>'
             : '';
+        $ariaLabel = e($rawCaption !== '' ? $rawCaption : 'Video');
 
-        return "<figure class=\"video\"><video src=\"{$url}\"{$poster} controls preload=\"metadata\"></video>{$caption}</figure>";
+        return "<figure class=\"video\"><video src=\"{$url}\"{$poster} controls preload=\"metadata\" aria-label=\"{$ariaLabel}\"></video>{$caption}</figure>";
     }
 
     /**
@@ -211,11 +224,13 @@ class BlockRenderer
             return '';
         }
 
-        $caption = ($data['caption'] ?? '') !== ''
-            ? '<figcaption>'.e((string) $data['caption']).'</figcaption>'
+        $rawCaption = trim((string) ($data['caption'] ?? ''));
+        $caption = $rawCaption !== ''
+            ? '<figcaption>'.e($rawCaption).'</figcaption>'
             : '';
+        $ariaLabel = e($rawCaption !== '' ? $rawCaption : 'Audio');
 
-        return "<figure class=\"audio\"><audio src=\"{$url}\" controls preload=\"metadata\"></audio>{$caption}</figure>";
+        return "<figure class=\"audio\"><audio src=\"{$url}\" controls preload=\"metadata\" aria-label=\"{$ariaLabel}\"></audio>{$caption}</figure>";
     }
 
     /**
