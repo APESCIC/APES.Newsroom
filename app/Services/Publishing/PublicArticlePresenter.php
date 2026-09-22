@@ -14,7 +14,7 @@ class PublicArticlePresenter
      */
     public function payload(Post $post): array
     {
-        $post->loadMissing(['author', 'tags']);
+        $post->loadMissing(['author', 'authors', 'tags']);
 
         $url = route('articles.show', $post->slug, absolute: true);
 
@@ -27,6 +27,14 @@ class PublicArticlePresenter
             'channel_slug' => $post->channel->slug(),
             'author' => $post->author->name,
             'author_id' => $post->author_id,
+            'authors' => $post->authors->map(fn ($user) => [
+                'id' => $user->id,
+                'name' => $user->name,
+            ])->values()->all() ?: [[
+                'id' => $post->author_id,
+                'name' => $post->author->name,
+            ]],
+            'featured' => (bool) $post->featured,
             'published_at' => $post->published_at?->toIso8601String(),
             'meta_title' => $post->meta_title ?? $post->title,
             'meta_description' => $post->meta_description ?? $post->excerpt,

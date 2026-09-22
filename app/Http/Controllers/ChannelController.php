@@ -20,6 +20,7 @@ class ChannelController extends Controller
         $posts = Post::published()
             ->where('channel', $channelEnum)
             ->with('author')
+            ->orderByDesc('featured')
             ->latest('published_at')
             ->paginate(12)
             ->through(fn (Post $post) => [
@@ -28,6 +29,7 @@ class ChannelController extends Controller
                 'excerpt' => $post->excerpt,
                 'author' => $post->author->name,
                 'published_at' => $post->published_at?->toIso8601String(),
+                'featured' => (bool) $post->featured,
             ]);
 
         return Inertia::render('Channels/Show', [

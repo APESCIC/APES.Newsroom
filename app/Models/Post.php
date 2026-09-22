@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'hero_image', 'hero_image_alt', 'hero_image_caption', 'hero_image_credit',
     'meta_title', 'meta_description', 'canonical_url', 'published_at',
     'scheduled_for', 'email_on_publish', 'mailing_lists', 'review_notes', 'needs_import_review',
+    'featured',
 ])]
 class Post extends Model
 {
@@ -37,6 +38,7 @@ class Post extends Model
             'email_on_publish' => 'boolean',
             'mailing_lists' => 'array',
             'needs_import_review' => 'boolean',
+            'featured' => 'boolean',
         ];
     }
 
@@ -46,6 +48,14 @@ class Post extends Model
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'author_id');
+    }
+
+    /**
+     * @return BelongsToMany<User, $this>
+     */
+    public function authors(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'post_author');
     }
 
     /**

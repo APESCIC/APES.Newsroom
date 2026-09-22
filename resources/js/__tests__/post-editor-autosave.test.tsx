@@ -39,6 +39,8 @@ const persistedPost: PersistedPost = {
     mailing_lists: [],
     review_notes: null,
     tags: ['rescue'],
+    featured: false,
+    co_author_ids: [],
     updated_at: '2026-08-10T09:00:00+00:00',
 };
 

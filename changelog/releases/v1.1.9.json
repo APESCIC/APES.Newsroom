@@ -1,0 +1,22 @@
+{
+  "version": "v1.1.9",
+  "released_at": "2026-09-22",
+  "previous_version": "v1.1.8",
+  "theme": "Multi-author and featured posts",
+  "change_types": ["added"],
+  "topic_tags": ["public-facing"],
+  "summary": "Posts support co-authors and a featured flag that prefers curated stories on the homepage and channel listings.",
+  "detailed_changes": [
+    "Added post_author pivot while keeping primary author_id; public articles and author archives list co-authors.",
+    "Added posts.featured boolean with staff toggle; homepage and channels prefer featured then latest.",
+    "Ghost content import attaches all posts_authors and imports Ghost featured."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /, /{channel}, /articles/{slug}, /authors/{id}, staff post editor",
+    "User groups affected: staff editors; public readers of bylines and curated home",
+    "Public impact: co-author bylines; featured stories can lead home/channel",
+    "Internal impact: staff can curate featured posts and assign co-authors"
+  ],
+  "pr": 0
+}

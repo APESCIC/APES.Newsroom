@@ -12,18 +12,27 @@ class HomeController extends Controller
 {
     public function __invoke(Request $request): Response
     {
-        $posts = Post::published()
+        $featuredPost = Post::published()
+            ->where('featured', true)
             ->with('author')
             ->latest('published_at')
-            ->limit(12)
-            ->get()
-            ->map(fn (Post $post) => $this->cardPayload($post));
+            ->first();
 
-        $featured = $posts->first();
+        $recentQuery = Post::published()->with('author')->latest('published_at');
+        if ($featuredPost) {
+            $recentQuery->where('id', '!=', $featuredPost->id);
+        }
+
+        $recent = $recentQuery->limit($featuredPost ? 11 : 12)->get();
+
+        if (! $featuredPost) {
+            $featuredPost = $recent->first();
+            $recent = $recent->skip(1)->values();
+        }
 
         return Inertia::render('home', [
-            'featured' => $featured,
-            'recent' => $posts->skip(1)->values(),
+            'featured' => $featuredPost ? $this->cardPayload($featuredPost) : null,
+            'recent' => $recent->map(fn (Post $post) => $this->cardPayload($post))->values(),
             'channels' => collect(Channel::cases())->map(fn (Channel $c) => [
                 'slug' => $c->slug(),
                 'label' => $c->label(),
@@ -46,6 +55,7 @@ class HomeController extends Controller
             'published_at' => $post->published_at?->toIso8601String(),
             'hero_image' => $post->hero_image,
             'hero_image_alt' => $post->hero_image_alt,
+            'featured' => (bool) $post->featured,
         ];
     }
 }

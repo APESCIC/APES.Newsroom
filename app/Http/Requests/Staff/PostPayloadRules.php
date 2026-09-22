@@ -30,6 +30,9 @@ trait PostPayloadRules
             'mailing_lists.*' => [Rule::enum(MailingList::class)],
             'tags' => ['nullable', 'array'],
             'tags.*' => ['string', 'max:100'],
+            'featured' => ['sometimes', 'boolean'],
+            'co_author_ids' => ['nullable', 'array'],
+            'co_author_ids.*' => ['integer', 'exists:users,id'],
             'expected_updated_at' => ['nullable', 'string'],
         ];
     }

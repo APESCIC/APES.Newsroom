@@ -572,11 +572,21 @@ class GhostContentImporter
                 'email_on_publish' => false,
                 'mailing_lists' => [],
                 'needs_import_review' => $converted['needs_review'],
+                'featured' => (bool) ($post['featured'] ?? false),
             ];
 
             if ($converted['needs_review']) {
                 $report['needs_review'][] = $slug;
             }
+
+            $coAuthorIds = [];
+            foreach ($authorsByPost[$ghostId] ?? [] as $ghostAuthorId) {
+                if (($authorMap[$ghostAuthorId] ?? 0) > 0) {
+                    $coAuthorIds[] = $authorMap[$ghostAuthorId];
+                }
+            }
+            $coAuthorIds[] = (int) $authorId;
+            $coAuthorIds = array_values(array_unique($coAuthorIds));
 
             $existing = Post::withTrashed()->where('ghost_id', $ghostId)->orWhere('slug', $slug)->first();
 
@@ -590,7 +600,7 @@ class GhostContentImporter
                 continue;
             }
 
-            DB::transaction(function () use ($existing, $attrs, $tagsByPost, $ghostId, $tagMap, $slug, &$report) {
+            DB::transaction(function () use ($existing, $attrs, $tagsByPost, $ghostId, $tagMap, $slug, $coAuthorIds, &$report) {
                 if ($existing) {
                     $oldSlug = $existing->slug;
                     $existing->fill($attrs)->save();
@@ -615,6 +625,7 @@ class GhostContentImporter
                     }
                 }
                 $postModel->tags()->sync(array_unique($tagIds));
+                $postModel->authors()->sync($coAuthorIds);
 
                 // Preserve legacy Ghost path as redirect to new article URL.
                 Redirect::query()->updateOrCreate(
