@@ -1,0 +1,22 @@
+{
+  "version": "v1.1.5",
+  "released_at": "2026-09-22",
+  "previous_version": "v1.1.4",
+  "theme": "Public editor card rendering",
+  "change_types": ["changed", "fixed"],
+  "topic_tags": ["public-facing", "accessibility"],
+  "summary": "Public articles style and harden display of gallery, media, file, bookmark, product, toggle, and markup blocks.",
+  "detailed_changes": [
+    "Added prose styles for gallery, video, audio, file, bookmark, product, toggle, and markup blocks.",
+    "Gallery skips empty image URLs and no longer nests figures; video and audio expose accessible names.",
+    "Empty toggle titles and empty media URLs fail closed; product titles use a non-heading element."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: public /articles/{slug}",
+    "User groups affected: public readers of articles with rich media cards; staff authors of those blocks",
+    "Public impact: richer card layout and clearer media labels on published articles",
+    "Internal impact: BlockRenderer fail-closed behaviour for corrupt/empty media fields"
+  ],
+  "pr": 0
+}

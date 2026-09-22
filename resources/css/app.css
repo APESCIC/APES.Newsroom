@@ -489,6 +489,144 @@
     padding: 0.75rem 1rem;
 }
 
+.prose .gallery {
+    margin-block: 1.25rem;
+}
+
+.prose .gallery-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+    gap: 0.75rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.prose .gallery-items li {
+    margin: 0;
+}
+
+.prose .gallery-items img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.prose .gallery-item-caption {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.875rem;
+    color: var(--color-muted);
+}
+
+.prose .video,
+.prose .audio {
+    margin-block: 1.25rem;
+}
+
+.prose .video video,
+.prose .audio audio {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+}
+
+.prose .video video {
+    aspect-ratio: 16 / 9;
+    background: var(--color-brand-ink);
+}
+
+.prose .file-block {
+    margin-block: 1rem;
+}
+
+.prose .file-size {
+    margin-left: 0.35rem;
+    font-size: 0.875rem;
+    color: var(--color-muted);
+}
+
+.prose .bookmark,
+.prose .product {
+    margin-block: 1.25rem;
+    padding: 0.75rem 0;
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.prose .bookmark a {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    color: var(--color-teal-deep);
+    text-decoration: none;
+}
+
+.prose .bookmark a:hover {
+    text-decoration: underline;
+}
+
+.prose .bookmark img {
+    width: 4.5rem;
+    height: 4.5rem;
+    object-fit: cover;
+}
+
+.prose .bookmark-title {
+    font-weight: 600;
+    color: var(--color-brand-ink);
+}
+
+.prose .bookmark-description {
+    margin-top: 0.35rem;
+    margin-bottom: 0;
+    color: var(--color-muted);
+    font-size: 0.9375rem;
+}
+
+.prose .product-title {
+    margin: 0 0 0.35rem;
+    font-size: 1.05rem;
+    color: var(--color-brand-ink);
+}
+
+.prose .product-price {
+    margin: 0.35rem 0 0;
+    color: var(--color-apes-primary);
+    font-weight: 600;
+}
+
+.prose .toggle {
+    margin-block: 1rem;
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+    padding: 0.35rem 0;
+}
+
+.prose .toggle summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--color-brand-ink);
+}
+
+.prose .toggle-content {
+    margin-top: 0.5rem;
+    color: var(--color-body);
+}
+
+.prose .markup-block {
+    margin-block: 1.25rem;
+}
+
+.prose .markup-block > *:first-child {
+    margin-top: 0;
+}
+
+.prose .markup-block > *:last-child {
+    margin-bottom: 0;
+}
+
 .legacy-block {
     border: 1px dashed #b45309;
     padding: 0.75rem;
