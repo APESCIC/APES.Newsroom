@@ -18,5 +18,5 @@
     "Public impact: richer card layout and clearer media labels on published articles",
     "Internal impact: BlockRenderer fail-closed behaviour for corrupt/empty media fields"
   ],
-  "pr": 0
+  "pr": 182
 }
