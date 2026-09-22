@@ -1,0 +1,22 @@
+{
+  "version": "v1.1.10",
+  "released_at": "2026-09-22",
+  "previous_version": "v1.1.9",
+  "theme": "Body search and channel RSS",
+  "change_types": ["added"],
+  "topic_tags": ["public-facing"],
+  "summary": "Public search indexes Editor.js body text with documented ranking, and each channel exposes a dedicated RSS feed alongside site-wide /rss.xml.",
+  "detailed_changes": [
+    "Added posts.body_text denormalized on save (and migration backfill) so search matches published post body blocks, not only title/excerpt.",
+    "Documented search relevance: title, then excerpt, then body, then newest published_at (see docs/search.md).",
+    "Added per-channel RSS at /{channel}/rss.xml via the shared RssFeedBuilder; site-wide /rss.xml unchanged."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /search, /rss.xml, /{channel}/rss.xml",
+    "User groups affected: public readers discovering posts; feed subscribers by channel",
+    "Public impact: deeper search matches; channel-scoped RSS feeds",
+    "Internal impact: body_text maintained automatically on post save/import"
+  ],
+  "pr": 0
+}

@@ -11,16 +11,24 @@ class SearchController extends Controller
 {
     public function index(Request $request): Response
     {
-        $query = (string) $request->query('q', '');
+        $query = trim((string) $request->query('q', ''));
 
         $posts = collect();
 
         if ($query !== '') {
+            $escaped = addcslashes($query, '%_\\');
+            $like = '%'.$escaped.'%';
+
             $posts = Post::published()
-                ->where(function ($q) use ($query) {
-                    $q->where('title', 'like', "%{$query}%")
-                        ->orWhere('excerpt', 'like', "%{$query}%");
+                ->where(function ($q) use ($like) {
+                    $q->where('title', 'like', $like)
+                        ->orWhere('excerpt', 'like', $like)
+                        ->orWhere('body_text', 'like', $like);
                 })
+                ->orderByRaw(
+                    'CASE WHEN title LIKE ? THEN 0 WHEN excerpt LIKE ? THEN 1 ELSE 2 END',
+                    [$like, $like],
+                )
                 ->latest('published_at')
                 ->limit(20)
                 ->get()

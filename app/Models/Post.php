@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\Channel;
 use App\Enums\PostStatus;
 use App\Enums\Role;
+use App\Services\EditorJs\BodyTextExtractor;
 use Database\Factories\PostFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
-    'ghost_id', 'author_id', 'title', 'slug', 'excerpt', 'content', 'status', 'channel',
+    'ghost_id', 'author_id', 'title', 'slug', 'excerpt', 'content', 'body_text', 'status', 'channel',
     'hero_image', 'hero_image_alt', 'hero_image_caption', 'hero_image_credit',
     'meta_title', 'meta_description', 'canonical_url', 'published_at',
     'scheduled_for', 'email_on_publish', 'mailing_lists', 'review_notes', 'needs_import_review',
@@ -26,6 +27,16 @@ class Post extends Model
 {
     /** @use HasFactory<PostFactory> */
     use HasFactory, SoftDeletes;
+
+    protected static function booted(): void
+    {
+        static::saving(function (Post $post): void {
+            if ($post->isDirty('content') || $post->body_text === null) {
+                $content = is_array($post->content) ? $post->content : [];
+                $post->body_text = app(BodyTextExtractor::class)->extract($content);
+            }
+        });
+    }
 
     protected function casts(): array
     {
