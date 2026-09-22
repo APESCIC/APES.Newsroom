@@ -13,6 +13,7 @@ use App\Models\Post;
 use App\Models\PostRevision;
 use App\Models\Redirect;
 use App\Models\Tag;
+use App\Models\User;
 use App\Services\Audit\AuditLogger;
 use App\Services\EditorJs\BlockValidator;
 use App\Services\Mailing\CampaignService;
@@ -91,6 +92,15 @@ class PostController extends Controller
             'post' => null,
             'channels' => $this->channelOptions(),
             'mailingLists' => $this->mailingListOptions(),
+            'staffUsers' => User::query()
+                ->whereIn('role', [Role::Staff, Role::Admin, Role::SuperAdmin])
+                ->orderBy('name')
+                ->get(['id', 'name', 'email'])
+                ->map(fn (User $user) => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                ]),
             'canPublish' => $request->user()->role->atLeast(Role::Admin),
             'revisions' => [],
         ]);
@@ -101,7 +111,8 @@ class PostController extends Controller
         $validated = $request->validated();
         $content = $this->validator->validate($validated['content']);
         $tags = $validated['tags'] ?? [];
-        unset($validated['tags']);
+        $coAuthorIds = $validated['co_author_ids'] ?? [];
+        unset($validated['tags'], $validated['co_author_ids'], $validated['expected_updated_at']);
 
         $post = Post::create([
             ...$validated,
@@ -109,9 +120,11 @@ class PostController extends Controller
             'slug' => $validated['slug'] ?? Str::slug($validated['title']),
             'author_id' => $request->user()->id,
             'status' => PostStatus::Draft,
+            'featured' => (bool) ($validated['featured'] ?? false),
         ]);
 
         $this->syncTags($post, $tags);
+        $this->syncAuthors($post, $coAuthorIds);
         $this->saveRevision($post, $request->user()->id);
 
         return redirect()->route('staff.posts.edit', $post);
@@ -120,12 +133,21 @@ class PostController extends Controller
     public function edit(Request $request, Post $post): Response
     {
         $this->authorizeEdit($post);
-        $post->load('tags', 'revisions.editor');
+        $post->load('tags', 'authors', 'revisions.editor');
 
         return Inertia::render('Staff/Posts/Edit', [
             'post' => $this->editPayload($post),
             'channels' => $this->channelOptions(),
             'mailingLists' => $this->mailingListOptions(),
+            'staffUsers' => User::query()
+                ->whereIn('role', [Role::Staff, Role::Admin, Role::SuperAdmin])
+                ->orderBy('name')
+                ->get(['id', 'name', 'email'])
+                ->map(fn (User $user) => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                ]),
             'canPublish' => $request->user()->role->atLeast(Role::Admin),
             'revisions' => $post->revisions()->latest()->limit(20)->get()->map(fn (PostRevision $revision) => [
                 'id' => $revision->id,
@@ -155,7 +177,8 @@ class PostController extends Controller
 
         $content = $this->validator->validate($validated['content']);
         $tags = $validated['tags'] ?? [];
-        unset($validated['tags']);
+        $coAuthorIds = $validated['co_author_ids'] ?? [];
+        unset($validated['tags'], $validated['co_author_ids']);
 
         $oldSlug = $post->slug;
         $wasPublished = $post->status === PostStatus::Published;
@@ -163,9 +186,11 @@ class PostController extends Controller
         $post->update([
             ...$validated,
             'content' => $content,
+            'featured' => (bool) ($validated['featured'] ?? $post->featured),
         ]);
 
         $this->syncTags($post, $tags);
+        $this->syncAuthors($post, $coAuthorIds);
         $this->saveRevision($post, $request->user()->id);
 
         if ($wasPublished && $oldSlug !== $post->slug) {
@@ -376,6 +401,22 @@ class PostController extends Controller
     }
 
     /**
+     * @param  array<int, int|string>  $coAuthorIds
+     */
+    private function syncAuthors(Post $post, array $coAuthorIds): void
+    {
+        $ids = collect($coAuthorIds)
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn (int $id) => $id > 0)
+            ->push((int) $post->author_id)
+            ->unique()
+            ->values()
+            ->all();
+
+        $post->authors()->sync($ids);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function editPayload(Post $post): array
@@ -400,6 +441,12 @@ class PostController extends Controller
             'mailing_lists' => $post->mailing_lists ?? [],
             'review_notes' => $post->review_notes,
             'tags' => $post->tags->pluck('name')->all(),
+            'featured' => (bool) $post->featured,
+            'co_author_ids' => $post->authors
+                ->pluck('id')
+                ->reject(fn ($id) => (int) $id === (int) $post->author_id)
+                ->values()
+                ->all(),
             'updated_at' => $post->updated_at?->toIso8601String(),
         ];
     }

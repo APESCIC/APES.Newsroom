@@ -15,7 +15,10 @@ class ArchiveController extends Controller
         $user = User::query()->where('id', $author)->orWhere('name', $author)->firstOrFail();
 
         $posts = Post::published()
-            ->where('author_id', $user->id)
+            ->where(function ($query) use ($user) {
+                $query->where('author_id', $user->id)
+                    ->orWhereHas('authors', fn ($q) => $q->where('users.id', $user->id));
+            })
             ->with('author')
             ->latest('published_at')
             ->paginate(12)

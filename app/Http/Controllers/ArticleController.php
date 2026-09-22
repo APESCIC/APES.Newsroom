@@ -21,7 +21,7 @@ class ArticleController extends Controller
     ): Response {
         $post = Post::published()
             ->where('slug', $slug)
-            ->with('author', 'tags')
+            ->with('author', 'authors', 'tags')
             ->firstOrFail();
 
         return Inertia::render('Articles/Show', [

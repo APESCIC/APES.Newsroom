@@ -27,6 +27,8 @@ type PostData = {
     mailing_lists: string[];
     review_notes: string | null;
     tags: string[];
+    featured: boolean;
+    co_author_ids: number[];
     updated_at: string | null;
 };
 
@@ -52,6 +54,8 @@ type PostForm = {
     email_on_publish: boolean;
     mailing_lists: string[];
     tags_text: string;
+    featured: boolean;
+    co_author_ids: number[];
     expected_updated_at: string;
 };
 
@@ -74,6 +78,8 @@ const INLINE_ERROR_FIELDS = [
     'canonical_url',
     'email_on_publish',
     'mailing_lists',
+    'featured',
+    'co_author_ids',
     'expected_updated_at',
 ] as const;
 
@@ -94,6 +100,8 @@ function formFromPost(post: PostData | null, channels: Channel[]): PostForm {
         email_on_publish: post?.email_on_publish ?? false,
         mailing_lists: post?.mailing_lists ?? [],
         tags_text: (post?.tags ?? []).join(', '),
+        featured: post?.featured ?? false,
+        co_author_ids: post?.co_author_ids ?? [],
         expected_updated_at: post?.updated_at ?? '',
     };
 }
@@ -152,12 +160,14 @@ export default function PostEdit({
     post,
     channels,
     mailingLists,
+    staffUsers = [],
     canPublish,
     revisions,
 }: {
     post: PostData | null;
     channels: Channel[];
     mailingLists: MailingListOption[];
+    staffUsers?: Array<{ id: number; name: string; email: string }>;
     canPublish: boolean;
     revisions: Revision[];
 }) {
@@ -343,6 +353,39 @@ export default function PostEdit({
                         </select>
                         <FieldError message={errors.channel} />
                     </div>
+                    <div className="flex items-center gap-2">
+                        <input
+                            id="featured"
+                            type="checkbox"
+                            checked={data.featured}
+                            onChange={(e) => setData('featured', e.target.checked)}
+                        />
+                        <label htmlFor="featured">Featured on homepage / channel</label>
+                        <FieldError message={errors.featured} />
+                    </div>
+                    {staffUsers.length > 0 && (
+                        <div>
+                            <label htmlFor="co_authors">Co-authors</label>
+                            <select
+                                id="co_authors"
+                                multiple
+                                value={data.co_author_ids.map(String)}
+                                onChange={(e) => {
+                                    const selected = Array.from(e.target.selectedOptions).map((opt) => Number(opt.value));
+                                    setData('co_author_ids', selected);
+                                }}
+                                className="w-full rounded border px-3 py-2"
+                                size={Math.min(6, Math.max(3, staffUsers.length))}
+                            >
+                                {staffUsers.map((user) => (
+                                    <option key={user.id} value={user.id}>
+                                        {user.name} ({user.email})
+                                    </option>
+                                ))}
+                            </select>
+                            <FieldError message={fieldError(errors, 'co_author_ids')} />
+                        </div>
+                    )}
                     <div>
                         <label htmlFor="excerpt">Excerpt</label>
                         <textarea
