@@ -6,6 +6,7 @@ use App\Enums\Channel;
 use App\Enums\PostStatus;
 use App\Enums\Role;
 use App\Models\ImportRun;
+use App\Models\Page;
 use App\Models\Post;
 use App\Models\Redirect;
 use App\Models\Tag;
@@ -85,6 +86,7 @@ class GhostContentImporter
 
             $report = [
                 'posts' => ['seen' => 0, 'created' => 0, 'updated' => 0, 'skipped' => 0],
+                'pages' => ['seen' => 0, 'created' => 0, 'updated' => 0, 'converted_from_posts' => 0],
                 'tags' => ['seen' => 0, 'created' => 0, 'updated' => 0],
                 'authors' => ['seen' => 0, 'mapped' => 0, 'created' => 0],
                 'media' => ['copied' => 0, 'missing' => 0],
@@ -246,6 +248,200 @@ class GhostContentImporter
     }
 
     /**
+     * Idempotent backfill: Ghost export rows with type=page → Page rows + article→page redirects (#78).
+     *
+     * @return array<string, mixed>
+     */
+    public function backfillPagesFromExport(string $jsonPath, bool $dryRun = true): array
+    {
+        if (! is_file($jsonPath)) {
+            throw new RuntimeException("Ghost content export not found: {$jsonPath}");
+        }
+
+        $payload = json_decode(File::get($jsonPath), true);
+        if (! is_array($payload) || ! $this->isGhostContentExport($payload)) {
+            throw new RuntimeException('File is not a Ghost content JSON export.');
+        }
+
+        $data = $this->extractData($payload);
+        $report = [
+            'pages' => ['seen' => 0, 'created' => 0, 'updated' => 0, 'converted_from_posts' => 0],
+            'redirects' => ['created' => 0],
+            'warnings' => [],
+        ];
+
+        $authorMap = [];
+        foreach ($data['users'] ?? [] as $user) {
+            $email = strtolower((string) ($user['email'] ?? ''));
+            $ghostId = (string) ($user['id'] ?? '');
+            if ($ghostId === '') {
+                continue;
+            }
+            $local = $email !== '' ? User::query()->whereRaw('lower(email) = ?', [$email])->value('id') : null;
+            if ($local) {
+                $authorMap[$ghostId] = (int) $local;
+            }
+        }
+
+        $fallbackAuthorId = (int) (User::query()->whereIn('role', [Role::Admin, Role::Staff, Role::SuperAdmin])->value('id')
+            ?: User::query()->value('id'));
+
+        $authorsByPost = [];
+        foreach ($data['posts_authors'] ?? [] as $row) {
+            $authorsByPost[(string) ($row['post_id'] ?? '')][] = (string) ($row['author_id'] ?? '');
+        }
+
+        foreach ($data['posts'] ?? [] as $post) {
+            if (($post['type'] ?? 'post') !== 'page') {
+                continue;
+            }
+
+            $this->importGhostPage(
+                $post,
+                $authorsByPost,
+                $authorMap,
+                $fallbackAuthorId,
+                null,
+                $dryRun,
+                $report,
+            );
+        }
+
+        return $report;
+    }
+
+    /**
+     * @param  array<string, mixed>  $post
+     * @param  array<string, list<string>>  $authorsByPost
+     * @param  array<string, int>  $authorMap
+     * @param  array<string, mixed>  $report
+     */
+    private function importGhostPage(
+        array $post,
+        array $authorsByPost,
+        array $authorMap,
+        int $fallbackAuthorId,
+        ?string $mediaPath,
+        bool $dryRun,
+        array &$report,
+    ): void {
+        $ghostId = (string) ($post['id'] ?? '');
+        if ($ghostId === '') {
+            return;
+        }
+
+        $report['pages']['seen'] = ($report['pages']['seen'] ?? 0) + 1;
+        $slug = Str::slug((string) ($post['slug'] ?? $post['title'] ?? $ghostId));
+        if ($slug === '') {
+            $report['warnings'][] = "Ghost page {$ghostId} has no usable slug; skipped.";
+
+            return;
+        }
+
+        $html = (string) ($post['html'] ?? '');
+        $converted = $this->converter->convert($html);
+
+        if ($mediaPath) {
+            $converted['blocks'] = $this->rewriteMedia($converted['blocks'], $mediaPath, $report);
+        } else {
+            $converted['blocks'] = $this->normalizeImageUrlsForImport($converted['blocks'], $report);
+        }
+
+        try {
+            $document = $this->validator->validate([
+                'time' => now()->getTimestampMs(),
+                'blocks' => $converted['blocks'],
+                'version' => '2.29.0',
+            ]);
+        } catch (ValidationException $e) {
+            $report['warnings'][] = 'Page '.$slug.' failed block validation: '.$e->getMessage();
+            $document = $this->validator->validate([
+                'time' => now()->getTimestampMs(),
+                'blocks' => [[
+                    'type' => 'paragraph',
+                    'data' => [
+                        'text' => e((string) ($post['title'] ?? $slug)).' (import needs review — original body failed block validation)',
+                    ],
+                ]],
+                'version' => '2.29.0',
+            ]);
+            $converted['needs_review'] = true;
+        }
+
+        $authorGhostId = $authorsByPost[$ghostId][0] ?? null;
+        $authorId = ($authorGhostId && ($authorMap[$authorGhostId] ?? 0) > 0)
+            ? $authorMap[$authorGhostId]
+            : $fallbackAuthorId;
+
+        $status = match ((string) ($post['status'] ?? 'draft')) {
+            'published' => PostStatus::Published,
+            'scheduled' => PostStatus::Scheduled,
+            default => PostStatus::Draft,
+        };
+
+        $attrs = [
+            'ghost_id' => $ghostId,
+            'author_id' => $authorId,
+            'title' => (string) ($post['title'] ?? 'Untitled'),
+            'slug' => $slug,
+            'excerpt' => (string) ($post['custom_excerpt'] ?? $post['excerpt'] ?? ''),
+            'content' => $document,
+            'status' => $status,
+            'hero_image' => $post['feature_image'] ?? null,
+            'meta_title' => $post['meta_title'] ?? null,
+            'meta_description' => $post['meta_description'] ?? null,
+            'canonical_url' => $post['canonical_url'] ?? null,
+            'published_at' => ! empty($post['published_at']) ? $post['published_at'] : null,
+        ];
+
+        $existingPage = Page::withTrashed()->where('ghost_id', $ghostId)->orWhere('slug', $slug)->first();
+        $misclassifiedPost = Post::withTrashed()->where('ghost_id', $ghostId)->first();
+
+        if ($dryRun) {
+            if ($existingPage) {
+                $report['pages']['updated'] = ($report['pages']['updated'] ?? 0) + 1;
+            } else {
+                $report['pages']['created'] = ($report['pages']['created'] ?? 0) + 1;
+            }
+            if ($misclassifiedPost) {
+                $report['pages']['converted_from_posts'] = ($report['pages']['converted_from_posts'] ?? 0) + 1;
+            }
+
+            return;
+        }
+
+        DB::transaction(function () use ($existingPage, $attrs, $slug, $misclassifiedPost, &$report) {
+            if ($existingPage) {
+                if ($existingPage->trashed()) {
+                    $existingPage->restore();
+                }
+                $existingPage->fill($attrs)->save();
+                $report['pages']['updated'] = ($report['pages']['updated'] ?? 0) + 1;
+            } else {
+                Page::query()->create($attrs);
+                $report['pages']['created'] = ($report['pages']['created'] ?? 0) + 1;
+            }
+
+            if ($misclassifiedPost) {
+                if (! $misclassifiedPost->trashed()) {
+                    $misclassifiedPost->delete();
+                }
+                $report['pages']['converted_from_posts'] = ($report['pages']['converted_from_posts'] ?? 0) + 1;
+            }
+
+            Redirect::query()->updateOrCreate(
+                ['from_path' => '/articles/'.$slug],
+                ['to_path' => '/pages/'.$slug, 'status_code' => 301],
+            );
+            Redirect::query()->updateOrCreate(
+                ['from_path' => '/'.$slug.'/'],
+                ['to_path' => '/pages/'.$slug, 'status_code' => 301],
+            );
+            $report['redirects']['created'] = ($report['redirects']['created'] ?? 0) + 2;
+        });
+    }
+
+    /**
      * @param  list<array<string, mixed>>  $posts
      * @param  list<array<string, mixed>>  $postsTags
      * @param  list<array<string, mixed>>  $postsAuthors
@@ -287,10 +483,21 @@ class GhostContentImporter
 
         foreach ($posts as $post) {
             $ghostId = (string) ($post['id'] ?? '');
-            if ($ghostId === '' || ($post['type'] ?? 'post') === 'page' && ($post['status'] ?? '') === 'draft' && empty($post['slug'])) {
-                // Still import pages when they have a slug.
-            }
             if ($ghostId === '') {
+                continue;
+            }
+
+            if (($post['type'] ?? 'post') === 'page') {
+                $this->importGhostPage(
+                    $post,
+                    $authorsByPost,
+                    $authorMap,
+                    (int) $fallbackAuthorId,
+                    $mediaPath,
+                    $dryRun,
+                    $report,
+                );
+
                 continue;
             }
 

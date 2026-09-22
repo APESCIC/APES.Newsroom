@@ -25,6 +25,16 @@
             "status": "published",
             "published_at": "2024-02-01T10:00:00.000Z",
             "type": "post"
+          },
+          {
+            "id": "ghost-page-1",
+            "title": "About APES",
+            "slug": "about-apes",
+            "html": "<p>We are a community organisation.</p>",
+            "status": "published",
+            "published_at": "2024-01-01T10:00:00.000Z",
+            "custom_excerpt": "About us",
+            "type": "page"
           }
         ],
         "users": [
@@ -47,7 +57,8 @@
         ],
         "posts_authors": [
           { "post_id": "ghost-post-1", "author_id": "ghost-user-1" },
-          { "post_id": "ghost-post-2", "author_id": "ghost-user-1" }
+          { "post_id": "ghost-post-2", "author_id": "ghost-user-1" },
+          { "post_id": "ghost-page-1", "author_id": "ghost-user-1" }
         ],
         "redirects": [
           { "from": "/old-welcome/", "to": "/welcome-to-apes/", "status_code": 301 }
