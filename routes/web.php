@@ -10,6 +10,7 @@ use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\ChangeLogHubController;
 use App\Http\Controllers\ChannelController;
+use App\Http\Controllers\ChannelRssController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HomeController;
@@ -63,6 +64,9 @@ Route::get('/mailing/unsubscribe', [UnsubscribeController::class, 'show'])->name
 Route::post('/mailing/unsubscribe', [UnsubscribeController::class, 'store'])->name('mailing.unsubscribe.store');
 Route::post('/mailing/unsubscribe/one-click', [UnsubscribeController::class, 'oneClick'])->name('mailing.unsubscribe.one-click');
 
+Route::get('/{channel}/rss.xml', [ChannelRssController::class, 'show'])
+    ->where('channel', 'apes-cic|apes-shelter-rescue|apes-pet-care-clinic')
+    ->name('channels.rss');
 Route::get('/{channel}', [ChannelController::class, 'show'])
     ->where('channel', 'apes-cic|apes-shelter-rescue|apes-pet-care-clinic')
     ->name('channels.show');

@@ -53,6 +53,13 @@ class PublicNewsroomTest extends TestCase
     {
         Post::factory()->published()->create(['title' => 'Unique Searchable Title']);
 
-        $this->get('/search?q=Unique+Searchable')->assertOk();
+        $this->withoutVite();
+
+        $this->get('/search?q=Unique+Searchable')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Search/Index')
+                ->has('results', 1)
+                ->where('results.0.title', 'Unique Searchable Title'));
     }
 }
