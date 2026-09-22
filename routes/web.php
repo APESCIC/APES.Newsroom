@@ -18,6 +18,7 @@ use App\Http\Controllers\Mailing\ConfirmController;
 use App\Http\Controllers\Mailing\PreferenceController;
 use App\Http\Controllers\Mailing\SignupController;
 use App\Http\Controllers\Mailing\UnsubscribeController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReactionController;
 use App\Http\Controllers\ReportController;
@@ -26,6 +27,7 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\Staff\CampaignController as StaffCampaignController;
 use App\Http\Controllers\Staff\MediaController as StaffMediaController;
+use App\Http\Controllers\Staff\PageController as StaffPageController;
 use App\Http\Controllers\Staff\PostController as StaffPostController;
 use Illuminate\Support\Facades\Route;
 
@@ -47,6 +49,7 @@ Route::get('/archive/{year}/{month?}', [ArchiveController::class, 'date'])
     ->whereNumber('month')
     ->name('archives.date');
 Route::get('/articles/{slug}', [ArticleController::class, 'show'])->name('articles.show');
+Route::get('/pages/{slug}', [PageController::class, 'show'])->name('pages.show');
 Route::get('/profiles/{profile}', [ProfileController::class, 'show'])->name('profiles.show');
 
 Route::get('/mailing/signup', [SignupController::class, 'show'])->name('mailing.signup');
@@ -130,6 +133,17 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
         Route::get('/posts/{post}/preview', [StaffPostController::class, 'preview'])->name('posts.preview');
         Route::get('/posts/{post}/campaign', [StaffCampaignController::class, 'preview'])->name('posts.campaign.preview');
         Route::post('/posts/{post}/campaign/test-send', [StaffCampaignController::class, 'testSend'])->name('posts.campaign.test');
+
+        Route::get('/pages', [StaffPageController::class, 'index'])->name('pages.index');
+        Route::get('/pages/new', [StaffPageController::class, 'create'])->name('pages.create');
+        Route::post('/pages', [StaffPageController::class, 'store'])->name('pages.store');
+        Route::get('/pages/{page}/edit', [StaffPageController::class, 'edit'])->name('pages.edit');
+        Route::patch('/pages/{page}', [StaffPageController::class, 'update'])->name('pages.update');
+        Route::delete('/pages/{page}', [StaffPageController::class, 'destroy'])->name('pages.destroy');
+        Route::post('/pages/{page}/publish', [StaffPageController::class, 'publish'])->name('pages.publish');
+        Route::post('/pages/{page}/unpublish', [StaffPageController::class, 'unpublish'])->name('pages.unpublish');
+        Route::get('/pages/{page}/preview', [StaffPageController::class, 'preview'])->name('pages.preview');
+
         Route::post('/media/by-url', [StaffMediaController::class, 'byUrl'])->name('media.by-url');
         Route::post('/media/link-meta', [StaffMediaController::class, 'linkMeta'])->name('media.link-meta');
         Route::post('/media/upload', [StaffMediaController::class, 'upload'])->name('media.upload');

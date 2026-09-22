@@ -102,10 +102,10 @@ class ReleaseChangelogSyncTest extends TestCase
 
         $exit = Artisan::call('newsroom:sync-releases');
         $this->assertSame(0, $exit);
-        $this->assertGreaterThanOrEqual(7, Release::query()->count());
+        $this->assertGreaterThanOrEqual(8, Release::query()->count());
 
         $current = Release::query()->where('is_current', true)->firstOrFail();
-        $this->assertSame('v1.1.5', $current->version);
+        $this->assertSame('v1.1.6', $current->version);
         $this->assertSame(ReleaseChannel::Beta, $current->channel);
     }
 
