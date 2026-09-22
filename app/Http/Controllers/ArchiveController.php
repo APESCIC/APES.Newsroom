@@ -29,7 +29,7 @@ class ArchiveController extends Controller
 
     public function tag(string $slug): Response
     {
-        $tag = Tag::query()->where('slug', $slug)->firstOrFail();
+        $tag = Tag::query()->public()->where('slug', $slug)->firstOrFail();
 
         $posts = Post::published()
             ->whereHas('tags', fn ($q) => $q->where('tags.id', $tag->id))

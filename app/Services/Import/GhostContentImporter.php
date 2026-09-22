@@ -210,8 +210,15 @@ class GhostContentImporter
             }
 
             $report['tags']['seen']++;
-            $name = (string) ($tag['name'] ?? 'Untitled');
-            $slug = Str::slug((string) ($tag['slug'] ?? $name));
+            $attrs = Tag::attributesFromName((string) ($tag['name'] ?? 'Untitled'));
+            $slug = Str::slug((string) ($tag['slug'] ?? $attrs['slug'])) ?: $attrs['slug'];
+            $name = $attrs['name'];
+            $isInternal = $attrs['is_internal'] || str_starts_with((string) ($tag['slug'] ?? ''), 'hash-');
+
+            // Ghost often stores internal tags with name still starting with #.
+            if (str_starts_with(trim((string) ($tag['name'] ?? '')), '#')) {
+                $isInternal = true;
+            }
 
             $existing = Tag::query()->where('ghost_id', $ghostId)->orWhere('slug', $slug)->first();
             if ($existing) {
@@ -220,6 +227,7 @@ class GhostContentImporter
                         'ghost_id' => $ghostId,
                         'name' => $name,
                         'slug' => $slug,
+                        'is_internal' => $isInternal,
                     ]);
                     $report['tags']['updated']++;
                 }
@@ -239,6 +247,7 @@ class GhostContentImporter
                 'ghost_id' => $ghostId,
                 'name' => $name,
                 'slug' => $slug,
+                'is_internal' => $isInternal,
             ]);
             $map[$ghostId] = $created->id;
             $report['tags']['created']++;

@@ -356,10 +356,19 @@ class PostController extends Controller
                 continue;
             }
 
+            $attrs = Tag::attributesFromName($name);
             $tag = Tag::query()->firstOrCreate(
-                ['slug' => Str::slug($name)],
-                ['name' => $name],
+                ['slug' => $attrs['slug']],
+                ['name' => $attrs['name'], 'is_internal' => $attrs['is_internal']],
             );
+
+            if ($tag->is_internal !== $attrs['is_internal'] || $tag->name !== $attrs['name']) {
+                $tag->fill([
+                    'name' => $attrs['name'],
+                    'is_internal' => $attrs['is_internal'],
+                ])->save();
+            }
+
             $ids[] = $tag->id;
         }
 

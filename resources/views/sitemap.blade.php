@@ -28,4 +28,11 @@
         <changefreq>monthly</changefreq>
     </url>
     @endforeach
+    @foreach ($tags as $tag)
+    <url>
+        <loc>{{ url('/tags/'.$tag->slug) }}</loc>
+        <lastmod>{{ $tag->updated_at?->toAtomString() }}</lastmod>
+        <changefreq>weekly</changefreq>
+    </url>
+    @endforeach
 </urlset>
