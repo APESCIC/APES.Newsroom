@@ -21,4 +21,11 @@
         <changefreq>weekly</changefreq>
     </url>
     @endforeach
+    @foreach ($pages as $page)
+    <url>
+        <loc>{{ url('/pages/'.$page->slug) }}</loc>
+        <lastmod>{{ ($page->updated_at ?? $page->published_at)->toAtomString() }}</lastmod>
+        <changefreq>monthly</changefreq>
+    </url>
+    @endforeach
 </urlset>

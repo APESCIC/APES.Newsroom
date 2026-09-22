@@ -13,12 +13,13 @@ type WorkspaceLink = {
     active: boolean;
 };
 
-function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: 'moderation' | 'posts' | 'releases' }) {
+function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: 'moderation' | 'posts' | 'pages' | 'releases' }) {
     const { auth } = usePage<SharedPageProps>().props;
     const links: WorkspaceLink[] = [];
 
     if (area === 'Staff' && auth.can.accessStaff) {
         links.push({ href: '/staff/posts', label: 'Posts', icon: 'document', active: active === 'posts' });
+        links.push({ href: '/staff/pages', label: 'Pages', icon: 'document', active: active === 'pages' });
     }
 
     if (area === 'Admin' && auth.can.accessAdmin) {
@@ -56,7 +57,7 @@ function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: 'm
     );
 }
 
-function Sidebar({ area, active, close }: { area: WorkspaceArea; active: 'moderation' | 'posts' | 'releases'; close?: () => void }) {
+function Sidebar({ area, active, close }: { area: WorkspaceArea; active: 'moderation' | 'posts' | 'pages' | 'releases'; close?: () => void }) {
     const { auth } = usePage<SharedPageProps>().props;
     const roleLabel = auth.user?.role.replace('_', ' ') ?? 'workspace';
 
@@ -120,7 +121,7 @@ export default function WorkspaceLayout({
     children,
 }: {
     area: WorkspaceArea;
-    active: 'moderation' | 'posts' | 'releases';
+    active: 'moderation' | 'posts' | 'pages' | 'releases';
     title: string;
     subtitle?: string;
     actions?: ReactNode;

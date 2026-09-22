@@ -1,0 +1,22 @@
+{
+  "version": "v1.1.6",
+  "released_at": "2026-09-22",
+  "previous_version": "v1.1.5",
+  "theme": "First-class Pages",
+  "change_types": ["added"],
+  "topic_tags": ["public-facing"],
+  "summary": "Staff can create and publish Pages that render at /pages/{slug} and stay out of news lists and site RSS.",
+  "detailed_changes": [
+    "Added a pages table and Page model with staff CRUD, publish/unpublish, and preview.",
+    "Public published pages resolve at /pages/{slug} and appear in the sitemap.",
+    "Pages are excluded from homepage, channel listings, and /rss.xml by using a separate model from posts."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff/pages, /pages/{slug}, /sitemap.xml",
+    "User groups affected: staff editors; public readers of static pages",
+    "Public impact: static CMS pages can appear at /pages/{slug}",
+    "Internal impact: staff gain a Pages workspace distinct from Posts"
+  ],
+  "pr": 0
+}
