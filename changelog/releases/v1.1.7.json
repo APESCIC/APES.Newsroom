@@ -1,0 +1,22 @@
+{
+  "version": "v1.1.7",
+  "released_at": "2026-09-22",
+  "previous_version": "v1.1.6",
+  "theme": "Ghost page backfill",
+  "change_types": ["fixed", "added"],
+  "topic_tags": ["public-facing"],
+  "summary": "Ghost exports with type page land as Pages; legacy article URLs redirect to /pages/{slug}.",
+  "detailed_changes": [
+    "Ghost content import routes type:page rows into the Page model instead of posts.",
+    "Added ghost:backfill-pages to convert previously misclassified posts and create redirects.",
+    "Published Ghost pages keep stable public URLs via /articles/{slug} → /pages/{slug} redirects."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /pages/{slug}, /articles/{slug} redirects, ghost import commands",
+    "User groups affected: staff running Ghost imports; public readers of migrated pages",
+    "Public impact: Ghost pages resolve under /pages and old article URLs redirect",
+    "Internal impact: idempotent backfill command for existing beta imports"
+  ],
+  "pr": 0
+}
