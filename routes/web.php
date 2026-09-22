@@ -29,6 +29,7 @@ use App\Http\Controllers\Staff\CampaignController as StaffCampaignController;
 use App\Http\Controllers\Staff\MediaController as StaffMediaController;
 use App\Http\Controllers\Staff\PageController as StaffPageController;
 use App\Http\Controllers\Staff\PostController as StaffPostController;
+use App\Http\Controllers\TagRssController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
@@ -44,6 +45,7 @@ Route::get('/rss.xml', [RssController::class, 'index'])->name('rss');
 Route::get('/search', [SearchController::class, 'index'])->name('search');
 Route::get('/authors/{author}', [ArchiveController::class, 'author'])->name('archives.author');
 Route::get('/tags/{slug}', [ArchiveController::class, 'tag'])->name('archives.tag');
+Route::get('/tags/{slug}/rss.xml', [TagRssController::class, 'show'])->name('tags.rss');
 Route::get('/archive/{year}/{month?}', [ArchiveController::class, 'date'])
     ->whereNumber('year')
     ->whereNumber('month')

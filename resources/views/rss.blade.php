@@ -1,11 +1,11 @@
 <?php echo '<?xml version="1.0" encoding="UTF-8"?>'; ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
-        <title>{{ config('app.name') }}</title>
-        <link>{{ url('/') }}</link>
-        <description>APES Newsroom — stories from APES CIC, Shelter &amp; Rescue, and Pet Care Clinic</description>
+        <title>{{ $title }}</title>
+        <link>{{ $link }}</link>
+        <description>{{ $description }}</description>
         <language>en-gb</language>
-        <atom:link href="{{ url('/rss.xml') }}" rel="self" type="application/rss+xml" />
+        <atom:link href="{{ $self }}" rel="self" type="application/rss+xml" />
         @foreach ($posts as $post)
         <item>
             <title>{{ $post->title }}</title>

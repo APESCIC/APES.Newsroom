@@ -1,0 +1,22 @@
+{
+  "version": "v1.1.8",
+  "released_at": "2026-09-22",
+  "previous_version": "v1.1.7",
+  "theme": "Internal tags and per-tag RSS",
+  "change_types": ["added", "changed"],
+  "topic_tags": ["public-facing", "accessibility"],
+  "summary": "Internal #tags stay off public archives, chips, sitemap, and RSS; public tags gain per-tag feeds and sitemap URLs.",
+  "detailed_changes": [
+    "Added tags.is_internal (auto from # name prefix) and hide internals from public archives, article chips, sitemap, and tag RSS.",
+    "Added /tags/{slug}/rss.xml using a shared RSS feed builder; site-wide /rss.xml unchanged.",
+    "Sitemap now lists public tag archive URLs that have published posts."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /tags/{slug}, /tags/{slug}/rss.xml, /sitemap.xml, article tag chips",
+    "User groups affected: staff tagging posts; public readers of tag archives and feeds",
+    "Public impact: new per-tag RSS; internal tags no longer appear publicly",
+    "Internal impact: staff can still assign #tags for editorial organisation"
+  ],
+  "pr": 0
+}

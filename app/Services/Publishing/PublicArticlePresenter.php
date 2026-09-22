@@ -30,10 +30,12 @@ class PublicArticlePresenter
             'published_at' => $post->published_at?->toIso8601String(),
             'meta_title' => $post->meta_title ?? $post->title,
             'meta_description' => $post->meta_description ?? $post->excerpt,
-            'tags' => $post->tags->map(fn ($tag) => [
-                'name' => $tag->name,
-                'slug' => $tag->slug,
-            ])->values()->all(),
+            'tags' => $post->tags
+                ->filter(fn ($tag) => ! $tag->is_internal)
+                ->map(fn ($tag) => [
+                    'name' => $tag->name,
+                    'slug' => $tag->slug,
+                ])->values()->all(),
             'hero_image' => $this->nullableString($post->hero_image),
             'hero_image_alt' => $this->nullableString($post->hero_image_alt),
             'hero_image_caption' => $this->nullableString($post->hero_image_caption),
