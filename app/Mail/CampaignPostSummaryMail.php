@@ -22,6 +22,8 @@ class CampaignPostSummaryMail extends Mailable
         public readonly string $preferencesUrl,
         public readonly string $listUnsubscribeUrl,
         public readonly bool $isTest = false,
+        public readonly ?string $openPixelUrl = null,
+        public readonly ?string $trackedReadMoreUrl = null,
     ) {}
 
     public function envelope(): Envelope
@@ -43,6 +45,8 @@ class CampaignPostSummaryMail extends Mailable
                 'unsubscribeUrl' => $this->unsubscribeUrl,
                 'preferencesUrl' => $this->preferencesUrl,
                 'isTest' => $this->isTest,
+                'openPixelUrl' => $this->openPixelUrl,
+                'trackedReadMoreUrl' => $this->trackedReadMoreUrl ?? ($this->snapshot['read_more_url'] ?? '#'),
             ],
         );
     }

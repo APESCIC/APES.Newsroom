@@ -16,6 +16,7 @@ use App\Http\Controllers\CommentController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LegalController;
+use App\Http\Controllers\Mailing\CampaignTrackingController;
 use App\Http\Controllers\Mailing\ConfirmController;
 use App\Http\Controllers\Mailing\NewsletterSignupController;
 use App\Http\Controllers\Mailing\PreferenceController;
@@ -31,6 +32,7 @@ use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\Staff\CampaignController as StaffCampaignController;
 use App\Http\Controllers\Staff\MediaController as StaffMediaController;
 use App\Http\Controllers\Staff\MembershipPlanController as StaffMembershipPlanController;
+use App\Http\Controllers\Staff\MetricsController as StaffMetricsController;
 use App\Http\Controllers\Staff\NewsletterController as StaffNewsletterController;
 use App\Http\Controllers\Staff\OfferController as StaffOfferController;
 use App\Http\Controllers\Staff\PageController as StaffPageController;
@@ -67,6 +69,8 @@ Route::post('/newsletters/{slug}/signup', [NewsletterSignupController::class, 's
 Route::get('/mailing/signup', [SignupController::class, 'show'])->name('mailing.signup');
 Route::post('/mailing/signup', [SignupController::class, 'store'])->name('mailing.signup.store');
 Route::get('/mailing/confirm/{token}', ConfirmController::class)->name('mailing.confirm');
+Route::get('/mailing/track/open/{recipient}', [CampaignTrackingController::class, 'open'])->name('mailing.track.open');
+Route::get('/mailing/track/click/{recipient}', [CampaignTrackingController::class, 'click'])->name('mailing.track.click');
 Route::get('/mailing/preferences', [PreferenceController::class, 'showSigned'])->name('mailing.preferences.signed');
 Route::post('/mailing/preferences', [PreferenceController::class, 'updateSigned'])->name('mailing.preferences.signed.update');
 Route::get('/mailing/unsubscribe', [UnsubscribeController::class, 'show'])->name('mailing.unsubscribe');
@@ -151,6 +155,8 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
         Route::get('/posts/{post}/preview', [StaffPostController::class, 'preview'])->name('posts.preview');
         Route::get('/posts/{post}/campaign', [StaffCampaignController::class, 'preview'])->name('posts.campaign.preview');
         Route::post('/posts/{post}/campaign/test-send', [StaffCampaignController::class, 'testSend'])->name('posts.campaign.test');
+
+        Route::get('/metrics', StaffMetricsController::class)->name('metrics.index');
 
         Route::get('/newsletters', [StaffNewsletterController::class, 'index'])->name('newsletters.index');
         Route::get('/newsletters/new', [StaffNewsletterController::class, 'create'])->name('newsletters.create');

@@ -13,12 +13,16 @@
 {{ $snapshot['excerpt'] }}
 @endif
 
-<x-mail::button :url="$snapshot['read_more_url']">
+<x-mail::button :url="$trackedReadMoreUrl">
 Read the full story
 </x-mail::button>
 
 Thanks,<br>
 {{ config('app.name') }}
+
+@if (!empty($openPixelUrl))
+<img src="{{ $openPixelUrl }}" width="1" height="1" alt="" />
+@endif
 
 <x-mail::subcopy>
 APES CIC · 40 Morris Street, St Helens, Merseyside, WA9 3EN · 01744 374 015<br>
