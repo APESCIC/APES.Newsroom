@@ -1,0 +1,28 @@
+{
+  "version": "v1.5.0",
+  "released_at": "2026-09-23",
+  "previous_version": "v1.4.7",
+  "theme": "Platform and developer",
+  "change_types": [
+    "added"
+  ],
+  "topic_tags": [
+    "public-facing",
+    "internal-only"
+  ],
+  "summary": "Milestone 6 adds REST Content and Admin APIs, outbound signed webhooks, and product integrations (Unsplash, Slack, optional AI assist, consent-gated analytics) on Cloudron beta.",
+  "detailed_changes": [
+    "Content API (/api/content/v1) serves published posts, pages, and tags with a site Content API key; body HTML only for public visibility.",
+    "Admin API (/api/admin/v1) supports staff token writes and publish transitions through BlockValidator and PostPayloadRules.",
+    "Outbound webhooks deliver post.published, member.created, and subscription.updated with HMAC-SHA256 signing and queued retries without blocking publish.",
+    "Staff integrations: Unsplash media picker, Slack editorial alerts, optional AI draft assist (off by default), and consent-gated Plausible/GTM-stub analytics hooks."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /api/content/v1, /api/admin/v1, /staff/webhooks, staff editor media/AI, /analytics/consent, /legal/cookies",
+    "User groups affected: headless clients; staff editors; visitors (analytics consent)",
+    "Public impact: optional third-party analytics only after consent; APIs for published content",
+    "Internal impact: no production cutover, live Stripe reopen, Ghost retirement, or new live-send authorization"
+  ],
+  "pr": 212
+}
