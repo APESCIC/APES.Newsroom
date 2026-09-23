@@ -1,0 +1,22 @@
+{
+  "version": "v1.3.6",
+  "released_at": "2026-09-23",
+  "previous_version": "v1.3.5",
+  "theme": "Member CRM",
+  "change_types": ["added"],
+  "topic_tags": ["internal-only"],
+  "summary": "Staff can search and filter public members by free or paying status and see recent signed-in reading activity.",
+  "detailed_changes": [
+    "Added a staff Members CRM at /staff/members with name/email search and free/paying filters.",
+    "Show signup date, plan, paying status, and up to five recent content views per member.",
+    "Completes the membership and business epic for beta (test-mode Stripe only)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff/members",
+    "User groups affected: staff",
+    "Public impact: none",
+    "Internal impact: staff can support members using signup, billing status, and reading activity"
+  ],
+  "pr": 0
+}
