@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
+use App\Services\Analytics\ContentViewRecorder;
 use App\Services\Engagement\CommentService;
 use App\Services\Engagement\ReactionService;
 use App\Services\Publishing\PublicArticlePresenter;
@@ -18,11 +19,14 @@ class ArticleController extends Controller
         PublicArticlePresenter $articles,
         CommentService $comments,
         ReactionService $reactions,
+        ContentViewRecorder $views,
     ): Response {
         $post = Post::published()
             ->where('slug', $slug)
             ->with('author', 'authors', 'tags')
             ->firstOrFail();
+
+        $views->record($request, post: $post);
 
         return Inertia::render('Articles/Show', [
             'article' => $articles->payload($post, $request->user()),

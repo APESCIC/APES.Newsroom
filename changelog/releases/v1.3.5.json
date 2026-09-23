@@ -1,0 +1,22 @@
+{
+  "version": "v1.3.5",
+  "released_at": "2026-09-23",
+  "previous_version": "v1.3.4",
+  "theme": "First-party metrics",
+  "change_types": ["added"],
+  "topic_tags": ["public-facing", "internal-only"],
+  "summary": "Staff metrics cover web views, newsletter opens and clicks, and membership counts without a new analytics cookie.",
+  "detailed_changes": [
+    "Record article and page views server-side with optional signed-in account linkage and no IP storage.",
+    "Add signed open and click tokens on campaign mail for first-party newsletter metrics.",
+    "Add a staff Metrics dashboard for web, newsletter, and subscription summaries, and update the cookie notice."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff/metrics, /mailing/track/*, cookie notice",
+    "User groups affected: staff; signed-in members (reading activity); newsletter recipients",
+    "Public impact: cookie notice discloses first-party view and mail tracking",
+    "Internal impact: staff can review engagement and test-mode MRR without third-party analytics"
+  ],
+  "pr": 0
+}

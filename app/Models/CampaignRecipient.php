@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable([
     'campaign_id', 'email', 'status', 'attempts', 'idempotency_key',
-    'last_error', 'accepted_at', 'failed_at',
+    'last_error', 'accepted_at', 'opened_at', 'clicked_at', 'failed_at',
 ])]
 class CampaignRecipient extends Model
 {
@@ -18,6 +18,8 @@ class CampaignRecipient extends Model
         return [
             'status' => CampaignRecipientStatus::class,
             'accepted_at' => 'datetime',
+            'opened_at' => 'datetime',
+            'clicked_at' => 'datetime',
             'failed_at' => 'datetime',
         ];
     }

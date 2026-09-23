@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\CampaignRecipientStatus;
 use App\Enums\CampaignStatus;
 use App\Enums\MailingList;
+use App\Http\Controllers\Mailing\CampaignTrackingController;
 use App\Mail\CampaignPostSummaryMail;
 use App\Models\Campaign;
 use App\Models\CampaignRecipient;
@@ -81,12 +82,20 @@ class SendCampaignRecipientJob implements ShouldBeUnique, ShouldQueue
         $unsubscribePageUrl = $this->signedUnsubscribePageUrl($recipient->email);
         $preferencesUrl = $this->signedPreferencesUrl($recipient->email);
 
+        $readMore = (string) ($campaign->snapshot['read_more_url'] ?? url('/'));
+        $openPixelUrl = $campaign->is_test ? null : CampaignTrackingController::openUrl($recipient);
+        $trackedReadMoreUrl = $campaign->is_test
+            ? $readMore
+            : CampaignTrackingController::clickUrl($recipient, $readMore);
+
         Mail::to($recipient->email)->send(new CampaignPostSummaryMail(
             snapshot: $campaign->snapshot,
             unsubscribeUrl: $unsubscribePageUrl,
             preferencesUrl: $preferencesUrl,
             listUnsubscribeUrl: $oneClickUnsubscribeUrl,
             isTest: $campaign->is_test,
+            openPixelUrl: $openPixelUrl,
+            trackedReadMoreUrl: $trackedReadMoreUrl,
         ));
 
         $recipient->update([

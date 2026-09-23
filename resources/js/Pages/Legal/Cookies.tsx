@@ -13,8 +13,11 @@ export default function Cookies() {
                     sessions secure. These are strictly necessary for the service to work.
                 </p>
                 <p>
-                    We do not use third-party advertising cookies on the newsroom. Analytics cookies, if introduced later,
-                    will only load after an appropriate consent mechanism and updated notice.
+                    We do not use third-party advertising cookies on the newsroom. We do not set a separate analytics
+                    cookie. Article and page views may be counted server-side for staff metrics without storing your IP
+                    address. When you are signed in, those views can be linked to your account as reading activity so
+                    staff can support members. Newsletter open and click tracking uses signed links in email, not a
+                    browser cookie.
                 </p>
                 </div>
             </main>
