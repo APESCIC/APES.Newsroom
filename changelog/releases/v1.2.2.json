@@ -1,0 +1,21 @@
+{
+  "version": "v1.2.2",
+  "released_at": "2026-09-23",
+  "previous_version": "v1.2.1",
+  "theme": "Full-post publish emails",
+  "change_types": ["changed"],
+  "topic_tags": ["public-facing"],
+  "summary": "Publishing a post emails the rendered article body once, stored in an immutable campaign snapshot.",
+  "detailed_changes": [
+    "Campaign snapshots now store Editor.js HTML from BlockRenderer at send time, and the email template renders that body.",
+    "A live campaign remains one per post (idempotency key post:{id}:live), so later edits do not resend or rewrite the emailed body."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: staff publish with email_on_publish",
+    "User groups affected: confirmed mailing subscribers",
+    "Public impact: publish emails include the article body, not only the excerpt",
+    "Internal impact: consent, unsubscribe, and one-send-per-publish rules are unchanged"
+  ],
+  "pr": 0
+}
