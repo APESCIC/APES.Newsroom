@@ -3,7 +3,9 @@
 namespace App\Http\Middleware;
 
 use App\Enums\Role;
+use App\Http\Controllers\AnalyticsConsentController;
 use App\Models\Release;
+use App\Support\AnalyticsConfig;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Throwable;
@@ -47,6 +49,10 @@ class HandleInertiaRequests extends Middleware
             ],
             'currentRelease' => fn () => $this->currentReleasePayload(),
             'devTools' => app()->environment('local'),
+            'analytics' => fn () => [
+                ...AnalyticsConfig::publicPayload(),
+                'consent' => $request->cookie(AnalyticsConsentController::COOKIE) === '1',
+            ],
             'flash' => [
                 'status' => fn () => $request->session()->get('status'),
             ],

@@ -82,4 +82,21 @@ return [
         'model' => env('NEWSROOM_AI_ASSIST_MODEL', 'gpt-4o-mini'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Third-party analytics (consent-gated)
+    |--------------------------------------------------------------------------
+    |
+    | provider: none | plausible | gtm-stub
+    | Scripts load only after the visitor accepts analytics cookies.
+    | Native first-party ContentViewRecorder metrics are unaffected.
+    |
+    */
+
+    'analytics' => [
+        'provider' => env('NEWSROOM_ANALYTICS_PROVIDER', 'none'),
+        'plausible_domain' => env('NEWSROOM_PLAUSIBLE_DOMAIN'),
+        'gtm_container_id' => env('NEWSROOM_GTM_CONTAINER_ID'),
+    ],
+
 ];

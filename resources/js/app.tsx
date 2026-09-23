@@ -2,6 +2,7 @@ import '../css/app.css';
 
 import { createInertiaApp } from '@inertiajs/react';
 import { createRoot } from 'react-dom/client';
+import ThirdPartyAnalytics from './Components/Analytics/ThirdPartyAnalytics';
 import RoleSwitcher from './Components/Dev/RoleSwitcher';
 
 const appName = document.title || 'APES Newsroom';
@@ -24,6 +25,7 @@ createInertiaApp({
                 {({ Component, props: pageProps, key }) => (
                     <>
                         <Component key={key} {...pageProps} />
+                        <ThirdPartyAnalytics />
                         <RoleSwitcher />
                     </>
                 )}
