@@ -17,6 +17,7 @@ use App\Models\Tag;
 use App\Models\User;
 use App\Services\Audit\AuditLogger;
 use App\Services\EditorJs\BlockValidator;
+use App\Services\Integrations\SlackEditorialNotifier;
 use App\Services\Mailing\CampaignService;
 use App\Services\Publishing\PublicArticlePresenter;
 use App\Services\Webhooks\OutboundWebhookDispatcher;
@@ -35,6 +36,7 @@ class PostController extends Controller
         private readonly CampaignService $campaigns,
         private readonly AuditLogger $audit,
         private readonly OutboundWebhookDispatcher $webhooks,
+        private readonly SlackEditorialNotifier $slack,
     ) {}
 
     public function index(Request $request): Response
@@ -217,6 +219,8 @@ class PostController extends Controller
             'review_notes' => null,
         ]);
 
+        $this->slack->notifyPostSubmittedForReview($post->fresh() ?? $post);
+
         return back();
     }
 
@@ -290,6 +294,7 @@ class PostController extends Controller
                 'status' => $publishedPost->status->value,
                 'published_at' => $publishedPost->published_at?->toIso8601String(),
             ]);
+            $this->slack->notifyPostPublished($publishedPost);
         }
 
         return back();
