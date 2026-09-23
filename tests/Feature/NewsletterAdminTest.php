@@ -6,7 +6,9 @@ use App\Enums\MailingList;
 use App\Models\Newsletter;
 use App\Models\User;
 use App\Services\Mailing\ConsentService;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class NewsletterAdminTest extends TestCase
@@ -26,6 +28,33 @@ class NewsletterAdminTest extends TestCase
         $this->assertNotNull($cic);
         $this->assertNull($cic->archived_at);
         $this->assertSame('apes-cic', $cic->slug);
+    }
+
+    public function test_subscription_newsletter_unique_index_is_short_and_retryable(): void
+    {
+        $name = 'mailing_subs_contact_newsletter_uq';
+        $this->assertLessThanOrEqual(64, strlen($name));
+
+        $index = collect(Schema::getIndexes('mailing_list_subscriptions'))
+            ->first(fn (array $index): bool => ($index['name'] ?? '') === $name);
+
+        $this->assertNotNull($index);
+        $this->assertTrue($index['unique']);
+
+        Schema::table('mailing_list_subscriptions', function (Blueprint $table) use ($name): void {
+            $table->dropUnique($name);
+        });
+
+        $migration = require database_path('migrations/2026_09_23_101000_create_newsletters_table.php');
+        $migration->up();
+
+        $this->assertSame(3, Newsletter::query()->count());
+        $this->assertSame(
+            1,
+            collect(Schema::getIndexes('mailing_list_subscriptions'))
+                ->where('name', $name)
+                ->count(),
+        );
     }
 
     public function test_channel_signup_links_seeded_newsletter(): void
