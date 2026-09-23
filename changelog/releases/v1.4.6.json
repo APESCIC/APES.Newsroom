@@ -1,0 +1,26 @@
+{
+  "version": "v1.4.6",
+  "released_at": "2026-09-23",
+  "previous_version": "v1.4.5",
+  "theme": "Optional AI editor assist",
+  "change_types": [
+    "added"
+  ],
+  "topic_tags": [
+    "internal-only"
+  ],
+  "summary": "Staff can request optional AI draft suggestions into the post editor when NEWSROOM_AI_ASSIST_ENABLED and OPENAI_API_KEY are set. Assist never auto-publishes.",
+  "detailed_changes": [
+    "Added AiAssistService and staff /staff/ai/status + /staff/ai/suggest routes gated by newsroom.ai_assist config (off by default).",
+    "Added AiAssistPanel on staff post edit to insert suggestions as a paragraph block into the draft only.",
+    "Missing flag or API key hides the panel and returns 503 on suggest."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff/posts/{id}/edit; /staff/ai/*",
+    "User groups affected: staff editors",
+    "Public impact: none",
+    "Internal impact: optional OpenAI-backed draft assist"
+  ],
+  "pr": null
+}
