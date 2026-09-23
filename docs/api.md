@@ -1,11 +1,11 @@
 # REST APIs
 
-Versioned JSON APIs for headless reads and (later) editorial writes. Stack remains Laravel/PHP.
+Versioned JSON APIs for headless reads and editorial writes. Stack remains Laravel/PHP.
 
 Base paths:
 
 - Content API: `/api/content/v1/…`
-- Admin API: `/api/admin/v1/…` (documented when shipped)
+- Admin API: `/api/admin/v1/…`
 
 ## Content API (v1)
 
@@ -58,3 +58,44 @@ List responses include:
 ### Versioning
 
 The `v1` path segment is the Content API contract. Breaking changes require a new major segment (`v2`). Additive fields may appear within `v1`.
+
+## Admin API (v1)
+
+### Authentication
+
+Staff-owned bearer tokens (`Authorization: Bearer nr_admin_…`). Tokens are hashed at rest in `api_tokens`.
+
+Mint a bootstrap token:
+
+```bash
+php artisan newsroom:issue-admin-api-token staff@example.com --name=ci
+```
+
+Additional tokens: `POST /api/admin/v1/tokens` with an existing bearer token and JSON `{ "name": "label" }` (plain token returned once).
+
+Token owner must be `Role::Staff` or higher. Missing/invalid token → `401`.
+
+### Rate limits
+
+Default: **60 requests per minute** per authenticated user (`throttle:admin-api`). Override with `NEWSROOM_ADMIN_API_RATE_PER_MINUTE`.
+
+### Authorization (mirrors staff UI)
+
+| Action | Minimum role |
+|--------|----------------|
+| List/create/update posts | Staff (staff authors see own posts only; admin+ see all) |
+| Publish / unpublish | Admin |
+
+Writes run through `BlockValidator` and the same field rules as the staff editors (`PostPayloadRules` shape). Invalid Editor.js blocks return `422`.
+
+### Endpoints
+
+| Method | Path | Notes |
+|--------|------|--------|
+| POST | `/api/admin/v1/tokens` | Issue another token for the authenticated staff user. |
+| GET | `/api/admin/v1/posts` | Paginated editorial list. |
+| POST | `/api/admin/v1/posts` | Create draft post. |
+| GET | `/api/admin/v1/posts/{id}` | Show post including Editor.js `content`. |
+| PATCH | `/api/admin/v1/posts/{id}` | Update post (partial). |
+| POST | `/api/admin/v1/posts/{id}/publish` | Publish (admin+). |
+| POST | `/api/admin/v1/posts/{id}/unpublish` | Unpublish (admin+). |
