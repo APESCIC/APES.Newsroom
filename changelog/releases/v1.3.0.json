@@ -1,0 +1,22 @@
+{
+  "version": "v1.3.0",
+  "released_at": "2026-09-23",
+  "previous_version": "v1.2.5",
+  "theme": "Newsletters and audience",
+  "change_types": ["added"],
+  "topic_tags": ["public-facing"],
+  "summary": "Milestone 4 adds newsletter audiences distinct from channel lists, full-post publish emails, segment filters, and public signup forms on Cloudron beta.",
+  "detailed_changes": [
+    "Added newsletter entities seeded from the three channel lists, with staff create/archive and subscriptions that can target a newsletter without dropping channel lists.",
+    "Publish emails now include the rendered article body once per publication, and staff can limit a send to contacts confirmed on two newsletters.",
+    "Added public and embeddable signup at /newsletters/{slug}/signup with double opt-in and per-audience unsubscribe."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff/newsletters, /newsletters/{slug}/signup, /account/mailing, publish email",
+    "User groups affected: public subscribers; staff editors",
+    "Public impact: newsletter signup and fuller publish emails",
+    "Internal impact: consent and suppression rules unchanged; no new live-send authorization"
+  ],
+  "pr": 0
+}
