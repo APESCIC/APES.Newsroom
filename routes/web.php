@@ -38,6 +38,7 @@ use App\Http\Controllers\Staff\NewsletterController as StaffNewsletterController
 use App\Http\Controllers\Staff\OfferController as StaffOfferController;
 use App\Http\Controllers\Staff\PageController as StaffPageController;
 use App\Http\Controllers\Staff\PostController as StaffPostController;
+use App\Http\Controllers\Staff\WebhookController as StaffWebhookController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\TagRssController;
 use Illuminate\Support\Facades\Route;
@@ -159,6 +160,10 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
 
         Route::get('/metrics', StaffMetricsController::class)->name('metrics.index');
         Route::get('/members', StaffMemberController::class)->name('members.index');
+        Route::get('/webhooks', [StaffWebhookController::class, 'index'])->name('webhooks.index');
+        Route::post('/webhooks', [StaffWebhookController::class, 'store'])->name('webhooks.store');
+        Route::patch('/webhooks/{webhook}', [StaffWebhookController::class, 'update'])->name('webhooks.update');
+        Route::delete('/webhooks/{webhook}', [StaffWebhookController::class, 'destroy'])->name('webhooks.destroy');
 
         Route::get('/newsletters', [StaffNewsletterController::class, 'index'])->name('newsletters.index');
         Route::get('/newsletters/new', [StaffNewsletterController::class, 'create'])->name('newsletters.create');

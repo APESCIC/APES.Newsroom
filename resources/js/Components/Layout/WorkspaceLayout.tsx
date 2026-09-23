@@ -13,7 +13,7 @@ type WorkspaceLink = {
     active: boolean;
 };
 
-function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: 'moderation' | 'posts' | 'pages' | 'newsletters' | 'membership-plans' | 'offers' | 'metrics' | 'members' | 'releases' }) {
+function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: 'moderation' | 'posts' | 'pages' | 'newsletters' | 'membership-plans' | 'offers' | 'metrics' | 'members' | 'webhooks' | 'releases' }) {
     const { auth } = usePage<SharedPageProps>().props;
     const links: WorkspaceLink[] = [];
 
@@ -24,6 +24,7 @@ function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: 'm
         links.push({ href: '/staff/membership-plans', label: 'Plans', icon: 'document', active: active === 'membership-plans' });
         links.push({ href: '/staff/offers', label: 'Offers', icon: 'document', active: active === 'offers' });
         links.push({ href: '/staff/members', label: 'Members', icon: 'document', active: active === 'members' });
+        links.push({ href: '/staff/webhooks', label: 'Webhooks', icon: 'document', active: active === 'webhooks' });
         links.push({ href: '/staff/metrics', label: 'Metrics', icon: 'document', active: active === 'metrics' });
     }
 
@@ -62,7 +63,7 @@ function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: 'm
     );
 }
 
-function Sidebar({ area, active, close }: { area: WorkspaceArea; active: 'moderation' | 'posts' | 'pages' | 'newsletters' | 'membership-plans' | 'offers' | 'metrics' | 'members' | 'releases'; close?: () => void }) {
+function Sidebar({ area, active, close }: { area: WorkspaceArea; active: 'moderation' | 'posts' | 'pages' | 'newsletters' | 'membership-plans' | 'offers' | 'metrics' | 'members' | 'webhooks' | 'releases'; close?: () => void }) {
     const { auth } = usePage<SharedPageProps>().props;
     const roleLabel = auth.user?.role.replace('_', ' ') ?? 'workspace';
 
@@ -126,7 +127,7 @@ export default function WorkspaceLayout({
     children,
 }: {
     area: WorkspaceArea;
-    active: 'moderation' | 'posts' | 'pages' | 'newsletters' | 'membership-plans' | 'offers' | 'metrics' | 'members' | 'releases';
+    active: 'moderation' | 'posts' | 'pages' | 'newsletters' | 'membership-plans' | 'offers' | 'metrics' | 'members' | 'webhooks' | 'releases';
     title: string;
     subtitle?: string;
     actions?: ReactNode;

@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\Audit\AuditLogger;
 use App\Services\EditorJs\BlockValidator;
 use App\Services\Mailing\CampaignService;
+use App\Services\Webhooks\OutboundWebhookDispatcher;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -22,6 +23,7 @@ class EditorialPostWriter
         private readonly BlockValidator $validator,
         private readonly CampaignService $campaigns,
         private readonly AuditLogger $audit,
+        private readonly OutboundWebhookDispatcher $webhooks,
     ) {}
 
     /**
@@ -144,6 +146,13 @@ class EditorialPostWriter
 
         if ($didPublish) {
             $this->audit->record($actor, 'post.published', $publishedPost, []);
+            $this->webhooks->dispatch(OutboundWebhookDispatcher::EVENT_POST_PUBLISHED, [
+                'post_id' => $publishedPost->id,
+                'slug' => $publishedPost->slug,
+                'title' => $publishedPost->title,
+                'status' => $publishedPost->status->value,
+                'published_at' => $publishedPost->published_at?->toIso8601String(),
+            ]);
         }
 
         return $publishedPost->fresh(['author', 'tags', 'authors']) ?? $publishedPost;

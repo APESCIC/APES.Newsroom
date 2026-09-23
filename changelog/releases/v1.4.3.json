@@ -1,0 +1,26 @@
+{
+  "version": "v1.4.3",
+  "released_at": "2026-09-23",
+  "previous_version": "v1.4.2",
+  "theme": "Outbound webhooks",
+  "change_types": [
+    "added"
+  ],
+  "topic_tags": [
+    "internal-only"
+  ],
+  "summary": "Staff can register outbound webhook endpoints that receive signed, queued deliveries for publish, member, and subscription events.",
+  "detailed_changes": [
+    "Added staff Webhooks UI and webhook_endpoints/deliveries tables with per-endpoint HMAC secrets.",
+    "Queued DeliverWebhookJob posts JSON with X-Newsroom-Signature (HMAC-SHA256) and retries with backoff without blocking publish.",
+    "Wired post.published, member.created, and subscription.updated event emission from editorial and membership flows."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff/webhooks",
+    "User groups affected: staff; external webhook consumers",
+    "Public impact: none",
+    "Internal impact: async outbound integrations; failures logged and retried"
+  ],
+  "pr": 207
+}
