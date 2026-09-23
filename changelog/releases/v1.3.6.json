@@ -3,8 +3,12 @@
   "released_at": "2026-09-23",
   "previous_version": "v1.3.5",
   "theme": "Member CRM",
-  "change_types": ["added"],
-  "topic_tags": ["internal-only"],
+  "change_types": [
+    "added"
+  ],
+  "topic_tags": [
+    "internal-only"
+  ],
   "summary": "Staff can search and filter public members by free or paying status and see recent signed-in reading activity.",
   "detailed_changes": [
     "Added a staff Members CRM at /staff/members with name/email search and free/paying filters.",
@@ -18,5 +22,5 @@
     "Public impact: none",
     "Internal impact: staff can support members using signup, billing status, and reading activity"
   ],
-  "pr": 0
+  "pr": 203
 }
