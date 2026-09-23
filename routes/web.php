@@ -29,6 +29,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RssController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\Staff\AiAssistController as StaffAiAssistController;
 use App\Http\Controllers\Staff\CampaignController as StaffCampaignController;
 use App\Http\Controllers\Staff\MediaController as StaffMediaController;
 use App\Http\Controllers\Staff\MemberController as StaffMemberController;
@@ -196,6 +197,8 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
         Route::post('/media/upload', [StaffMediaController::class, 'upload'])->name('media.upload');
         Route::get('/media/unsplash', [StaffMediaController::class, 'unsplashSearch'])->name('media.unsplash.search');
         Route::post('/media/unsplash/select', [StaffMediaController::class, 'unsplashSelect'])->name('media.unsplash.select');
+        Route::get('/ai/status', [StaffAiAssistController::class, 'status'])->name('ai.status');
+        Route::post('/ai/suggest', StaffAiAssistController::class)->name('ai.suggest');
     });
 
 require __DIR__.'/auth.php';

@@ -2,6 +2,7 @@ import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useCallback, useEffect, useRef, useState } from 'react';
 import type { OutputData } from '@editorjs/editorjs';
 import EditorJsField from '../../../Components/editor/EditorJsField';
+import AiAssistPanel from '../../../Components/Staff/AiAssistPanel';
 import UnsplashPicker from '../../../Components/Staff/UnsplashPicker';
 
 type Channel = { value: string; label: string };
@@ -439,6 +440,22 @@ export default function PostEdit({
                             onChange={(content) => setData('content', content)}
                         />
                         <FieldError message={errors.content} />
+                        <div className="mt-3">
+                            <AiAssistPanel
+                                title={data.title}
+                                excerpt={data.excerpt}
+                                onInsert={(text) => {
+                                    setData('content', {
+                                        ...data.content,
+                                        time: Date.now(),
+                                        blocks: [
+                                            ...(data.content.blocks ?? []),
+                                            { type: 'paragraph', data: { text } },
+                                        ],
+                                    });
+                                }}
+                            />
+                        </div>
                     </div>
 
                     <fieldset className="flex flex-col gap-3 border-t pt-4">

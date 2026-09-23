@@ -76,4 +76,10 @@ return [
         'access_key' => env('UNSPLASH_ACCESS_KEY'),
     ],
 
+    'ai_assist' => [
+        'enabled' => (bool) env('NEWSROOM_AI_ASSIST_ENABLED', false),
+        'api_key' => env('OPENAI_API_KEY'),
+        'model' => env('NEWSROOM_AI_ASSIST_MODEL', 'gpt-4o-mini'),
+    ],
+
 ];
