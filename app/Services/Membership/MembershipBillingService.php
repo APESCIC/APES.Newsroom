@@ -5,6 +5,8 @@ namespace App\Services\Membership;
 use App\Enums\MembershipStatus;
 use App\Models\Membership;
 use App\Models\MembershipPlan;
+use App\Models\Offer;
+use App\Models\OfferRedemption;
 use App\Models\StripeWebhookEvent;
 use App\Models\User;
 use Illuminate\Support\Carbon;
@@ -15,9 +17,10 @@ class MembershipBillingService
     public function __construct(
         private readonly StripeBillingClient $stripe,
         private readonly MembershipService $memberships,
+        private readonly OfferService $offers,
     ) {}
 
-    public function startCheckout(User $user, MembershipPlan $plan, ?string $promotionCodeId = null): string
+    public function startCheckout(User $user, MembershipPlan $plan, ?string $offerCode = null): string
     {
         if (! $plan->is_active) {
             throw new \InvalidArgumentException('That membership plan is not available.');
@@ -29,12 +32,22 @@ class MembershipBillingService
             throw new \InvalidArgumentException('You already have an active paid membership.');
         }
 
+        $promotionCodeId = null;
+        $metadata = [];
+
+        if (filled($offerCode)) {
+            $offer = $this->offers->resolveValidOffer($offerCode);
+            $promotionCodeId = $offer->stripe_promotion_code_id;
+            $metadata['offer_id'] = (string) $offer->id;
+        }
+
         $session = $this->stripe->createCheckoutSession(
             $user,
             $plan,
             route('account.membership.success'),
             route('account.show'),
             $promotionCodeId,
+            $metadata,
         );
 
         return $session['url'];
@@ -121,6 +134,28 @@ class MembershipBillingService
             'stripe_subscription_id' => $session['subscription'] ?? $membership->stripe_subscription_id,
         ]);
         $membership->save();
+
+        $offerId = (int) ($session['metadata']['offer_id'] ?? 0);
+
+        if ($offerId > 0) {
+            $offer = Offer::query()->lockForUpdate()->find($offerId);
+
+            if ($offer) {
+                OfferRedemption::query()->firstOrCreate(
+                    [
+                        'offer_id' => $offer->id,
+                        'user_id' => $user->id,
+                    ],
+                    [
+                        'stripe_checkout_session_id' => $session['id'] ?? null,
+                    ],
+                );
+
+                $offer->update([
+                    'redemption_count' => $offer->redemptions()->count(),
+                ]);
+            }
+        }
     }
 
     /**

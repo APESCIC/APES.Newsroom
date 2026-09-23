@@ -1,0 +1,22 @@
+{
+  "version": "v1.3.3",
+  "released_at": "2026-09-23",
+  "previous_version": "v1.3.2",
+  "theme": "Membership offers",
+  "change_types": ["added"],
+  "topic_tags": ["public-facing"],
+  "summary": "Staff can create promo offers that apply at membership checkout, with redemption audit and safe rejection of invalid codes.",
+  "detailed_changes": [
+    "Added offers and offer_redemptions with optional Stripe test-mode coupons and promotion codes.",
+    "Account checkout accepts an offer code; expired, inactive, or exhausted codes are rejected before creating a session.",
+    "Successful checkout webhooks record one redemption per member and update redemption counts."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff/offers, /account",
+    "User groups affected: staff; public members",
+    "Public impact: optional promo codes at paid checkout",
+    "Internal impact: no live Stripe charge authorization"
+  ],
+  "pr": 0
+}

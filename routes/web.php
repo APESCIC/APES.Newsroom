@@ -32,6 +32,7 @@ use App\Http\Controllers\Staff\CampaignController as StaffCampaignController;
 use App\Http\Controllers\Staff\MediaController as StaffMediaController;
 use App\Http\Controllers\Staff\MembershipPlanController as StaffMembershipPlanController;
 use App\Http\Controllers\Staff\NewsletterController as StaffNewsletterController;
+use App\Http\Controllers\Staff\OfferController as StaffOfferController;
 use App\Http\Controllers\Staff\PageController as StaffPageController;
 use App\Http\Controllers\Staff\PostController as StaffPostController;
 use App\Http\Controllers\StripeWebhookController;
@@ -162,6 +163,10 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
 
         Route::get('/membership-plans', [StaffMembershipPlanController::class, 'index'])->name('membership-plans.index');
         Route::patch('/membership-plans/{plan}', [StaffMembershipPlanController::class, 'update'])->name('membership-plans.update');
+
+        Route::get('/offers', [StaffOfferController::class, 'index'])->name('offers.index');
+        Route::post('/offers', [StaffOfferController::class, 'store'])->name('offers.store');
+        Route::patch('/offers/{offer}', [StaffOfferController::class, 'update'])->name('offers.update');
 
         Route::get('/pages', [StaffPageController::class, 'index'])->name('pages.index');
         Route::get('/pages/new', [StaffPageController::class, 'create'])->name('pages.create');

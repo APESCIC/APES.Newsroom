@@ -3,6 +3,7 @@
 namespace App\Services\Membership;
 
 use App\Models\MembershipPlan;
+use App\Models\Offer;
 use App\Models\User;
 use Stripe\Checkout\Session;
 use Stripe\Exception\SignatureVerificationException;
@@ -20,10 +21,16 @@ class StripeApiBillingClient implements StripeBillingClient
         string $successUrl,
         string $cancelUrl,
         ?string $promotionCodeId = null,
+        array $metadata = [],
     ): array {
         if (blank($plan->stripe_price_id)) {
             throw new \RuntimeException('Membership plan is missing a Stripe price id.');
         }
+
+        $mergedMetadata = array_merge([
+            'user_id' => (string) $user->id,
+            'membership_plan_id' => (string) $plan->id,
+        ], $metadata);
 
         $params = [
             'mode' => 'subscription',
@@ -34,15 +41,9 @@ class StripeApiBillingClient implements StripeBillingClient
                 'quantity' => 1,
             ]],
             'client_reference_id' => (string) $user->id,
-            'metadata' => [
-                'user_id' => (string) $user->id,
-                'membership_plan_id' => (string) $plan->id,
-            ],
+            'metadata' => $mergedMetadata,
             'subscription_data' => [
-                'metadata' => [
-                    'user_id' => (string) $user->id,
-                    'membership_plan_id' => (string) $plan->id,
-                ],
+                'metadata' => $mergedMetadata,
             ],
         ];
 
@@ -79,6 +80,44 @@ class StripeApiBillingClient implements StripeBillingClient
         ]);
 
         return ['url' => (string) $session->url];
+    }
+
+    public function createOfferPromotion(Offer $offer): array
+    {
+        $couponParams = [
+            'name' => $offer->name,
+            'duration' => 'once',
+        ];
+
+        if ($offer->discount_type === 'percent') {
+            $couponParams['percent_off'] = $offer->discount_value;
+        } else {
+            $couponParams['amount_off'] = $offer->discount_value;
+            $couponParams['currency'] = 'gbp';
+        }
+
+        $coupon = $this->stripe->coupons->create($couponParams);
+
+        $promoParams = [
+            'coupon' => $coupon->id,
+            'code' => $offer->code,
+            'active' => $offer->is_active,
+        ];
+
+        if ($offer->max_redemptions !== null) {
+            $promoParams['max_redemptions'] = $offer->max_redemptions;
+        }
+
+        if ($offer->ends_at) {
+            $promoParams['expires_at'] = $offer->ends_at->getTimestamp();
+        }
+
+        $promo = $this->stripe->promotionCodes->create($promoParams);
+
+        return [
+            'coupon_id' => (string) $coupon->id,
+            'promotion_code_id' => (string) $promo->id,
+        ];
     }
 
     public function constructWebhookEvent(string $payload, string $signatureHeader): array
