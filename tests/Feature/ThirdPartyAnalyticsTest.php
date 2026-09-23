@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\AnalyticsConsentController;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -92,7 +93,7 @@ class ThirdPartyAnalyticsTest extends TestCase
 
     public function test_native_metrics_route_unaffected(): void
     {
-        $staff = \App\Models\User::factory()->staff()->create();
+        $staff = User::factory()->staff()->create();
 
         $this->actingAs($staff)
             ->get(route('staff.metrics.index'))
