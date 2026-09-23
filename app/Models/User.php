@@ -52,6 +52,14 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * @return HasOne<Membership, $this>
+     */
+    public function membership(): HasOne
+    {
+        return $this->hasOne(Membership::class);
+    }
+
+    /**
      * Staff accounts authenticated via Cloudron OIDC are directory-verified.
      */
     public function hasVerifiedEmail(): bool

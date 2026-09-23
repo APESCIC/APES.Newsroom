@@ -9,14 +9,23 @@ type ProfileUser = {
     auth_provider: string | null;
 };
 
+type MembershipSummary = {
+    status: string;
+    status_label: string;
+    is_paying: boolean;
+    interval: string | null;
+    current_period_end: string | null;
+};
+
 type ProfileProps = {
     user: ProfileUser;
+    membership: MembershipSummary;
     status?: string;
     can_delete_account: boolean;
     deletion_block_reason: string | null;
 };
 
-export default function Profile({ user, status, can_delete_account, deletion_block_reason }: ProfileProps) {
+export default function Profile({ user, membership, status, can_delete_account, deletion_block_reason }: ProfileProps) {
     const { data, setData, patch, processing, errors, delete: destroy } = useForm({
         name: user.name,
         email: user.email,
@@ -71,6 +80,23 @@ export default function Profile({ user, status, can_delete_account, deletion_blo
                 </div>
 
                 <div className="glass-form-panel mt-6">
+                    <h2 className="text-lg font-bold text-body">Membership</h2>
+                    <p className="mt-2 text-sm text-body">{membership.status_label}</p>
+                    {membership.is_paying && membership.interval ? (
+                        <p className="mt-1 text-sm text-muted">
+                            Billed {membership.interval}
+                            {membership.current_period_end
+                                ? ` · renews ${new Date(membership.current_period_end).toLocaleDateString('en-GB')}`
+                                : ''}
+                        </p>
+                    ) : (
+                        <p className="mt-1 text-sm text-muted">
+                            Free membership includes your account and newsletter preferences. Paid tiers unlock gated posts when available.
+                        </p>
+                    )}
+                </div>
+
+                <div className="glass-form-panel mt-6">
                     <h2 className="text-lg font-bold text-body">Public profile</h2>
                     <Link href="/account/public-profile" className="mt-2 inline-block text-sm text-teal-deep hover:underline">
                         Edit public profile
@@ -78,9 +104,12 @@ export default function Profile({ user, status, can_delete_account, deletion_blo
                 </div>
 
                 <div className="glass-form-panel mt-6">
-                    <h2 className="text-lg font-bold text-body">Mailing lists</h2>
+                    <h2 className="text-lg font-bold text-body">Newsletters and mailing lists</h2>
+                    <p className="mt-1 text-sm text-muted">
+                        Confirm subscriptions separately; creating an account does not subscribe you automatically.
+                    </p>
                     <Link href="/account/mailing" className="mt-2 inline-block text-sm text-teal-deep hover:underline">
-                        Manage mailing preferences
+                        Manage newsletter preferences
                     </Link>
                 </div>
 

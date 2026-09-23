@@ -6,6 +6,7 @@ use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\StoreRegisteredUserRequest;
 use App\Models\User;
+use App\Services\Membership\MembershipService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -15,6 +16,8 @@ use Inertia\Response;
 
 class RegisteredUserController extends Controller
 {
+    public function __construct(private readonly MembershipService $memberships) {}
+
     public function create(): Response
     {
         return Inertia::render('Auth/Register');
@@ -32,6 +35,8 @@ class RegisteredUserController extends Controller
         ]);
 
         $user->forceFill(['role' => Role::Public])->save();
+
+        $this->memberships->provisionFreeMember($user);
 
         event(new Registered($user));
 
