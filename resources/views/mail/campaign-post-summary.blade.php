@@ -7,7 +7,9 @@
 
 **{{ $snapshot['channel_label'] }}** · {{ $snapshot['author'] }}@if (!empty($snapshot['published_at'])) · {{ \Illuminate\Support\Carbon::parse($snapshot['published_at'])->timezone('Europe/London')->format('j M Y') }}@endif
 
-@if (!empty($snapshot['excerpt']))
+@if (!empty($snapshot['html']))
+{!! $snapshot['html'] !!}
+@elseif (!empty($snapshot['excerpt']))
 {{ $snapshot['excerpt'] }}
 @endif
 

@@ -10,6 +10,7 @@ use App\Models\Campaign;
 use App\Models\CampaignRecipient;
 use App\Models\Post;
 use App\Models\User;
+use App\Services\EditorJs\BlockRenderer;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -118,9 +119,12 @@ class CampaignService
     {
         $post->loadMissing('author');
 
+        $content = is_array($post->content) ? $post->content : [];
+
         return [
             'title' => $post->title,
             'excerpt' => $post->excerpt,
+            'html' => app(BlockRenderer::class)->toHtml($content),
             'hero_image' => $post->hero_image,
             'hero_image_alt' => $post->hero_image_alt,
             'author' => $post->author->name,

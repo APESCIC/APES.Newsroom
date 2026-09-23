@@ -179,6 +179,60 @@ class MailingConsentTest extends TestCase
 
         $post->update(['title' => 'Changed After Publish']);
         $this->assertSame('Original Title', $campaign->fresh()->snapshot['title']);
+        $this->assertStringContainsString('<p>', (string) $campaign->snapshot['html']);
+    }
+
+    public function test_live_snapshot_html_is_immutable_and_rendered_in_mail(): void
+    {
+        Notification::fake();
+        Mail::fake();
+
+        $admin = User::factory()->admin()->create();
+        app(ConsentService::class)->signup('reader@example.com', [MailingList::ApesCic->value], 'test');
+        $subscription = MailingListSubscription::query()->first();
+        $subscription->update([
+            'status' => SubscriptionStatus::Confirmed,
+            'confirm_token' => null,
+            'confirmed_at' => now(),
+        ]);
+
+        $post = Post::factory()->published()->create([
+            'author_id' => $admin->id,
+            'email_on_publish' => true,
+            'mailing_lists' => [MailingList::ApesCic->value],
+            'content' => [
+                'time' => now()->getTimestampMs(),
+                'blocks' => [
+                    ['type' => 'paragraph', 'data' => ['text' => 'FullPostBodyPhrase']],
+                ],
+                'version' => '2.29.0',
+            ],
+        ]);
+
+        $campaign = app(CampaignService::class)->createFromPublishedPost($post, $admin);
+        $this->assertStringContainsString('FullPostBodyPhrase', (string) $campaign->snapshot['html']);
+
+        $post->update([
+            'content' => [
+                'time' => now()->getTimestampMs(),
+                'blocks' => [
+                    ['type' => 'paragraph', 'data' => ['text' => 'Edited after send']],
+                ],
+                'version' => '2.29.0',
+            ],
+        ]);
+
+        $again = app(CampaignService::class)->createFromPublishedPost($post->fresh(), $admin);
+        $this->assertTrue($campaign->is($again));
+        $this->assertStringContainsString('FullPostBodyPhrase', (string) $again->snapshot['html']);
+        $this->assertStringNotContainsString('Edited after send', (string) $again->snapshot['html']);
+
+        $recipient = $campaign->recipients()->first();
+        (new SendCampaignRecipientJob($recipient->id))->handle(app(ConsentService::class));
+
+        Mail::assertSent(CampaignPostSummaryMail::class, function (CampaignPostSummaryMail $mail) {
+            return str_contains($mail->render(), 'FullPostBodyPhrase');
+        });
     }
 
     public function test_live_campaign_uses_a_stable_database_idempotency_key(): void
