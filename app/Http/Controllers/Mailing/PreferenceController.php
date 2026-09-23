@@ -24,6 +24,7 @@ class PreferenceController extends Controller
         return Inertia::render('Mailing/Preferences', [
             'email' => $email,
             'lists' => array_values($this->consent->preferenceStateForEmail($email)),
+            'newsletters' => $this->consent->extraNewsletterStateForEmail($email),
             'signed' => true,
         ]);
     }
@@ -35,6 +36,7 @@ class PreferenceController extends Controller
         return Inertia::render('Mailing/Preferences', [
             'email' => $email,
             'lists' => array_values($this->consent->preferenceStateForEmail($email)),
+            'newsletters' => $this->consent->extraNewsletterStateForEmail($email),
             'signed' => false,
         ]);
     }
@@ -47,6 +49,8 @@ class PreferenceController extends Controller
         $validated = $request->validate([
             'lists' => ['array'],
             'lists.*' => [Rule::enum(MailingList::class)],
+            'newsletter_ids' => ['array'],
+            'newsletter_ids.*' => ['integer', 'exists:newsletters,id'],
         ]);
 
         $selected = $validated['lists'] ?? [];
@@ -75,6 +79,14 @@ class PreferenceController extends Controller
             }
         }
 
+        $this->consent->syncNewsletterChoices(
+            $email,
+            $validated['newsletter_ids'] ?? [],
+            null,
+            $request->ip(),
+            $request->userAgent(),
+        );
+
         return back()->with('status', 'preferences-updated');
     }
 
@@ -85,9 +97,21 @@ class PreferenceController extends Controller
             'lists.*' => [Rule::enum(MailingList::class)],
         ]);
 
+        $validatedNewsletters = $request->validate([
+            'newsletter_ids' => ['array'],
+            'newsletter_ids.*' => ['integer', 'exists:newsletters,id'],
+        ]);
+
         $this->consent->syncAccountPreferences(
             $request->user(),
             $validated['lists'] ?? [],
+            $request->ip(),
+            $request->userAgent(),
+        );
+        $this->consent->syncNewsletterChoices(
+            strtolower($request->user()->email),
+            $validatedNewsletters['newsletter_ids'] ?? [],
+            $request->user(),
             $request->ip(),
             $request->userAgent(),
         );

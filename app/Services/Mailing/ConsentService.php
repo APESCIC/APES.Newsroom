@@ -12,6 +12,7 @@ use App\Models\Newsletter;
 use App\Models\Suppression;
 use App\Models\User;
 use App\Notifications\ConfirmMailingListNotification;
+use App\Notifications\ConfirmNewsletterNotification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -185,6 +186,164 @@ class ConsentService
         }
     }
 
+    public function subscribeToNewsletter(
+        string $email,
+        Newsletter $newsletter,
+        string $source,
+        ?User $user = null,
+        ?string $ip = null,
+        ?string $userAgent = null,
+    ): MailingListSubscription {
+        if ($newsletter->isArchived()) {
+            throw new \InvalidArgumentException('Archived newsletters cannot accept new subscriptions.');
+        }
+
+        if ($newsletter->legacy_list instanceof MailingList) {
+            $contact = $this->signup($email, [$newsletter->legacy_list->value], $source, $user, $ip, $userAgent);
+
+            return $contact->subscriptions()->where('newsletter_id', $newsletter->id)->firstOrFail();
+        }
+
+        $email = Str::lower(trim($email));
+
+        return DB::transaction(function () use ($email, $newsletter, $source, $user, $ip, $userAgent) {
+            $contact = MailingContact::query()->firstOrCreate(
+                ['email' => $email],
+                ['user_id' => $user?->id],
+            );
+
+            $subscription = MailingListSubscription::query()->firstOrNew([
+                'mailing_contact_id' => $contact->id,
+                'newsletter_id' => $newsletter->id,
+            ]);
+
+            if ($subscription->status === SubscriptionStatus::Confirmed) {
+                return $subscription;
+            }
+
+            $token = Str::random(64);
+            $subscription->fill([
+                'list' => null,
+                'status' => SubscriptionStatus::Pending,
+                'confirm_token' => $token,
+                'confirmed_at' => null,
+                'unsubscribed_at' => null,
+            ]);
+            $subscription->save();
+
+            $this->recordEvent(
+                $contact,
+                null,
+                ConsentAction::SignupRequested,
+                $source,
+                ['newsletter_id' => $newsletter->id, 'confirm_token_issued' => true],
+                $ip,
+                $userAgent,
+            );
+
+            $contact->notify(new ConfirmNewsletterNotification($newsletter, $this->confirmUrl($token)));
+
+            return $subscription->fresh();
+        });
+    }
+
+    public function unsubscribeFromNewsletter(
+        string $email,
+        Newsletter $newsletter,
+        string $source = 'unsubscribe_link',
+        ?string $ip = null,
+        ?string $userAgent = null,
+    ): void {
+        if ($newsletter->legacy_list instanceof MailingList) {
+            $this->unsubscribe($email, $newsletter->legacy_list, $source, $ip, $userAgent);
+
+            return;
+        }
+
+        $email = Str::lower(trim($email));
+        $contact = MailingContact::query()->where('email', $email)->first();
+
+        if (! $contact) {
+            return;
+        }
+
+        $subscription = $contact->subscriptions()->where('newsletter_id', $newsletter->id)->first();
+
+        if (! $subscription || $subscription->status === SubscriptionStatus::Unsubscribed) {
+            return;
+        }
+
+        $subscription->update([
+            'status' => SubscriptionStatus::Unsubscribed,
+            'confirm_token' => null,
+            'unsubscribed_at' => now(),
+        ]);
+
+        $this->recordEvent(
+            $contact,
+            null,
+            ConsentAction::Unsubscribed,
+            $source,
+            ['newsletter_id' => $newsletter->id],
+            $ip,
+            $userAgent,
+        );
+    }
+
+    /**
+     * @param  list<int>  $selectedIds
+     */
+    public function syncNewsletterChoices(
+        string $email,
+        array $selectedIds,
+        ?User $user = null,
+        ?string $ip = null,
+        ?string $userAgent = null,
+    ): void {
+        $selected = array_map('intval', $selectedIds);
+        $newsletters = Newsletter::query()->active()->whereNull('legacy_list')->get();
+
+        foreach ($newsletters as $newsletter) {
+            $subscription = MailingListSubscription::query()
+                ->where('newsletter_id', $newsletter->id)
+                ->whereHas('contact', fn ($q) => $q->where('email', Str::lower(trim($email))))
+                ->first();
+            $status = $subscription?->status;
+            $wants = in_array($newsletter->id, $selected, true);
+
+            if ($wants && $status !== SubscriptionStatus::Confirmed && $status !== SubscriptionStatus::Pending) {
+                $this->subscribeToNewsletter($email, $newsletter, 'account_preferences', $user, $ip, $userAgent);
+            } elseif (! $wants && in_array($status, [SubscriptionStatus::Confirmed, SubscriptionStatus::Pending], true)) {
+                $this->unsubscribeFromNewsletter($email, $newsletter, 'account_preferences', $ip, $userAgent);
+            }
+        }
+    }
+
+    /**
+     * @return list<array{id: int, name: string, description: string|null, status: string|null}>
+     */
+    public function extraNewsletterStateForEmail(string $email): array
+    {
+        $contact = MailingContact::query()->where('email', Str::lower(trim($email)))->first();
+        $byNewsletter = $contact
+            ? $contact->subscriptions->keyBy('newsletter_id')
+            : collect();
+
+        return Newsletter::query()->active()->whereNull('legacy_list')->orderBy('name')->get()
+            ->map(function (Newsletter $newsletter) use ($byNewsletter) {
+                /** @var MailingListSubscription|null $sub */
+                $sub = $byNewsletter->get($newsletter->id);
+
+                return [
+                    'id' => $newsletter->id,
+                    'name' => $newsletter->name,
+                    'description' => $newsletter->description,
+                    'status' => $sub?->status->value,
+                ];
+            })
+            ->all();
+    }
+
     /**
      * Sync account preference centre choices (checked = request DOI or keep confirmed).
      *
@@ -330,7 +489,8 @@ class ConsentService
     {
         $contact = MailingContact::query()->where('email', Str::lower(trim($email)))->first();
         $subscriptions = $contact
-            ? $contact->subscriptions->keyBy(fn (MailingListSubscription $s) => $s->list->value)
+            ? $contact->subscriptions->filter(fn (MailingListSubscription $s) => $s->list !== null)
+                ->keyBy(fn (MailingListSubscription $s) => $s->list->value)
             : collect();
 
         $state = [];
