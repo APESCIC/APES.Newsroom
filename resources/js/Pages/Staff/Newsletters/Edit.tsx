@@ -11,7 +11,15 @@ type NewsletterData = {
     archived_at: string | null;
 };
 
-export default function NewsletterEdit({ newsletter }: { newsletter: NewsletterData | null }) {
+export default function NewsletterEdit({
+    newsletter,
+    segments = [],
+    otherNewsletters = [],
+}: {
+    newsletter: NewsletterData | null;
+    segments?: Array<{ id: number; name: string; also: string }>;
+    otherNewsletters?: Array<{ id: number; name: string }>;
+}) {
     const form = useForm({
         name: newsletter?.name ?? '',
         slug: newsletter?.slug ?? '',
@@ -69,6 +77,46 @@ export default function NewsletterEdit({ newsletter }: { newsletter: NewsletterD
                     )}
                 </div>
             </form>
+            {newsletter && (
+                <section className="mt-6 max-w-xl space-y-3">
+                    <h2 className="font-semibold">Segments</h2>
+                    <ul className="text-sm">
+                        {segments.map((segment) => (
+                            <li key={segment.id}>
+                                {segment.name} — also confirmed on {segment.also}
+                            </li>
+                        ))}
+                    </ul>
+                    {otherNewsletters.length > 0 && (
+                        <form
+                            className="space-y-2"
+                            onSubmit={(event) => {
+                                event.preventDefault();
+                                const data = new FormData(event.currentTarget);
+                                router.post(`/staff/newsletters/${newsletter.id}/segments`, {
+                                    name: String(data.get('name') ?? ''),
+                                    also_newsletter_id: String(data.get('also_newsletter_id') ?? ''),
+                                });
+                            }}
+                        >
+                            <input name="name" placeholder="Segment name" className="w-full rounded border px-3 py-2" required />
+                            <select name="also_newsletter_id" className="w-full rounded border px-3 py-2" required defaultValue="">
+                                <option value="" disabled>
+                                    Also confirmed on
+                                </option>
+                                {otherNewsletters.map((other) => (
+                                    <option key={other.id} value={other.id}>
+                                        {other.name}
+                                    </option>
+                                ))}
+                            </select>
+                            <button type="submit" className="rounded border px-3 py-2 text-sm">
+                                Add segment
+                            </button>
+                        </form>
+                    )}
+                </section>
+            )}
         </WorkspaceLayout>
     );
 }

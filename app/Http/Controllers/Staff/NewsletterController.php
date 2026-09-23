@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
 use App\Models\Newsletter;
+use App\Models\NewsletterSegment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -64,6 +65,12 @@ class NewsletterController extends Controller
                 'legacy_list' => $newsletter->legacy_list?->value,
                 'archived_at' => $newsletter->archived_at?->toIso8601String(),
             ],
+            'segments' => $newsletter->segments()->with('alsoNewsletter')->get()->map(fn (NewsletterSegment $segment) => [
+                'id' => $segment->id,
+                'name' => $segment->name,
+                'also' => $segment->alsoNewsletter->name,
+            ]),
+            'otherNewsletters' => Newsletter::query()->active()->where('id', '!=', $newsletter->id)->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -75,6 +82,25 @@ class NewsletterController extends Controller
             'name' => $validated['name'],
             'slug' => $validated['slug'] !== '' ? $validated['slug'] : $newsletter->slug,
             'description' => $validated['description'] !== '' ? $validated['description'] : null,
+        ]);
+
+        return back();
+    }
+
+    public function storeSegment(Request $request, Newsletter $newsletter): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'also_newsletter_id' => ['required', 'integer', 'exists:newsletters,id'],
+        ]);
+
+        if ((int) $validated['also_newsletter_id'] === $newsletter->id) {
+            return back()->withErrors(['also_newsletter_id' => 'Choose a different newsletter.']);
+        }
+
+        $newsletter->segments()->create([
+            'name' => $validated['name'],
+            'also_newsletter_id' => $validated['also_newsletter_id'],
         ]);
 
         return back();

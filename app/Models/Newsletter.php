@@ -36,6 +36,14 @@ class Newsletter extends Model
     /**
      * @return HasMany<MailingListSubscription, $this>
      */
+    /**
+     * @return HasMany<NewsletterSegment, $this>
+     */
+    public function segments(): HasMany
+    {
+        return $this->hasMany(NewsletterSegment::class);
+    }
+
     public function subscriptions(): HasMany
     {
         return $this->hasMany(MailingListSubscription::class);

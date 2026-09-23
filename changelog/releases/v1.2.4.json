@@ -1,0 +1,22 @@
+{
+  "version": "v1.2.4",
+  "released_at": "2026-09-23",
+  "previous_version": "v1.2.3",
+  "theme": "Newsletter segment filters",
+  "change_types": ["added"],
+  "topic_tags": ["internal-only"],
+  "summary": "Staff can target a send to people confirmed on two newsletters, and an empty match sends to nobody.",
+  "detailed_changes": [
+    "Added newsletter_segments: a newsletter plus a second newsletter the contact must also have confirmed.",
+    "Publish emails use that intersection when a post selects a segment, still dropping suppressed addresses.",
+    "An empty intersection completes the campaign with zero recipients."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff/newsletters, staff post email campaign",
+    "User groups affected: staff editors; confirmed subscribers",
+    "Public impact: segmented sends only reach the overlap",
+    "Internal impact: channel-list sends stay unchanged when no segment is selected"
+  ],
+  "pr": 0
+}
