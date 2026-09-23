@@ -77,4 +77,22 @@ return [
         'provider_name' => env('CLOUDRON_OIDC_PROVIDER_NAME', 'Cloudron'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Stripe (membership billing — test mode only for v1.4.0)
+    |--------------------------------------------------------------------------
+    |
+    | Live mode keys and real charges require separate operational sign-off.
+    | Leave STRIPE_SECRET empty locally/CI to use the fake billing client.
+    |
+    */
+
+    'stripe' => [
+        'secret' => env('STRIPE_SECRET'),
+        'publishable' => env('STRIPE_PUBLISHABLE'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+        'price_monthly' => env('STRIPE_PRICE_MONTHLY'),
+        'price_yearly' => env('STRIPE_PRICE_YEARLY'),
+    ],
+
 ];

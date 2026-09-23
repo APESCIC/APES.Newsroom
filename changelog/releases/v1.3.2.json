@@ -1,0 +1,22 @@
+{
+  "version": "v1.3.2",
+  "released_at": "2026-09-23",
+  "previous_version": "v1.3.1",
+  "theme": "Stripe test-mode memberships",
+  "change_types": ["added"],
+  "topic_tags": ["public-facing"],
+  "summary": "Paid monthly and yearly membership tiers use Stripe Checkout in test mode, with webhooks updating member paying status.",
+  "detailed_changes": [
+    "Added membership plans (monthly/yearly) editable by staff, with optional Stripe test price ids.",
+    "Account portal can start Checkout or open the Billing Portal; webhooks mark memberships active, past due, or canceled.",
+    "Documented test-mode keys in docs/membership.md; live Stripe charges remain unauthorized."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /account, /staff/membership-plans, /stripe/webhook",
+    "User groups affected: public members; staff",
+    "Public impact: optional paid supporter checkout in test mode when keys are configured",
+    "Internal impact: fake Stripe client in CI; no live-mode authorization"
+  ],
+  "pr": 0
+}

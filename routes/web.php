@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Role;
+use App\Http\Controllers\Account\MembershipCheckoutController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Admin\GhostContentImportController;
 use App\Http\Controllers\Admin\GhostMembersImportController;
@@ -29,9 +30,11 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\Staff\CampaignController as StaffCampaignController;
 use App\Http\Controllers\Staff\MediaController as StaffMediaController;
+use App\Http\Controllers\Staff\MembershipPlanController as StaffMembershipPlanController;
 use App\Http\Controllers\Staff\NewsletterController as StaffNewsletterController;
 use App\Http\Controllers\Staff\PageController as StaffPageController;
 use App\Http\Controllers\Staff\PostController as StaffPostController;
+use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\TagRssController;
 use Illuminate\Support\Facades\Route;
 
@@ -42,6 +45,7 @@ Route::get('/legal/rights', [LegalController::class, 'rights'])->name('legal.rig
 Route::get('/change-log-hub', ChangeLogHubController::class)->name('change-log-hub');
 
 Route::get('/health', HealthController::class)->name('health');
+Route::post('/stripe/webhook', StripeWebhookController::class)->name('stripe.webhook');
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 Route::get('/rss.xml', [RssController::class, 'index'])->name('rss');
 
@@ -84,6 +88,9 @@ Route::middleware(['auth', 'verified'])->prefix('account')->name('account.')->gr
     Route::post('/mailing', [PreferenceController::class, 'updateAccount'])->name('mailing.update');
     Route::get('/public-profile', [ProfileController::class, 'edit'])->name('public-profile');
     Route::post('/public-profile', [ProfileController::class, 'update'])->name('public-profile.update');
+    Route::post('/membership/checkout', [MembershipCheckoutController::class, 'checkout'])->name('membership.checkout');
+    Route::post('/membership/portal', [MembershipCheckoutController::class, 'portal'])->name('membership.portal');
+    Route::get('/membership/success', [MembershipCheckoutController::class, 'success'])->name('membership.success');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -152,6 +159,9 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
         Route::post('/newsletters/{newsletter}/archive', [StaffNewsletterController::class, 'archive'])->name('newsletters.archive');
         Route::post('/newsletters/{newsletter}/segments', [StaffNewsletterController::class, 'storeSegment'])->name('newsletters.segments.store');
         Route::post('/newsletters/{newsletter}/restore', [StaffNewsletterController::class, 'restore'])->name('newsletters.restore');
+
+        Route::get('/membership-plans', [StaffMembershipPlanController::class, 'index'])->name('membership-plans.index');
+        Route::patch('/membership-plans/{plan}', [StaffMembershipPlanController::class, 'update'])->name('membership-plans.update');
 
         Route::get('/pages', [StaffPageController::class, 'index'])->name('pages.index');
         Route::get('/pages/new', [StaffPageController::class, 'create'])->name('pages.create');

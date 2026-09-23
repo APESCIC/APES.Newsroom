@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, router } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import PublicLayout from '../../Components/Layout/PublicLayout';
 
@@ -15,17 +15,43 @@ type MembershipSummary = {
     is_paying: boolean;
     interval: string | null;
     current_period_end: string | null;
+    has_stripe_customer: boolean;
+};
+
+type PlanOption = {
+    slug: string;
+    name: string;
+    interval: string;
+    amount_pence: number;
+    currency: string;
 };
 
 type ProfileProps = {
     user: ProfileUser;
     membership: MembershipSummary;
+    plans?: PlanOption[];
+    stripe_enabled?: boolean;
     status?: string;
     can_delete_account: boolean;
     deletion_block_reason: string | null;
 };
 
-export default function Profile({ user, membership, status, can_delete_account, deletion_block_reason }: ProfileProps) {
+function formatMoney(amountPence: number, currency: string): string {
+    return new Intl.NumberFormat('en-GB', {
+        style: 'currency',
+        currency: currency.toUpperCase(),
+    }).format(amountPence / 100);
+}
+
+export default function Profile({
+    user,
+    membership,
+    plans = [],
+    stripe_enabled = false,
+    status,
+    can_delete_account,
+    deletion_block_reason,
+}: ProfileProps) {
     const { data, setData, patch, processing, errors, delete: destroy } = useForm({
         name: user.name,
         email: user.email,
@@ -43,6 +69,14 @@ export default function Profile({ user, membership, status, can_delete_account, 
     };
     const deleteError = (errors as Record<string, string>).delete_account;
 
+    const startCheckout = (plan: string) => {
+        router.post('/account/membership/checkout', { plan });
+    };
+
+    const openPortal = () => {
+        router.post('/account/membership/portal');
+    };
+
     return (
         <PublicLayout>
             <Head title="Your account" />
@@ -53,6 +87,11 @@ export default function Profile({ user, membership, status, can_delete_account, 
 
                     {status === 'profile-updated' && <p className="status-badge-success mt-4">Profile updated.</p>}
                     {status === 'email-verified' && <p className="status-badge-success mt-4">Email verified.</p>}
+                    {status === 'membership-checkout-started' && (
+                        <p className="status-badge-success mt-4" role="status">
+                            Checkout completed. Your membership status updates when Stripe confirms payment.
+                        </p>
+                    )}
 
                     <form onSubmit={submit} className="mt-6 flex flex-col gap-4">
                         <div>
@@ -93,6 +132,34 @@ export default function Profile({ user, membership, status, can_delete_account, 
                         <p className="mt-1 text-sm text-muted">
                             Free membership includes your account and newsletter preferences. Paid tiers unlock gated posts when available.
                         </p>
+                    )}
+
+                    {stripe_enabled && !membership.is_paying && plans.length > 0 && (
+                        <ul className="mt-4 flex flex-col gap-3">
+                            {plans.map((plan) => (
+                                <li key={plan.slug} className="flex items-center justify-between gap-3">
+                                    <div>
+                                        <p className="text-sm font-bold text-body">{plan.name}</p>
+                                        <p className="text-sm text-muted">
+                                            {formatMoney(plan.amount_pence, plan.currency)} / {plan.interval}
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="button-primary shrink-0"
+                                        onClick={() => startCheckout(plan.slug)}
+                                    >
+                                        Subscribe
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+
+                    {membership.has_stripe_customer && (
+                        <button type="button" className="button-secondary mt-4" onClick={openPortal}>
+                            Manage billing
+                        </button>
                     )}
                 </div>
 
