@@ -28,6 +28,7 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\Staff\CampaignController as StaffCampaignController;
 use App\Http\Controllers\Staff\MediaController as StaffMediaController;
+use App\Http\Controllers\Staff\NewsletterController as StaffNewsletterController;
 use App\Http\Controllers\Staff\PageController as StaffPageController;
 use App\Http\Controllers\Staff\PostController as StaffPostController;
 use App\Http\Controllers\TagRssController;
@@ -139,6 +140,14 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
         Route::get('/posts/{post}/preview', [StaffPostController::class, 'preview'])->name('posts.preview');
         Route::get('/posts/{post}/campaign', [StaffCampaignController::class, 'preview'])->name('posts.campaign.preview');
         Route::post('/posts/{post}/campaign/test-send', [StaffCampaignController::class, 'testSend'])->name('posts.campaign.test');
+
+        Route::get('/newsletters', [StaffNewsletterController::class, 'index'])->name('newsletters.index');
+        Route::get('/newsletters/new', [StaffNewsletterController::class, 'create'])->name('newsletters.create');
+        Route::post('/newsletters', [StaffNewsletterController::class, 'store'])->name('newsletters.store');
+        Route::get('/newsletters/{newsletter}/edit', [StaffNewsletterController::class, 'edit'])->name('newsletters.edit');
+        Route::patch('/newsletters/{newsletter}', [StaffNewsletterController::class, 'update'])->name('newsletters.update');
+        Route::post('/newsletters/{newsletter}/archive', [StaffNewsletterController::class, 'archive'])->name('newsletters.archive');
+        Route::post('/newsletters/{newsletter}/restore', [StaffNewsletterController::class, 'restore'])->name('newsletters.restore');
 
         Route::get('/pages', [StaffPageController::class, 'index'])->name('pages.index');
         Route::get('/pages/new', [StaffPageController::class, 'create'])->name('pages.create');
