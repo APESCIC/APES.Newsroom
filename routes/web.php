@@ -31,6 +31,7 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\Staff\CampaignController as StaffCampaignController;
 use App\Http\Controllers\Staff\MediaController as StaffMediaController;
+use App\Http\Controllers\Staff\MemberController as StaffMemberController;
 use App\Http\Controllers\Staff\MembershipPlanController as StaffMembershipPlanController;
 use App\Http\Controllers\Staff\MetricsController as StaffMetricsController;
 use App\Http\Controllers\Staff\NewsletterController as StaffNewsletterController;
@@ -157,6 +158,7 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
         Route::post('/posts/{post}/campaign/test-send', [StaffCampaignController::class, 'testSend'])->name('posts.campaign.test');
 
         Route::get('/metrics', StaffMetricsController::class)->name('metrics.index');
+        Route::get('/members', StaffMemberController::class)->name('members.index');
 
         Route::get('/newsletters', [StaffNewsletterController::class, 'index'])->name('newsletters.index');
         Route::get('/newsletters/new', [StaffNewsletterController::class, 'create'])->name('newsletters.create');
