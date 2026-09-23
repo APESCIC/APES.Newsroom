@@ -431,6 +431,7 @@ class PostController extends Controller
             'excerpt' => $post->excerpt,
             'content' => $post->content,
             'status' => $post->status->value,
+            'visibility' => $post->visibility?->value ?? 'public',
             'channel' => $post->channel->value,
             'hero_image' => $post->hero_image,
             'hero_image_alt' => $post->hero_image_alt,

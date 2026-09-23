@@ -127,11 +127,25 @@ class CampaignService
         $post->loadMissing('author');
 
         $content = is_array($post->content) ? $post->content : [];
+        $visibility = $post->visibility?->value ?? 'public';
+        $html = $visibility === 'public'
+            ? app(BlockRenderer::class)->toHtml($content)
+            : null;
+
+        $excerpt = $post->excerpt;
+        if ($visibility !== 'public') {
+            $cta = $visibility === 'paid'
+                ? 'This article is for paid members. Subscribe in your account to read the full post.'
+                : 'This article is for members. Create a free account to read the full post.';
+            $excerpt = trim((string) $excerpt);
+            $excerpt = $excerpt !== '' ? $excerpt."\n\n".$cta : $cta;
+        }
 
         return [
             'title' => $post->title,
-            'excerpt' => $post->excerpt,
-            'html' => app(BlockRenderer::class)->toHtml($content),
+            'excerpt' => $excerpt,
+            'html' => $html,
+            'visibility' => $visibility,
             'hero_image' => $post->hero_image,
             'hero_image_alt' => $post->hero_image_alt,
             'author' => $post->author->name,

@@ -5,7 +5,10 @@ export type PublicPage = {
     title: string;
     slug: string;
     excerpt: string | null;
-    html: string;
+    html: string | null;
+    visibility?: string;
+    gated?: boolean;
+    gate?: { reason: string | null; cta: { label: string; href: string } | null } | null;
     author: string;
     published_at: string | null;
     meta_title: string;
@@ -57,10 +60,26 @@ export default function PageShow({
                         )}
                     </figure>
                 )}
-                <div
-                    className="prose mt-8 max-w-none"
-                    dangerouslySetInnerHTML={{ __html: page.html }}
-                />
+                {page.gated ? (
+                    <div className="glass-form-panel mt-8" role="status">
+                        <p className="text-body">
+                            {page.gate?.reason === 'paid'
+                                ? 'This page is for paid members.'
+                                : 'This page is for members.'}
+                        </p>
+                        {page.excerpt && <p className="mt-2 text-sm text-muted">{page.excerpt}</p>}
+                        {page.gate?.cta && (
+                            <a href={page.gate.cta.href} className="button-primary mt-4 inline-flex">
+                                {page.gate.cta.label}
+                            </a>
+                        )}
+                    </div>
+                ) : (
+                    <div
+                        className="prose mt-8 max-w-none"
+                        dangerouslySetInnerHTML={{ __html: page.html ?? '' }}
+                    />
+                )}
             </article>
         </PublicLayout>
     );

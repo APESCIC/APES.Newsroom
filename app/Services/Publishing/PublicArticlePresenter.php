@@ -2,27 +2,46 @@
 
 namespace App\Services\Publishing;
 
+use App\Enums\ContentVisibility;
 use App\Models\Post;
+use App\Models\User;
 use App\Services\EditorJs\BlockRenderer;
+use App\Services\Membership\ContentAccessService;
 
 class PublicArticlePresenter
 {
-    public function __construct(private readonly BlockRenderer $renderer) {}
+    public function __construct(
+        private readonly BlockRenderer $renderer,
+        private readonly ContentAccessService $access,
+    ) {}
 
     /**
      * @return array<string, mixed>
      */
-    public function payload(Post $post): array
+    public function payload(Post $post, ?User $viewer = null): array
     {
         $post->loadMissing(['author', 'authors', 'tags']);
 
         $url = route('articles.show', $post->slug, absolute: true);
+        $visibility = $post->visibility instanceof ContentVisibility
+            ? $post->visibility
+            : ContentVisibility::Public;
+        $gate = $this->access->evaluate($visibility, $viewer);
+        $html = $gate['allowed']
+            ? $this->renderer->toHtml($post->content ?? ['blocks' => []])
+            : null;
 
         return [
             'title' => $post->title,
             'slug' => $post->slug,
             'excerpt' => $post->excerpt,
-            'html' => $this->renderer->toHtml($post->content ?? ['blocks' => []]),
+            'html' => $html,
+            'visibility' => $visibility->value,
+            'gated' => ! $gate['allowed'],
+            'gate' => $gate['allowed'] ? null : [
+                'reason' => $gate['reason'],
+                'cta' => $gate['cta'],
+            ],
             'channel' => $post->channel->label(),
             'channel_slug' => $post->channel->slug(),
             'author' => $post->author->name,

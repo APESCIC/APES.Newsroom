@@ -25,7 +25,7 @@ class ArticleController extends Controller
             ->firstOrFail();
 
         return Inertia::render('Articles/Show', [
-            'article' => $articles->payload($post),
+            'article' => $articles->payload($post, $request->user()),
             'comments' => $comments->approvedPayloadForPost($post),
             'reactions' => $reactions->countsForPost($post, $request->user()),
             'canEngage' => $request->user()?->hasVerifiedEmail() ?? false,

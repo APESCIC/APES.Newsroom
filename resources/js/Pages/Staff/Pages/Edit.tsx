@@ -11,6 +11,7 @@ type PageData = {
     excerpt: string | null;
     content: OutputData;
     status: string;
+    visibility?: string;
     hero_image: string | null;
     hero_image_alt: string | null;
     hero_image_caption: string | null;
@@ -32,6 +33,7 @@ type PageForm = {
     slug: string;
     excerpt: string;
     content: OutputData;
+    visibility: string;
     hero_image: string;
     hero_image_alt: string;
     hero_image_caption: string;
@@ -50,6 +52,7 @@ function formFromPage(page: PageData | null): PageForm {
         slug: page?.slug ?? '',
         excerpt: page?.excerpt ?? '',
         content: page?.content ?? emptyContent,
+        visibility: page?.visibility ?? 'public',
         hero_image: page?.hero_image ?? '',
         hero_image_alt: page?.hero_image_alt ?? '',
         hero_image_caption: page?.hero_image_caption ?? '',
@@ -161,6 +164,19 @@ export default function PagesEdit({ page }: { page: PageData | null }) {
                         value={data.excerpt}
                         onChange={(e) => setData('excerpt', e.target.value)}
                     />
+                </label>
+
+                <label className="flex flex-col gap-1 text-sm font-semibold">
+                    Visibility
+                    <select
+                        value={data.visibility}
+                        onChange={(e) => setData('visibility', e.target.value)}
+                        className="rounded border px-3 py-2 font-normal"
+                    >
+                        <option value="public">Public</option>
+                        <option value="members">Members only</option>
+                        <option value="paid">Paid members only</option>
+                    </select>
                 </label>
 
                 <div>
