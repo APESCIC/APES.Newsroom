@@ -51,4 +51,25 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Content API (headless reads)
+    |--------------------------------------------------------------------------
+    */
+
+    'content_api' => [
+        'key' => env('NEWSROOM_CONTENT_API_KEY'),
+        'rate_per_minute' => (int) env('NEWSROOM_CONTENT_API_RATE_PER_MINUTE', 120),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Admin API (editorial writes)
+    |--------------------------------------------------------------------------
+    */
+
+    'admin_api' => [
+        'rate_per_minute' => (int) env('NEWSROOM_ADMIN_API_RATE_PER_MINUTE', 60),
+    ],
+
 ];
