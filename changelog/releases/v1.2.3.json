@@ -1,0 +1,22 @@
+{
+  "version": "v1.2.3",
+  "released_at": "2026-09-23",
+  "previous_version": "v1.2.2",
+  "theme": "Multiple newsletter audiences",
+  "change_types": ["added"],
+  "topic_tags": ["public-facing"],
+  "summary": "Contacts can subscribe to more than one newsletter, and unsubscribe applies to that audience only.",
+  "detailed_changes": [
+    "Non-channel newsletters can be subscribed with double opt-in without a MailingList value.",
+    "Unsubscribing one newsletter leaves other confirmed audiences in place.",
+    "Account and signed preference pages list extra newsletters alongside the three channel lists."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /account/mailing, /mailing/preferences",
+    "User groups affected: mailing contacts and account holders",
+    "Public impact: people can join more than one audience",
+    "Internal impact: channel lists continue to use legacy_list"
+  ],
+  "pr": 0
+}
