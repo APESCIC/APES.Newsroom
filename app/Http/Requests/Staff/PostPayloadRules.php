@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Staff;
 
 use App\Enums\Channel;
+use App\Enums\ContentVisibility;
 use App\Enums\MailingList;
 use Illuminate\Validation\Rule;
 
@@ -18,6 +19,7 @@ trait PostPayloadRules
             'excerpt' => ['nullable', 'string', 'max:1000'],
             'content' => ['required', 'array'],
             'channel' => ['required', Rule::enum(Channel::class)],
+            'visibility' => ['sometimes', Rule::enum(ContentVisibility::class)],
             'hero_image' => ['nullable', 'string', 'max:2048'],
             'hero_image_alt' => ['nullable', 'string', 'max:255'],
             'hero_image_caption' => ['nullable', 'string', 'max:500'],

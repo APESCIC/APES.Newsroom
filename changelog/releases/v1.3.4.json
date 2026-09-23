@@ -1,0 +1,22 @@
+{
+  "version": "v1.3.4",
+  "released_at": "2026-09-23",
+  "previous_version": "v1.3.3",
+  "theme": "Content gating",
+  "change_types": ["added"],
+  "topic_tags": ["public-facing"],
+  "summary": "Posts and pages can be public, members-only, or paid-only, with gated visitors seeing a CTA instead of the body.",
+  "detailed_changes": [
+    "Added visibility on posts and pages with staff controls in the editors.",
+    "Public presenters omit HTML for unauthorized viewers and show signup or subscribe CTAs.",
+    "Publish-email snapshots for gated posts store excerpt plus CTA, not the full body."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /articles/{slug}, /pages/{slug}, staff editors",
+    "User groups affected: public visitors; members; staff",
+    "Public impact: gated content no longer leaks body via article pages or publish email",
+    "Internal impact: RSS/listings remain title and excerpt only"
+  ],
+  "pr": 0
+}

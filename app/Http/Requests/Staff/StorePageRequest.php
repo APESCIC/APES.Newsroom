@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Staff;
 
+use App\Enums\ContentVisibility;
 use App\Enums\Role;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -23,6 +24,7 @@ class StorePageRequest extends FormRequest
             'slug' => ['nullable', 'string', 'max:255', 'alpha_dash', Rule::unique('pages', 'slug')],
             'excerpt' => ['nullable', 'string', 'max:1000'],
             'content' => ['required', 'array'],
+            'visibility' => ['sometimes', Rule::enum(ContentVisibility::class)],
             'hero_image' => ['nullable', 'string', 'max:2048'],
             'hero_image_alt' => ['nullable', 'string', 'max:255'],
             'hero_image_caption' => ['nullable', 'string', 'max:500'],

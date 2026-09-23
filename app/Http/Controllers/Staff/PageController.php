@@ -186,6 +186,7 @@ class PageController extends Controller
             'excerpt' => $page->excerpt,
             'content' => $page->content,
             'status' => $page->status->value,
+            'visibility' => $page->visibility?->value ?? 'public',
             'hero_image' => $page->hero_image,
             'hero_image_alt' => $page->hero_image_alt,
             'hero_image_caption' => $page->hero_image_caption,

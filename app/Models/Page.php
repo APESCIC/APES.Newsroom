@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ContentVisibility;
 use App\Enums\PostStatus;
 use App\Enums\Role;
 use Database\Factories\PageFactory;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
-    'ghost_id', 'author_id', 'title', 'slug', 'excerpt', 'content', 'status',
+    'ghost_id', 'author_id', 'title', 'slug', 'excerpt', 'content', 'status', 'visibility',
     'hero_image', 'hero_image_alt', 'hero_image_caption', 'hero_image_credit',
     'meta_title', 'meta_description', 'canonical_url', 'published_at',
 ])]
@@ -27,6 +28,7 @@ class Page extends Model
         return [
             'content' => 'array',
             'status' => PostStatus::class,
+            'visibility' => ContentVisibility::class,
             'published_at' => 'datetime',
         ];
     }

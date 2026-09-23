@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Staff;
 
+use App\Enums\ContentVisibility;
 use App\Enums\Role;
 use App\Models\Page;
 use Illuminate\Foundation\Http\FormRequest;
@@ -27,6 +28,7 @@ class UpdatePageRequest extends FormRequest
             'slug' => ['required', 'string', 'max:255', 'alpha_dash', Rule::unique('pages', 'slug')->ignore($page->id)],
             'excerpt' => ['nullable', 'string', 'max:1000'],
             'content' => ['required', 'array'],
+            'visibility' => ['sometimes', Rule::enum(ContentVisibility::class)],
             'hero_image' => ['nullable', 'string', 'max:2048'],
             'hero_image_alt' => ['nullable', 'string', 'max:255'],
             'hero_image_caption' => ['nullable', 'string', 'max:500'],

@@ -2,27 +2,46 @@
 
 namespace App\Services\Publishing;
 
+use App\Enums\ContentVisibility;
 use App\Models\Page;
+use App\Models\User;
 use App\Services\EditorJs\BlockRenderer;
+use App\Services\Membership\ContentAccessService;
 
 class PublicPagePresenter
 {
-    public function __construct(private readonly BlockRenderer $renderer) {}
+    public function __construct(
+        private readonly BlockRenderer $renderer,
+        private readonly ContentAccessService $access,
+    ) {}
 
     /**
      * @return array<string, mixed>
      */
-    public function payload(Page $page): array
+    public function payload(Page $page, ?User $viewer = null): array
     {
         $page->loadMissing(['author']);
 
         $url = route('pages.show', $page->slug, absolute: true);
+        $visibility = $page->visibility instanceof ContentVisibility
+            ? $page->visibility
+            : ContentVisibility::Public;
+        $gate = $this->access->evaluate($visibility, $viewer);
+        $html = $gate['allowed']
+            ? $this->renderer->toHtml($page->content ?? ['blocks' => []])
+            : null;
 
         return [
             'title' => $page->title,
             'slug' => $page->slug,
             'excerpt' => $page->excerpt,
-            'html' => $this->renderer->toHtml($page->content ?? ['blocks' => []]),
+            'html' => $html,
+            'visibility' => $visibility->value,
+            'gated' => ! $gate['allowed'],
+            'gate' => $gate['allowed'] ? null : [
+                'reason' => $gate['reason'],
+                'cta' => $gate['cta'],
+            ],
             'author' => $page->author->name,
             'author_id' => $page->author_id,
             'published_at' => $page->published_at?->toIso8601String(),

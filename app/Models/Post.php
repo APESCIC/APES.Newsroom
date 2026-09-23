@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\Channel;
+use App\Enums\ContentVisibility;
 use App\Enums\PostStatus;
 use App\Enums\Role;
 use App\Services\EditorJs\BodyTextExtractor;
@@ -17,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
-    'ghost_id', 'author_id', 'title', 'slug', 'excerpt', 'content', 'body_text', 'status', 'channel',
+    'ghost_id', 'author_id', 'title', 'slug', 'excerpt', 'content', 'body_text', 'status', 'visibility', 'channel',
     'hero_image', 'hero_image_alt', 'hero_image_caption', 'hero_image_credit',
     'meta_title', 'meta_description', 'canonical_url', 'published_at',
     'scheduled_for', 'email_on_publish', 'mailing_lists', 'newsletter_segment_id', 'review_notes', 'needs_import_review',
@@ -43,6 +44,7 @@ class Post extends Model
         return [
             'content' => 'array',
             'status' => PostStatus::class,
+            'visibility' => ContentVisibility::class,
             'channel' => Channel::class,
             'published_at' => 'datetime',
             'scheduled_for' => 'datetime',

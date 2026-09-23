@@ -23,7 +23,10 @@ export type Article = {
     title: string;
     slug: string;
     excerpt: string | null;
-    html: string;
+    html: string | null;
+    visibility?: string;
+    gated?: boolean;
+    gate?: { reason: string | null; cta: { label: string; href: string } | null } | null;
     channel: string;
     channel_slug: string;
     author: string;
@@ -190,10 +193,26 @@ export default function ArticleShow({
                             </ul>
                         )}
                         <ArticleHero article={article} />
-                        <div
-                            className="prose mt-8 max-w-none"
-                            dangerouslySetInnerHTML={{ __html: article.html }}
-                        />
+                        {article.gated ? (
+                            <div className="glass-form-panel mt-8" role="status">
+                                <p className="text-body">
+                                    {article.gate?.reason === 'paid'
+                                        ? 'This article is for paid members.'
+                                        : 'This article is for members.'}
+                                </p>
+                                {article.excerpt && <p className="mt-2 text-sm text-muted">{article.excerpt}</p>}
+                                {article.gate?.cta && (
+                                    <a href={article.gate.cta.href} className="button-primary mt-4 inline-flex">
+                                        {article.gate.cta.label}
+                                    </a>
+                                )}
+                            </div>
+                        ) : (
+                            <div
+                                className="prose mt-8 max-w-none"
+                                dangerouslySetInnerHTML={{ __html: article.html ?? '' }}
+                            />
+                        )}
                     </article>
 
                     {!preview && (

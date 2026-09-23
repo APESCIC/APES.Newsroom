@@ -14,6 +14,7 @@ type PostData = {
     excerpt: string | null;
     content: OutputData;
     status: string;
+    visibility?: string;
     channel: string;
     hero_image: string | null;
     hero_image_alt: string | null;
@@ -45,6 +46,7 @@ type PostForm = {
     excerpt: string;
     content: OutputData;
     channel: string;
+    visibility: string;
     hero_image: string;
     hero_image_alt: string;
     hero_image_caption: string;
@@ -68,6 +70,7 @@ const INLINE_ERROR_FIELDS = [
     'title',
     'slug',
     'channel',
+    'visibility',
     'excerpt',
     'tags',
     'content',
@@ -93,6 +96,7 @@ function formFromPost(post: PostData | null, channels: Channel[]): PostForm {
         excerpt: post?.excerpt ?? '',
         content: post?.content ?? emptyContent,
         channel: post?.channel ?? channels[0]?.value ?? 'apes_cic',
+        visibility: post?.visibility ?? 'public',
         hero_image: post?.hero_image ?? '',
         hero_image_alt: post?.hero_image_alt ?? '',
         hero_image_caption: post?.hero_image_caption ?? '',
@@ -358,6 +362,20 @@ export default function PostEdit({
                             ))}
                         </select>
                         <FieldError message={errors.channel} />
+                    </div>
+                    <div>
+                        <label htmlFor="visibility">Visibility</label>
+                        <select
+                            id="visibility"
+                            value={data.visibility}
+                            onChange={(e) => setData('visibility', e.target.value)}
+                            className="w-full rounded border px-3 py-2"
+                        >
+                            <option value="public">Public</option>
+                            <option value="members">Members only</option>
+                            <option value="paid">Paid members only</option>
+                        </select>
+                        <FieldError message={errors.visibility} />
                     </div>
                     <div className="flex items-center gap-2">
                         <input
