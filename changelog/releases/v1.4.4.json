@@ -1,0 +1,26 @@
+{
+  "version": "v1.4.4",
+  "released_at": "2026-09-23",
+  "previous_version": "v1.4.3",
+  "theme": "Unsplash picker",
+  "change_types": [
+    "added"
+  ],
+  "topic_tags": [
+    "internal-only"
+  ],
+  "summary": "Staff editors can search Unsplash for hero images with attribution when UNSPLASH_ACCESS_KEY is configured.",
+  "detailed_changes": [
+    "Added Unsplash search/select staff media endpoints that no-op cleanly without an access key.",
+    "Added an Unsplash picker on post and page editors that fills hero image URL, alt, and credit.",
+    "Documented UNSPLASH_ACCESS_KEY in .env.example."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff/posts/*, /staff/pages/*, /staff/media/unsplash",
+    "User groups affected: staff editors",
+    "Public impact: hero credits when Unsplash images are selected",
+    "Internal impact: optional integration gated by env key"
+  ],
+  "pr": 208
+}

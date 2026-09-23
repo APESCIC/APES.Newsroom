@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
+use App\Services\Integrations\UnsplashService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -100,6 +101,51 @@ class MediaController extends Controller
                 'url' => $publicUrl,
                 'title' => $title !== '' ? $title : null,
                 'size' => $sizeLabel,
+            ],
+        ]);
+    }
+
+    public function unsplashSearch(Request $request, UnsplashService $unsplash): JsonResponse
+    {
+        if (! $unsplash->enabled()) {
+            return response()->json([
+                'enabled' => false,
+                'results' => [],
+                'message' => 'Unsplash is not configured.',
+            ]);
+        }
+
+        $validated = $request->validate([
+            'q' => ['required', 'string', 'max:120'],
+        ]);
+
+        return response()->json([
+            'enabled' => true,
+            'results' => $unsplash->search($validated['q']),
+        ]);
+    }
+
+    public function unsplashSelect(Request $request, UnsplashService $unsplash): JsonResponse
+    {
+        if (! $unsplash->enabled()) {
+            return response()->json(['message' => 'Unsplash is not configured.'], 503);
+        }
+
+        $validated = $request->validate([
+            'id' => ['required', 'string', 'max:64'],
+            'url' => ['required', 'url', 'max:2048'],
+            'credit' => ['required', 'string', 'max:255'],
+            'alt' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $unsplash->trackDownload($validated['id']);
+
+        return response()->json([
+            'success' => 1,
+            'file' => [
+                'url' => $validated['url'],
+                'credit' => $validated['credit'],
+                'alt' => $validated['alt'] ?? '',
             ],
         ]);
     }

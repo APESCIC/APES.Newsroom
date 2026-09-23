@@ -2,6 +2,7 @@ import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useEffect, useRef } from 'react';
 import type { OutputData } from '@editorjs/editorjs';
 import EditorJsField from '../../../Components/editor/EditorJsField';
+import UnsplashPicker from '../../../Components/Staff/UnsplashPicker';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
 
 type PageData = {
@@ -216,6 +217,26 @@ export default function PagesEdit({ page }: { page: PageData | null }) {
                             onChange={(e) => setData('meta_description', e.target.value)}
                         />
                     </label>
+                    <label className="block text-sm md:col-span-2">
+                        <span>Hero credit</span>
+                        <input
+                            className="mt-1 w-full rounded-control border border-border px-3 py-2"
+                            value={data.hero_image_credit}
+                            onChange={(e) => setData('hero_image_credit', e.target.value)}
+                        />
+                    </label>
+                    <div className="md:col-span-2">
+                        <UnsplashPicker
+                            onSelect={({ url, credit, alt }) => {
+                                setData((current) => ({
+                                    ...current,
+                                    hero_image: url,
+                                    hero_image_credit: credit,
+                                    hero_image_alt: alt || current.hero_image_alt,
+                                }));
+                            }}
+                        />
+                    </div>
                 </fieldset>
 
                 <div className="flex flex-wrap gap-3">
