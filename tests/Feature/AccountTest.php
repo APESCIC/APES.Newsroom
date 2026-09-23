@@ -41,7 +41,8 @@ class AccountTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Account/Profile')
                 ->where('can_delete_account', true)
-                ->where('deletion_block_reason', null));
+                ->where('deletion_block_reason', null)
+                ->where('membership.status', 'free'));
 
         $staff = User::factory()->staff()->create();
 
