@@ -17,6 +17,7 @@ class MembershipCheckoutController extends Controller
     {
         $validated = $request->validate([
             'plan' => ['required', 'string', 'exists:membership_plans,slug'],
+            'offer_code' => ['nullable', 'string', 'max:64'],
         ]);
 
         $plan = MembershipPlan::query()
@@ -25,9 +26,13 @@ class MembershipCheckoutController extends Controller
             ->firstOrFail();
 
         try {
-            $url = $this->billing->startCheckout($request->user(), $plan);
+            $url = $this->billing->startCheckout(
+                $request->user(),
+                $plan,
+                $validated['offer_code'] ?? null,
+            );
         } catch (\InvalidArgumentException $e) {
-            throw ValidationException::withMessages(['plan' => $e->getMessage()]);
+            throw ValidationException::withMessages(['offer_code' => $e->getMessage()]);
         }
 
         return redirect()->away($url);

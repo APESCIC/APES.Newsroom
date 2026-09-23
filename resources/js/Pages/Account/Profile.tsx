@@ -1,5 +1,5 @@
 import { Head, Link, useForm, router } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useState } from 'react';
 import PublicLayout from '../../Components/Layout/PublicLayout';
 
 type ProfileUser = {
@@ -68,9 +68,13 @@ export default function Profile({
         }
     };
     const deleteError = (errors as Record<string, string>).delete_account;
+    const [offerCode, setOfferCode] = useState('');
 
     const startCheckout = (plan: string) => {
-        router.post('/account/membership/checkout', { plan });
+        router.post('/account/membership/checkout', {
+            plan,
+            offer_code: offerCode || undefined,
+        });
     };
 
     const openPortal = () => {
@@ -135,25 +139,37 @@ export default function Profile({
                     )}
 
                     {stripe_enabled && !membership.is_paying && plans.length > 0 && (
-                        <ul className="mt-4 flex flex-col gap-3">
-                            {plans.map((plan) => (
-                                <li key={plan.slug} className="flex items-center justify-between gap-3">
-                                    <div>
-                                        <p className="text-sm font-bold text-body">{plan.name}</p>
-                                        <p className="text-sm text-muted">
-                                            {formatMoney(plan.amount_pence, plan.currency)} / {plan.interval}
-                                        </p>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        className="button-primary shrink-0"
-                                        onClick={() => startCheckout(plan.slug)}
-                                    >
-                                        Subscribe
-                                    </button>
-                                </li>
-                            ))}
-                        </ul>
+                        <div className="mt-4 flex flex-col gap-3">
+                            <label className="text-sm font-bold text-body">
+                                Offer code (optional)
+                                <input
+                                    id="offer_code"
+                                    className="form-input mt-1"
+                                    value={offerCode}
+                                    onChange={(e) => setOfferCode(e.target.value)}
+                                    autoComplete="off"
+                                />
+                            </label>
+                            <ul className="flex flex-col gap-3">
+                                {plans.map((plan) => (
+                                    <li key={plan.slug} className="flex items-center justify-between gap-3">
+                                        <div>
+                                            <p className="text-sm font-bold text-body">{plan.name}</p>
+                                            <p className="text-sm text-muted">
+                                                {formatMoney(plan.amount_pence, plan.currency)} / {plan.interval}
+                                            </p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="button-primary shrink-0"
+                                            onClick={() => startCheckout(plan.slug)}
+                                        >
+                                            Subscribe
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     )}
 
                     {membership.has_stripe_customer && (

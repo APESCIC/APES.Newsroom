@@ -13,7 +13,7 @@ type WorkspaceLink = {
     active: boolean;
 };
 
-function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: 'moderation' | 'posts' | 'pages' | 'newsletters' | 'membership-plans' | 'releases' }) {
+function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: 'moderation' | 'posts' | 'pages' | 'newsletters' | 'membership-plans' | 'offers' | 'releases' }) {
     const { auth } = usePage<SharedPageProps>().props;
     const links: WorkspaceLink[] = [];
 
@@ -22,6 +22,7 @@ function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: 'm
         links.push({ href: '/staff/pages', label: 'Pages', icon: 'document', active: active === 'pages' });
         links.push({ href: '/staff/newsletters', label: 'Newsletters', icon: 'document', active: active === 'newsletters' });
         links.push({ href: '/staff/membership-plans', label: 'Plans', icon: 'document', active: active === 'membership-plans' });
+        links.push({ href: '/staff/offers', label: 'Offers', icon: 'document', active: active === 'offers' });
     }
 
     if (area === 'Admin' && auth.can.accessAdmin) {
@@ -59,7 +60,7 @@ function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: 'm
     );
 }
 
-function Sidebar({ area, active, close }: { area: WorkspaceArea; active: 'moderation' | 'posts' | 'pages' | 'newsletters' | 'membership-plans' | 'releases'; close?: () => void }) {
+function Sidebar({ area, active, close }: { area: WorkspaceArea; active: 'moderation' | 'posts' | 'pages' | 'newsletters' | 'membership-plans' | 'offers' | 'releases'; close?: () => void }) {
     const { auth } = usePage<SharedPageProps>().props;
     const roleLabel = auth.user?.role.replace('_', ' ') ?? 'workspace';
 
@@ -123,7 +124,7 @@ export default function WorkspaceLayout({
     children,
 }: {
     area: WorkspaceArea;
-    active: 'moderation' | 'posts' | 'pages' | 'newsletters' | 'membership-plans' | 'releases';
+    active: 'moderation' | 'posts' | 'pages' | 'newsletters' | 'membership-plans' | 'offers' | 'releases';
     title: string;
     subtitle?: string;
     actions?: ReactNode;
