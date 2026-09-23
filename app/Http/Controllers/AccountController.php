@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateAccountRequest;
+use App\Models\MembershipPlan;
 use App\Services\Account\AccountDeletionPolicy;
 use App\Services\Account\AccountEmailChangeService;
 use App\Services\Membership\MembershipService;
@@ -36,7 +37,20 @@ class AccountController extends Controller
                 'is_paying' => $membership->isPaying(),
                 'interval' => $membership->interval,
                 'current_period_end' => $membership->current_period_end?->toIso8601String(),
+                'has_stripe_customer' => filled($membership->stripe_customer_id),
             ],
+            'plans' => MembershipPlan::query()
+                ->where('is_active', true)
+                ->orderBy('interval')
+                ->get()
+                ->map(fn (MembershipPlan $plan) => [
+                    'slug' => $plan->slug,
+                    'name' => $plan->name,
+                    'interval' => $plan->interval,
+                    'amount_pence' => $plan->amount_pence,
+                    'currency' => $plan->currency,
+                ]),
+            'stripe_enabled' => filled(config('services.stripe.secret')) || app()->environment('testing', 'local'),
             'status' => session('status'),
             'can_delete_account' => $deletionBlockReason === null,
             'deletion_block_reason' => $deletionBlockReason,

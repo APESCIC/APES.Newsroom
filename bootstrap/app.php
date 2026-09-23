@@ -28,6 +28,10 @@ return Application::configure(basePath: dirname(__DIR__))
             SecurityHeaders::class,
         ]);
 
+        $middleware->validateCsrfTokens(except: [
+            'stripe/webhook',
+        ]);
+
         // Cloudron terminates TLS and proxies requests from a single,
         // known internal address (CLOUDRON_PROXY_IP). Trust only that
         // address so X-Forwarded-* headers (scheme, host, client IP)

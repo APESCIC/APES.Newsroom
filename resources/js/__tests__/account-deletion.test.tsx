@@ -15,6 +15,7 @@ const freeMembership = {
     is_paying: false,
     interval: null,
     current_period_end: null,
+    has_stripe_customer: false,
 };
 
 describe('account self-service deletion', () => {

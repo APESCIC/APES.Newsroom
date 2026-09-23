@@ -13,7 +13,7 @@ type WorkspaceLink = {
     active: boolean;
 };
 
-function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: 'moderation' | 'posts' | 'pages' | 'newsletters' | 'releases' }) {
+function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: 'moderation' | 'posts' | 'pages' | 'newsletters' | 'membership-plans' | 'releases' }) {
     const { auth } = usePage<SharedPageProps>().props;
     const links: WorkspaceLink[] = [];
 
@@ -21,6 +21,7 @@ function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: 'm
         links.push({ href: '/staff/posts', label: 'Posts', icon: 'document', active: active === 'posts' });
         links.push({ href: '/staff/pages', label: 'Pages', icon: 'document', active: active === 'pages' });
         links.push({ href: '/staff/newsletters', label: 'Newsletters', icon: 'document', active: active === 'newsletters' });
+        links.push({ href: '/staff/membership-plans', label: 'Plans', icon: 'document', active: active === 'membership-plans' });
     }
 
     if (area === 'Admin' && auth.can.accessAdmin) {
@@ -58,7 +59,7 @@ function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: 'm
     );
 }
 
-function Sidebar({ area, active, close }: { area: WorkspaceArea; active: 'moderation' | 'posts' | 'pages' | 'newsletters' | 'releases'; close?: () => void }) {
+function Sidebar({ area, active, close }: { area: WorkspaceArea; active: 'moderation' | 'posts' | 'pages' | 'newsletters' | 'membership-plans' | 'releases'; close?: () => void }) {
     const { auth } = usePage<SharedPageProps>().props;
     const roleLabel = auth.user?.role.replace('_', ' ') ?? 'workspace';
 
@@ -122,7 +123,7 @@ export default function WorkspaceLayout({
     children,
 }: {
     area: WorkspaceArea;
-    active: 'moderation' | 'posts' | 'pages' | 'newsletters' | 'releases';
+    active: 'moderation' | 'posts' | 'pages' | 'newsletters' | 'membership-plans' | 'releases';
     title: string;
     subtitle?: string;
     actions?: ReactNode;

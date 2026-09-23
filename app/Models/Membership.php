@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable([
     'user_id',
+    'membership_plan_id',
     'status',
     'interval',
     'stripe_customer_id',
@@ -31,6 +32,14 @@ class Membership extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * @return BelongsTo<MembershipPlan, $this>
+     */
+    public function plan(): BelongsTo
+    {
+        return $this->belongsTo(MembershipPlan::class, 'membership_plan_id');
     }
 
     public function isPaying(): bool
