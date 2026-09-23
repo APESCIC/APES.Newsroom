@@ -9,6 +9,7 @@ use App\Models\Offer;
 use App\Models\OfferRedemption;
 use App\Models\StripeWebhookEvent;
 use App\Models\User;
+use App\Services\Webhooks\OutboundWebhookDispatcher;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -18,6 +19,7 @@ class MembershipBillingService
         private readonly StripeBillingClient $stripe,
         private readonly MembershipService $memberships,
         private readonly OfferService $offers,
+        private readonly OutboundWebhookDispatcher $webhooks,
     ) {}
 
     public function startCheckout(User $user, MembershipPlan $plan, ?string $offerCode = null): string
@@ -135,6 +137,8 @@ class MembershipBillingService
         ]);
         $membership->save();
 
+        $this->emitSubscriptionUpdated($membership);
+
         $offerId = (int) ($session['metadata']['offer_id'] ?? 0);
 
         if ($offerId > 0) {
@@ -192,6 +196,7 @@ class MembershipBillingService
             'current_period_end' => $periodEnd,
         ]);
         $membership->save();
+        $this->emitSubscriptionUpdated($membership);
     }
 
     /**
@@ -213,6 +218,7 @@ class MembershipBillingService
                 : now(),
         ]);
         $membership->save();
+        $this->emitSubscriptionUpdated($membership);
     }
 
     /**
@@ -233,6 +239,19 @@ class MembershipBillingService
         }
 
         $membership->fill(['status' => MembershipStatus::PastDue])->save();
+        $this->emitSubscriptionUpdated($membership);
+    }
+
+    private function emitSubscriptionUpdated(Membership $membership): void
+    {
+        $this->webhooks->dispatch(OutboundWebhookDispatcher::EVENT_SUBSCRIPTION_UPDATED, [
+            'user_id' => $membership->user_id,
+            'membership_id' => $membership->id,
+            'status' => $membership->status->value,
+            'interval' => $membership->interval,
+            'plan_id' => $membership->membership_plan_id,
+            'current_period_end' => $membership->current_period_end?->toIso8601String(),
+        ]);
     }
 
     /**

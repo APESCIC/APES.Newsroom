@@ -19,6 +19,7 @@ use App\Services\Audit\AuditLogger;
 use App\Services\EditorJs\BlockValidator;
 use App\Services\Mailing\CampaignService;
 use App\Services\Publishing\PublicArticlePresenter;
+use App\Services\Webhooks\OutboundWebhookDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -33,6 +34,7 @@ class PostController extends Controller
         private readonly BlockValidator $validator,
         private readonly CampaignService $campaigns,
         private readonly AuditLogger $audit,
+        private readonly OutboundWebhookDispatcher $webhooks,
     ) {}
 
     public function index(Request $request): Response
@@ -281,6 +283,13 @@ class PostController extends Controller
 
         if ($didPublish) {
             $this->audit->record($request->user(), 'post.published', $publishedPost, [], $request);
+            $this->webhooks->dispatch(OutboundWebhookDispatcher::EVENT_POST_PUBLISHED, [
+                'post_id' => $publishedPost->id,
+                'slug' => $publishedPost->slug,
+                'title' => $publishedPost->title,
+                'status' => $publishedPost->status->value,
+                'published_at' => $publishedPost->published_at?->toIso8601String(),
+            ]);
         }
 
         return back();

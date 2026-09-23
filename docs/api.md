@@ -99,3 +99,25 @@ Writes run through `BlockValidator` and the same field rules as the staff editor
 | PATCH | `/api/admin/v1/posts/{id}` | Update post (partial). |
 | POST | `/api/admin/v1/posts/{id}/publish` | Publish (admin+). |
 | POST | `/api/admin/v1/posts/{id}/unpublish` | Unpublish (admin+). |
+
+## Outbound webhooks
+
+Staff configure endpoints at `/staff/webhooks`. Distinct from inbound Stripe webhooks.
+
+### Events
+
+- `post.published`
+- `member.created` (first free membership provision)
+- `subscription.updated` (Stripe-driven membership status changes)
+
+### Signing
+
+Each endpoint has a `whsec_…` secret. Deliveries POST JSON with headers:
+
+- `X-Newsroom-Event`
+- `X-Newsroom-Delivery` (UUID)
+- `X-Newsroom-Signature: sha256=<hmac-sha256-hex of raw body>`
+
+### Delivery
+
+Queued (`DeliverWebhookJob`) with retries/backoff (up to 5 attempts). Failures never block publish or membership flows.
