@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Api\Admin\V1\AdminPostController;
 use App\Http\Controllers\Api\Content\V1\ContentResourceController;
+use App\Http\Middleware\AuthenticateAdminApiToken;
 use App\Http\Middleware\AuthenticateContentApiKey;
 use Illuminate\Support\Facades\Route;
 
@@ -13,4 +15,16 @@ Route::prefix('content/v1')
         Route::get('/pages/{slug}', [ContentResourceController::class, 'page']);
         Route::get('/tags', [ContentResourceController::class, 'tags']);
         Route::get('/tags/{slug}', [ContentResourceController::class, 'tag']);
+    });
+
+Route::prefix('admin/v1')
+    ->middleware([AuthenticateAdminApiToken::class, 'throttle:admin-api'])
+    ->group(function () {
+        Route::post('/tokens', [AdminPostController::class, 'storeToken']);
+        Route::get('/posts', [AdminPostController::class, 'index']);
+        Route::post('/posts', [AdminPostController::class, 'store']);
+        Route::get('/posts/{post}', [AdminPostController::class, 'show']);
+        Route::patch('/posts/{post}', [AdminPostController::class, 'update']);
+        Route::post('/posts/{post}/publish', [AdminPostController::class, 'publish']);
+        Route::post('/posts/{post}/unpublish', [AdminPostController::class, 'unpublish']);
     });
