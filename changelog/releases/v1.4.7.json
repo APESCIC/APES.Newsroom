@@ -1,0 +1,26 @@
+{
+  "version": "v1.4.7",
+  "released_at": "2026-09-23",
+  "previous_version": "v1.4.6",
+  "theme": "Consent-gated third-party analytics",
+  "change_types": [
+    "added"
+  ],
+  "topic_tags": [
+    "internal-only"
+  ],
+  "summary": "Optional Plausible or GTM-stub analytics load only after visitor consent. Native first-party metrics remain unchanged. Cookie notice updated.",
+  "detailed_changes": [
+    "Added newsroom.analytics config (provider none|plausible|gtm-stub) and shared Inertia props.",
+    "Consent banner + POST /analytics/consent sets newsroom_analytics_consent; scripts inject only after accept.",
+    "Updated /legal/cookies copy for optional third-party analytics governance."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: public layout; /legal/cookies; /analytics/consent",
+    "User groups affected: visitors (consent), ops (env config)",
+    "Public impact: optional analytics after consent only",
+    "Internal impact: native staff metrics unchanged"
+  ],
+  "pr": 211
+}

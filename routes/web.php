@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\GhostContentImportController;
 use App\Http\Controllers\Admin\GhostMembersImportController;
 use App\Http\Controllers\Admin\ModerationController;
 use App\Http\Controllers\Admin\ReleaseController as AdminReleaseController;
+use App\Http\Controllers\AnalyticsConsentController;
 use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\ChangeLogHubController;
@@ -48,6 +49,7 @@ Route::get('/', HomeController::class)->name('home');
 Route::get('/legal/privacy', [LegalController::class, 'privacy'])->name('legal.privacy');
 Route::get('/legal/cookies', [LegalController::class, 'cookies'])->name('legal.cookies');
 Route::get('/legal/rights', [LegalController::class, 'rights'])->name('legal.rights');
+Route::post('/analytics/consent', [AnalyticsConsentController::class, 'store'])->name('analytics.consent');
 Route::get('/change-log-hub', ChangeLogHubController::class)->name('change-log-hub');
 
 Route::get('/health', HealthController::class)->name('health');
