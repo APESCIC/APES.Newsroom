@@ -1,0 +1,22 @@
+{
+  "version": "v1.2.5",
+  "released_at": "2026-09-23",
+  "previous_version": "v1.2.4",
+  "theme": "Newsletter signup forms",
+  "change_types": ["added"],
+  "topic_tags": ["public-facing"],
+  "summary": "Each active newsletter has a public signup page, including an embeddable form, that still uses double opt-in.",
+  "detailed_changes": [
+    "Added GET and POST /newsletters/{slug}/signup for active newsletters. Archived newsletters return 404.",
+    "The form posts through the existing consent flow and shows accessible success and validation errors.",
+    "?embed=1 renders the form without the public site chrome so it can be linked or iframed."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /newsletters/{slug}/signup",
+    "User groups affected: public visitors joining newsletters",
+    "Public impact: newsletter-specific signup with confirmation email",
+    "Internal impact: channel list signup at /mailing/signup is unchanged"
+  ],
+  "pr": 0
+}

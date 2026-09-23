@@ -16,6 +16,7 @@ use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\Mailing\ConfirmController;
+use App\Http\Controllers\Mailing\NewsletterSignupController;
 use App\Http\Controllers\Mailing\PreferenceController;
 use App\Http\Controllers\Mailing\SignupController;
 use App\Http\Controllers\Mailing\UnsubscribeController;
@@ -56,6 +57,8 @@ Route::get('/articles/{slug}', [ArticleController::class, 'show'])->name('articl
 Route::get('/pages/{slug}', [PageController::class, 'show'])->name('pages.show');
 Route::get('/profiles/{profile}', [ProfileController::class, 'show'])->name('profiles.show');
 
+Route::get('/newsletters/{slug}/signup', [NewsletterSignupController::class, 'show'])->name('newsletters.signup');
+Route::post('/newsletters/{slug}/signup', [NewsletterSignupController::class, 'store'])->name('newsletters.signup.store');
 Route::get('/mailing/signup', [SignupController::class, 'show'])->name('mailing.signup');
 Route::post('/mailing/signup', [SignupController::class, 'store'])->name('mailing.signup.store');
 Route::get('/mailing/confirm/{token}', ConfirmController::class)->name('mailing.confirm');
