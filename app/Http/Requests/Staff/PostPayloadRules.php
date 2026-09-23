@@ -28,6 +28,7 @@ trait PostPayloadRules
             'email_on_publish' => ['sometimes', 'boolean'],
             'mailing_lists' => ['nullable', 'array'],
             'mailing_lists.*' => [Rule::enum(MailingList::class)],
+            'newsletter_segment_id' => ['nullable', 'integer', 'exists:newsletter_segments,id'],
             'tags' => ['nullable', 'array'],
             'tags.*' => ['string', 'max:100'],
             'featured' => ['sometimes', 'boolean'],

@@ -25,6 +25,7 @@ type PostData = {
     scheduled_for: string | null;
     email_on_publish: boolean;
     mailing_lists: string[];
+    newsletter_segment_id: number | null;
     review_notes: string | null;
     tags: string[];
     featured: boolean;
@@ -53,6 +54,7 @@ type PostForm = {
     canonical_url: string;
     email_on_publish: boolean;
     mailing_lists: string[];
+    newsletter_segment_id: string;
     tags_text: string;
     featured: boolean;
     co_author_ids: number[];
@@ -78,6 +80,7 @@ const INLINE_ERROR_FIELDS = [
     'canonical_url',
     'email_on_publish',
     'mailing_lists',
+    'newsletter_segment_id',
     'featured',
     'co_author_ids',
     'expected_updated_at',
@@ -99,6 +102,7 @@ function formFromPost(post: PostData | null, channels: Channel[]): PostForm {
         canonical_url: post?.canonical_url ?? '',
         email_on_publish: post?.email_on_publish ?? false,
         mailing_lists: post?.mailing_lists ?? [],
+        newsletter_segment_id: post?.newsletter_segment_id ? String(post.newsletter_segment_id) : '',
         tags_text: (post?.tags ?? []).join(', '),
         featured: post?.featured ?? false,
         co_author_ids: post?.co_author_ids ?? [],
@@ -160,6 +164,7 @@ export default function PostEdit({
     post,
     channels,
     mailingLists,
+    segments = [],
     staffUsers = [],
     canPublish,
     revisions,
@@ -167,6 +172,7 @@ export default function PostEdit({
     post: PostData | null;
     channels: Channel[];
     mailingLists: MailingListOption[];
+    segments?: Array<{ id: number; name: string; newsletter: string; also: string }>;
     staffUsers?: Array<{ id: number; name: string; email: string }>;
     canPublish: boolean;
     revisions: Revision[];
@@ -497,6 +503,22 @@ export default function PostEdit({
                                         {list.label}
                                     </label>
                                 ))}
+                                <label className="text-sm" htmlFor="newsletter_segment_id">
+                                    Segment (also confirmed on another newsletter)
+                                    <select
+                                        id="newsletter_segment_id"
+                                        className="mt-1 w-full rounded border px-2 py-1"
+                                        value={data.newsletter_segment_id}
+                                        onChange={(e) => setData('newsletter_segment_id', e.target.value)}
+                                    >
+                                        <option value="">No segment</option>
+                                        {segments.map((segment) => (
+                                            <option key={segment.id} value={String(segment.id)}>
+                                                {segment.name} ({segment.newsletter} and {segment.also})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
                             </div>
                         )}
                         <FieldError message={fieldError(errors, 'mailing_lists')} />

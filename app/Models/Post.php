@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'ghost_id', 'author_id', 'title', 'slug', 'excerpt', 'content', 'body_text', 'status', 'channel',
     'hero_image', 'hero_image_alt', 'hero_image_caption', 'hero_image_credit',
     'meta_title', 'meta_description', 'canonical_url', 'published_at',
-    'scheduled_for', 'email_on_publish', 'mailing_lists', 'review_notes', 'needs_import_review',
+    'scheduled_for', 'email_on_publish', 'mailing_lists', 'newsletter_segment_id', 'review_notes', 'needs_import_review',
     'featured',
 ])]
 class Post extends Model
@@ -80,6 +80,14 @@ class Post extends Model
     /**
      * @return BelongsToMany<Tag, $this>
      */
+    /**
+     * @return BelongsTo<NewsletterSegment, $this>
+     */
+    public function newsletterSegment(): BelongsTo
+    {
+        return $this->belongsTo(NewsletterSegment::class);
+    }
+
     public function tags(): BelongsToMany
     {
         return $this->belongsToMany(Tag::class);

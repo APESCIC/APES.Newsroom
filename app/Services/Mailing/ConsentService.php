@@ -9,6 +9,7 @@ use App\Models\ConsentEvent;
 use App\Models\MailingContact;
 use App\Models\MailingListSubscription;
 use App\Models\Newsletter;
+use App\Models\NewsletterSegment;
 use App\Models\Suppression;
 use App\Models\User;
 use App\Notifications\ConfirmMailingListNotification;
@@ -480,6 +481,47 @@ class ConsentService
         $suppressed = Suppression::query()->pluck('email')->map(fn (string $e) => Str::lower($e))->all();
 
         return $emails->reject(fn (string $email) => in_array($email, $suppressed, true))->values()->all();
+    }
+
+    /**
+     * Confirmed, non-suppressed emails on one newsletter.
+     *
+     * @return list<string>
+     */
+    public function confirmedEmailsForNewsletter(Newsletter $newsletter): array
+    {
+        if ($newsletter->legacy_list instanceof MailingList) {
+            return $this->confirmedEmailsForLists([$newsletter->legacy_list->value]);
+        }
+
+        $emails = MailingListSubscription::query()
+            ->where('newsletter_id', $newsletter->id)
+            ->where('status', SubscriptionStatus::Confirmed)
+            ->with('contact')
+            ->get()
+            ->pluck('contact.email')
+            ->filter()
+            ->map(fn (string $email) => Str::lower($email))
+            ->unique()
+            ->values();
+
+        $suppressed = Suppression::query()->pluck('email')->map(fn (string $e) => Str::lower($e))->all();
+
+        return $emails->reject(fn (string $email) => in_array($email, $suppressed, true))->values()->all();
+    }
+
+    /**
+     * Emails confirmed on both newsletters in the segment. Empty is safe.
+     *
+     * @return list<string>
+     */
+    public function confirmedEmailsForSegment(NewsletterSegment $segment): array
+    {
+        $segment->loadMissing('newsletter', 'alsoNewsletter');
+        $primary = $this->confirmedEmailsForNewsletter($segment->newsletter);
+        $also = $this->confirmedEmailsForNewsletter($segment->alsoNewsletter);
+
+        return array_values(array_intersect($primary, $also));
     }
 
     /**

@@ -37,6 +37,7 @@ const persistedPost: PersistedPost = {
     scheduled_for: null,
     email_on_publish: false,
     mailing_lists: [],
+    newsletter_segment_id: null,
     review_notes: null,
     tags: ['rescue'],
     featured: false,

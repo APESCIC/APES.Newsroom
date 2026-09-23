@@ -9,6 +9,7 @@ use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Staff\StorePostRequest;
 use App\Http\Requests\Staff\UpdatePostRequest;
+use App\Models\NewsletterSegment;
 use App\Models\Post;
 use App\Models\PostRevision;
 use App\Models\Redirect;
@@ -92,6 +93,7 @@ class PostController extends Controller
             'post' => null,
             'channels' => $this->channelOptions(),
             'mailingLists' => $this->mailingListOptions(),
+            'segments' => $this->segmentOptions(),
             'staffUsers' => User::query()
                 ->whereIn('role', [Role::Staff, Role::Admin, Role::SuperAdmin])
                 ->orderBy('name')
@@ -139,6 +141,7 @@ class PostController extends Controller
             'post' => $this->editPayload($post),
             'channels' => $this->channelOptions(),
             'mailingLists' => $this->mailingListOptions(),
+            'segments' => $this->segmentOptions(),
             'staffUsers' => User::query()
                 ->whereIn('role', [Role::Staff, Role::Admin, Role::SuperAdmin])
                 ->orderBy('name')
@@ -439,6 +442,7 @@ class PostController extends Controller
             'scheduled_for' => $post->scheduled_for?->format('Y-m-d\TH:i'),
             'email_on_publish' => $post->email_on_publish,
             'mailing_lists' => $post->mailing_lists ?? [],
+            'newsletter_segment_id' => $post->newsletter_segment_id,
             'review_notes' => $post->review_notes,
             'tags' => $post->tags->pluck('name')->all(),
             'featured' => (bool) $post->featured,
@@ -454,6 +458,24 @@ class PostController extends Controller
     /**
      * @return array<int, array{value: string, label: string}>
      */
+    /**
+     * @return list<array{id: int, name: string, newsletter: string, also: string}>
+     */
+    private function segmentOptions(): array
+    {
+        return NewsletterSegment::query()
+            ->with('newsletter', 'alsoNewsletter')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (NewsletterSegment $segment) => [
+                'id' => $segment->id,
+                'name' => $segment->name,
+                'newsletter' => $segment->newsletter->name,
+                'also' => $segment->alsoNewsletter->name,
+            ])
+            ->all();
+    }
+
     private function channelOptions(): array
     {
         return collect(Channel::cases())->map(fn (Channel $c) => [

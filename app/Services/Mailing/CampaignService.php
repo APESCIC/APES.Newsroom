@@ -8,6 +8,7 @@ use App\Enums\MailingList;
 use App\Jobs\SendCampaignRecipientJob;
 use App\Models\Campaign;
 use App\Models\CampaignRecipient;
+use App\Models\NewsletterSegment;
 use App\Models\Post;
 use App\Models\User;
 use App\Services\EditorJs\BlockRenderer;
@@ -36,7 +37,11 @@ class CampaignService
             }
 
             $lists = $this->normalizeListValues($lockedPost->mailing_lists ?? []);
-            if ($lists === []) {
+            $segment = $lockedPost->newsletter_segment_id
+                ? NewsletterSegment::query()->with('newsletter', 'alsoNewsletter')->find($lockedPost->newsletter_segment_id)
+                : null;
+
+            if ($lists === [] && ! $segment) {
                 return null;
             }
 
@@ -72,7 +77,9 @@ class CampaignService
                 return $campaign->load('recipients');
             }
 
-            $emails = $this->consent->confirmedEmailsForLists($lists);
+            $emails = $segment
+                ? $this->consent->confirmedEmailsForSegment($segment)
+                : $this->consent->confirmedEmailsForLists($lists);
 
             foreach ($emails as $email) {
                 $this->createRecipient($campaign, $email);

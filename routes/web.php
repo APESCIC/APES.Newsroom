@@ -147,6 +147,7 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
         Route::get('/newsletters/{newsletter}/edit', [StaffNewsletterController::class, 'edit'])->name('newsletters.edit');
         Route::patch('/newsletters/{newsletter}', [StaffNewsletterController::class, 'update'])->name('newsletters.update');
         Route::post('/newsletters/{newsletter}/archive', [StaffNewsletterController::class, 'archive'])->name('newsletters.archive');
+        Route::post('/newsletters/{newsletter}/segments', [StaffNewsletterController::class, 'storeSegment'])->name('newsletters.segments.store');
         Route::post('/newsletters/{newsletter}/restore', [StaffNewsletterController::class, 'restore'])->name('newsletters.restore');
 
         Route::get('/pages', [StaffPageController::class, 'index'])->name('pages.index');
