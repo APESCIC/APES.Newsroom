@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable([
-    'mailing_contact_id', 'list', 'status', 'confirm_token',
+    'mailing_contact_id', 'newsletter_id', 'list', 'status', 'confirm_token',
     'confirmed_at', 'unsubscribed_at',
 ])]
 class MailingListSubscription extends Model
@@ -30,6 +30,14 @@ class MailingListSubscription extends Model
     public function contact(): BelongsTo
     {
         return $this->belongsTo(MailingContact::class, 'mailing_contact_id');
+    }
+
+    /**
+     * @return BelongsTo<Newsletter, $this>
+     */
+    public function newsletter(): BelongsTo
+    {
+        return $this->belongsTo(Newsletter::class);
     }
 
     public function isConfirmed(): bool

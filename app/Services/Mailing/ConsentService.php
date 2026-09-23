@@ -8,6 +8,7 @@ use App\Enums\SubscriptionStatus;
 use App\Models\ConsentEvent;
 use App\Models\MailingContact;
 use App\Models\MailingListSubscription;
+use App\Models\Newsletter;
 use App\Models\Suppression;
 use App\Models\User;
 use App\Notifications\ConfirmMailingListNotification;
@@ -54,6 +55,9 @@ class ConsentService
                 ]);
 
                 if ($subscription->status === SubscriptionStatus::Confirmed) {
+                    $this->attachLegacyNewsletter($subscription, $list);
+                    $subscription->save();
+
                     continue;
                 }
 
@@ -64,6 +68,7 @@ class ConsentService
                     'confirmed_at' => null,
                     'unsubscribed_at' => null,
                 ]);
+                $this->attachLegacyNewsletter($subscription, $list);
                 $subscription->save();
 
                 $this->recordEvent(
@@ -227,6 +232,7 @@ class ConsentService
                     'confirmed_at' => null,
                     'unsubscribed_at' => null,
                 ]);
+                $this->attachLegacyNewsletter($subscription, $list);
                 $subscription->save();
 
                 $this->recordEvent(
@@ -340,6 +346,19 @@ class ConsentService
         }
 
         return $state;
+    }
+
+    private function attachLegacyNewsletter(MailingListSubscription $subscription, MailingList $list): void
+    {
+        if ($subscription->newsletter_id !== null) {
+            return;
+        }
+
+        $newsletterId = Newsletter::query()->where('legacy_list', $list->value)->value('id');
+
+        if ($newsletterId !== null) {
+            $subscription->newsletter_id = $newsletterId;
+        }
     }
 
     private function confirmUrl(string $token): string
