@@ -194,6 +194,8 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
         Route::post('/media/by-url', [StaffMediaController::class, 'byUrl'])->name('media.by-url');
         Route::post('/media/link-meta', [StaffMediaController::class, 'linkMeta'])->name('media.link-meta');
         Route::post('/media/upload', [StaffMediaController::class, 'upload'])->name('media.upload');
+        Route::get('/media/unsplash', [StaffMediaController::class, 'unsplashSearch'])->name('media.unsplash.search');
+        Route::post('/media/unsplash/select', [StaffMediaController::class, 'unsplashSelect'])->name('media.unsplash.select');
     });
 
 require __DIR__.'/auth.php';

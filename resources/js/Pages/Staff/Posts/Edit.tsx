@@ -2,6 +2,7 @@ import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useCallback, useEffect, useRef, useState } from 'react';
 import type { OutputData } from '@editorjs/editorjs';
 import EditorJsField from '../../../Components/editor/EditorJsField';
+import UnsplashPicker from '../../../Components/Staff/UnsplashPicker';
 
 type Channel = { value: string; label: string };
 type MailingListOption = { value: string; label: string };
@@ -470,6 +471,16 @@ export default function PostEdit({
                             className="w-full rounded border px-3 py-2"
                         />
                         <FieldError message={errors.hero_image_credit} />
+                        <UnsplashPicker
+                            onSelect={({ url, credit, alt }) => {
+                                setData((current) => ({
+                                    ...current,
+                                    hero_image: url,
+                                    hero_image_credit: credit,
+                                    hero_image_alt: alt || current.hero_image_alt,
+                                }));
+                            }}
+                        />
                     </fieldset>
 
                     <fieldset className="flex flex-col gap-3 border-t pt-4">

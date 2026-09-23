@@ -72,4 +72,8 @@ return [
         'rate_per_minute' => (int) env('NEWSROOM_ADMIN_API_RATE_PER_MINUTE', 60),
     ],
 
+    'unsplash' => [
+        'access_key' => env('UNSPLASH_ACCESS_KEY'),
+    ],
+
 ];
