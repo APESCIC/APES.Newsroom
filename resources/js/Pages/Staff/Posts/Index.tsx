@@ -1,4 +1,5 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
+import { FormEvent, useState } from 'react';
 import { channelMeta } from '../../../channelMeta';
 import LineIcon from '../../../Components/Icons/LineIcon';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
@@ -53,17 +54,59 @@ function ChannelLabel({ value }: { value: string }) {
 export default function PostsIndex({
     posts,
     filterStatus,
+    filterChannel = null,
+    filters = { q: '' },
+    channels = [],
     canReview,
 }: {
     posts: Post[];
     filterStatus: string | null;
+    filterChannel?: string | null;
+    filters?: { q: string };
+    channels?: Array<{ value: string; label: string }>;
     canReview: boolean;
 }) {
-    const filters = [
-        { href: '/staff/posts', value: null, label: 'All' },
-        { href: '/staff/posts?status=in_review', value: 'in_review', label: 'In review' },
-        { href: '/staff/posts?status=published', value: 'published', label: 'Published' },
+    const [search, setSearch] = useState(filters.q ?? '');
+
+    const statusQuery = (status: string | null) => {
+        const params = new URLSearchParams();
+        if (status) params.set('status', status);
+        if (filterChannel) params.set('channel', filterChannel);
+        if (filters.q) params.set('q', filters.q);
+        const qs = params.toString();
+        return qs ? `/staff/posts?${qs}` : '/staff/posts';
+    };
+
+    const filtersNav = [
+        { href: statusQuery(null), value: null, label: 'All' },
+        { href: statusQuery('in_review'), value: 'in_review', label: 'In review' },
+        { href: statusQuery('published'), value: 'published', label: 'Published' },
     ];
+
+    const applyFilters = (event: FormEvent) => {
+        event.preventDefault();
+        router.get(
+            '/staff/posts',
+            {
+                status: filterStatus || undefined,
+                channel: filterChannel || undefined,
+                q: search || undefined,
+            },
+            { preserveState: true, replace: true },
+        );
+    };
+
+    const onChannelChange = (value: string) => {
+        router.get(
+            '/staff/posts',
+            {
+                status: filterStatus || undefined,
+                channel: value || undefined,
+                q: search || undefined,
+            },
+            { preserveState: true, replace: true },
+        );
+    };
 
     const actions = (
         <div className="flex flex-wrap gap-3">
@@ -90,9 +133,40 @@ export default function PostsIndex({
         >
             <Head title="Staff — Posts" />
             <main id="main-content" className="mx-auto max-w-[62.5rem] px-5 py-6 sm:px-6">
+                <form onSubmit={applyFilters} className="mb-4 grid gap-3 sm:grid-cols-[1fr_auto_auto] sm:items-end" role="search" aria-label="Search and filter posts">
+                    <label className="text-sm font-semibold text-body">
+                        Search title or author
+                        <input
+                            type="search"
+                            value={search}
+                            onChange={(event) => setSearch(event.target.value)}
+                            className="form-input mt-2"
+                            placeholder="Title or author"
+                        />
+                    </label>
+                    <label className="text-sm font-semibold text-body">
+                        Channel
+                        <select
+                            className="form-input mt-2"
+                            value={filterChannel ?? ''}
+                            onChange={(event) => onChannelChange(event.target.value)}
+                        >
+                            <option value="">All channels</option>
+                            {channels.map((channel) => (
+                                <option key={channel.value} value={channel.value}>
+                                    {channel.label}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                    <button type="submit" className="button-primary min-h-11">
+                        Apply
+                    </button>
+                </form>
+
                 <nav aria-label="Post status filters" className="workspace-glass-tabs rounded-control px-2">
                     <ul className="flex gap-1 overflow-x-auto">
-                        {filters.map((filter) => {
+                        {filtersNav.map((filter) => {
                             const active = filterStatus === filter.value;
                             return (
                                 <li key={filter.label}>

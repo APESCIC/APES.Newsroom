@@ -1,0 +1,26 @@
+{
+  "version": "v1.5.6",
+  "released_at": "2026-09-24",
+  "previous_version": "v1.5.5",
+  "theme": "Posts list search and channel filter",
+  "change_types": [
+    "added"
+  ],
+  "topic_tags": [
+    "internal-only"
+  ],
+  "summary": "Staff Posts index supports title/author search and optional channel filter alongside status, without changing /staff/posts routes.",
+  "detailed_changes": [
+    "PostController::index accepts q and channel query params with staff ownership scoping preserved.",
+    "Posts Index UI adds search form and channel select that compose with status filters.",
+    "Feature tests cover search, channel, and status combinations."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff/posts",
+    "User groups affected: staff editors",
+    "Public impact: none",
+    "Internal impact: faster Posts list filtering"
+  ],
+  "pr": 218
+}

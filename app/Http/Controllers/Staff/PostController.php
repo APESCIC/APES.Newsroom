@@ -47,8 +47,23 @@ class PostController extends Controller
             $query->where('author_id', $request->user()->id);
         }
 
-        if ($status = $request->string('status')->toString()) {
+        $status = $request->string('status')->toString();
+        if ($status !== '') {
             $query->where('status', $status);
+        }
+
+        $channel = $request->string('channel')->toString();
+        if ($channel !== '' && Channel::tryFrom($channel)) {
+            $query->where('channel', $channel);
+        }
+
+        $q = trim((string) $request->query('q', ''));
+        if ($q !== '') {
+            $like = '%'.$q.'%';
+            $query->where(function ($builder) use ($like) {
+                $builder->where('title', 'like', $like)
+                    ->orWhereHas('author', fn ($author) => $author->where('name', 'like', $like)->orWhere('email', 'like', $like));
+            });
         }
 
         $posts = $query->latest('updated_at')->get()->map(fn (Post $post) => [
@@ -63,7 +78,12 @@ class PostController extends Controller
 
         return Inertia::render('Staff/Posts/Index', [
             'posts' => $posts,
-            'filterStatus' => $status ?: null,
+            'filterStatus' => $status !== '' ? $status : null,
+            'filterChannel' => $channel !== '' && Channel::tryFrom($channel) ? $channel : null,
+            'filters' => [
+                'q' => $q,
+            ],
+            'channels' => $this->channelOptions(),
             'canReview' => $request->user()->role->atLeast(Role::Admin),
         ]);
     }
