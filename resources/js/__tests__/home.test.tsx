@@ -221,6 +221,28 @@ describe('Direction C public homepage', () => {
         expect(footer).toHaveTextContent('Stories from the APES network');
         expect(footer).toHaveTextContent('Association of Protecting Exotic Species CIC');
         expect(footer).toHaveTextContent('CIC No: 16253848');
+
+        const partners = within(footer).getByRole('region', { name: 'Partner organisations' });
+        expect(within(partners).getByRole('link', { name: /British Arachnological Society/ })).toHaveAttribute(
+            'href',
+            'https://www.apes.org.uk/sponsors/index.html',
+        );
+        expect(within(partners).getByAltText('British Arachnological Society logo')).toHaveAttribute(
+            'src',
+            '/partners/bas.png',
+        );
+
+        const socials = within(footer).getByRole('region', { name: 'APES social media' });
+        expect(within(socials).getByRole('link', { name: 'Facebook @apesorguk' })).toHaveAttribute(
+            'href',
+            'https://www.facebook.com/apesorguk',
+        );
+        expect(within(socials).getByRole('link', { name: 'Mastodon @apes' })).toHaveAttribute(
+            'href',
+            'https://social.apes.org.uk/@apes',
+        );
+        expect(within(socials).queryByRole('link', { name: /apesshelter/i })).not.toBeInTheDocument();
+
         const phoneLinks = within(footer).getAllByRole('link', { name: '01744 374 015' });
         expect(phoneLinks.length).toBeGreaterThanOrEqual(1);
         for (const phone of phoneLinks) {
