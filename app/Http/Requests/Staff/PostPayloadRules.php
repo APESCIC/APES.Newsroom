@@ -10,6 +10,36 @@ use Illuminate\Validation\Rule;
 trait PostPayloadRules
 {
     /**
+     * Normalize Glass Studio composer wire format before validation.
+     * Empty optional selects/strings mirror ConvertEmptyStringsToNull; keep
+     * explicit so create/update stay in parity with Edit.tsx payloads.
+     */
+    protected function prepareForValidation(): void
+    {
+        $merge = [];
+
+        if ($this->exists('newsletter_segment_id') && $this->input('newsletter_segment_id') === '') {
+            $merge['newsletter_segment_id'] = null;
+        }
+
+        if ($this->exists('mailing_lists') && ! is_array($this->input('mailing_lists'))) {
+            $merge['mailing_lists'] = [];
+        }
+
+        if ($this->exists('co_author_ids') && ! is_array($this->input('co_author_ids'))) {
+            $merge['co_author_ids'] = [];
+        }
+
+        if ($this->exists('tags') && ! is_array($this->input('tags'))) {
+            $merge['tags'] = [];
+        }
+
+        if ($merge !== []) {
+            $this->merge($merge);
+        }
+    }
+
+    /**
      * @return array<string, mixed>
      */
     protected function baseRules(): array
