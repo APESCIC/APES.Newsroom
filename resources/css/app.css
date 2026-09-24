@@ -597,6 +597,23 @@
             gap: 0.55rem;
         }
     }
+
+    .site-footer-fineprint {
+        border-top: 1px solid rgba(255, 255, 255, 0.14);
+        padding-top: 1rem;
+        display: grid;
+        gap: 0.35rem;
+        font-size: 0.92rem;
+        color: #d9ece2;
+    }
+
+    .site-footer-fineprint p {
+        margin: 0;
+    }
+
+    .site-footer-fineprint a {
+        color: #fff;
+    }
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {

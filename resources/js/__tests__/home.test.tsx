@@ -219,12 +219,21 @@ describe('Direction C public homepage', () => {
         expect(footer).toHaveClass('site-footer');
         expect(footer).toHaveTextContent('40 Morris Street, St Helens, Merseyside, WA9 3EN');
         expect(footer).toHaveTextContent('Stories from the APES network');
-        expect(within(footer).getByRole('link', { name: '01744 374 015' })).toHaveAttribute('href', 'tel:+441744374015');
+        expect(footer).toHaveTextContent('Association of Protecting Exotic Species CIC');
+        expect(footer).toHaveTextContent('CIC No: 16253848');
+        const phoneLinks = within(footer).getAllByRole('link', { name: '01744 374 015' });
+        expect(phoneLinks.length).toBeGreaterThanOrEqual(1);
+        for (const phone of phoneLinks) {
+            expect(phone).toHaveAttribute('href', 'tel:+441744374015');
+        }
 
         const assembledEmail = ['info', '@', ['apes', 'org', 'uk'].join('.')].join('');
-        const emailLink = within(footer).getByRole('link', { name: assembledEmail });
-        expect(emailLink).toHaveAttribute('href', `mailto:${assembledEmail}`);
-        expect(emailLink).toHaveAttribute('rel', 'nofollow');
+        const emailLinks = within(footer).getAllByRole('link', { name: assembledEmail });
+        expect(emailLinks.length).toBeGreaterThanOrEqual(1);
+        for (const emailLink of emailLinks) {
+            expect(emailLink).toHaveAttribute('href', `mailto:${assembledEmail}`);
+            expect(emailLink).toHaveAttribute('rel', 'nofollow');
+        }
         expect(protectedEmailSource).not.toContain(assembledEmail);
     });
 });

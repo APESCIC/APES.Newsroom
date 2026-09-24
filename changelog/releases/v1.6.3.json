@@ -1,0 +1,28 @@
+{
+  "version": "v1.6.3",
+  "released_at": "2026-09-24",
+  "previous_version": "v1.6.2",
+  "theme": "Footer CIC fineprint",
+  "change_types": [
+    "added",
+    "changed"
+  ],
+  "topic_tags": [
+    "public-facing",
+    "compliance"
+  ],
+  "summary": "Public SiteFooter gains an organisation legal fineprint with CIC copyright, contact line, and preserved Change Log Hub version links.",
+  "detailed_changes": [
+    "Fineprint strip: © year Association of Protecting Exotic Species CIC, CIC No: 16253848.",
+    "Contact line reuses address, phone, and ProtectedEmail; version / Change Log Hub behaviour preserved.",
+    "ORG_LEGAL_NAME and ORG_CIC_NUMBER constants in organisationContact.ts."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: all public pages using SiteFooter",
+    "User groups affected: public readers",
+    "Public impact: legal fineprint on beta footer",
+    "Internal impact: unblocks #175 social/partners row"
+  ],
+  "pr": 0
+}
