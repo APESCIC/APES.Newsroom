@@ -82,6 +82,7 @@ describe('Glass Studio admin moderation workspace', () => {
         expect(profileTab).toHaveAttribute('tabindex', '-1');
         expect(commentSummary).toHaveAttribute('aria-pressed', 'true');
         expect(screen.getByText('A thoughtful comment.')).toBeInTheDocument();
+        expect(screen.getByText('A thoughtful comment.').closest('li')).toHaveClass('workspace-glass-card');
         await user.click(screen.getByRole('button', { name: 'Approve comment by reader' }));
         expect(getInertiaMock().post).toHaveBeenCalledWith('/admin/moderation/comments/3', { status: 'approved' });
         await user.click(screen.getByRole('button', { name: 'Reject comment by reader' }));
