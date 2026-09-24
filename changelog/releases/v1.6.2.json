@@ -1,0 +1,27 @@
+{
+  "version": "v1.6.2",
+  "released_at": "2026-09-24",
+  "previous_version": "v1.6.1",
+  "theme": "Shelter-style glass SiteFooter",
+  "change_types": [
+    "changed",
+    "added"
+  ],
+  "topic_tags": [
+    "public-facing"
+  ],
+  "summary": "Public SiteFooter rebuilt as a Shelter-style multi-column deep-green glass layout with newsroom-appropriate destinations.",
+  "detailed_changes": [
+    "Four glass footer panels: Brand, Visit and get help, Stay informed, and Policies (inventory from #174).",
+    "Extended public CSS with site-footer glass panel, pill-link, and solid/reduced-motion fallbacks.",
+    "Footer link constants live in siteFooter.ts beside organisationContact.ts."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: all public pages using SiteFooter",
+    "User groups affected: public readers",
+    "Public impact: multi-column glass footer on beta",
+    "Internal impact: unblocks #173 fineprint and #175 social/partners"
+  ],
+  "pr": 0
+}
