@@ -1,12 +1,15 @@
 # Deploying to Cloudron (issue #3)
 
 This documents the guarded deploy pipeline for the existing Cloudron LAMP app
-(`74a2a784-a161-4787-84ff-2b8efc957bc8`). The watched beta deployment and
+(`74a2a784-a161-4787-84ff-2b8efc957bc8`). The watched beta deployment and  <!-- pragma: allowlist secret -->
 rollback drill completed on 2026-08-06 under
 [#3](https://github.com/APESCIC/APES-Newsroom/issues/3#issuecomment-5208564154),
 and the separately authorized production cutover completed under
 [#11](https://github.com/APESCIC/APES-Newsroom/issues/11#issuecomment-5208865545).
-The live app is `www.apesnews.org.uk`.
+The live app is `www.apesnews.org.uk`.  <!-- pragma: allowlist secret -->
+
+The GitHub Environment name remains **`beta`**; it targets this live LAMP
+app. Health checks use `CLOUDRON_APP_ORIGIN_HOST=www.apesnews.org.uk`.  <!-- pragma: allowlist secret -->
 
 The workflow and scripts remain the operational runbook for future guarded
 deployments. Treat credentials and production execution as separately
@@ -40,7 +43,7 @@ for inspection until manually cleaned up.
 These happen once, outside of CI, before the first deploy can work.
 
 1. **Cloudron dashboard, this app's Location/SSO/etc.** are configured for the
-   Newsroom at `www.apesnews.org.uk`. The former Ghost app remains stopped and
+   Newsroom at `www.apesnews.org.uk`. The former Ghost app remains stopped and  <!-- pragma: allowlist secret -->
    recoverable at `ghost-legacy.apesnews.org.uk`. Do not retire it or change the
    unresolved apex DNS record without separate authorization.
 
@@ -80,16 +83,21 @@ These happen once, outside of CI, before the first deploy can work.
    - `CLOUDRON_FQDN` - the Cloudron instance's hostname
    - `CLOUDRON_TOKEN` - an API token from the Cloudron profile page, with
      the minimum scope needed for exec/push/restart/backup on this app
-   - `CLOUDRON_APP_ID` - `74a2a784-a161-4787-84ff-2b8efc957bc8`
-   - `CLOUDRON_APP_ORIGIN_HOST` - the beta hostname the health check
-     should curl, e.g. `beta.apesnews.org.uk`
+   - `CLOUDRON_APP_ID` - `74a2a784-a161-4787-84ff-2b8efc957bc8`  <!-- pragma: allowlist secret -->
+   - `CLOUDRON_APP_ORIGIN_HOST` - health-check host for the live app:
+     `www.apesnews.org.uk`  <!-- pragma: allowlist secret -->
+
+   The Environment name stays **`beta`**, but it targets the live LAMP app
+   (`https://www.apesnews.org.uk/`, app id `74a2a784-a161-4787-84ff-2b8efc957bc8`). Keep secrets aligned with that origin.  <!-- pragma: allowlist secret -->
 
 ## Cloud Agent / local Cloudron CLI
 
 Cloud Agents (and local ops) can use the same Cloudron API without running
-the full GitHub deploy workflow:
+the full GitHub deploy workflow. See also [`AGENTS.md`](../AGENTS.md) for
+branch naming, secret **names**, and deploy authorization rules.
 
-1. Install the CLI (user-writable prefix; avoids root `npm -g`):
+1. Install the CLI (user-writable prefix; avoids root `npm -g`). Optional on
+   Cloud Agent boots — not required for everyday coding:
 
    ```bash
    npm install --prefix "$HOME/.local" cloudron@^9
@@ -98,8 +106,9 @@ the full GitHub deploy workflow:
    ```
 
 2. Provide secrets `CLOUDRON_FQDN`, `CLOUDRON_TOKEN`, `CLOUDRON_APP_ID`
-   (and optionally `CLOUDRON_APP_ORIGIN_HOST`) — the same values as the
-   `beta` GitHub Environment. Never commit tokens.
+   (and `CLOUDRON_APP_ORIGIN_HOST=www.apesnews.org.uk`) — the same values as the  <!-- pragma: allowlist secret -->
+   `beta` GitHub Environment (which targets the live LAMP app). Never commit
+   tokens. Do not put secrets in `.cursor/environment.json`.
 
 3. Use the wrapper:
 
@@ -111,6 +120,10 @@ the full GitHub deploy workflow:
 `scripts/cloudron.sh` requires those env vars and forwards to `cloudron`
 with `--server` / `--token` / `--app`. Restarting the app re-runs
 `/app/data/run.sh` and starts the queue worker again.
+
+Repo-managed Cursor Cloud config lives in [`.cursor/environment.json`](../.cursor/environment.json)
+and [`.cursor/Dockerfile`](../.cursor/Dockerfile). After merging env changes,
+save/rebuild the Cursor environment in the dashboard.
 
 ## What a deploy actually does
 
@@ -138,7 +151,7 @@ rather than automatic on every push, while the pipeline is unproven.
    config/routes/views, then atomically repoints `/app/data/current`.
 7. `cloudron restart` - picks up the new code for both Apache and the
    queue worker (`run.sh` runs again on boot).
-8. Polls `https://<beta-host>/health` for up to 60 seconds.
+8. Polls `https://www.apesnews.org.uk/health` (via `CLOUDRON_APP_ORIGIN_HOST`) for up to 60 seconds.  <!-- pragma: allowlist secret -->
 9. If activation, restart, or the health check fails: runs
    `deploy/cloudron-rollback.sh` (repoints `current` back to
    `previous_release`), restarts again, and fails the workflow loudly.
@@ -178,11 +191,17 @@ database unreachable. See [`deployment-beta-acceptance.md`](deployment-beta-acce
 
 ## Operational boundary
 
-The same guarded release mechanics now support the live Newsroom, but this
-document does not authorize running them. A future production deployment, DNS
-or hostname change, live campaign send, or Ghost retirement requires its own
-explicit approval and current preflight evidence. The apex `apesnews.org.uk`
-record was not switched during the 2026-08-06 cutover.
+The live Newsroom runs at `https://www.apesnews.org.uk/` (Cloudron app id `74a2a784-a161-4787-84ff-2b8efc957bc8`). The  <!-- pragma: allowlist secret -->
+guarded **Deploy to Cloudron (beta)** workflow is the supported release path
+to that app; merge to `main` does not auto-deploy.
+
+This document still does **not** authorize:
+
+- apex DNS changes for `apesnews.org.uk` (not switched during the 2026-08-06 cutover)
+- live campaign sends
+- retiring or deleting Ghost (`ghost-legacy.apesnews.org.uk`)
+
+Those require their own explicit approval and current preflight evidence.
 
 ## Redis addon
 
@@ -193,8 +212,8 @@ switches cache, queue, and sessions to Redis automatically.
 **Verify after restart:**
 
 ```bash
-cloudron exec --app 74a2a784-a161-4787-84ff-2b8efc957bc8 -- printenv | grep CLOUDRON_REDIS
-curl https://beta.apesnews.org.uk/health
+cloudron exec --app 74a2a784-a161-4787-84ff-2b8efc957bc8 -- printenv | grep CLOUDRON_REDIS  <!-- pragma: allowlist secret -->
+curl https://www.apesnews.org.uk/health  <!-- pragma: allowlist secret -->
 ```
 
 Expected: `"cache": true` in the health response.
@@ -230,7 +249,8 @@ LAMP apps do **not** auto-inject OIDC credentials. Create an OpenID
 client manually in the Cloudron dashboard:
 
 1. **Users & Groups → OpenID Clients → Add Client**
-2. **Redirect URI (beta):** `https://beta.apesnews.org.uk/auth/cloudron/callback`
+2. **Redirect URI (live):** `https://www.apesnews.org.uk/auth/cloudron/callback`  <!-- pragma: allowlist secret -->
+   (legacy beta host may still appear in older clients; prefer the live origin)
 3. Scopes: `openid`, `email`, `profile`
 4. Note the client ID, client secret, and Cloudron domain
 
@@ -263,14 +283,14 @@ matches the CN RDN as well as bare CNs used in local OpenLDAP.
 **Discover group names** inside the Cloudron container:
 
 ```bash
-cloudron exec --app 74a2a784-a161-4787-84ff-2b8efc957bc8 -- bash -c \
+cloudron exec --app 74a2a784-a161-4787-84ff-2b8efc957bc8 -- bash -c \  <!-- pragma: allowlist secret -->
   'ldapsearch -x -H "$CLOUDRON_LDAP_URL" -D "$CLOUDRON_LDAP_BIND_DN" -w "$CLOUDRON_LDAP_BIND_PASSWORD" -b "$CLOUDRON_LDAP_GROUPS_BASE_DN" cn'
 ```
 
 **Inspect a user's `memberof`:**
 
 ```bash
-cloudron exec --app 74a2a784-a161-4787-84ff-2b8efc957bc8 -- bash -c \
+cloudron exec --app 74a2a784-a161-4787-84ff-2b8efc957bc8 -- bash -c \  <!-- pragma: allowlist secret -->
   'ldapsearch -x -H "$CLOUDRON_LDAP_URL" -D "$CLOUDRON_LDAP_BIND_DN" -w "$CLOUDRON_LDAP_BIND_PASSWORD" -b "$CLOUDRON_LDAP_USERS_BASE_DN" "(mail=<user-email>)" memberof'
 ```
 

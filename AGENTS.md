@@ -43,15 +43,94 @@ find/create issue → implement on branch → PR references #N
   → comment progress → AC met? → close : leave open with gaps
 ```
 
+## Stack matrix
+
+| Environment | Runtime | Data / services |
+|-------------|---------|-----------------|
+| Local (default) | PHP 8.4, Composer 2, Node 22 | SQLite; optional Redis/OIDC/LDAP via [`docs/local-dev.md`](docs/local-dev.md) |
+| Cloudron LAMP (live) | PHP 8.4 in existing LAMP app | MySQL, Redis, SMTP, OIDC, LDAP via `CLOUDRON_*`; mapped by [`CloudronEnvironmentServiceProvider`](app/Providers/CloudronEnvironmentServiceProvider.php) |
+
+## Live Cloudron target
+
+- Origin: `https://www.apesnews.org.uk/`  <!-- pragma: allowlist secret -->
+- Cloudron app id: `74a2a784-a161-4787-84ff-2b8efc957bc8` (identifier, not a secret)  <!-- pragma: allowlist secret -->
+- Runbook: [`docs/deployment.md`](docs/deployment.md)
+- CLI wrapper: [`scripts/cloudron.sh`](scripts/cloudron.sh)
+
+The GitHub Actions Environment name remains **`beta`** (existing secrets and
+reviewers). That environment targets the **live** Newsroom LAMP app above.
+Ops must set `CLOUDRON_APP_ORIGIN_HOST=www.apesnews.org.uk` for health checks.  <!-- pragma: allowlist secret -->
+
+## Deploy rules
+
+- Workflow: **Deploy to Cloudron (beta)** (`.github/workflows/deploy.yml`).
+- Trigger: deliberate `workflow_dispatch` against `main` only (type `main`).
+- **Merge ≠ deploy.** Agents must not invent merge-auto-deploy or new
+  auto-deploy workflows.
+- Backup-first, versioned releases under `/app/data/releases/`, atomic
+  symlink activation, rollback on failed health.
+
+## Artisan on the server (www-data trap)
+
+Always run artisan as www-data via:
+
+```bash
+bash /app/data/current/deploy/cloudron-www-data.sh \
+  /usr/bin/php /app/data/current/artisan <command>
+```
+
+Never use bare `sudo -u www-data …` — that strips `CLOUDRON_*` and artisan
+can silently use SQLite from the shared `.env` while the web app uses MySQL.
+See [`docs/deployment.md`](docs/deployment.md).
+
+## Health
+
+`GET /health` must return JSON with `"status":"ok"` (plus database/cache
+checks). Used by the deploy workflow and uptime monitors. Do not expose
+secrets or config in the health payload.
+
+## Secrets (names only — never commit values)
+
+Same names for GitHub Environment `beta` and Cursor Project / Cloud Agent
+secrets:
+
+| Name | Purpose |
+|------|---------|
+| `CLOUDRON_FQDN` | Cloudron instance hostname |
+| `CLOUDRON_TOKEN` | API token (minimum scope for this app) |
+| `CLOUDRON_APP_ID` | Live LAMP app id above |
+| `CLOUDRON_APP_ORIGIN_HOST` | Health host: `www.apesnews.org.uk` |  <!-- pragma: allowlist secret -->
+
+Never commit `CLOUDRON_TOKEN` or any other credential. Do not put secrets in
+`.cursor/environment.json`.
+
+## Branch naming (Cloud Agents)
+
+Use `bmurphy/<short-slug>` (kebab-case). Conventional commits with `#N`.
+Do not commit directly to `main`.
+
 ## Authorization boundary
 
-Completing or closing issues does **not** authorize:
+The live Newsroom already runs at `www.apesnews.org.uk`. Completing or  <!-- pragma: allowlist secret -->
+closing issues still does **not** authorize:
 
-- production deployment or hostname cutover (`apesnews.org.uk`)
+- apex DNS changes for `apesnews.org.uk` (apex was not switched at cutover)
 - live campaign sends
-- retiring or deleting Ghost
+- retiring or deleting Ghost (`ghost-legacy.apesnews.org.uk`)
 
-Those require separate, explicit sign-off (see issue #11 and the epic body).
+Deploy remains a guarded, separately triggered operation (see Deploy rules).
+Those boundaries require explicit sign-off (see issue #11 and the epic body).
+
+## Cursor Cloud environment
+
+Committed repo-managed env:
+
+- [`.cursor/environment.json`](.cursor/environment.json)
+- [`.cursor/Dockerfile`](.cursor/Dockerfile)
+
+After merging changes to these files, save/rebuild the Cursor environment in
+the dashboard so new agents pick them up. Other `.cursor/` paths stay
+gitignored.
 
 ## Project pointers
 
@@ -62,6 +141,7 @@ Those require separate, explicit sign-off (see issue #11 and the epic body).
 | Deploy & rollback | [`docs/deployment.md`](docs/deployment.md) |
 | Beta acceptance checklist | [`docs/deployment-beta-acceptance.md`](docs/deployment-beta-acceptance.md) |
 | Design drafts | [`docs/design/`](docs/design/) |
+| Change Log Hub authoring | [`docs/change-log-hub.md`](docs/change-log-hub.md) |
 
 Quick checks before opening a PR: `composer test`, `composer lint`,
 `npm run typecheck`, `npm run lint`.

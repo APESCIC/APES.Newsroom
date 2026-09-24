@@ -1,10 +1,12 @@
 name: Deploy to Cloudron (beta)
 
-# Manually triggered on purpose. This app shares a single existing Cloudron
-# app ID (74a2a784-a161-4787-84ff-2b8efc957bc8) reused from the Ghost
-# install, and issue #3 requires deployment to be a deliberate, guarded
-# action rather than an automatic side effect of merging to main. Revisit
-# once beta has proven stable.
+# Manually triggered on purpose. Deploys the live Cloudron LAMP Newsroom at
+# https://www.apesnews.org.uk/ (app id 74a2a784-a161-4787-84ff-2b8efc957bc8).  # pragma: allowlist secret
+# The GitHub Environment name remains "beta" (existing secrets/reviewers); that
+# environment targets the live app. Ops must set CLOUDRON_APP_ORIGIN_HOST to
+# www.apesnews.org.uk for the health check. Issue #3 requires deployment to be a  # pragma: allowlist secret
+# deliberate, guarded action rather than an automatic side effect of merging to
+# main. Do not add merge-auto-deploy.
 on:
   workflow_dispatch:
     inputs:
