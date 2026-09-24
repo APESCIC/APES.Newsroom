@@ -30,13 +30,21 @@ function formatDate(value: string | null) {
 
 function StatusBadge({ status }: { status: string }) {
     const meta = postStatus(status);
-    return <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${meta.className}`}>{meta.label}</span>;
+    return (
+        <span className={`inline-flex min-h-8 items-center rounded-full px-3 py-1 text-xs font-bold tracking-wide ${meta.className}`}>
+            {meta.label}
+        </span>
+    );
 }
 
 function ChannelLabel({ value }: { value: string }) {
     const meta = channelMeta(value);
     return (
-        <span className={`inline-flex rounded border border-border px-2 py-1 text-[0.625rem] font-bold tracking-wide uppercase ${meta?.badgeClass ?? 'bg-page-tint text-muted'}`}>
+        <span
+            className={`inline-flex min-h-8 items-center rounded-full border px-2.5 py-1 text-[0.625rem] font-bold tracking-wide uppercase ${
+                meta?.badgeClass ?? 'border-border bg-page-tint text-muted'
+            }`}
+        >
             {meta?.label ?? value.replaceAll('_', ' ')}
         </span>
     );
@@ -82,7 +90,7 @@ export default function PostsIndex({
         >
             <Head title="Staff — Posts" />
             <main id="main-content" className="mx-auto max-w-[62.5rem] px-5 py-6 sm:px-6">
-                <nav aria-label="Post status filters" className="border-b border-border">
+                <nav aria-label="Post status filters" className="workspace-glass-tabs rounded-control px-2">
                     <ul className="flex gap-1 overflow-x-auto">
                         {filters.map((filter) => {
                             const active = filterStatus === filter.value;
@@ -91,7 +99,7 @@ export default function PostsIndex({
                                     <Link
                                         href={filter.href}
                                         aria-current={active ? 'page' : undefined}
-                                        className={`flex min-h-11 items-center border-b-2 px-4 py-3 text-sm font-semibold ${
+                                        className={`flex min-h-11 items-center border-b-2 px-4 py-3 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)] ${
                                             active ? 'border-teal-deep text-teal-deep' : 'border-transparent text-muted hover:text-body'
                                         }`}
                                     >
@@ -105,20 +113,23 @@ export default function PostsIndex({
 
                 {posts.length > 0 ? (
                     <>
-                        <div className="mt-6 hidden overflow-hidden rounded-card border border-border bg-white md:block">
+                        <div className="workspace-glass-panel mt-6 hidden md:block">
                             <table aria-label="Newsroom posts" className="w-full text-left text-sm">
-                                <thead className="bg-page-tint text-xs tracking-wide text-muted uppercase">
+                                <thead className="bg-brand-mist/40 text-xs tracking-wide text-muted uppercase">
                                     <tr>
-                                        <th scope="col" className="px-6 py-4 font-bold">Title</th>
-                                        <th scope="col" className="px-4 py-4 font-bold">Status</th>
-                                        <th scope="col" className="px-4 py-4 font-bold">Channel</th>
-                                        <th scope="col" className="px-6 py-4 font-bold">Updated</th>
+                                        <th scope="col" className="px-5 py-3 font-bold">Title</th>
+                                        <th scope="col" className="px-3 py-3 font-bold">Status</th>
+                                        <th scope="col" className="px-3 py-3 font-bold">Channel</th>
+                                        <th scope="col" className="px-5 py-3 font-bold">Updated</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-border">
+                                <tbody className="divide-y divide-border/70">
                                     {posts.map((post) => (
-                                        <tr key={post.id} className={`hover:bg-page-tint/70 ${post.status === 'in_review' ? 'border-l-4 border-warning' : ''}`}>
-                                            <td className="px-6 py-5">
+                                        <tr
+                                            key={post.id}
+                                            className={`bg-white/35 hover:bg-brand-mist/35 ${post.status === 'in_review' ? 'border-l-4 border-warning' : ''}`}
+                                        >
+                                            <td className="px-5 py-3.5">
                                                 <Link
                                                     href={`/staff/posts/${post.id}/edit`}
                                                     aria-label={`Edit ${post.title}`}
@@ -128,32 +139,38 @@ export default function PostsIndex({
                                                 </Link>
                                                 <p className="mt-1 text-xs text-muted">By {post.author}</p>
                                             </td>
-                                            <td className="px-4 py-5"><StatusBadge status={post.status} /></td>
-                                            <td className="px-4 py-5"><ChannelLabel value={post.channel} /></td>
-                                            <td className="px-6 py-5 text-muted">{formatDate(post.updated_at)}</td>
+                                            <td className="px-3 py-3.5"><StatusBadge status={post.status} /></td>
+                                            <td className="px-3 py-3.5"><ChannelLabel value={post.channel} /></td>
+                                            <td className="px-5 py-3.5 text-muted">{formatDate(post.updated_at)}</td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
                         </div>
 
-                        <ul aria-label="Newsroom posts on small screens" className="mt-6 space-y-4 md:hidden">
+                        <ul aria-label="Newsroom posts on small screens" className="mt-6 space-y-3 md:hidden">
                             {posts.map((post) => (
-                                <li key={post.id} className={`rounded-card border border-border bg-white p-5 ${post.status === 'in_review' ? 'border-l-4 border-l-warning' : ''}`}>
+                                <li
+                                    key={post.id}
+                                    className={`workspace-glass-card p-4 ${post.status === 'in_review' ? 'border-l-4 border-l-warning' : ''}`}
+                                >
                                     <div className="flex flex-wrap items-center justify-between gap-3">
                                         <StatusBadge status={post.status} />
                                         <span className="text-xs text-muted">{formatDate(post.updated_at)}</span>
                                     </div>
-                                    <h2 className="mt-4 text-lg font-bold text-brand-ink">
+                                    <h2 className="mt-3 text-base font-bold text-brand-ink">
                                         <Link href={`/staff/posts/${post.id}/edit`} className="hover:text-teal-deep hover:underline">{post.title}</Link>
                                     </h2>
-                                    <p className="mt-2 text-sm text-muted"><ChannelLabel value={post.channel} /> · {post.author}</p>
+                                    <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted">
+                                        <ChannelLabel value={post.channel} />
+                                        <span>· {post.author}</span>
+                                    </p>
                                 </li>
                             ))}
                         </ul>
                     </>
                 ) : (
-                    <div className="mt-6 rounded-card border border-border bg-white p-10 text-center">
+                    <div className="workspace-glass-card mt-6 p-10 text-center">
                         <LineIcon name="document" className="mx-auto h-10 w-10 text-teal-deep" />
                         <h2 className="mt-4 text-xl font-bold text-brand-ink">No posts found</h2>
                         <p className="mt-2 text-muted">Try another status filter or start a new draft.</p>

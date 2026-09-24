@@ -1,0 +1,26 @@
+{
+  "version": "v1.5.5",
+  "released_at": "2026-09-24",
+  "previous_version": "v1.5.4",
+  "theme": "Glass Posts list filters and table",
+  "change_types": [
+    "changed"
+  ],
+  "topic_tags": [
+    "internal-only"
+  ],
+  "summary": "Staff Posts list uses Glass Studio filters, denser table and mobile cards with clearer status and channel chips. New draft and Review queue CTAs unchanged.",
+  "detailed_changes": [
+    "Status filter strip uses workspace-glass-tabs; table uses workspace-glass-panel.",
+    "Mobile cards and empty state use workspace-glass-card; denser row padding.",
+    "Status and channel chips remain labelled; New draft and Review queue preserved."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff/posts",
+    "User groups affected: staff editors",
+    "Public impact: none",
+    "Internal impact: Glass Studio Posts list chrome"
+  ],
+  "pr": null
+}
