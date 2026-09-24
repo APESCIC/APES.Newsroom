@@ -1,0 +1,26 @@
+{
+  "version": "v1.5.7",
+  "released_at": "2026-09-24",
+  "previous_version": "v1.5.6",
+  "theme": "Glass two-column post composer",
+  "change_types": [
+    "changed"
+  ],
+  "topic_tags": [
+    "internal-only"
+  ],
+  "summary": "New and Edit post use WorkspaceLayout with a Glass Studio two-column layout: Editor.js canvas on the left and publish/SEO/campaign panel on the right.",
+  "detailed_changes": [
+    "Wrapped Staff Posts Edit/New in WorkspaceLayout with glass task chrome.",
+    "Two-column glass form: editorial canvas left, publish panel right.",
+    "Lifecycle actions (save, submit, publish, schedule, reject, restore, delete) retained."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff/posts/new, /staff/posts/{id}/edit",
+    "User groups affected: staff editors",
+    "Public impact: none",
+    "Internal impact: Glass Studio composer layout"
+  ],
+  "pr": null
+}
