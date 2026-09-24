@@ -4,6 +4,7 @@ import type { OutputData } from '@editorjs/editorjs';
 import EditorJsField from '../../../Components/editor/EditorJsField';
 import AiAssistPanel from '../../../Components/Staff/AiAssistPanel';
 import UnsplashPicker from '../../../Components/Staff/UnsplashPicker';
+import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
 
 type Channel = { value: string; label: string };
 type MailingListOption = { value: string; label: string };
@@ -288,397 +289,417 @@ export default function PostEdit({
     };
 
     return (
-        <>
+        <WorkspaceLayout
+            area="Staff"
+            active="posts"
+            title={isNew ? 'New draft' : 'Edit draft'}
+            subtitle={!isNew ? `Status: ${post.status}` : 'Compose editorial content'}
+            actions={
+                <div className="flex flex-wrap gap-2">
+                    <Link href="/staff/posts" className="button-secondary">
+                        Posts
+                    </Link>
+                    {!isNew && (
+                        <>
+                            <Link href={`/staff/posts/${post.id}/preview`} className="button-secondary">
+                                Preview
+                            </Link>
+                            <Link href={`/staff/posts/${post.id}/campaign`} className="button-secondary">
+                                Campaign
+                            </Link>
+                        </>
+                    )}
+                </div>
+            }
+        >
             <Head title={isNew ? 'New post' : `Edit: ${post.title}`} />
-            <main className="mx-auto max-w-3xl px-6 py-12">
-                <Link href="/staff/posts" className="text-sm text-teal-deep hover:underline">
-                    ← Posts
-                </Link>
-                <h1 className="mt-4 text-2xl font-semibold">{isNew ? 'New draft' : 'Edit draft'}</h1>
-                {!isNew && (
-                    <p className="mt-1 text-sm text-muted">
-                        Status: {post.status}{' '}
-                        <Link href={`/staff/posts/${post.id}/preview`} className="underline">
-                            Preview
-                        </Link>
-                        {' · '}
-                        <Link href={`/staff/posts/${post.id}/campaign`} className="underline">
-                            Campaign preview
-                        </Link>
-                    </p>
-                )}
+            <main id="main-content" className="mx-auto max-w-workspace px-5 py-6 sm:px-6 lg:px-8">
                 {post?.review_notes && (
-                    <p className="mt-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                    <p className="mb-4 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
                         Review notes: {post.review_notes}
                     </p>
                 )}
                 {errors.conflict && (
-                    <p className="mt-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+                    <p className="mb-4 rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
                         {errors.conflict}
                     </p>
                 )}
                 {extraErrors.map(([key, message]) => (
                     <p
                         key={key}
-                        className="mt-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800"
+                        className="mb-4 rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800"
                         role="alert"
                     >
                         {message}
                     </p>
                 ))}
 
-                <form onSubmit={submit} className="mt-8 flex flex-col gap-4">
-                    <div>
-                        <label htmlFor="title">Title</label>
-                        <input
-                            id="title"
-                            value={data.title}
-                            onChange={(e) => setData('title', e.target.value)}
-                            required
-                            className="w-full rounded border px-3 py-2"
-                        />
-                        <FieldError message={errors.title} />
-                    </div>
-                    <div>
-                        <label htmlFor="slug">Slug</label>
-                        <input
-                            id="slug"
-                            value={data.slug}
-                            onChange={(e) => setData('slug', e.target.value)}
-                            className="w-full rounded border px-3 py-2"
-                        />
-                        <FieldError message={errors.slug} />
-                    </div>
-                    <div>
-                        <label htmlFor="channel">Channel</label>
-                        <select
-                            id="channel"
-                            value={data.channel}
-                            onChange={(e) => setData('channel', e.target.value)}
-                            className="w-full rounded border px-3 py-2"
-                        >
-                            {channels.map((channel) => (
-                                <option key={channel.value} value={channel.value}>
-                                    {channel.label}
-                                </option>
-                            ))}
-                        </select>
-                        <FieldError message={errors.channel} />
-                    </div>
-                    <div>
-                        <label htmlFor="visibility">Visibility</label>
-                        <select
-                            id="visibility"
-                            value={data.visibility}
-                            onChange={(e) => setData('visibility', e.target.value)}
-                            className="w-full rounded border px-3 py-2"
-                        >
-                            <option value="public">Public</option>
-                            <option value="members">Members only</option>
-                            <option value="paid">Paid members only</option>
-                        </select>
-                        <FieldError message={errors.visibility} />
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <input
-                            id="featured"
-                            type="checkbox"
-                            checked={data.featured}
-                            onChange={(e) => setData('featured', e.target.checked)}
-                        />
-                        <label htmlFor="featured">Featured on homepage / channel</label>
-                        <FieldError message={errors.featured} />
-                    </div>
-                    {staffUsers.length > 0 && (
+                <form onSubmit={submit} className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+                    <div className="workspace-glass-panel flex flex-col gap-4 p-5 sm:p-6">
                         <div>
-                            <label htmlFor="co_authors">Co-authors</label>
-                            <select
-                                id="co_authors"
-                                multiple
-                                value={data.co_author_ids.map(String)}
-                                onChange={(e) => {
-                                    const selected = Array.from(e.target.selectedOptions).map((opt) => Number(opt.value));
-                                    setData('co_author_ids', selected);
-                                }}
-                                className="w-full rounded border px-3 py-2"
-                                size={Math.min(6, Math.max(3, staffUsers.length))}
-                            >
-                                {staffUsers.map((user) => (
-                                    <option key={user.id} value={user.id}>
-                                        {user.name} ({user.email})
-                                    </option>
-                                ))}
-                            </select>
-                            <FieldError message={fieldError(errors, 'co_author_ids')} />
-                        </div>
-                    )}
-                    <div>
-                        <label htmlFor="excerpt">Excerpt</label>
-                        <textarea
-                            id="excerpt"
-                            value={data.excerpt}
-                            onChange={(e) => setData('excerpt', e.target.value)}
-                            rows={2}
-                            className="w-full rounded border px-3 py-2"
-                        />
-                        <FieldError message={errors.excerpt} />
-                    </div>
-                    <div>
-                        <label htmlFor="tags">Tags (comma-separated)</label>
-                        <input
-                            id="tags"
-                            value={data.tags_text}
-                            onChange={(e) => setData('tags_text', e.target.value)}
-                            className="w-full rounded border px-3 py-2"
-                        />
-                        <FieldError message={fieldError(errors, 'tags')} />
-                    </div>
-                    <div>
-                        <label htmlFor="body">Body</label>
-                        <EditorJsField
-                            initialData={data.content}
-                            onChange={(content) => setData('content', content)}
-                        />
-                        <FieldError message={errors.content} />
-                        <div className="mt-3">
-                            <AiAssistPanel
-                                title={data.title}
-                                excerpt={data.excerpt}
-                                onInsert={(text) => {
-                                    setData('content', {
-                                        ...data.content,
-                                        time: Date.now(),
-                                        blocks: [
-                                            ...(data.content.blocks ?? []),
-                                            { type: 'paragraph', data: { text } },
-                                        ],
-                                    });
-                                }}
-                            />
-                        </div>
-                    </div>
-
-                    <fieldset className="flex flex-col gap-3 border-t pt-4">
-                        <legend className="font-medium">Hero image</legend>
-                        <input
-                            placeholder="Image URL"
-                            value={data.hero_image}
-                            onChange={(e) => setData('hero_image', e.target.value)}
-                            className="w-full rounded border px-3 py-2"
-                        />
-                        <FieldError message={errors.hero_image} />
-                        <input
-                            placeholder="Alt text"
-                            value={data.hero_image_alt}
-                            onChange={(e) => setData('hero_image_alt', e.target.value)}
-                            className="w-full rounded border px-3 py-2"
-                        />
-                        <FieldError message={errors.hero_image_alt} />
-                        <input
-                            placeholder="Caption"
-                            value={data.hero_image_caption}
-                            onChange={(e) => setData('hero_image_caption', e.target.value)}
-                            className="w-full rounded border px-3 py-2"
-                        />
-                        <FieldError message={errors.hero_image_caption} />
-                        <input
-                            placeholder="Credit"
-                            value={data.hero_image_credit}
-                            onChange={(e) => setData('hero_image_credit', e.target.value)}
-                            className="w-full rounded border px-3 py-2"
-                        />
-                        <FieldError message={errors.hero_image_credit} />
-                        <UnsplashPicker
-                            onSelect={({ url, credit, alt }) => {
-                                setData((current) => ({
-                                    ...current,
-                                    hero_image: url,
-                                    hero_image_credit: credit,
-                                    hero_image_alt: alt || current.hero_image_alt,
-                                }));
-                            }}
-                        />
-                    </fieldset>
-
-                    <fieldset className="flex flex-col gap-3 border-t pt-4">
-                        <legend className="font-medium">SEO</legend>
-                        <input
-                            placeholder="Meta title"
-                            value={data.meta_title}
-                            onChange={(e) => setData('meta_title', e.target.value)}
-                            className="w-full rounded border px-3 py-2"
-                        />
-                        <FieldError message={errors.meta_title} />
-                        <textarea
-                            placeholder="Meta description"
-                            value={data.meta_description}
-                            onChange={(e) => setData('meta_description', e.target.value)}
-                            rows={2}
-                            className="w-full rounded border px-3 py-2"
-                        />
-                        <FieldError message={errors.meta_description} />
-                        <input
-                            placeholder="Canonical URL"
-                            value={data.canonical_url}
-                            onChange={(e) => setData('canonical_url', e.target.value)}
-                            className="w-full rounded border px-3 py-2"
-                        />
-                        <FieldError message={errors.canonical_url} />
-                    </fieldset>
-
-                    <fieldset className="flex flex-col gap-3 border-t pt-4">
-                        <legend className="font-medium">Email campaign</legend>
-                        <label className="flex gap-2 text-sm">
+                            <label htmlFor="title">Title</label>
                             <input
-                                type="checkbox"
-                                checked={data.email_on_publish}
-                                onChange={(e) => setData('email_on_publish', e.target.checked)}
+                                id="title"
+                                value={data.title}
+                                onChange={(e) => setData('title', e.target.value)}
+                                required
+                                className="form-input w-full"
                             />
-                            Email this post on publish
-                        </label>
-                        <FieldError message={errors.email_on_publish} />
-                        {data.email_on_publish && (
-                            <div className="flex flex-col gap-2 pl-6">
-                                {mailingLists.map((list) => (
-                                    <label key={list.value} className="flex gap-2 text-sm">
-                                        <input
-                                            type="checkbox"
-                                            checked={data.mailing_lists.includes(list.value)}
-                                            onChange={() => toggleList(list.value)}
-                                        />
-                                        {list.label}
-                                    </label>
-                                ))}
-                                <label className="text-sm" htmlFor="newsletter_segment_id">
-                                    Segment (also confirmed on another newsletter)
-                                    <select
-                                        id="newsletter_segment_id"
-                                        className="mt-1 w-full rounded border px-2 py-1"
-                                        value={data.newsletter_segment_id}
-                                        onChange={(e) => setData('newsletter_segment_id', e.target.value)}
-                                    >
-                                        <option value="">No segment</option>
-                                        {segments.map((segment) => (
-                                            <option key={segment.id} value={String(segment.id)}>
-                                                {segment.name} ({segment.newsletter} and {segment.also})
-                                            </option>
-                                        ))}
-                                    </select>
-                                </label>
+                            <FieldError message={errors.title} />
+                        </div>
+                        <div>
+                            <label htmlFor="slug">Slug</label>
+                            <input
+                                id="slug"
+                                value={data.slug}
+                                onChange={(e) => setData('slug', e.target.value)}
+                                className="form-input w-full"
+                            />
+                            <FieldError message={errors.slug} />
+                        </div>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <div>
+                                <label htmlFor="channel">Channel</label>
+                                <select
+                                    id="channel"
+                                    value={data.channel}
+                                    onChange={(e) => setData('channel', e.target.value)}
+                                    className="form-input w-full"
+                                >
+                                    {channels.map((channel) => (
+                                        <option key={channel.value} value={channel.value}>
+                                            {channel.label}
+                                        </option>
+                                    ))}
+                                </select>
+                                <FieldError message={errors.channel} />
+                            </div>
+                            <div>
+                                <label htmlFor="visibility">Visibility</label>
+                                <select
+                                    id="visibility"
+                                    value={data.visibility}
+                                    onChange={(e) => setData('visibility', e.target.value)}
+                                    className="form-input w-full"
+                                >
+                                    <option value="public">Public</option>
+                                    <option value="members">Members only</option>
+                                    <option value="paid">Paid members only</option>
+                                </select>
+                                <FieldError message={errors.visibility} />
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <input
+                                id="featured"
+                                type="checkbox"
+                                checked={data.featured}
+                                onChange={(e) => setData('featured', e.target.checked)}
+                            />
+                            <label htmlFor="featured">Featured on homepage / channel</label>
+                            <FieldError message={errors.featured} />
+                        </div>
+                        {staffUsers.length > 0 && (
+                            <div>
+                                <label htmlFor="co_authors">Co-authors</label>
+                                <select
+                                    id="co_authors"
+                                    multiple
+                                    value={data.co_author_ids.map(String)}
+                                    onChange={(e) => {
+                                        const selected = Array.from(e.target.selectedOptions).map((opt) => Number(opt.value));
+                                        setData('co_author_ids', selected);
+                                    }}
+                                    className="form-input w-full"
+                                    size={Math.min(6, Math.max(3, staffUsers.length))}
+                                >
+                                    {staffUsers.map((user) => (
+                                        <option key={user.id} value={user.id}>
+                                            {user.name} ({user.email})
+                                        </option>
+                                    ))}
+                                </select>
+                                <FieldError message={fieldError(errors, 'co_author_ids')} />
                             </div>
                         )}
-                        <FieldError message={fieldError(errors, 'mailing_lists')} />
-                    </fieldset>
-                    <FieldError message={errors.expected_updated_at} />
+                        <div>
+                            <label htmlFor="excerpt">Excerpt</label>
+                            <textarea
+                                id="excerpt"
+                                value={data.excerpt}
+                                onChange={(e) => setData('excerpt', e.target.value)}
+                                rows={2}
+                                className="form-input w-full"
+                            />
+                            <FieldError message={errors.excerpt} />
+                        </div>
+                        <div>
+                            <label htmlFor="tags">Tags (comma-separated)</label>
+                            <input
+                                id="tags"
+                                value={data.tags_text}
+                                onChange={(e) => setData('tags_text', e.target.value)}
+                                className="form-input w-full"
+                            />
+                            <FieldError message={fieldError(errors, 'tags')} />
+                        </div>
+                        <div>
+                            <label htmlFor="body">Body</label>
+                            <div className="rounded-control border border-border/70 bg-white/80 p-3">
+                                <EditorJsField
+                                    initialData={data.content}
+                                    onChange={(content) => setData('content', content)}
+                                />
+                            </div>
+                            <FieldError message={errors.content} />
+                            <div className="mt-3">
+                                <AiAssistPanel
+                                    title={data.title}
+                                    excerpt={data.excerpt}
+                                    onInsert={(text) => {
+                                        setData('content', {
+                                            ...data.content,
+                                            time: Date.now(),
+                                            blocks: [
+                                                ...(data.content.blocks ?? []),
+                                                { type: 'paragraph', data: { text } },
+                                            ],
+                                        });
+                                    }}
+                                />
+                            </div>
+                        </div>
 
-                    <div className="flex flex-wrap gap-2 border-t pt-4">
-                        <button type="submit" disabled={processing} className="rounded bg-apes-primary px-4 py-2 text-white">
-                            {isNew ? 'Create draft' : 'Save'}
-                        </button>
-                        {!isNew && (
-                            <button
-                                type="button"
-                                className="rounded border px-4 py-2"
-                                onClick={() => action(`/staff/posts/${post.id}/submit`)}
-                            >
-                                Submit for review
-                            </button>
-                        )}
-                        {!isNew && canPublish && (
-                            <>
-                                <button
-                                    type="button"
-                                    className="rounded border px-4 py-2"
-                                    onClick={() => action(`/staff/posts/${post.id}/publish`)}
-                                >
-                                    Publish
-                                </button>
-                                <button
-                                    type="button"
-                                    className="rounded border px-4 py-2"
-                                    onClick={() => action(`/staff/posts/${post.id}/unpublish`)}
-                                >
-                                    Unpublish
-                                </button>
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        type="datetime-local"
-                                        value={scheduleAt}
-                                        onChange={(e) => setScheduleAt(e.target.value)}
-                                        className="rounded border px-2 py-1 text-sm"
-                                    />
-                                    <button
-                                        type="button"
-                                        className="rounded border px-4 py-2"
-                                        onClick={() =>
-                                            action(`/staff/posts/${post.id}/schedule`, {
-                                                scheduled_for: scheduleAt,
-                                            })
-                                        }
-                                    >
-                                        Schedule
-                                    </button>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        value={rejectNotes}
-                                        onChange={(e) => setRejectNotes(e.target.value)}
-                                        placeholder="Rejection notes"
-                                        className="rounded border px-2 py-1 text-sm"
-                                    />
-                                    <button
-                                        type="button"
-                                        className="rounded border px-4 py-2"
-                                        onClick={() =>
-                                            action(`/staff/posts/${post.id}/reject`, {
-                                                review_notes: rejectNotes,
-                                            })
-                                        }
-                                    >
-                                        Reject
-                                    </button>
-                                </div>
-                            </>
-                        )}
-                        {!isNew && (
-                            <button
-                                type="button"
-                                className="rounded border border-red-300 px-4 py-2 text-red-700"
-                                onClick={() => router.delete(`/staff/posts/${post.id}`)}
-                            >
-                                Soft delete
-                            </button>
+                        <fieldset className="flex flex-col gap-3 border-t border-border/60 pt-4">
+                            <legend className="font-medium">Hero image</legend>
+                            <input
+                                placeholder="Image URL"
+                                value={data.hero_image}
+                                onChange={(e) => setData('hero_image', e.target.value)}
+                                className="form-input w-full"
+                            />
+                            <FieldError message={errors.hero_image} />
+                            <input
+                                placeholder="Alt text"
+                                value={data.hero_image_alt}
+                                onChange={(e) => setData('hero_image_alt', e.target.value)}
+                                className="form-input w-full"
+                            />
+                            <FieldError message={errors.hero_image_alt} />
+                            <input
+                                placeholder="Caption"
+                                value={data.hero_image_caption}
+                                onChange={(e) => setData('hero_image_caption', e.target.value)}
+                                className="form-input w-full"
+                            />
+                            <FieldError message={errors.hero_image_caption} />
+                            <input
+                                placeholder="Credit"
+                                value={data.hero_image_credit}
+                                onChange={(e) => setData('hero_image_credit', e.target.value)}
+                                className="form-input w-full"
+                            />
+                            <FieldError message={errors.hero_image_credit} />
+                            <UnsplashPicker
+                                onSelect={({ url, credit, alt }) => {
+                                    setData((current) => ({
+                                        ...current,
+                                        hero_image: url,
+                                        hero_image_credit: credit,
+                                        hero_image_alt: alt || current.hero_image_alt,
+                                    }));
+                                }}
+                            />
+                        </fieldset>
+
+                        {!isNew && revisions.length > 0 && (
+                            <section className="border-t border-border/60 pt-4">
+                                <h2 className="text-lg font-medium">Revisions</h2>
+                                <ul className="mt-3 space-y-2 text-sm">
+                                    {revisions.map((revision) => (
+                                        <li key={revision.id} className="flex items-center justify-between gap-4">
+                                            <span>
+                                                {revision.title} — {revision.editor ?? 'Unknown'} —{' '}
+                                                {revision.created_at
+                                                    ? new Date(revision.created_at).toLocaleString('en-GB')
+                                                    : '—'}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                className="underline"
+                                                onClick={() =>
+                                                    router.post(`/staff/posts/${post.id}/revisions/${revision.id}/restore`)
+                                                }
+                                            >
+                                                Restore
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </section>
                         )}
                     </div>
-                </form>
 
-                {!isNew && revisions.length > 0 && (
-                    <section className="mt-10 border-t pt-6">
-                        <h2 className="text-lg font-medium">Revisions</h2>
-                        <ul className="mt-3 space-y-2 text-sm">
-                            {revisions.map((revision) => (
-                                <li key={revision.id} className="flex items-center justify-between gap-4">
-                                    <span>
-                                        {revision.title} — {revision.editor ?? 'Unknown'} —{' '}
-                                        {revision.created_at
-                                            ? new Date(revision.created_at).toLocaleString('en-GB')
-                                            : '—'}
-                                    </span>
+                    <aside
+                        className="workspace-glass-panel flex flex-col gap-4 p-5 lg:sticky lg:top-[calc(var(--workspace-task-header-height,4rem)+1rem)]"
+                        data-testid="composer-publish-panel"
+                    >
+                        <div>
+                            <h2 className="text-sm font-bold tracking-wide text-muted uppercase">Publish</h2>
+                            <div className="mt-3 flex flex-col gap-2">
+                                <button type="submit" disabled={processing} className="button-primary">
+                                    {isNew ? 'Create draft' : 'Save'}
+                                </button>
+                                {!isNew && (
                                     <button
                                         type="button"
-                                        className="underline"
-                                        onClick={() =>
-                                            router.post(`/staff/posts/${post.id}/revisions/${revision.id}/restore`)
-                                        }
+                                        className="button-secondary"
+                                        onClick={() => action(`/staff/posts/${post.id}/submit`)}
                                     >
-                                        Restore
+                                        Submit for review
                                     </button>
-                                </li>
-                            ))}
-                        </ul>
-                    </section>
-                )}
+                                )}
+                                {!isNew && canPublish && (
+                                    <>
+                                        <button
+                                            type="button"
+                                            className="button-secondary"
+                                            onClick={() => action(`/staff/posts/${post.id}/publish`)}
+                                        >
+                                            Publish
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="button-secondary"
+                                            onClick={() => action(`/staff/posts/${post.id}/unpublish`)}
+                                        >
+                                            Unpublish
+                                        </button>
+                                        <div className="flex flex-col gap-2">
+                                            <input
+                                                type="datetime-local"
+                                                value={scheduleAt}
+                                                onChange={(e) => setScheduleAt(e.target.value)}
+                                                className="form-input"
+                                            />
+                                            <button
+                                                type="button"
+                                                className="button-secondary"
+                                                onClick={() =>
+                                                    action(`/staff/posts/${post.id}/schedule`, {
+                                                        scheduled_for: scheduleAt,
+                                                    })
+                                                }
+                                            >
+                                                Schedule
+                                            </button>
+                                        </div>
+                                        <div className="flex flex-col gap-2">
+                                            <input
+                                                value={rejectNotes}
+                                                onChange={(e) => setRejectNotes(e.target.value)}
+                                                placeholder="Rejection notes"
+                                                className="form-input"
+                                            />
+                                            <button
+                                                type="button"
+                                                className="button-secondary"
+                                                onClick={() =>
+                                                    action(`/staff/posts/${post.id}/reject`, {
+                                                        review_notes: rejectNotes,
+                                                    })
+                                                }
+                                            >
+                                                Reject
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                                {!isNew && (
+                                    <button
+                                        type="button"
+                                        className="button-danger"
+                                        onClick={() => router.delete(`/staff/posts/${post.id}`)}
+                                    >
+                                        Soft delete
+                                    </button>
+                                )}
+                            </div>
+                            <FieldError message={errors.expected_updated_at} />
+                        </div>
+
+                        <fieldset className="flex flex-col gap-3 border-t border-border/60 pt-4">
+                            <legend className="font-medium">SEO</legend>
+                            <input
+                                placeholder="Meta title"
+                                value={data.meta_title}
+                                onChange={(e) => setData('meta_title', e.target.value)}
+                                className="form-input w-full"
+                            />
+                            <FieldError message={errors.meta_title} />
+                            <textarea
+                                placeholder="Meta description"
+                                value={data.meta_description}
+                                onChange={(e) => setData('meta_description', e.target.value)}
+                                rows={2}
+                                className="form-input w-full"
+                            />
+                            <FieldError message={errors.meta_description} />
+                            <input
+                                placeholder="Canonical URL"
+                                value={data.canonical_url}
+                                onChange={(e) => setData('canonical_url', e.target.value)}
+                                className="form-input w-full"
+                            />
+                            <FieldError message={errors.canonical_url} />
+                        </fieldset>
+
+                        <fieldset className="flex flex-col gap-3 border-t border-border/60 pt-4">
+                            <legend className="font-medium">Email campaign</legend>
+                            <label className="flex gap-2 text-sm">
+                                <input
+                                    type="checkbox"
+                                    checked={data.email_on_publish}
+                                    onChange={(e) => setData('email_on_publish', e.target.checked)}
+                                />
+                                Email this post on publish
+                            </label>
+                            <FieldError message={errors.email_on_publish} />
+                            {data.email_on_publish && (
+                                <div className="flex flex-col gap-2 pl-1">
+                                    {mailingLists.map((list) => (
+                                        <label key={list.value} className="flex gap-2 text-sm">
+                                            <input
+                                                type="checkbox"
+                                                checked={data.mailing_lists.includes(list.value)}
+                                                onChange={() => toggleList(list.value)}
+                                            />
+                                            {list.label}
+                                        </label>
+                                    ))}
+                                    <label className="text-sm" htmlFor="newsletter_segment_id">
+                                        Segment (also confirmed on another newsletter)
+                                        <select
+                                            id="newsletter_segment_id"
+                                            className="form-input mt-1 w-full"
+                                            value={data.newsletter_segment_id}
+                                            onChange={(e) => setData('newsletter_segment_id', e.target.value)}
+                                        >
+                                            <option value="">No segment</option>
+                                            {segments.map((segment) => (
+                                                <option key={segment.id} value={String(segment.id)}>
+                                                    {segment.name} ({segment.newsletter} and {segment.also})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
+                                </div>
+                            )}
+                            <FieldError message={fieldError(errors, 'mailing_lists')} />
+                        </fieldset>
+                    </aside>
+                </form>
             </main>
-        </>
+        </WorkspaceLayout>
     );
 }
