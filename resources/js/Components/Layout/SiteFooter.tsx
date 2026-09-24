@@ -224,13 +224,13 @@ export default function SiteFooter() {
                     <section className="site-footer-partners" aria-label="Partner organisations">
                         <strong>In partnership with</strong>
                         {SITE_FOOTER_PARTNERS.map((partner) => (
-                            <a
-                                key={partner.name}
-                                className="site-footer-partner-pill"
-                                href={SITE_FOOTER_PARTNERS_HREF}
-                                rel="noopener noreferrer"
-                                target="_blank"
-                            >
+                                <a
+                                    key={partner.name}
+                                    className="site-footer-partner-pill min-h-11"
+                                    href={SITE_FOOTER_PARTNERS_HREF}
+                                    rel="noopener noreferrer"
+                                    target="_blank"
+                                >
                                 <img src={partner.logoSrc} alt={partner.logoAlt} width={34} height={34} />
                                 <span>{partner.name}</span>
                             </a>
@@ -243,7 +243,7 @@ export default function SiteFooter() {
                             {SITE_FOOTER_SOCIALS.map((social) => (
                                 <a
                                     key={social.href}
-                                    className="site-footer-social-link"
+                                    className="site-footer-social-link min-h-11 min-w-11"
                                     href={social.href}
                                     rel="noopener noreferrer"
                                     target="_blank"

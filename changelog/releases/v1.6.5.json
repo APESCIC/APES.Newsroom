@@ -1,0 +1,27 @@
+{
+  "version": "v1.6.5",
+  "released_at": "2026-09-24",
+  "previous_version": "v1.6.4",
+  "theme": "Footer acceptance tests",
+  "change_types": [
+    "added",
+    "changed"
+  ],
+  "topic_tags": [
+    "public-facing"
+  ],
+  "summary": "Dedicated SiteFooter component tests and visual acceptance artifacts versus the Shelter footer reference complete the public footer alignment work.",
+  "detailed_changes": [
+    "Added resources/js/__tests__/site-footer.test.tsx covering landmark, columns, legal line, partners, socials, and external link rel attributes.",
+    "Keyboard / focus note and desktop/mobile screenshots vs Shelter attached on the PR.",
+    "Social/partner controls keep 44\u00d744 min target classes."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: public SiteFooter",
+    "User groups affected: public readers; contributors verifying footer AC",
+    "Public impact: none beyond test/docs confidence",
+    "Internal impact: closes #176 and parent #171"
+  ],
+  "pr": 227
+}
