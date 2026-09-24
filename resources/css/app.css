@@ -473,6 +473,130 @@
         overflow-y: auto;
         overscroll-contain: contain;
     }
+
+    /* Public SiteFooter — Shelter-aligned deep-green glass panels */
+    .site-footer {
+        margin-top: 3rem;
+        padding: 2.2rem 0 1.5rem;
+        background: linear-gradient(180deg, rgba(6, 26, 26, 0.55) 0%, rgba(6, 32, 22, 0.92) 100%);
+        color: #eaf7ef;
+    }
+
+    .site-footer-shell {
+        display: grid;
+        gap: 1.4rem;
+    }
+
+    .site-footer-grid {
+        display: grid;
+        grid-template-columns: minmax(280px, 1.45fr) repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .site-footer-panel {
+        padding: 1.25rem;
+        border-radius: 1.625rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+        backdrop-filter: blur(var(--glass-blur));
+        -webkit-backdrop-filter: blur(var(--glass-blur));
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
+    }
+
+    .site-footer-panel-brand {
+        background:
+            radial-gradient(circle at 100% 0, rgba(108, 246, 246, 0.12), transparent 32%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04));
+        backdrop-filter: blur(var(--glass-blur));
+        -webkit-backdrop-filter: blur(var(--glass-blur));
+    }
+
+    .site-footer-kicker {
+        margin: 0;
+        color: #f8f4df;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        font-size: 0.78rem;
+        font-weight: 700;
+    }
+
+    .site-footer-brand-title,
+    .site-footer-heading {
+        margin: 0.2rem 0 0.65rem;
+        color: #fff;
+        line-height: 1.2;
+        font-size: 1.125rem;
+        font-weight: 700;
+    }
+
+    .site-footer-brand-title {
+        font-size: 1.35rem;
+    }
+
+    .site-footer-link-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.65rem;
+        margin: 1rem 0 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .site-footer-pill-link,
+    .site-footer-version-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 2.75rem;
+        min-width: 2.75rem;
+        padding: 0.65rem 0.95rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 700;
+        transition:
+            background 0.2s ease,
+            border-color 0.2s ease,
+            transform 0.2s ease;
+    }
+
+    .site-footer-pill-link:hover,
+    .site-footer-pill-link:focus-visible,
+    .site-footer-version-badge:hover,
+    .site-footer-version-badge:focus-visible {
+        background: rgba(255, 255, 255, 0.18);
+        border-color: rgba(255, 255, 255, 0.35);
+        transform: translateY(-1px);
+    }
+
+    .site-footer-version-badge {
+        min-width: auto;
+        padding: 0.35rem 0.75rem;
+        min-height: 2.125rem;
+    }
+
+    @media (max-width: 1180px) {
+        .site-footer-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 760px) {
+        .site-footer-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .site-footer-panel {
+            padding: 1rem;
+        }
+
+        .site-footer-link-list {
+            gap: 0.55rem;
+        }
+    }
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -480,7 +604,9 @@
     .glass-hero,
     .glass-channel,
     .glass-story-card,
-    .workspace-glass-rail {
+    .workspace-glass-rail,
+    .site-footer-panel,
+    .site-footer-panel-brand {
         background: rgba(6, 26, 26, 0.92);
     }
 
@@ -503,10 +629,24 @@
     .glass-hero,
     .glass-channel,
     .glass-story-card,
-    .workspace-glass-rail {
+    .workspace-glass-rail,
+    .site-footer-panel,
+    .site-footer-panel-brand {
         backdrop-filter: none;
         -webkit-backdrop-filter: none;
         background: rgba(6, 26, 26, 0.88);
+    }
+
+    .site-footer-pill-link,
+    .site-footer-version-badge {
+        transition: none;
+    }
+
+    .site-footer-pill-link:hover,
+    .site-footer-pill-link:focus-visible,
+    .site-footer-version-badge:hover,
+    .site-footer-version-badge:focus-visible {
+        transform: none;
     }
 
     .glass-form-panel,

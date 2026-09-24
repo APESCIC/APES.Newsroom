@@ -101,19 +101,20 @@ describe('Direction C public homepage', () => {
         );
         expect(screen.getByRole('heading', { name: 'Wildlife corridor project reaches a new milestone' })).toHaveClass('display-headline-on-glass');
         expect(document.querySelector('.editorial-rule')).not.toBeInTheDocument();
-        expect(screen.getByRole('link', { name: /^APES CIC/ })).toHaveClass('glass-channel');
+        const channelsRegion = screen.getByRole('region', { name: 'APES newsroom channels' });
+        expect(within(channelsRegion).getByRole('link', { name: /^APES CIC/ })).toHaveClass('glass-channel');
         expect(
             screen.getByRole('link', {
                 name: 'Read the story: Wildlife corridor project reaches a new milestone',
             }),
         ).toHaveTextContent('Read the story');
         expect(screen.getByRole('heading', { name: 'Our mission' })).toBeInTheDocument();
-        expect(screen.getByRole('region', { name: 'APES newsroom channels' })).toBeInTheDocument();
-        const apesChannel = screen.getByRole('link', { name: /^APES CIC/ });
+        expect(channelsRegion).toBeInTheDocument();
+        const apesChannel = within(channelsRegion).getByRole('link', { name: /^APES CIC/ });
         expect(apesChannel).not.toHaveAttribute('aria-label');
         expect(apesChannel).toHaveTextContent('APES CIC');
-        expect(screen.getByRole('link', { name: /^Shelter & Rescue/ })).toHaveTextContent('Shelter & Rescue');
-        expect(screen.getByRole('link', { name: /^Pet Care Clinic/ })).toHaveTextContent('Pet Care Clinic');
+        expect(within(channelsRegion).getByRole('link', { name: /^Shelter & Rescue/ })).toHaveTextContent('Shelter & Rescue');
+        expect(within(channelsRegion).getByRole('link', { name: /^Pet Care Clinic/ })).toHaveTextContent('Pet Care Clinic');
         expect(screen.getByRole('heading', { name: 'Recent stories' })).toBeInTheDocument();
         expect(screen.getByText('The latest from the rescue centre.')).toBeInTheDocument();
         expect(screen.getByText('4 August 2026', { selector: 'time' })).toHaveAttribute(
@@ -192,13 +193,32 @@ describe('Direction C public homepage', () => {
         expect(menuButton).toHaveAttribute('aria-expanded', 'false');
         expect(mastheadHomeLink).toHaveFocus();
 
-        const footerNavigation = screen.getByRole('navigation', { name: 'Legal and subscriptions' });
-        for (const link of within(footerNavigation).getAllByRole('link')) {
-            expect(link).toHaveClass('inline-flex', 'min-h-11', 'min-w-11', 'items-center', 'justify-center');
+        const visitNav = screen.getByRole('navigation', { name: 'Visit and get help' });
+        const informedNav = screen.getByRole('navigation', { name: 'Stay informed' });
+        const policiesNav = screen.getByRole('navigation', { name: 'Read important information' });
+        for (const nav of [visitNav, informedNav, policiesNav]) {
+            for (const link of within(nav).getAllByRole('link')) {
+                expect(link.className).toMatch(/site-footer-pill-link/);
+            }
         }
 
+        expect(within(visitNav).getByRole('link', { name: 'Open a ticket' })).toHaveAttribute(
+            'href',
+            'https://contact.apes.org.uk/',
+        );
+        expect(within(informedNav).getByRole('link', { name: 'Mailing lists' })).toHaveAttribute(
+            'href',
+            '/mailing/signup',
+        );
+        expect(within(policiesNav).getByRole('link', { name: 'Privacy' })).toHaveAttribute(
+            'href',
+            '/legal/privacy',
+        );
+
         const footer = screen.getByRole('contentinfo');
+        expect(footer).toHaveClass('site-footer');
         expect(footer).toHaveTextContent('40 Morris Street, St Helens, Merseyside, WA9 3EN');
+        expect(footer).toHaveTextContent('Stories from the APES network');
         expect(within(footer).getByRole('link', { name: '01744 374 015' })).toHaveAttribute('href', 'tel:+441744374015');
 
         const assembledEmail = ['info', '@', ['apes', 'org', 'uk'].join('.')].join('');
