@@ -1,0 +1,26 @@
+{
+  "version": "v1.5.4",
+  "released_at": "2026-09-24",
+  "previous_version": "v1.5.3",
+  "theme": "Moderation queue pagination and search",
+  "change_types": [
+    "added"
+  ],
+  "topic_tags": [
+    "internal-only"
+  ],
+  "summary": "Admin Moderation queues paginate server-side with optional search filter. Moderation action routes and authz are unchanged.",
+  "detailed_changes": [
+    "Paginate profiles, comments, reports, and suspended queues (15 per page) with named page query params.",
+    "Optional q search filters display names, bios, comment bodies, report reasons, and related user names.",
+    "Inertia payload includes counts, filters, and prev/next links; UI search form added."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /admin/moderation",
+    "User groups affected: admin moderators",
+    "Public impact: none",
+    "Internal impact: scalable moderation queues"
+  ],
+  "pr": 216
+}
