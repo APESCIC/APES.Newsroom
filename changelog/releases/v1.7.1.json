@@ -1,0 +1,28 @@
+{
+  "version": "v1.7.1",
+  "released_at": "2026-09-24",
+  "previous_version": "v1.7.0",
+  "theme": "Cursor Cloud + Cloudron agent setup",
+  "change_types": [
+    "added",
+    "changed"
+  ],
+  "topic_tags": [
+    "internal-only"
+  ],
+  "summary": "Agent and Cloudron docs now match the live LAMP Newsroom, with a committed Cursor Cloud environment and GitHub hygiene (PR template, CODEOWNERS, Dependabot).",
+  "detailed_changes": [
+    "Expanded AGENTS.md with stack matrix, live Cloudron target, secret names, branch/deploy rules, www-data trap, and /health expectations (#229).",
+    "Committed .cursor/Dockerfile and environment.json (PHP 8.4 + Node 22) with gitignore allowlist.",
+    "Added PR template, CODEOWNERS, and Dependabot; clarified Deploy to Cloudron (beta) targets the live app while keeping Environment name beta.",
+    "Updated deployment.md and README for the live Newsroom origin and the live app id; merge still does not auto-deploy."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: docs / agent tooling (no public UI change)",
+    "User groups affected: contributors and Cloud Agents",
+    "Public impact: none beyond Change Log Hub entry",
+    "Internal impact: accurate live-target ops docs and reproducible Cursor Cloud env"
+  ],
+  "pr": 230
+}

@@ -9,16 +9,16 @@ Care Clinic, together with authenticated editorial, campaign, moderation, and
 governance workspaces.
 
 The production Newsroom is available at
-[www.apesnews.org.uk](https://www.apesnews.org.uk/). The guarded cutover from
+[www.apesnews.org.uk](https://www.apesnews.org.uk/). The guarded cutover from  <!-- pragma: allowlist secret -->
 Ghost completed on 2026-08-06 under
 [issue #11](https://github.com/APESCIC/APES-Newsroom/issues/11).
 
 ## Repository status
 
-Last verified: **2026-08-11T10:52:34+01:00**.
+Last verified: **2026-09-24**.
 
 - `main` is the remote default branch and its CI workflow is current.
-- The public Newsroom is live at `www.apesnews.org.uk`; the apex
+- The public Newsroom is live at `www.apesnews.org.uk`; the apex  <!-- pragma: allowlist secret -->
   `apesnews.org.uk` DNS transition was not recorded as complete during cutover.
 - The former Ghost app remains stopped and recoverable at
   `ghost-legacy.apesnews.org.uk`. Retirement or deletion is not authorized.
@@ -107,11 +107,13 @@ changes are intended. CI runs the backend/frontend checks against `main`.
 `{"status":"ok","checks":{...}}` without returning configuration or secrets.
 It is used by the guarded deployment workflow and external uptime checks.
 
-Deployments are manual, backup-first, versioned, and rollback-capable. Follow
-the [Cloudron deployment runbook](docs/deployment.md) and the
+Deployments are manual, backup-first, versioned, and rollback-capable. The
+GitHub Environment name is **`beta`** but targets the live LAMP app at
+`https://www.apesnews.org.uk/` (app id `74a2a784-a161-4787-84ff-2b8efc957bc8`). Follow the  <!-- pragma: allowlist secret -->
+[Cloudron deployment runbook](docs/deployment.md) and the
 [beta acceptance record](docs/deployment-beta-acceptance.md). Repository work
-does not by itself authorize a production deployment, DNS change, live campaign
-send, or Ghost retirement.
+does not by itself authorize apex DNS changes, live campaign sends, or Ghost
+retirement. Merge does not auto-deploy.
 
 ## Documentation and support
 

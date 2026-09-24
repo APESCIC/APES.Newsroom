@@ -1,0 +1,22 @@
+{
+  "name": "APES Newsroom",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "install": "composer install --no-interaction --prefer-dist --no-progress\nnpm ci\nif [ ! -f .env ]; then cp .env.example .env && php artisan key:generate --ansi; fi",
+  "terminals": [
+    {
+      "name": "laravel",
+      "command": "php artisan serve --host=127.0.0.1 --port=8000"
+    },
+    {
+      "name": "vite",
+      "command": "npm run dev -- --host 127.0.0.1 --port 5173"
+    }
+  ],
+  "ports": [
+    8000,
+    5173
+  ]
+}
