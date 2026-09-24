@@ -1,0 +1,28 @@
+{
+  "version": "v1.6.0",
+  "released_at": "2026-09-24",
+  "previous_version": "v1.5.9",
+  "theme": "Glass Studio",
+  "change_types": [
+    "added",
+    "changed"
+  ],
+  "topic_tags": [
+    "internal-only"
+  ],
+  "summary": "Milestone 8 brings Direction B Glass Studio frosted-glass chrome to staff WorkspaceLayout, admin Moderation, staff Posts, and the New/Edit composer on Cloudron beta, reusing public Direction C glass tokens.",
+  "detailed_changes": [
+    "Glass WorkspaceLayout shell with teal gradient, frosted rail/chrome, and solid no-blur / reduced-motion fallbacks (v1.5.1 / #167 #145).",
+    "Glass Moderation summary, tabs, cards, empty states, plus queue pagination and filter backend (v1.5.2–v1.5.4 / #157–#159 #146).",
+    "Glass Posts filters, table, mobile cards, and title/author/channel search (v1.5.5–v1.5.6 / #160–#161 #147).",
+    "Two-column Glass Studio composer with sticky publish/SEO/campaign panel and create/update payload parity including expected_updated_at (v1.5.7–v1.5.9 / #162 #164 #165 #148)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff/posts, /staff/posts/new, /staff/posts/{id}/edit, /admin/moderation, WorkspaceLayout chrome",
+    "User groups affected: staff editors; admins (moderation)",
+    "Public impact: none (public Direction C unchanged)",
+    "Internal impact: Glass Studio staff/admin chrome on beta; no production cutover, Ghost retirement, or live-send authorization"
+  ],
+  "pr": null
+}
