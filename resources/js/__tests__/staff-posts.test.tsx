@@ -80,8 +80,8 @@ describe('Glass Studio staff posts workspace', () => {
         expect(screen.getByRole('link', { name: 'Admin panel' })).toHaveAttribute('href', '/admin/moderation');
         expect(screen.getByRole('link', { name: 'Review queue' })).toHaveAttribute('href', '/staff/posts/review');
         expect(screen.getByRole('link', { name: 'New draft' })).toHaveAttribute('href', '/staff/posts/new');
-        expect(screen.getByRole('navigation', { name: 'Post status filters' })).toBeInTheDocument();
-        expect(screen.getByRole('table', { name: 'Newsroom posts' })).toBeInTheDocument();
+        expect(screen.getByRole('navigation', { name: 'Post status filters' })).toHaveClass('workspace-glass-tabs');
+        expect(screen.getByRole('table', { name: 'Newsroom posts' }).closest('div')).toHaveClass('workspace-glass-panel');
         expect(screen.getByRole('list', { name: 'Newsroom posts on small screens' })).toBeInTheDocument();
         expect(screen.getAllByText('In review').length).toBeGreaterThan(1);
         expect(screen.getAllByText('Published').length).toBeGreaterThan(1);
