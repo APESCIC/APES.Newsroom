@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
+import { ORG_CIC_NUMBER, ORG_LEGAL_NAME } from '../../organisationContact';
 import {
     ORG_PHONE_DISPLAY,
     ORG_PHONE_TEL,
@@ -16,6 +17,9 @@ import ProtectedEmail from './ProtectedEmail';
 
 const contactLinkClassName =
     'inline-flex min-h-11 min-w-11 items-center text-on-glass-muted hover:text-on-glass';
+
+const fineprintLinkClassName =
+    'inline-flex min-h-11 items-center text-on-glass hover:underline';
 
 function FooterPillLink({ item }: { item: FooterNavItem }) {
     const className = 'site-footer-pill-link';
@@ -67,26 +71,29 @@ function FooterNavColumn({
 
 export default function SiteFooter() {
     const { currentRelease } = usePage<SharedPageProps>().props;
+    const year = new Date().getFullYear();
 
-    let versionBlock: ReactNode = (
-        <Link href="/change-log-hub" className="site-footer-version-badge">
-            Change Log Hub
-        </Link>
+    let versionLine: ReactNode = (
+        <>
+            Website version:{' '}
+            <Link href="/change-log-hub" className={fineprintLinkClassName}>
+                Change Log Hub
+            </Link>
+        </>
     );
 
     if (currentRelease) {
-        versionBlock = (
-            <span className="inline-flex flex-wrap items-center gap-2">
-                <Link
-                    href={`/change-log-hub#${currentRelease.slug}`}
-                    className="site-footer-version-badge"
-                >
+        versionLine = (
+            <>
+                Website version:{' '}
+                <Link href={`/change-log-hub#${currentRelease.slug}`} className={fineprintLinkClassName}>
                     {currentRelease.version}
                 </Link>
-                <Link href="/change-log-hub" className="site-footer-pill-link">
+                {' · '}
+                <Link href="/change-log-hub" className={fineprintLinkClassName}>
                     Change Log Hub
                 </Link>
-            </span>
+            </>
         );
     }
 
@@ -114,7 +121,6 @@ export default function SiteFooter() {
                                 <ProtectedEmail className={contactLinkClassName} />
                             </p>
                         </div>
-                        <p className="mt-4">{versionBlock}</p>
                     </section>
 
                     <FooterNavColumn
@@ -135,6 +141,23 @@ export default function SiteFooter() {
                         labelledBy="site-footer-policies"
                         items={SITE_FOOTER_POLICIES}
                     />
+                </div>
+
+                <div className="site-footer-fineprint">
+                    <p>
+                        © {year} {ORG_LEGAL_NAME}. CIC No: {ORG_CIC_NUMBER}.
+                    </p>
+                    <p data-nosnippet="">
+                        <strong>Contact:</strong>{' '}
+                        <ProtectedEmail className={fineprintLinkClassName} />
+                        {' · '}
+                        <a href={`tel:${ORG_PHONE_TEL}`} className={fineprintLinkClassName}>
+                            {ORG_PHONE_DISPLAY}
+                        </a>
+                        {' · '}
+                        {ORG_POSTAL_ADDRESS}
+                    </p>
+                    <p>{versionLine}</p>
                 </div>
             </div>
         </footer>
