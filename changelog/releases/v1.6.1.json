@@ -1,0 +1,25 @@
+{
+  "version": "v1.6.1",
+  "released_at": "2026-09-24",
+  "previous_version": "v1.6.0",
+  "theme": "Footer column inventory",
+  "change_types": [
+    "changed"
+  ],
+  "topic_tags": [
+    "public-facing"
+  ],
+  "summary": "Locks the public SiteFooter four-column link inventory on issue #174 ahead of the Shelter-aligned glass footer rebuild.",
+  "detailed_changes": [
+    "Documented Brand, Visit & help, Stay informed, and Policies columns with newsroom-appropriate destinations only.",
+    "Confirmed out-of-scope Shelter product routes (donate, sponsorship, adoption, service finder, push) and @apesshelter socials."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: public SiteFooter (inventory only; UI in later patches)",
+    "User groups affected: public readers",
+    "Public impact: changelog gate for footer column lock; no visual change yet",
+    "Internal impact: unblocks #172 multi-column glass SiteFooter"
+  ],
+  "pr": 223
+}
