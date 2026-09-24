@@ -43,7 +43,11 @@ function formatDate(value: string | null) {
 }
 
 function EmptyQueue({ children }: { children: string }) {
-    return <p className="rounded-card border border-border bg-white p-8 text-center text-muted">{children}</p>;
+    return (
+        <p className="workspace-glass-card p-8 text-center text-muted" data-testid="moderation-empty">
+            {children}
+        </p>
+    );
 }
 
 export default function ModerationIndex({
@@ -150,7 +154,7 @@ export default function ModerationIndex({
                                 <>
                                     <div className="hidden overflow-x-auto md:block">
                                         <table className="w-full text-left text-sm" aria-label="Pending profiles">
-                                            <thead className="bg-page-tint/70 text-xs tracking-wide text-muted uppercase">
+                                            <thead className="bg-brand-mist/50 text-xs tracking-wide text-muted uppercase">
                                                 <tr>
                                                     <th scope="col" className="px-5 py-4">User / account</th>
                                                     <th scope="col" className="px-5 py-4">Bio / status</th>
@@ -158,11 +162,11 @@ export default function ModerationIndex({
                                                     <th scope="col" className="px-5 py-4 text-right">Actions</th>
                                                 </tr>
                                             </thead>
-                                            <tbody className="divide-y divide-border">
+                                            <tbody className="divide-y divide-border/70">
                                                 {profiles.map((profile) => {
                                                     const name = profile.display_name ?? 'Untitled profile';
                                                     return (
-                                                        <tr key={profile.id} className="hover:bg-page-tint/50">
+                                                        <tr key={profile.id} className="bg-white/40 hover:bg-brand-mist/30">
                                                             <td className="px-5 py-5">
                                                                 <p className="font-bold text-body">{name}</p>
                                                                 <p className="mt-1 text-xs text-muted">{profile.user_name}</p>
@@ -186,7 +190,7 @@ export default function ModerationIndex({
                                         {profiles.map((profile) => {
                                             const name = profile.display_name ?? 'Untitled profile';
                                             return (
-                                                <li key={profile.id} className="rounded-card border border-border bg-white p-5">
+                                                <li key={profile.id} className="workspace-glass-card p-5">
                                                     <div className="flex items-start gap-4">
                                                         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-mist text-teal-deep">
                                                             <LineIcon name="user" className="h-5 w-5" />
@@ -220,7 +224,7 @@ export default function ModerationIndex({
                         {comments.length > 0 ? (
                                 <ul className="space-y-4">
                                     {comments.map((comment) => (
-                                        <li key={comment.id} className="rounded-card border border-border bg-white p-6">
+                                        <li key={comment.id} className="workspace-glass-card p-6">
                                             <p className="text-sm text-muted">
                                                 <strong className="text-body">{comment.user_name}</strong> on{' '}
                                                 <Link href={`/articles/${comment.post_slug}`} className="font-semibold text-teal-deep hover:underline">{comment.post_title}</Link>
@@ -247,7 +251,7 @@ export default function ModerationIndex({
                         {reports.length > 0 ? (
                                 <ul className="space-y-4">
                                     {reports.map((report) => (
-                                        <li key={report.id} className="rounded-card border border-border bg-white p-6">
+                                        <li key={report.id} className="workspace-glass-card p-6">
                                             <div className="flex flex-wrap items-start justify-between gap-3">
                                                 <div>
                                                     <h3 className="font-bold text-brand-ink">{report.reportable_type} #{report.reportable_id}</h3>
@@ -278,7 +282,7 @@ export default function ModerationIndex({
                                     {suspended.map((profile) => {
                                         const name = profile.display_name ?? profile.user_name;
                                         return (
-                                            <li key={profile.id} className="rounded-card border border-border bg-white p-6">
+                                            <li key={profile.id} className="workspace-glass-card p-6">
                                                 <h3 className="font-bold text-brand-ink">{name}</h3>
                                                 <p className="mt-1 text-sm text-muted">Account: {profile.user_name}</p>
                                                 {profile.notes && <p className="mt-4 rounded-control bg-page-tint p-4 text-sm leading-6">{profile.notes}</p>}

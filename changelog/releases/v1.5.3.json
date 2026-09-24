@@ -1,0 +1,26 @@
+{
+  "version": "v1.5.3",
+  "released_at": "2026-09-24",
+  "previous_version": "v1.5.2",
+  "theme": "Glass Moderation records and empty states",
+  "change_types": [
+    "changed"
+  ],
+  "topic_tags": [
+    "internal-only"
+  ],
+  "summary": "Moderation queue record cards, mobile layouts, and empty states use Glass Studio surfaces. Approve/Reject/Suspend/Resolve/Dismiss/Lift actions unchanged.",
+  "detailed_changes": [
+    "Profile, comment, report, and suspended record cards use workspace-glass-card.",
+    "Empty queue states use the same glass card treatment.",
+    "Desktop profile table rows restyled for glass panel context; action buttons unchanged."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /admin/moderation",
+    "User groups affected: admin moderators",
+    "Public impact: none",
+    "Internal impact: Glass Studio Moderation records"
+  ],
+  "pr": 215
+}
