@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import PostsIndex from '../Pages/Staff/Posts/Index';
 import { setMockPage } from '../test/inertia';
 
-describe('Direction A staff posts workspace', () => {
+describe('Glass Studio staff posts workspace', () => {
     let desktopChangeListener: ((event: MediaQueryListEvent) => void) | undefined;
     let resizeObserverCallback: ResizeObserverCallback | undefined;
 
@@ -90,6 +90,11 @@ describe('Direction A staff posts workspace', () => {
             'href',
             '/staff/posts/9/edit',
         );
+
+        expect(screen.getByTestId('workspace-shell')).toHaveClass('workspace-gradient-shell');
+        expect(screen.getByTestId('workspace-sidebar')).toHaveClass('workspace-glass-rail');
+        expect(screen.getByTestId('workspace-task-header')).toHaveClass('workspace-glass-chrome');
+        expect(screen.getByTestId('workspace-canvas')).toHaveClass('workspace-canvas');
 
         const taskHeader = screen.getByTestId('workspace-task-header');
         vi.spyOn(taskHeader, 'getBoundingClientRect').mockReturnValue({ height: 176 } as DOMRect);

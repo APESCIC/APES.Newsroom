@@ -40,10 +40,10 @@ function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: 'm
                     key={link.href}
                     href={link.href}
                     aria-current={link.active ? 'page' : undefined}
-                    className={`flex min-h-11 items-center gap-3 rounded-control border-l-4 px-3 py-2 text-sm font-semibold transition-colors ${
+                    className={`flex min-h-11 items-center gap-3 rounded-control border-l-4 px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)] ${
                         link.active
                             ? 'border-brand-teal bg-brand-teal text-brand-ink'
-                            : 'border-transparent text-white hover:bg-white/10'
+                            : 'border-transparent text-on-glass hover:bg-white/10'
                     }`}
                 >
                     <LineIcon name={link.icon} className="h-5 w-5 shrink-0" />
@@ -53,7 +53,7 @@ function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: 'm
             {area === 'Staff' && auth.can.accessAdmin && (
                 <Link
                     href="/admin/moderation"
-                    className="flex min-h-11 items-center gap-3 rounded-control px-3 py-2 text-sm font-semibold text-white hover:bg-white/10"
+                    className="flex min-h-11 items-center gap-3 rounded-control px-3 py-2 text-sm font-semibold text-on-glass hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]"
                 >
                     <LineIcon name="shield" className="h-5 w-5 shrink-0" />
                     Admin panel
@@ -69,20 +69,20 @@ function Sidebar({ area, active, close }: { area: WorkspaceArea; active: 'modera
 
     return (
         <div
-            className="flex h-full flex-col overflow-y-auto overscroll-contain bg-brand-ink px-5 py-6 text-white"
+            className="workspace-glass-rail flex h-full flex-col overflow-y-auto overscroll-contain px-5 py-6"
             data-testid="workspace-sidebar"
         >
             <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                    <Link href="/" className="inline-flex rounded-control">
+                    <Link href="/" className="inline-flex rounded-control focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]">
                         <ApesLogo variant="compact" className="h-10 w-10 object-contain" />
                     </Link>
-                    <span className="rounded bg-white/10 px-2 py-1 text-[0.625rem] font-bold tracking-widest text-white/75 uppercase">{area}</span>
+                    <span className="rounded bg-white/10 px-2 py-1 text-[0.625rem] font-bold tracking-widest text-on-glass-muted uppercase">{area}</span>
                 </div>
                 {close && (
                     <button
                         type="button"
-                        className="icon-button text-white"
+                        className="icon-button text-on-glass"
                         aria-label="Close workspace navigation"
                         data-workspace-close
                         onClick={close}
@@ -95,19 +95,19 @@ function Sidebar({ area, active, close }: { area: WorkspaceArea; active: 'modera
                 <WorkspaceNavigation area={area} active={active} />
             </div>
             <div className="mt-auto border-t border-white/15 pt-5">
-                <Link href="/" className="flex min-h-11 items-center gap-3 rounded-control px-3 py-2 text-sm text-white hover:bg-white/10">
+                <Link href="/" className="flex min-h-11 items-center gap-3 rounded-control px-3 py-2 text-sm text-on-glass hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]">
                     <LineIcon name="home" className="h-5 w-5" />
                     Back to Newsroom
                 </Link>
                 {auth.user && (
                     <div className="mt-4 border-t border-white/15 pt-4">
-                        <p className="truncate text-sm font-semibold">{auth.user.name}</p>
-                        <p className="mt-1 text-xs text-white/65 capitalize">{roleLabel}</p>
+                        <p className="truncate text-sm font-semibold text-on-glass">{auth.user.name}</p>
+                        <p className="mt-1 text-xs text-on-glass-muted capitalize">{roleLabel}</p>
                         <div className="mt-3 flex gap-4 text-sm">
-                            <Link href="/account" className="min-h-11 py-2 text-white/80 hover:text-white">
+                            <Link href="/account" className="min-h-11 py-2 text-on-glass-muted hover:text-on-glass focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]">
                                 Account
                             </Link>
-                            <Link href="/logout" method="post" as="button" className="min-h-11 py-2 text-white/80 hover:text-white">
+                            <Link href="/logout" method="post" as="button" className="min-h-11 py-2 text-on-glass-muted hover:text-on-glass focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]">
                                 Sign out
                             </Link>
                         </div>
@@ -244,7 +244,7 @@ export default function WorkspaceLayout({
         <div
             ref={workspaceShellRef}
             data-testid="workspace-shell"
-            className="workspace-shell min-h-screen bg-page-tint text-body"
+            className="workspace-shell workspace-gradient-shell"
         >
             <div
                 data-testid="workspace-background"
@@ -254,11 +254,11 @@ export default function WorkspaceLayout({
                 <a href="#main-content" className="skip-link">
                     Skip to main content
                 </a>
-                <aside ref={desktopSidebarRef} className="fixed inset-y-0 left-0 hidden w-64 lg:block">
+                <aside ref={desktopSidebarRef} className="fixed inset-y-0 left-0 z-20 hidden w-64 lg:block">
                     <Sidebar area={area} active={active} />
                 </aside>
-                <header className="flex min-h-16 items-center justify-between border-b border-border bg-white px-5 lg:hidden">
-                    <Link href="/" className="inline-flex items-center gap-3 font-semibold text-brand-ink">
+                <header className="workspace-glass-chrome flex min-h-16 items-center justify-between px-5 lg:hidden">
+                    <Link href="/" className="inline-flex items-center gap-3 font-semibold text-brand-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)]">
                         <ApesLogo variant="compact" alt="" className="h-11 w-11 object-contain" />
                         APES Newsroom
                     </Link>
@@ -278,7 +278,7 @@ export default function WorkspaceLayout({
                     <header
                         ref={taskHeaderRef}
                         data-testid="workspace-task-header"
-                        className="sticky top-0 z-30 flex min-h-16 flex-col items-start justify-between gap-3 border-b border-border bg-white px-5 py-3 sm:flex-row sm:items-center sm:px-6"
+                        className="workspace-glass-chrome sticky top-0 z-30 flex min-h-16 flex-col items-start justify-between gap-3 px-5 py-3 sm:flex-row sm:items-center sm:px-6"
                     >
                         <div>
                             <h1 className="text-lg font-bold text-body">{title}</h1>
@@ -286,7 +286,9 @@ export default function WorkspaceLayout({
                         </div>
                         {actions}
                     </header>
-                    {children}
+                    <div className="workspace-canvas" data-testid="workspace-canvas">
+                        {children}
+                    </div>
                 </div>
             </div>
             {mobileOpen && (

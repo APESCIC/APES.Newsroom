@@ -11,7 +11,9 @@ Supersedes Direction B (Magazine Bold Grid, #53).
 Direction C is a logo-led Glassmorphism Modern treatment. Public pages use a
 dark teal gradient shell with frosted-glass navigation, hero, three channel
 entry cards, and story cards while remaining calm, credible, and
-newsroom-first. Authenticated workspaces retain the light operational canvas.
+newsroom-first. Authenticated workspaces use **Direction B — Glass Studio**
+(see `direction-b-glass-studio-ui.md`); public Direction C tokens are reused
+there without changing marketing surfaces.
 
 The supplied APES logo files remain unchanged without filters or recolouring. No
 frog mascot artwork is included.
@@ -34,7 +36,8 @@ frog mascot artwork is included.
 
 ### Workspace
 
-- Unchanged light operational shell.
+- Glass Studio Direction B (v1.6.0): frosted rail/chrome on teal gradient with
+  opaque canvas. See `direction-b-glass-studio-ui.md`.
 
 ## Accessibility
 
@@ -45,4 +48,6 @@ frog mascot artwork is included.
 
 ## Out of scope
 
-Logo modification, frog mascot, workspace glass, new routes, deployment.
+Logo modification, frog mascot, new routes, production deployment. Workspace
+glass is **in scope** for v1.6.0 via Direction B Glass Studio (#145), not via
+this public Direction C document.
