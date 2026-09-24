@@ -457,7 +457,6 @@
         backdrop-filter: blur(var(--glass-blur));
         -webkit-backdrop-filter: blur(var(--glass-blur));
         color: var(--color-body);
-        overflow: hidden;
     }
 
     .workspace-glass-tabs {
@@ -465,6 +464,14 @@
         background: rgba(255, 255, 255, 0.72);
         backdrop-filter: blur(var(--glass-blur));
         -webkit-backdrop-filter: blur(var(--glass-blur));
+    }
+
+    .workspace-composer-panel {
+        position: sticky;
+        top: calc(var(--workspace-task-header-height, 4rem) + 1rem);
+        max-height: calc(100vh - var(--workspace-task-header-height, 4rem) - 2rem);
+        overflow-y: auto;
+        overscroll-contain: contain;
     }
 }
 
