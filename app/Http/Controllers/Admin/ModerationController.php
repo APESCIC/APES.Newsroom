@@ -11,6 +11,7 @@ use App\Models\Profile;
 use App\Services\Audit\AuditLogger;
 use App\Services\Engagement\CommentService;
 use App\Services\Engagement\ProfileService;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -19,6 +20,8 @@ use Inertia\Response;
 
 class ModerationController extends Controller
 {
+    private const PER_PAGE = 15;
+
     public function __construct(
         private readonly ProfileService $profiles,
         private readonly CommentService $comments,
@@ -29,12 +32,55 @@ class ModerationController extends Controller
     {
         $this->authorizeAdmin();
 
-        $pendingProfiles = Profile::query()
+        $q = trim((string) $request->query('q', ''));
+
+        $pendingProfilesQuery = Profile::query()
             ->where('moderation_status', ModerationStatus::Pending)
             ->with('user:id,name,email')
-            ->latest('updated_at')
-            ->get()
-            ->map(fn (Profile $profile) => [
+            ->latest('updated_at');
+
+        $pendingCommentsQuery = Comment::query()
+            ->where('moderation_status', ModerationStatus::Pending)
+            ->with(['user:id,name', 'post:id,title,slug'])
+            ->latest();
+
+        $reportsQuery = ModerationReport::query()
+            ->where('status', 'open')
+            ->with('reporter:id,name')
+            ->latest();
+
+        $suspendedQuery = Profile::query()
+            ->where('moderation_status', ModerationStatus::Suspended)
+            ->with('user:id,name')
+            ->latest('moderated_at');
+
+        if ($q !== '') {
+            $like = '%'.$q.'%';
+            $pendingProfilesQuery->where(function ($query) use ($like) {
+                $query->where('display_name', 'like', $like)
+                    ->orWhere('bio', 'like', $like)
+                    ->orWhereHas('user', fn ($user) => $user->where('name', 'like', $like)->orWhere('email', 'like', $like));
+            });
+            $pendingCommentsQuery->where(function ($query) use ($like) {
+                $query->where('body', 'like', $like)
+                    ->orWhereHas('user', fn ($user) => $user->where('name', 'like', $like))
+                    ->orWhereHas('post', fn ($post) => $post->where('title', 'like', $like));
+            });
+            $reportsQuery->where(function ($query) use ($like) {
+                $query->where('reason', 'like', $like)
+                    ->orWhereHas('reporter', fn ($user) => $user->where('name', 'like', $like));
+            });
+            $suspendedQuery->where(function ($query) use ($like) {
+                $query->where('display_name', 'like', $like)
+                    ->orWhere('moderation_notes', 'like', $like)
+                    ->orWhereHas('user', fn ($user) => $user->where('name', 'like', $like));
+            });
+        }
+
+        $pendingProfiles = $pendingProfilesQuery
+            ->paginate(self::PER_PAGE, ['*'], 'profiles_page')
+            ->withQueryString()
+            ->through(fn (Profile $profile) => [
                 'id' => $profile->id,
                 'display_name' => $profile->display_name,
                 'bio' => $profile->bio,
@@ -42,12 +88,10 @@ class ModerationController extends Controller
                 'updated_at' => $profile->updated_at?->toIso8601String(),
             ]);
 
-        $pendingComments = Comment::query()
-            ->where('moderation_status', ModerationStatus::Pending)
-            ->with(['user:id,name', 'post:id,title,slug'])
-            ->latest()
-            ->get()
-            ->map(fn (Comment $comment) => [
+        $pendingComments = $pendingCommentsQuery
+            ->paginate(self::PER_PAGE, ['*'], 'comments_page')
+            ->withQueryString()
+            ->through(fn (Comment $comment) => [
                 'id' => $comment->id,
                 'body' => $comment->body,
                 'user_name' => $comment->user->name,
@@ -56,13 +100,10 @@ class ModerationController extends Controller
                 'created_at' => $comment->created_at?->toIso8601String(),
             ]);
 
-        $reports = ModerationReport::query()
-            ->where('status', 'open')
-            ->with('reporter:id,name')
-            ->latest()
-            ->limit(50)
-            ->get()
-            ->map(fn (ModerationReport $report) => [
+        $reports = $reportsQuery
+            ->paginate(self::PER_PAGE, ['*'], 'reports_page')
+            ->withQueryString()
+            ->through(fn (ModerationReport $report) => [
                 'id' => $report->id,
                 'reason' => $report->reason,
                 'reportable_type' => class_basename($report->reportable_type),
@@ -71,12 +112,10 @@ class ModerationController extends Controller
                 'created_at' => $report->created_at?->toIso8601String(),
             ]);
 
-        $suspendedProfiles = Profile::query()
-            ->where('moderation_status', ModerationStatus::Suspended)
-            ->with('user:id,name')
-            ->latest('moderated_at')
-            ->get()
-            ->map(fn (Profile $profile) => [
+        $suspendedProfiles = $suspendedQuery
+            ->paginate(self::PER_PAGE, ['*'], 'suspended_page')
+            ->withQueryString()
+            ->through(fn (Profile $profile) => [
                 'id' => $profile->id,
                 'display_name' => $profile->display_name,
                 'user_name' => $profile->user->name,
@@ -84,10 +123,19 @@ class ModerationController extends Controller
             ]);
 
         return Inertia::render('Admin/Moderation/Index', [
-            'profiles' => $pendingProfiles,
-            'comments' => $pendingComments,
-            'reports' => $reports,
-            'suspended' => $suspendedProfiles,
+            'profiles' => $this->pagePayload($pendingProfiles),
+            'comments' => $this->pagePayload($pendingComments),
+            'reports' => $this->pagePayload($reports),
+            'suspended' => $this->pagePayload($suspendedProfiles),
+            'filters' => [
+                'q' => $q,
+            ],
+            'counts' => [
+                'profiles' => $pendingProfiles->total(),
+                'comments' => $pendingComments->total(),
+                'reports' => $reports->total(),
+                'suspended' => $suspendedProfiles->total(),
+            ],
         ]);
     }
 
@@ -181,6 +229,26 @@ class ModerationController extends Controller
         $this->audit->record($request->user(), 'comment.restored', $model, [], $request);
 
         return back();
+    }
+
+    /**
+     * @return array{data: list<array<string, mixed>>, meta: array{current_page: int, last_page: int, per_page: int, total: int}, links: array{prev: string|null, next: string|null}}
+     */
+    private function pagePayload(LengthAwarePaginator $paginator): array
+    {
+        return [
+            'data' => array_values($paginator->items()),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+            ],
+            'links' => [
+                'prev' => $paginator->previousPageUrl(),
+                'next' => $paginator->nextPageUrl(),
+            ],
+        ];
     }
 
     private function authorizeAdmin(): void

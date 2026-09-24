@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { useState, type KeyboardEvent } from 'react';
+import { FormEvent, useState, type KeyboardEvent } from 'react';
 import LineIcon from '../../../Components/Icons/LineIcon';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
 
@@ -38,6 +38,12 @@ type Suspended = {
 
 type Queue = 'profiles' | 'comments' | 'reports' | 'suspended';
 
+type Page<T> = {
+    data: T[];
+    meta: { current_page: number; last_page: number; per_page: number; total: number };
+    links: { prev: string | null; next: string | null };
+};
+
 function formatDate(value: string | null) {
     return value ? new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium' }).format(new Date(value)) : 'Date unavailable';
 }
@@ -50,18 +56,69 @@ function EmptyQueue({ children }: { children: string }) {
     );
 }
 
+function QueuePager({ page, label }: { page: Page<unknown>; label: string }) {
+    if (page.meta.last_page <= 1) {
+        return null;
+    }
+
+    return (
+        <nav className="mt-6 flex items-center justify-between gap-3 text-sm" aria-label={`${label} pagination`}>
+            {page.links.prev ? (
+                <Link href={page.links.prev} className="button-secondary min-h-11">
+                    Previous
+                </Link>
+            ) : (
+                <span className="text-muted">Previous</span>
+            )}
+            <span className="text-muted">
+                Page {page.meta.current_page} of {page.meta.last_page}
+            </span>
+            {page.links.next ? (
+                <Link href={page.links.next} className="button-secondary min-h-11">
+                    Next
+                </Link>
+            ) : (
+                <span className="text-muted">Next</span>
+            )}
+        </nav>
+    );
+}
+
+function toPage<T>(value: Page<T> | T[] | undefined): Page<T> {
+    if (Array.isArray(value)) {
+        return {
+            data: value,
+            meta: { current_page: 1, last_page: 1, per_page: value.length, total: value.length },
+            links: { prev: null, next: null },
+        };
+    }
+    if (value && Array.isArray(value.data)) {
+        return value;
+    }
+    return { data: [], meta: { current_page: 1, last_page: 1, per_page: 15, total: 0 }, links: { prev: null, next: null } };
+}
+
 export default function ModerationIndex({
     profiles,
     comments,
-    reports = [],
-    suspended = [],
+    reports,
+    suspended,
+    filters = { q: '' },
+    counts,
 }: {
-    profiles: PendingProfile[];
-    comments: PendingComment[];
-    reports?: Report[];
-    suspended?: Suspended[];
+    profiles: Page<PendingProfile> | PendingProfile[];
+    comments: Page<PendingComment> | PendingComment[];
+    reports?: Page<Report> | Report[];
+    suspended?: Page<Suspended> | Suspended[];
+    filters?: { q: string };
+    counts?: { profiles: number; comments: number; reports: number; suspended: number };
 }) {
+    const profilesPage = toPage(profiles);
+    const commentsPage = toPage(comments);
+    const reportsPage = toPage(reports);
+    const suspendedPage = toPage(suspended);
     const [activeQueue, setActiveQueue] = useState<Queue>('profiles');
+    const [search, setSearch] = useState(filters.q ?? '');
 
     const moderateProfile = (id: number, status: string) => {
         router.post(`/admin/moderation/profiles/${id}`, { status });
@@ -71,11 +128,18 @@ export default function ModerationIndex({
         router.post(`/admin/moderation/comments/${id}`, { status });
     };
 
+    const queueCounts = counts ?? {
+        profiles: profilesPage.meta.total,
+        comments: commentsPage.meta.total,
+        reports: reportsPage.meta.total,
+        suspended: suspendedPage.meta.total,
+    };
+
     const queues: Array<{ id: Queue; tabLabel: string; summaryLabel: string; count: number }> = [
-        { id: 'profiles', tabLabel: 'Profiles', summaryLabel: 'Profiles awaiting review', count: profiles.length },
-        { id: 'comments', tabLabel: 'Comments', summaryLabel: 'Comments awaiting review', count: comments.length },
-        { id: 'reports', tabLabel: 'Reports', summaryLabel: 'Open reports', count: reports.length },
-        { id: 'suspended', tabLabel: 'Suspended', summaryLabel: 'Suspended profiles', count: suspended.length },
+        { id: 'profiles', tabLabel: 'Profiles', summaryLabel: 'Profiles awaiting review', count: queueCounts.profiles },
+        { id: 'comments', tabLabel: 'Comments', summaryLabel: 'Comments awaiting review', count: queueCounts.comments },
+        { id: 'reports', tabLabel: 'Reports', summaryLabel: 'Open reports', count: queueCounts.reports },
+        { id: 'suspended', tabLabel: 'Suspended', summaryLabel: 'Suspended profiles', count: queueCounts.suspended },
     ];
 
     const handleTabKey = (event: KeyboardEvent<HTMLButtonElement>, queue: Queue) => {
@@ -95,10 +159,31 @@ export default function ModerationIndex({
         document.getElementById(`tab-${nextQueue}`)?.focus();
     };
 
+    const submitSearch = (event: FormEvent) => {
+        event.preventDefault();
+        router.get('/admin/moderation', { q: search || undefined }, { preserveState: true, replace: true });
+    };
+
     return (
         <WorkspaceLayout area="Admin" active="moderation" title="Moderation queue">
             <Head title="Moderation" />
             <main id="main-content" className="mx-auto max-w-workspace px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
+                <form onSubmit={submitSearch} className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end" role="search" aria-label="Filter moderation queues">
+                    <label className="flex-1 text-sm font-semibold text-body">
+                        Search queues
+                        <input
+                            type="search"
+                            value={search}
+                            onChange={(event) => setSearch(event.target.value)}
+                            className="form-input mt-2"
+                            placeholder="Name, email, body, or reason"
+                        />
+                    </label>
+                    <button type="submit" className="button-primary min-h-11">
+                        Apply filter
+                    </button>
+                </form>
+
                 <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Moderation summary">
                     {queues.map((queue) => (
                         <button
@@ -150,67 +235,68 @@ export default function ModerationIndex({
                         hidden={activeQueue !== 'profiles'}
                         className="p-5 sm:p-6"
                     >
-                        {profiles.length > 0 ? (
-                                <>
-                                    <div className="hidden overflow-x-auto md:block">
-                                        <table className="w-full text-left text-sm" aria-label="Pending profiles">
-                                            <thead className="bg-brand-mist/50 text-xs tracking-wide text-muted uppercase">
-                                                <tr>
-                                                    <th scope="col" className="px-5 py-4">User / account</th>
-                                                    <th scope="col" className="px-5 py-4">Bio / status</th>
-                                                    <th scope="col" className="px-5 py-4">Updated</th>
-                                                    <th scope="col" className="px-5 py-4 text-right">Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-border/70">
-                                                {profiles.map((profile) => {
-                                                    const name = profile.display_name ?? 'Untitled profile';
-                                                    return (
-                                                        <tr key={profile.id} className="bg-white/40 hover:bg-brand-mist/30">
-                                                            <td className="px-5 py-5">
-                                                                <p className="font-bold text-body">{name}</p>
-                                                                <p className="mt-1 text-xs text-muted">{profile.user_name}</p>
-                                                            </td>
-                                                            <td className="max-w-sm px-5 py-5 text-body">{profile.bio ?? 'No bio supplied.'}</td>
-                                                            <td className="px-5 py-5 text-xs text-muted">{formatDate(profile.updated_at)}</td>
-                                                            <td className="px-5 py-5">
-                                                                <div className="flex justify-end gap-2">
-                                                                    <button type="button" className="button-success" aria-label={`Approve profile for ${name}`} onClick={() => moderateProfile(profile.id, 'approved')}>Approve</button>
-                                                                    <button type="button" className="button-danger" aria-label={`Reject profile for ${name}`} onClick={() => moderateProfile(profile.id, 'rejected')}>Reject</button>
-                                                                    <button type="button" className="button-secondary" aria-label={`Suspend profile for ${name}`} onClick={() => moderateProfile(profile.id, 'suspended')}>Suspend</button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <ul className="space-y-4 md:hidden">
-                                        {profiles.map((profile) => {
-                                            const name = profile.display_name ?? 'Untitled profile';
-                                            return (
-                                                <li key={profile.id} className="workspace-glass-card p-5">
-                                                    <div className="flex items-start gap-4">
-                                                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-mist text-teal-deep">
-                                                            <LineIcon name="user" className="h-5 w-5" />
-                                                        </span>
-                                                        <div>
-                                                            <h3 className="font-bold text-brand-ink">{name}</h3>
-                                                            <p className="mt-1 text-sm text-muted">Account: {profile.user_name}</p>
-                                                        </div>
+                        {profilesPage.data.length > 0 ? (
+                            <>
+                                <div className="hidden overflow-x-auto md:block">
+                                    <table className="w-full text-left text-sm" aria-label="Pending profiles">
+                                        <thead className="bg-brand-mist/50 text-xs tracking-wide text-muted uppercase">
+                                            <tr>
+                                                <th scope="col" className="px-5 py-4">User / account</th>
+                                                <th scope="col" className="px-5 py-4">Bio / status</th>
+                                                <th scope="col" className="px-5 py-4">Updated</th>
+                                                <th scope="col" className="px-5 py-4 text-right">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-border/70">
+                                            {profilesPage.data.map((profile) => {
+                                                const name = profile.display_name ?? 'Untitled profile';
+                                                return (
+                                                    <tr key={profile.id} className="bg-white/40 hover:bg-brand-mist/30">
+                                                        <td className="px-5 py-5">
+                                                            <p className="font-bold text-body">{name}</p>
+                                                            <p className="mt-1 text-xs text-muted">{profile.user_name}</p>
+                                                        </td>
+                                                        <td className="max-w-sm px-5 py-5 text-body">{profile.bio ?? 'No bio supplied.'}</td>
+                                                        <td className="px-5 py-5 text-xs text-muted">{formatDate(profile.updated_at)}</td>
+                                                        <td className="px-5 py-5">
+                                                            <div className="flex justify-end gap-2">
+                                                                <button type="button" className="button-success" aria-label={`Approve profile for ${name}`} onClick={() => moderateProfile(profile.id, 'approved')}>Approve</button>
+                                                                <button type="button" className="button-danger" aria-label={`Reject profile for ${name}`} onClick={() => moderateProfile(profile.id, 'rejected')}>Reject</button>
+                                                                <button type="button" className="button-secondary" aria-label={`Suspend profile for ${name}`} onClick={() => moderateProfile(profile.id, 'suspended')}>Suspend</button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <ul className="space-y-4 md:hidden">
+                                    {profilesPage.data.map((profile) => {
+                                        const name = profile.display_name ?? 'Untitled profile';
+                                        return (
+                                            <li key={profile.id} className="workspace-glass-card p-5">
+                                                <div className="flex items-start gap-4">
+                                                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-mist text-teal-deep">
+                                                        <LineIcon name="user" className="h-5 w-5" />
+                                                    </span>
+                                                    <div>
+                                                        <h3 className="font-bold text-brand-ink">{name}</h3>
+                                                        <p className="mt-1 text-sm text-muted">Account: {profile.user_name}</p>
                                                     </div>
-                                                    {profile.bio && <p className="mt-5 text-sm leading-6 text-body">{profile.bio}</p>}
-                                                    <div className="mt-5 flex flex-wrap gap-2">
-                                                        <button type="button" className="button-success" aria-label={`Approve profile for ${name} on small screens`} onClick={() => moderateProfile(profile.id, 'approved')}>Approve</button>
-                                                        <button type="button" className="button-danger" aria-label={`Reject profile for ${name} on small screens`} onClick={() => moderateProfile(profile.id, 'rejected')}>Reject</button>
-                                                        <button type="button" className="button-secondary" aria-label={`Suspend profile for ${name} on small screens`} onClick={() => moderateProfile(profile.id, 'suspended')}>Suspend</button>
-                                                    </div>
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
-                                </>
+                                                </div>
+                                                {profile.bio && <p className="mt-5 text-sm leading-6 text-body">{profile.bio}</p>}
+                                                <div className="mt-5 flex flex-wrap gap-2">
+                                                    <button type="button" className="button-success" aria-label={`Approve profile for ${name} on small screens`} onClick={() => moderateProfile(profile.id, 'approved')}>Approve</button>
+                                                    <button type="button" className="button-danger" aria-label={`Reject profile for ${name} on small screens`} onClick={() => moderateProfile(profile.id, 'rejected')}>Reject</button>
+                                                    <button type="button" className="button-secondary" aria-label={`Suspend profile for ${name} on small screens`} onClick={() => moderateProfile(profile.id, 'suspended')}>Suspend</button>
+                                                </div>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                                <QueuePager page={profilesPage} label="Profiles" />
+                            </>
                         ) : <EmptyQueue>No profiles are waiting for review.</EmptyQueue>}
                     </div>
 
@@ -221,9 +307,10 @@ export default function ModerationIndex({
                         hidden={activeQueue !== 'comments'}
                         className="p-5 sm:p-6"
                     >
-                        {comments.length > 0 ? (
+                        {commentsPage.data.length > 0 ? (
+                            <>
                                 <ul className="space-y-4">
-                                    {comments.map((comment) => (
+                                    {commentsPage.data.map((comment) => (
                                         <li key={comment.id} className="workspace-glass-card p-6">
                                             <p className="text-sm text-muted">
                                                 <strong className="text-body">{comment.user_name}</strong> on{' '}
@@ -238,6 +325,8 @@ export default function ModerationIndex({
                                         </li>
                                     ))}
                                 </ul>
+                                <QueuePager page={commentsPage} label="Comments" />
+                            </>
                         ) : <EmptyQueue>No comments are waiting for review.</EmptyQueue>}
                     </div>
 
@@ -248,9 +337,10 @@ export default function ModerationIndex({
                         hidden={activeQueue !== 'reports'}
                         className="p-5 sm:p-6"
                     >
-                        {reports.length > 0 ? (
+                        {reportsPage.data.length > 0 ? (
+                            <>
                                 <ul className="space-y-4">
-                                    {reports.map((report) => (
+                                    {reportsPage.data.map((report) => (
                                         <li key={report.id} className="workspace-glass-card p-6">
                                             <div className="flex flex-wrap items-start justify-between gap-3">
                                                 <div>
@@ -267,6 +357,8 @@ export default function ModerationIndex({
                                         </li>
                                     ))}
                                 </ul>
+                                <QueuePager page={reportsPage} label="Reports" />
+                            </>
                         ) : <EmptyQueue>No reports are open.</EmptyQueue>}
                     </div>
 
@@ -277,9 +369,10 @@ export default function ModerationIndex({
                         hidden={activeQueue !== 'suspended'}
                         className="p-5 sm:p-6"
                     >
-                        {suspended.length > 0 ? (
+                        {suspendedPage.data.length > 0 ? (
+                            <>
                                 <ul className="grid gap-4 xl:grid-cols-2">
-                                    {suspended.map((profile) => {
+                                    {suspendedPage.data.map((profile) => {
                                         const name = profile.display_name ?? profile.user_name;
                                         return (
                                             <li key={profile.id} className="workspace-glass-card p-6">
@@ -291,6 +384,8 @@ export default function ModerationIndex({
                                         );
                                     })}
                                 </ul>
+                                <QueuePager page={suspendedPage} label="Suspended profiles" />
+                            </>
                         ) : <EmptyQueue>No profiles are suspended.</EmptyQueue>}
                     </div>
                 </section>
