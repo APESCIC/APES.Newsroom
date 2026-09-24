@@ -541,9 +541,14 @@ export default function PostEdit({
                     </div>
 
                     <aside
-                        className="workspace-glass-panel flex flex-col gap-4 p-5 lg:sticky lg:top-[calc(var(--workspace-task-header-height,4rem)+1rem)]"
+                        className="workspace-glass-panel workspace-composer-panel flex flex-col gap-4 p-5"
                         data-testid="composer-publish-panel"
                     >
+                        {post?.review_notes && (
+                            <p className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                                Review notes: {post.review_notes}
+                            </p>
+                        )}
                         <div>
                             <h2 className="text-sm font-bold tracking-wide text-muted uppercase">Publish</h2>
                             <div className="mt-3 flex flex-col gap-2">

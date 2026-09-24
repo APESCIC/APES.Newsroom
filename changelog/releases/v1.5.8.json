@@ -1,0 +1,26 @@
+{
+  "version": "v1.5.8",
+  "released_at": "2026-09-24",
+  "previous_version": "v1.5.7",
+  "theme": "Sticky glass publish panel",
+  "change_types": [
+    "changed"
+  ],
+  "topic_tags": [
+    "internal-only"
+  ],
+  "summary": "Composer publish/SEO/schedule/campaign panel is sticky glass chrome with scroll containment and review notes, without regressing post lifecycle actions.",
+  "detailed_changes": [
+    "Added workspace-composer-panel sticky positioning under the workspace task header.",
+    "Publish panel shows review notes alongside SEO, schedule, and campaign controls.",
+    "Removed overflow clipping on workspace-glass-panel so sticky behaviour works."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff/posts/new, /staff/posts/{id}/edit",
+    "User groups affected: staff editors",
+    "Public impact: none",
+    "Internal impact: sticky Glass Studio publish panel"
+  ],
+  "pr": null
+}
