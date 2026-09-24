@@ -6,10 +6,14 @@ import {
     ORG_PHONE_TEL,
     ORG_POSTAL_ADDRESS,
     SITE_FOOTER_BRAND_BLURB,
+    SITE_FOOTER_PARTNERS,
+    SITE_FOOTER_PARTNERS_HREF,
     SITE_FOOTER_POLICIES,
+    SITE_FOOTER_SOCIALS,
     SITE_FOOTER_STAY_INFORMED,
     SITE_FOOTER_VISIT_HELP,
     type FooterNavItem,
+    type FooterSocial,
 } from '../../siteFooter';
 import type { SharedPageProps } from '../../types/page';
 import ApesLogo from '../Brand/ApesLogo';
@@ -67,6 +71,79 @@ function FooterNavColumn({
             </nav>
         </section>
     );
+}
+
+function SocialIcon({ label }: { label: FooterSocial['label'] }) {
+    const icons: Record<FooterSocial['label'], ReactNode> = {
+        Facebook: (
+            <svg viewBox="0 0 16 16" aria-hidden="true" className="site-footer-social-icon">
+                <path
+                    fill="currentColor"
+                    d="M9.7 3H12v2.8H9.9c-.8 0-1.2.4-1.2 1.1V8H12l-.4 2.8H8.7V15H5.9v-4.2H4V8h1.9V6.6C5.9 4.4 7.4 3 9.7 3z"
+                />
+            </svg>
+        ),
+        Instagram: (
+            <svg viewBox="0 0 16 16" aria-hidden="true" className="site-footer-social-icon">
+                <rect
+                    x="2.2"
+                    y="2.2"
+                    width="11.6"
+                    height="11.6"
+                    rx="3"
+                    ry="3"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                />
+                <circle cx="8" cy="8" r="2.7" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                <circle cx="11.7" cy="4.4" r="0.9" fill="currentColor" />
+            </svg>
+        ),
+        X: (
+            <svg viewBox="0 0 16 16" aria-hidden="true" className="site-footer-social-icon">
+                <path d="M3 3l10 10M13 3L3 13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+        ),
+        YouTube: (
+            <svg viewBox="0 0 16 16" aria-hidden="true" className="site-footer-social-icon">
+                <rect x="1.5" y="3.5" width="13" height="9" rx="2" fill="none" stroke="currentColor" strokeWidth="1.4" />
+                <path fill="currentColor" d="M7 6.2v3.6l3.2-1.8z" />
+            </svg>
+        ),
+        Threads: (
+            <svg viewBox="0 0 16 16" aria-hidden="true" className="site-footer-social-icon">
+                <text
+                    x="8"
+                    y="11.2"
+                    textAnchor="middle"
+                    fontSize="10"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                    fill="currentColor"
+                >
+                    @
+                </text>
+            </svg>
+        ),
+        Bluesky: (
+            <svg viewBox="0 0 16 16" aria-hidden="true" className="site-footer-social-icon">
+                <path
+                    fill="currentColor"
+                    d="M4 4.1c1.3.8 2.3 1.9 4 4 1.7-2.1 2.7-3.2 4-4 .8-.5 1.6 0 1.4 1-.3 1.6-1.3 2.8-2.5 3.9.8.2 1.6.7 2.1 1.4.7.9.3 2.3-1.2 2.3-1.2 0-2.2-.8-2.8-1.7-.3-.4-.6-.9-1-1.5-.4.6-.7 1.1-1 1.5-.6.9-1.6 1.7-2.8 1.7-1.5 0-1.9-1.4-1.2-2.3.5-.7 1.3-1.2 2.1-1.4-1.2-1.1-2.2-2.3-2.5-3.9-.2-1 .6-1.5 1.4-1z"
+                />
+            </svg>
+        ),
+        Mastodon: (
+            <svg viewBox="0 0 16 16" aria-hidden="true" className="site-footer-social-icon">
+                <path
+                    fill="currentColor"
+                    d="M3 4.4C3 2.9 4.2 2 5.8 2h4.4C11.8 2 13 2.9 13 4.4v4.1c0 2.4-1.4 3.6-3.7 3.8l-1.3 1.7h-1l.5-1.7H5.8C4.2 12.1 3 11.1 3 9.4V4.4zm2 .7v4.1h1.3V5.8l1.7 2.6h.3L10 5.8v3.4h1.3V5.1h-1.5l-1.6 2.4L6.5 5.1H5z"
+                />
+            </svg>
+        ),
+    };
+
+    return icons[label];
 }
 
 export default function SiteFooter() {
@@ -141,6 +218,43 @@ export default function SiteFooter() {
                         labelledBy="site-footer-policies"
                         items={SITE_FOOTER_POLICIES}
                     />
+                </div>
+
+                <div className="site-footer-lower">
+                    <section className="site-footer-partners" aria-label="Partner organisations">
+                        <strong>In partnership with</strong>
+                        {SITE_FOOTER_PARTNERS.map((partner) => (
+                            <a
+                                key={partner.name}
+                                className="site-footer-partner-pill"
+                                href={SITE_FOOTER_PARTNERS_HREF}
+                                rel="noopener noreferrer"
+                                target="_blank"
+                            >
+                                <img src={partner.logoSrc} alt={partner.logoAlt} width={34} height={34} />
+                                <span>{partner.name}</span>
+                            </a>
+                        ))}
+                    </section>
+
+                    <section className="site-footer-social-block" aria-label="APES social media">
+                        <strong>Stay connected</strong>
+                        <div className="site-footer-social-row">
+                            {SITE_FOOTER_SOCIALS.map((social) => (
+                                <a
+                                    key={social.href}
+                                    className="site-footer-social-link"
+                                    href={social.href}
+                                    rel="noopener noreferrer"
+                                    target="_blank"
+                                    aria-label={social.ariaLabel}
+                                >
+                                    <SocialIcon label={social.label} />
+                                    <span className="site-footer-social-label">{social.label}</span>
+                                </a>
+                            ))}
+                        </div>
+                    </section>
                 </div>
 
                 <div className="site-footer-fineprint">

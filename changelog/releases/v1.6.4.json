@@ -1,0 +1,26 @@
+{
+  "version": "v1.6.4",
+  "released_at": "2026-09-24",
+  "previous_version": "v1.6.3",
+  "theme": "Footer socials and partners",
+  "change_types": [
+    "added"
+  ],
+  "topic_tags": [
+    "public-facing"
+  ],
+  "summary": "Public SiteFooter lower row adds organisation-wide social links (apesorguk) and BAS / FBH / Merseyside Police partner pills.",
+  "detailed_changes": [
+    "Social row with accessible aria-labels for Facebook, Instagram, X, YouTube, Threads, Bluesky, and Mastodon (org handles, not @apesshelter).",
+    "Partner pills with vendored logos under public/partners/, linking to apes.org.uk/sponsors.",
+    "SITE_FOOTER_SOCIALS and SITE_FOOTER_PARTNERS constants in siteFooter.ts."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: all public pages using SiteFooter",
+    "User groups affected: public readers",
+    "Public impact: social + partner row on beta footer",
+    "Internal impact: unblocks #176 visual acceptance vs Shelter"
+  ],
+  "pr": 226
+}
