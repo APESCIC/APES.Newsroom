@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import ModerationIndex from '../Pages/Admin/Moderation/Index';
 import { getInertiaMock, setMockPage } from '../test/inertia';
 
-describe('Direction A admin moderation workspace', () => {
+describe('Glass Studio admin moderation workspace', () => {
     beforeEach(() => {
         setMockPage({
             appName: 'APES Newsroom',

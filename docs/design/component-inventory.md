@@ -1,7 +1,8 @@
 # APES Newsroom — Component inventory
 
-> **Status:** Direction C (Glassmorphism Modern) components implemented under #55.
-> Supersedes Direction B (Magazine Bold Grid, #53).
+> **Status:** Direction C (Glassmorphism Modern) public components under #55;
+> Direction B Glass Studio workspace shell under #145/#167 (v1.6.0).
+> Supersedes Magazine Bold Grid (#53).
 
 ## Direction A layout and content
 
@@ -14,7 +15,7 @@
 | `RecentStoryCard` | Glass story card with channel label, title, excerpt, hero image | default, missing metadata |
 | `AccountLayout` | Public gradient wrapper with centred `.glass-form-panel` | default, status messages |
 | `AuthCard` | Gradient shell with compact logo header and `.glass-form-panel` | login, register, password reset |
-| `WorkspaceLayout` | Dark role-labelled rail, account controls, light task canvas, measured skip-link offset and scrollable modal mobile drawer with contained focus, inert and scroll-locked background, and automatic close to the active desktop destination at the desktop breakpoint | staff, admin, wrapped task header, short viewport, breakpoint change |
+| `WorkspaceLayout` | Glass Studio shell: teal gradient, frosted rail and task chrome, near-opaque canvas, measured skip-link offset and scrollable modal mobile drawer with contained focus, inert and scroll-locked background, and automatic close to the active desktop destination at the desktop breakpoint | staff, admin, wrapped task header, short viewport, breakpoint change |
 | `LineIcon` | First-party current-colour line icons without emoji dependencies | decorative |
 | `ApesLogo` | Unfiltered horizontal, masthead, footer, square, or compact APES artwork; the masthead uses a deterministic tight crop, the footer uses a 64px derivative, and square placement uses 384/768 WebP sources with PNG fallback | per placement, responsive |
 

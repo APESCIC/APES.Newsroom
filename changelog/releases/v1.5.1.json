@@ -1,0 +1,27 @@
+{
+  "version": "v1.5.1",
+  "released_at": "2026-09-24",
+  "previous_version": "v1.5.0",
+  "theme": "Glass Studio workspace shell",
+  "change_types": [
+    "changed",
+    "added"
+  ],
+  "topic_tags": [
+    "internal-only"
+  ],
+  "summary": "Staff and admin WorkspaceLayout uses Direction B Glass Studio chrome on the shared teal gradient, with solid fallbacks and updated design docs.",
+  "detailed_changes": [
+    "WorkspaceLayout: gradient shell, frosted glass rail/chrome, near-opaque canvas; a11y drawer behaviour unchanged.",
+    "Extended CSS glass fallbacks for workspace classes when backdrop-filter is unsupported or prefers-reduced-motion.",
+    "Added direction-b-glass-studio-ui.md; updated tokens.md, Direction C OOS notes, and component inventory."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: all staff/admin pages using WorkspaceLayout",
+    "User groups affected: staff and admin editors",
+    "Public impact: none (public Direction C unchanged)",
+    "Internal impact: Glass Studio shell for authenticated workspaces"
+  ],
+  "pr": 213
+}

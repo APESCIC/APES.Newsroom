@@ -1,20 +1,21 @@
 # APES Newsroom — design tokens
 
-> **Status:** Direction C (Glassmorphism Modern) approved under #36 and
-> implemented under #55. Supersedes Direction B (Magazine Bold Grid, #53).
+> **Status:** Public **Direction C** (Glassmorphism Modern) under #36/#55.
+> Authenticated workspaces use **Direction B — Glass Studio** under #145/#167
+> (milestone v1.6.0). Magazine Bold Grid (#53) remains superseded and retired.
 
 ## Brand direction
 
 Story-led conservation editorial: credible, calm and mission-led on public
-pages, with focused operational workspaces for staff and administrators. Use
-the supplied APES artwork as-is. Do not redraw, recolour, grayscale or filter
-the marks.
+pages, with focused glass operational workspaces for staff and administrators.
+Use the supplied APES artwork as-is. Do not redraw, recolour, grayscale or
+filter the marks.
 
 ## Colour
 
 | Token | Value | Usage |
 | --- | --- | --- |
-| `--color-brand-ink` | `#061A1A` | Public masthead and workspace rail |
+| `--color-brand-ink` | `#061A1A` | Public masthead; solid fallback for workspace rail |
 | `--color-brand-teal` | `#00BFC7` | Decorative brand rules and highlights |
 | `--color-teal-deep` | `#006E73` | Accessible links, buttons and active states |
 | `--color-brand-mist` | `#E5F6F4` | Selected and informative surfaces |
@@ -49,7 +50,7 @@ use the supported 700 weight and compact line height. Body and UI text use
 400–600 weight, with 16px primary reading text and 14px minimum compact
 metadata. Article measure is 65–72 characters.
 
-### Direction C glass scale
+### Direction C glass scale (public)
 
 | Class | Usage |
 | --- | --- |
@@ -62,6 +63,15 @@ metadata. Article measure is 65–72 characters.
 | `.text-on-glass` / `.text-on-glass-muted` | Primary/secondary text on dark glass |
 | `.eyebrow-on-glass` | Teal uppercase labels on glass |
 | `.display-headline-on-glass` | Hero headlines on glass (white) |
+
+### Direction B Glass Studio scale (workspaces)
+
+| Class | Usage |
+| --- | --- |
+| `.workspace-gradient-shell` | Teal gradient shell (`--gradient-public`) for staff/admin |
+| `.workspace-glass-rail` | Frosted sidebar / mobile drawer |
+| `.workspace-glass-chrome` | Frosted task header and mobile top bar |
+| `.workspace-canvas` | Near-opaque work surface for page bodies |
 
 ## Direction C component classes
 
@@ -78,8 +88,8 @@ metadata. Article measure is 65–72 characters.
 
 ## Page-shell mapping
 
-- Public: teal gradient shell, frosted glass chrome, glass content panels.
-- Staff/admin: dark workspace rail and light working canvas (unchanged).
+- Public: teal gradient shell, frosted glass chrome, glass content panels (Direction C).
+- Staff/admin: Glass Studio Direction B — teal gradient + frosted rail/chrome + opaque canvas (v1.6.0).
 
 ## Spacing, radius and elevation
 
@@ -103,7 +113,7 @@ metadata. Article measure is 65–72 characters.
 
 | Token | Value | Usage |
 | --- | --- | --- |
-| `--gradient-public` | `linear-gradient(180deg, #061A1A 0%, #004D52 50%, #006E73 100%)` | Public page background |
+| `--gradient-public` | `linear-gradient(180deg, #061A1A 0%, #004D52 50%, #006E73 100%)` | Public and Glass Studio workspace backgrounds |
 | `--glass-surface` | `rgba(255, 255, 255, 0.08)` | Frosted panel fill |
 | `--glass-border` | `rgba(255, 255, 255, 0.18)` | Glass edge |
 | `--glass-blur` | `12px` | Backdrop blur radius |
