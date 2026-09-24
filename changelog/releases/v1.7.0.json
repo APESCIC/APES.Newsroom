@@ -1,0 +1,29 @@
+{
+  "version": "v1.7.0",
+  "released_at": "2026-09-24",
+  "previous_version": "v1.6.5",
+  "theme": "Public SiteFooter Shelter alignment",
+  "change_types": [
+    "added",
+    "changed"
+  ],
+  "topic_tags": [
+    "public-facing"
+  ],
+  "summary": "Milestone 9 aligns the public SiteFooter with Shelter’s deep-green glass multi-column layout, CIC fineprint, organisation socials, and partner row on Cloudron beta.",
+  "detailed_changes": [
+    "Locked four-column inventory (Brand / Visit & help / Stay informed / Policies) on #174 (v1.6.1).",
+    "Shelter-style multi-column glass SiteFooter with shared tokens and solid fallbacks (v1.6.2 / #172).",
+    "CIC copyright fineprint with contact line and preserved Change Log Hub version links (v1.6.3 / #173).",
+    "Organisation socials (apesorguk) and BAS / FBH / Merseyside Police partner pills (v1.6.4 / #175).",
+    "Component tests, keyboard note, and screenshots vs Shelter; feature #171 closed (v1.6.5 / #176)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: all public pages using SiteFooter",
+    "User groups affected: public readers",
+    "Public impact: Shelter-aligned public footer on beta",
+    "Internal impact: milestone 9 closed on beta; no production cutover, Ghost retirement, or live-send authorization"
+  ],
+  "pr": 0
+}
