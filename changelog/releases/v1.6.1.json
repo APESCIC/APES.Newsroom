@@ -21,5 +21,5 @@
     "Public impact: changelog gate for footer column lock; no visual change yet",
     "Internal impact: unblocks #172 multi-column glass SiteFooter"
   ],
-  "pr": 0
+  "pr": 223
 }
