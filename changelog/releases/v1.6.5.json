@@ -14,7 +14,7 @@
   "detailed_changes": [
     "Added resources/js/__tests__/site-footer.test.tsx covering landmark, columns, legal line, partners, socials, and external link rel attributes.",
     "Keyboard / focus note and desktop/mobile screenshots vs Shelter attached on the PR.",
-    "Social/partner controls keep 44×44 min target classes."
+    "Social/partner controls keep 44\u00d744 min target classes."
   ],
   "affected_areas": [
     "Website: APES Newsroom",
@@ -23,5 +23,5 @@
     "Public impact: none beyond test/docs confidence",
     "Internal impact: closes #176 and parent #171"
   ],
-  "pr": 0
+  "pr": 227
 }
