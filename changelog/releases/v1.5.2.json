@@ -1,0 +1,26 @@
+{
+  "version": "v1.5.2",
+  "released_at": "2026-09-24",
+  "previous_version": "v1.5.1",
+  "theme": "Glass Moderation summary and tabs",
+  "change_types": [
+    "changed"
+  ],
+  "topic_tags": [
+    "internal-only"
+  ],
+  "summary": "Admin Moderation summary cards and queue tabs use Glass Studio frosted surfaces while keeping counts, pressed state, and keyboard tablist behaviour.",
+  "detailed_changes": [
+    "Summary cards use workspace-glass-card with pressed styling.",
+    "Queue records panel and tab strip use workspace-glass-panel / workspace-glass-tabs.",
+    "Arrow/Home/End tablist keyboard behaviour and moderation action wiring unchanged."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /admin/moderation",
+    "User groups affected: admin moderators",
+    "Public impact: none",
+    "Internal impact: Glass Studio Moderation chrome"
+  ],
+  "pr": null
+}

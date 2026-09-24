@@ -100,8 +100,8 @@ export default function ModerationIndex({
                         <button
                             key={queue.id}
                             type="button"
-                            className={`min-h-32 rounded-card border bg-white p-5 text-left transition-colors ${
-                                activeQueue === queue.id ? 'border-teal-deep ring-2 ring-teal-deep/15' : 'border-border hover:border-teal-deep'
+                            className={`workspace-glass-card min-h-32 p-5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)] ${
+                                activeQueue === queue.id ? '' : 'hover:border-teal-deep'
                             }`}
                             onClick={() => setActiveQueue(queue.id)}
                             aria-label={`${queue.summaryLabel}: ${queue.count}`}
@@ -113,8 +113,8 @@ export default function ModerationIndex({
                     ))}
                 </section>
 
-                <section className="mt-8 overflow-hidden rounded-feature border border-border bg-white" aria-label="Moderation queue records">
-                    <div className="border-b border-border px-2 sm:px-4">
+                <section className="workspace-glass-panel mt-8" aria-label="Moderation queue records">
+                    <div className="workspace-glass-tabs px-2 sm:px-4">
                         <div role="tablist" aria-label="Moderation queues" className="flex gap-1 overflow-x-auto">
                             {queues.map((queue) => (
                                 <button
@@ -125,7 +125,7 @@ export default function ModerationIndex({
                                     aria-selected={activeQueue === queue.id}
                                     aria-controls={`panel-${queue.id}`}
                                     tabIndex={activeQueue === queue.id ? 0 : -1}
-                                    className={`min-h-11 shrink-0 border-b-2 px-4 py-3 text-sm font-semibold ${
+                                    className={`min-h-11 shrink-0 border-b-2 px-4 py-3 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)] ${
                                         activeQueue === queue.id
                                             ? 'border-teal-deep text-teal-deep'
                                             : 'border-transparent text-muted hover:text-body'
