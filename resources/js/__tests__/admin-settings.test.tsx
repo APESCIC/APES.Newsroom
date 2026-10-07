@@ -1,6 +1,7 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
+import WorkspaceLayout from '../Components/Layout/WorkspaceLayout';
 import SettingsIndex, { type SettingDefinition } from '../Pages/Admin/Settings/Index';
 import type { SharedPageProps } from '../types/page';
 import { getInertiaMock, setMockPage } from '../test/inertia';
@@ -64,6 +65,46 @@ describe('Admin settings page', () => {
 
         expect(screen.getByText('The selected staff editor is invalid.')).toBeInTheDocument();
         expect(screen.getByRole('group', { name: 'Staff editor' })).toHaveAttribute('aria-invalid', 'true');
+    });
+
+    it('marks the Settings navigation link as the current page', () => {
+        render(<SettingsIndex settings={[editorSetting]} />);
+
+        const nav = screen.getByRole('navigation', { name: 'Admin workspace' });
+        expect(within(nav).getByRole('link', { name: 'Settings' })).toHaveAttribute('href', '/admin/settings');
+        expect(within(nav).getByRole('link', { name: 'Settings' })).toHaveAttribute('aria-current', 'page');
+        expect(within(nav).getByRole('link', { name: 'Releases' })).not.toHaveAttribute('aria-current');
+    });
+
+    it('shows the Settings link to admins on other admin screens without marking it current', () => {
+        render(
+            <WorkspaceLayout area="Admin" active="releases" title="Releases">
+                <p>Releases</p>
+            </WorkspaceLayout>,
+        );
+
+        const nav = screen.getByRole('navigation', { name: 'Admin workspace' });
+        expect(within(nav).getByRole('link', { name: 'Settings' })).not.toHaveAttribute('aria-current');
+    });
+
+    it('hides the Settings link from staff and members', () => {
+        for (const role of ['staff', 'public'] as const) {
+            setMockPage({
+                appName: 'APES Newsroom',
+                auth: {
+                    user: { id: 2, name: 'Sam', email: 'sam@example.test', role },
+                    can: { accessStaff: role === 'staff', accessAdmin: false },
+                },
+            });
+            const { unmount } = render(
+                <WorkspaceLayout area="Admin" active="settings" title="Settings">
+                    <p>Settings</p>
+                </WorkspaceLayout>,
+            );
+
+            expect(screen.queryByRole('link', { name: 'Settings' })).not.toBeInTheDocument();
+            unmount();
+        }
     });
 
     it('shows the saved flash message', () => {

@@ -35,6 +35,34 @@ class AuthzMatrixTest extends TestCase
         $this->actingAs($staff)->get('/admin/moderation')->assertForbidden();
     }
 
+    public function test_guest_is_redirected_from_admin_settings(): void
+    {
+        $this->get('/admin/settings')->assertRedirect('/login');
+        $this->put('/admin/settings', ['settings' => ['editor' => ['driver' => 'tinymce']]])->assertRedirect('/login');
+    }
+
+    public function test_public_and_staff_cannot_access_admin_settings(): void
+    {
+        foreach ([User::factory()->create(), User::factory()->staff()->create()] as $user) {
+            $this->actingAs($user)->get('/admin/settings')->assertForbidden();
+            $this->actingAs($user)
+                ->put('/admin/settings', ['settings' => ['editor' => ['driver' => 'tinymce']]])
+                ->assertForbidden();
+        }
+
+        $this->assertDatabaseCount('settings', 0);
+    }
+
+    public function test_admin_and_super_admin_can_access_admin_settings(): void
+    {
+        foreach ([User::factory()->admin()->create(), User::factory()->superAdmin()->create()] as $user) {
+            $this->actingAs($user)->get('/admin/settings')->assertOk();
+            $this->actingAs($user)
+                ->put('/admin/settings', ['settings' => ['editor' => ['driver' => 'tinymce']]])
+                ->assertRedirect('/admin/settings');
+        }
+    }
+
     public function test_admin_publish_writes_audit_log(): void
     {
         $admin = User::factory()->admin()->create();

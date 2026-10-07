@@ -33,6 +33,7 @@ function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: Wo
     if (area === 'Admin' && auth.can.accessAdmin) {
         links.push({ href: '/admin/moderation', label: 'Moderation', icon: 'shield', active: active === 'moderation' });
         links.push({ href: '/admin/releases', label: 'Releases', icon: 'document', active: active === 'releases' });
+        links.push({ href: '/admin/settings', label: 'Settings', icon: 'settings', active: active === 'settings' });
     }
 
     return (
