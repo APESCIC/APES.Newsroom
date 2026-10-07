@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\GhostContentImportController;
 use App\Http\Controllers\Admin\GhostMembersImportController;
 use App\Http\Controllers\Admin\ModerationController;
 use App\Http\Controllers\Admin\ReleaseController as AdminReleaseController;
+use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\AnalyticsConsentController;
 use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\ArticleController;
@@ -128,6 +129,8 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Admin->value])
         Route::get('/imports/ghost-members', [GhostMembersImportController::class, 'index'])->name('imports.ghost-members');
         Route::post('/imports/ghost-members', [GhostMembersImportController::class, 'upload'])->name('imports.ghost-members.upload');
         Route::get('/imports/ghost-members/{run}/report', [GhostMembersImportController::class, 'report'])->name('imports.ghost-members.report');
+        Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
+        Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
     });
 
 Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])

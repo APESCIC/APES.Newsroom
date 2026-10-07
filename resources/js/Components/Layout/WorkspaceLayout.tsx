@@ -6,6 +6,8 @@ import LineIcon, { type IconName } from '../Icons/LineIcon';
 
 type WorkspaceArea = 'Admin' | 'Staff';
 
+export type WorkspaceActive = 'moderation' | 'posts' | 'pages' | 'newsletters' | 'membership-plans' | 'offers' | 'metrics' | 'members' | 'webhooks' | 'releases' | 'settings';
+
 type WorkspaceLink = {
     href: string;
     label: string;
@@ -13,7 +15,7 @@ type WorkspaceLink = {
     active: boolean;
 };
 
-function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: 'moderation' | 'posts' | 'pages' | 'newsletters' | 'membership-plans' | 'offers' | 'metrics' | 'members' | 'webhooks' | 'releases' }) {
+function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: WorkspaceActive }) {
     const { auth } = usePage<SharedPageProps>().props;
     const links: WorkspaceLink[] = [];
 
@@ -63,7 +65,7 @@ function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: 'm
     );
 }
 
-function Sidebar({ area, active, close }: { area: WorkspaceArea; active: 'moderation' | 'posts' | 'pages' | 'newsletters' | 'membership-plans' | 'offers' | 'metrics' | 'members' | 'webhooks' | 'releases'; close?: () => void }) {
+function Sidebar({ area, active, close }: { area: WorkspaceArea; active: WorkspaceActive; close?: () => void }) {
     const { auth } = usePage<SharedPageProps>().props;
     const roleLabel = auth.user?.role.replace('_', ' ') ?? 'workspace';
 
@@ -127,7 +129,7 @@ export default function WorkspaceLayout({
     children,
 }: {
     area: WorkspaceArea;
-    active: 'moderation' | 'posts' | 'pages' | 'newsletters' | 'membership-plans' | 'offers' | 'metrics' | 'members' | 'webhooks' | 'releases';
+    active: WorkspaceActive;
     title: string;
     subtitle?: string;
     actions?: ReactNode;
