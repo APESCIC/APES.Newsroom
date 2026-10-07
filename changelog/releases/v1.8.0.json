@@ -1,0 +1,31 @@
+{
+  "version": "v1.8.0",
+  "released_at": "2026-10-07",
+  "previous_version": "v1.7.1",
+  "theme": "Admin Settings and editor abstraction",
+  "change_types": [
+    "added",
+    "changed",
+    "security"
+  ],
+  "topic_tags": [
+    "internal-only"
+  ],
+  "summary": "Admins get a new Settings page for site-wide configuration, and staff post and page editors now run through a single editor abstraction ready for TinyMCE.",
+  "detailed_changes": [
+    "Added a cached site settings store with typed defaults, starting with the staff editor choice (#250).",
+    "Added the admin-only Settings page at /admin/settings with inline validation and an audit log entry on every change (#251).",
+    "Added a Settings link to the admin workspace navigation, with access-control tests for guests, members, staff and admins (#252).",
+    "Staff post and page editors now render through one EditorField component instead of importing Editor.js directly (#253).",
+    "The active editor is shared with staff screens only; the TinyMCE option falls back to Editor.js until TinyMCE ships in v1.12.0 (#254).",
+    "Patched laravel/framework, league/commonmark, league/flysystem, axios and qs to clear new security advisories (#317)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /admin/settings, /staff/posts editor, /staff/pages editor",
+    "User groups affected: admins and staff",
+    "Public impact: none; stored content and public rendering are unchanged",
+    "Internal impact: admins can manage site settings; editor switching groundwork for v1.12.0"
+  ],
+  "pr": 316
+}
