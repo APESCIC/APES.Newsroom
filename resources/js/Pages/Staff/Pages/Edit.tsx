@@ -4,6 +4,7 @@ import type { OutputData } from '@editorjs/editorjs';
 import EditorField from '../../../Components/editor/EditorField';
 import UnsplashPicker from '../../../Components/Staff/UnsplashPicker';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
+import type { SharedPageProps } from '../../../types/page';
 
 type PageData = {
     id: number;
@@ -66,8 +67,9 @@ function formFromPage(page: PageData | null): PageForm {
 }
 
 export default function PagesEdit({ page }: { page: PageData | null }) {
-    const inertiaPage = usePage();
+    const inertiaPage = usePage<SharedPageProps>();
     const pageErrors = (inertiaPage.props as { errors?: FormErrors }).errors ?? {};
+    const editorDriver = inertiaPage.props.editorDriver ?? 'editorjs';
     const { data, setData, post, patch, processing, errors: formErrors, transform } = useForm<PageForm>(formFromPage(page));
     const errors: FormErrors = { ...pageErrors, ...(formErrors as FormErrors) };
     const titleTouchedSlug = useRef(false);
@@ -183,7 +185,7 @@ export default function PagesEdit({ page }: { page: PageData | null }) {
                 <div>
                     <p className="mb-2 text-sm font-semibold">Body</p>
                     <EditorField
-                        driver="editorjs"
+                        driver={editorDriver}
                         initialData={data.content}
                         onChange={(next) => setData('content', next)}
                     />
