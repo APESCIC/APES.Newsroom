@@ -1,7 +1,7 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useEffect, useRef } from 'react';
 import type { OutputData } from '@editorjs/editorjs';
-import EditorJsField from '../../../Components/editor/EditorJsField';
+import EditorField from '../../../Components/editor/EditorField';
 import UnsplashPicker from '../../../Components/Staff/UnsplashPicker';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
 
@@ -182,7 +182,8 @@ export default function PagesEdit({ page }: { page: PageData | null }) {
 
                 <div>
                     <p className="mb-2 text-sm font-semibold">Body</p>
-                    <EditorJsField
+                    <EditorField
+                        driver="editorjs"
                         initialData={data.content}
                         onChange={(next) => setData('content', next)}
                     />

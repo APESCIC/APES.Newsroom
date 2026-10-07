@@ -1,7 +1,7 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useCallback, useEffect, useRef, useState } from 'react';
 import type { OutputData } from '@editorjs/editorjs';
-import EditorJsField from '../../../Components/editor/EditorJsField';
+import EditorField from '../../../Components/editor/EditorField';
 import AiAssistPanel from '../../../Components/Staff/AiAssistPanel';
 import UnsplashPicker from '../../../Components/Staff/UnsplashPicker';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
@@ -446,7 +446,8 @@ export default function PostEdit({
                         <div>
                             <label htmlFor="body">Body</label>
                             <div className="rounded-control border border-border/70 bg-white/80 p-3">
-                                <EditorJsField
+                                <EditorField
+                                    driver="editorjs"
                                     initialData={data.content}
                                     onChange={(content) => setData('content', content)}
                                 />
