@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\Membership\FakeStripeBillingClient;
 use App\Services\Membership\StripeApiBillingClient;
 use App\Services\Membership\StripeBillingClient;
+use App\Services\Settings\SettingsRepository;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -22,6 +23,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(FakeStripeBillingClient::class);
+        $this->app->singleton(SettingsRepository::class);
 
         $this->app->bind(StripeBillingClient::class, function ($app) {
             if ($app->environment('testing') || blank(config('services.stripe.secret'))) {
