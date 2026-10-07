@@ -5,7 +5,9 @@ namespace App\Http\Middleware;
 use App\Enums\Role;
 use App\Http\Controllers\AnalyticsConsentController;
 use App\Models\Release;
+use App\Services\Settings\SettingsRepository;
 use App\Support\AnalyticsConfig;
+use App\Support\Settings\SettingDefinitions;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Throwable;
@@ -37,7 +39,7 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        return [
+        $shared = [
             ...parent::share($request),
             'appName' => config('app.name'),
             'auth' => [
@@ -57,6 +59,12 @@ class HandleInertiaRequests extends Middleware
                 'status' => fn () => $request->session()->get('status'),
             ],
         ];
+
+        if ($request->user()?->role->atLeast(Role::Staff)) {
+            $shared['editorDriver'] = fn () => app(SettingsRepository::class)->get(SettingDefinitions::EDITOR_DRIVER);
+        }
+
+        return $shared;
     }
 
     /**

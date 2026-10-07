@@ -26,6 +26,7 @@ const inertiaMock = {
         } as SharedPageProps,
     },
     post: vi.fn(),
+    put: vi.fn(),
     patch: vi.fn(),
     delete: vi.fn(),
     visits: [] as MockVisit[],
@@ -34,6 +35,7 @@ const inertiaMock = {
 export function setMockPage(props: SharedPageProps) {
     inertiaMock.page = { props };
     inertiaMock.post.mockReset();
+    inertiaMock.put.mockReset();
     inertiaMock.patch.mockReset();
     inertiaMock.delete.mockReset();
     inertiaMock.visits = [];
@@ -43,7 +45,7 @@ export function getInertiaMock() {
     return inertiaMock;
 }
 
-export function recordVisit(method: 'post' | 'patch' | 'delete', url: string, options: VisitOptions, data: unknown) {
+export function recordVisit(method: 'post' | 'put' | 'patch' | 'delete', url: string, options: VisitOptions, data: unknown) {
     const visit: MockVisit = { url, options, data, status: 'pending' };
     inertiaMock.visits.push(visit);
     inertiaMock[method](url, options, data);

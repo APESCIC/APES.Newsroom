@@ -45,6 +45,7 @@ vi.mock('@inertiajs/react', async () => {
         },
         router: {
             post: (...args: unknown[]) => getInertiaMock().post(...args),
+            put: (...args: unknown[]) => getInertiaMock().put(...args),
             patch: (...args: unknown[]) => getInertiaMock().patch(...args),
             delete: (...args: unknown[]) => getInertiaMock().delete(...args),
         },
@@ -71,7 +72,7 @@ vi.mock('@inertiajs/react', async () => {
             }, []);
 
             const submit = React.useCallback(
-                (method: 'post' | 'patch' | 'delete', url: string, options?: VisitOptions) => {
+                (method: 'post' | 'put' | 'patch' | 'delete', url: string, options?: VisitOptions) => {
                     setProcessing(true);
                     const visit = recordVisit(method, url, {
                         ...options,
@@ -98,6 +99,10 @@ vi.mock('@inertiajs/react', async () => {
 
             const post = React.useCallback(
                 (url: string, options?: VisitOptions) => submit('post', url, options),
+                [submit],
+            );
+            const put = React.useCallback(
+                (url: string, options?: VisitOptions) => submit('put', url, options),
                 [submit],
             );
             const patch = React.useCallback(
@@ -134,6 +139,7 @@ vi.mock('@inertiajs/react', async () => {
                 data,
                 setData,
                 post,
+                put,
                 patch,
                 delete: destroy,
                 processing,
@@ -152,6 +158,7 @@ afterEach(() => {
     cleanup();
     const inertiaMock = getTestInertiaMock();
     inertiaMock.post.mockReset();
+    inertiaMock.put.mockReset();
     inertiaMock.patch.mockReset();
     inertiaMock.delete.mockReset();
     inertiaMock.visits = [];

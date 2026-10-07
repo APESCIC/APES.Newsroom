@@ -10,6 +10,7 @@ export type IconName =
     | 'plus'
     | 'review'
     | 'search'
+    | 'settings'
     | 'shelter'
     | 'shield'
     | 'tree'
@@ -55,6 +56,14 @@ export default function LineIcon({ name, ...props }: { name: IconName } & SVGPro
             <>
                 <circle cx="11" cy="11" r="7" />
                 <path d="m16.5 16.5 4 4" />
+            </>
+        ),
+        settings: (
+            <>
+                <path d="M4 6h9m4 0h3M4 12h3m4 0h9M4 18h11m4 0h1" />
+                <circle cx="15" cy="6" r="2" />
+                <circle cx="9" cy="12" r="2" />
+                <circle cx="17" cy="18" r="2" />
             </>
         ),
         shelter: (
