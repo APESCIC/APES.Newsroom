@@ -7,7 +7,6 @@ use App\Enums\ContentVisibility;
 use App\Enums\MailingList;
 use App\Enums\Role;
 use App\Http\Controllers\Controller;
-use App\Models\ApiToken;
 use App\Models\Post;
 use App\Services\Publishing\EditorialPostWriter;
 use Illuminate\Http\JsonResponse;
@@ -78,24 +77,6 @@ class AdminPostController extends Controller
         $post = $this->writer->unpublish($request->user(), $post);
 
         return response()->json(['data' => $this->serialize($post, full: true)]);
-    }
-
-    public function storeToken(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:120'],
-        ]);
-
-        $issued = ApiToken::issue($request->user(), $validated['name']);
-
-        return response()->json([
-            'data' => [
-                'id' => $issued['model']->id,
-                'name' => $issued['model']->name,
-                'token' => $issued['token'],
-                'warning' => 'Store this token now; it will not be shown again.',
-            ],
-        ], 201);
     }
 
     /**

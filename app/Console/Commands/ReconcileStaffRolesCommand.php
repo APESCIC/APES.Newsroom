@@ -103,10 +103,13 @@ class ReconcileStaffRolesCommand extends Command
     {
         $sessions->revoke($user);
 
+        $revokedTokens = $user->role->atLeast(Role::Staff) ? 0 : $user->apiTokens()->delete();
+
         $audit->record(null, 'staff.role_changed', $user, [
             'from' => $previousRole->value,
             'to' => $user->role->value,
             'source' => 'staff:reconcile-roles',
+            'api_tokens_revoked' => $revokedTokens,
         ]);
     }
 }

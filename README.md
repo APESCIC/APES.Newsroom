@@ -1,6 +1,6 @@
 # APES Newsroom
 
-[![CI](https://github.com/APESCIC/APES-Newsroom/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/APESCIC/APES-Newsroom/actions/workflows/ci.yml)
+[![CI](https://github.com/APESCIC/APES.Newsroom/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/APESCIC/APES.Newsroom/actions/workflows/ci.yml)
 
 APES Newsroom is the mission-led wildlife publishing platform for the
 [Association for the Protection of Exotic Species (APES CIC)](https://apes.org.uk).
@@ -11,7 +11,7 @@ governance workspaces.
 The production Newsroom is available at
 [www.apesnews.org.uk](https://www.apesnews.org.uk/). The guarded cutover from  <!-- pragma: allowlist secret -->
 Ghost completed on 2026-08-06 under
-[issue #11](https://github.com/APESCIC/APES-Newsroom/issues/11).
+[issue #11](https://github.com/APESCIC/APES.Newsroom/issues/11).
 
 ## Repository status
 
@@ -25,11 +25,11 @@ Last verified: **2026-09-24**.
 - Live campaign sends remain an explicit operational decision; imports and
   migration did not send mail.
 - Product and engineering work is tracked in
-  [GitHub Issues](https://github.com/APESCIC/APES-Newsroom/issues). The current
+  [GitHub Issues](https://github.com/APESCIC/APES.Newsroom/issues). The current
   frog-led theme exploration remains gated in
-  [issue #36](https://github.com/APESCIC/APES-Newsroom/issues/36).
+  [issue #36](https://github.com/APESCIC/APES.Newsroom/issues/36).
 
-See [Epic #1](https://github.com/APESCIC/APES-Newsroom/issues/1) and the
+See [Epic #1](https://github.com/APESCIC/APES.Newsroom/issues/1) and the
 [delivery record](docs/epic-1-build-plan.md) for the original dependency map
 and completion evidence. Agents and contributors must follow
 [`AGENTS.md`](AGENTS.md) and keep issue records current.
@@ -127,11 +127,13 @@ retirement. Merge does not auto-deploy.
   [data inventory](docs/governance/data-inventory.md),
   [retention schedule](docs/governance/retention-schedule.md), and
   [threat model](docs/governance/threat-model.md)
-- [Security reporting](SECURITY.md)
-- [Report a bug](https://github.com/APESCIC/APES-Newsroom/issues/new?template=bug_report.yml)
-  or [request a feature](https://github.com/APESCIC/APES-Newsroom/issues/new?template=feature_request.yml)
-- [All issues](https://github.com/APESCIC/APES-Newsroom/issues),
-  [Discussions](https://github.com/APESCIC/APES-Newsroom/discussions), and
-  [Releases](https://github.com/APESCIC/APES-Newsroom/releases)
+- [Security reporting](SECURITY.md) — report vulnerabilities privately via a
+  [security advisory](https://github.com/APESCIC/APES.Newsroom/security/advisories/new),
+  never a public issue
+- [Report a bug](https://github.com/APESCIC/APES.Newsroom/issues/new?template=bug_report.yml)
+  or [request a feature](https://github.com/APESCIC/APES.Newsroom/issues/new?template=feature_request.yml)
+- [All issues](https://github.com/APESCIC/APES.Newsroom/issues),
+  [Discussions](https://github.com/APESCIC/APES.Newsroom/discussions), and
+  [Releases](https://github.com/APESCIC/APES.Newsroom/releases)
 
 The repository is maintained by [APES CIC](https://github.com/APESCIC).

@@ -5,9 +5,9 @@ Instructions for AI agents and contributors working in this repository.
 ## Source of truth for work
 
 Track all product and engineering work with **GitHub Issues** on
-[APESCIC/APES-Newsroom](https://github.com/APESCIC/APES-Newsroom/issues).
+[APESCIC/APES.Newsroom](https://github.com/APESCIC/APES.Newsroom/issues).
 
-- Epic: [#1 Build and launch APES Newsroom](https://github.com/APESCIC/APES-Newsroom/issues/1)
+- Epic: [#1 Build and launch APES Newsroom](https://github.com/APESCIC/APES.Newsroom/issues/1)
 - Sequencing and dependency map: [`docs/epic-1-build-plan.md`](docs/epic-1-build-plan.md)
 - Sub-issues #2–#11 cover design, foundation, auth, publishing, newsroom,
   mailing, engagement, Ghost migration, governance, and cutover
@@ -104,6 +104,10 @@ secrets:
 Never commit `CLOUDRON_TOKEN` or any other credential. Do not put secrets in
 `.cursor/environment.json`.
 
+The repository is public. Vulnerabilities go through private advisories per
+[`SECURITY.md`](SECURITY.md) — never public issues, PRs, or comments. Keep
+remediation issues free of exploit detail.
+
 ## Branch naming (Cloud Agents)
 
 Use `bmurphy/<short-slug>` (kebab-case). Conventional commits with `#N`.
@@ -142,6 +146,8 @@ gitignored.
 | Beta acceptance checklist | [`docs/deployment-beta-acceptance.md`](docs/deployment-beta-acceptance.md) |
 | Design drafts | [`docs/design/`](docs/design/) |
 | Change Log Hub authoring | [`docs/change-log-hub.md`](docs/change-log-hub.md) |
+| Vulnerability reporting | [`SECURITY.md`](SECURITY.md) |
+| Admin API tokens | [`docs/api.md`](docs/api.md) |
 
 Quick checks before opening a PR: `composer test`, `composer lint`,
 `npm run typecheck`, `npm run lint`.

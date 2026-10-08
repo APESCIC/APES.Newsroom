@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/APESCIC/APES.Newsroom/security/advisories/new
+    about: Report vulnerabilities privately. Never open a public issue for a security problem.
   - name: APES Newsroom discussions
-    url: https://github.com/APESCIC/APES-Newsroom/discussions
+    url: https://github.com/APESCIC/APES.Newsroom/discussions
     about: Ask questions or discuss ideas that are not yet actionable issues.

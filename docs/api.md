@@ -65,15 +65,24 @@ The `v1` path segment is the Content API contract. Breaking changes require a ne
 
 Staff-owned bearer tokens (`Authorization: Bearer nr_admin_…`). Tokens are hashed at rest in `api_tokens`.
 
-Mint a bootstrap token:
+Tokens can only be issued, listed and revoked with artisan on the server. The API cannot create tokens (removed in #282). On Cloudron, run artisan through the www-data wrapper (see [`deployment.md`](deployment.md#artisan-must-preserve-cloudron_-www-data)).
 
 ```bash
+# Issue a token (plain token shown once)
 php artisan newsroom:issue-admin-api-token staff@example.com --name=ci
+
+# List tokens: id, name, owner, role, last used, created (never the secret)
+php artisan newsroom:list-admin-api-tokens
+php artisan newsroom:list-admin-api-tokens --user=staff@example.com
+
+# Revoke by id, by name, by owner, or all (asks for confirmation unless --force)
+php artisan newsroom:revoke-admin-api-token 12
+php artisan newsroom:revoke-admin-api-token --name=ci --user=staff@example.com
+php artisan newsroom:revoke-admin-api-token --user=staff@example.com
+php artisan newsroom:revoke-admin-api-token --all --force
 ```
 
-Additional tokens: `POST /api/admin/v1/tokens` with an existing bearer token and JSON `{ "name": "label" }` (plain token returned once).
-
-Token owner must be `Role::Staff` or higher. Missing/invalid token → `401`.
+Token owner must be `Role::Staff` or higher. Missing/invalid token → `401`; owner below Staff → `403`. When `staff:reconcile-roles` demotes a user below Staff, their tokens are deleted.
 
 ### Rate limits
 
@@ -92,7 +101,6 @@ Writes run through `BlockValidator` and the same field rules as the staff editor
 
 | Method | Path | Notes |
 |--------|------|--------|
-| POST | `/api/admin/v1/tokens` | Issue another token for the authenticated staff user. |
 | GET | `/api/admin/v1/posts` | Paginated editorial list. |
 | POST | `/api/admin/v1/posts` | Create draft post. |
 | GET | `/api/admin/v1/posts/{id}` | Show post including Editor.js `content`. |
