@@ -20,7 +20,6 @@ Route::prefix('content/v1')
 Route::prefix('admin/v1')
     ->middleware([AuthenticateAdminApiToken::class, 'throttle:admin-api'])
     ->group(function () {
-        Route::post('/tokens', [AdminPostController::class, 'storeToken']);
         Route::get('/posts', [AdminPostController::class, 'index']);
         Route::post('/posts', [AdminPostController::class, 'store']);
         Route::get('/posts/{post}', [AdminPostController::class, 'show']);
