@@ -71,9 +71,13 @@ Route::get('/pages/{slug}', [PageController::class, 'show'])->name('pages.show')
 Route::get('/profiles/{profile}', [ProfileController::class, 'show'])->name('profiles.show');
 
 Route::get('/newsletters/{slug}/signup', [NewsletterSignupController::class, 'show'])->name('newsletters.signup');
-Route::post('/newsletters/{slug}/signup', [NewsletterSignupController::class, 'store'])->name('newsletters.signup.store');
+Route::post('/newsletters/{slug}/signup', [NewsletterSignupController::class, 'store'])
+    ->middleware('throttle:mailing-signup')
+    ->name('newsletters.signup.store');
 Route::get('/mailing/signup', [SignupController::class, 'show'])->name('mailing.signup');
-Route::post('/mailing/signup', [SignupController::class, 'store'])->name('mailing.signup.store');
+Route::post('/mailing/signup', [SignupController::class, 'store'])
+    ->middleware('throttle:mailing-signup')
+    ->name('mailing.signup.store');
 Route::get('/mailing/confirm/{token}', ConfirmController::class)->name('mailing.confirm');
 Route::get('/mailing/track/open/{recipient}', [CampaignTrackingController::class, 'open'])->name('mailing.track.open');
 Route::get('/mailing/track/click/{recipient}', [CampaignTrackingController::class, 'click'])->name('mailing.track.click');

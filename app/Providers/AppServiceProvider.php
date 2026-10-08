@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 use Stripe\StripeClient;
 
 class AppServiceProvider extends ServiceProvider
@@ -65,5 +66,27 @@ class AppServiceProvider extends ServiceProvider
 
             return Limit::perMinute($perMinute)->by($request->user()?->id ?: ($request->ip() ?? 'admin-api'));
         });
+
+        $this->configureAuthRateLimits();
+    }
+
+    /**
+     * Limits for unauthenticated auth and signup endpoints. Keep
+     * docs/auth-rate-limits.md in sync when changing these.
+     */
+    private function configureAuthRateLimits(): void
+    {
+        RateLimiter::for('magic-link', fn (Request $request) => [
+            Limit::perMinute(3)->by('email:'.Str::lower((string) $request->input('email'))),
+            Limit::perMinute(10)->by('ip:'.$request->ip()),
+        ]);
+
+        RateLimiter::for('register', fn (Request $request) => Limit::perHour(5)->by($request->ip()));
+
+        RateLimiter::for('forgot-password', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));
+
+        RateLimiter::for('mailing-signup', fn (Request $request) => Limit::perMinute(10)->by($request->ip()));
+
+        RateLimiter::for('oidc-callback', fn (Request $request) => Limit::perMinute(20)->by($request->ip()));
     }
 }

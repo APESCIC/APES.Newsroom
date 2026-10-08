@@ -8,6 +8,7 @@ use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
@@ -51,6 +52,20 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        // Throttled form posts go back to the form with an inline error;
+        // throttled page loads fall through to the 429 error page below.
+        $exceptions->render(function (ThrottleRequestsException $e, Request $request) {
+            if ($request->expectsJson() || $request->is('api/*') || $request->isMethod('GET')) {
+                return null;
+            }
+
+            $seconds = (int) ($e->getHeaders()['Retry-After'] ?? 60);
+
+            return back()
+                ->withInput($request->except('password', 'password_confirmation'))
+                ->withErrors(['email' => "Too many attempts. Please try again in {$seconds} seconds."]);
+        });
 
         $exceptions->respond(function (Response $response, Throwable $e, Request $request) {
             if ($request->expectsJson() || $request->is('api/*') || $request->is('health') || $request->is('up')) {
