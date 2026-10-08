@@ -8,5 +8,6 @@ final readonly class StaffOidcIdentity
         public string $sub,
         public string $email,
         public string $name,
+        public bool $emailVerified = false,
     ) {}
 }

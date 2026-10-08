@@ -38,7 +38,9 @@ export default function Login({ staffLoginUrl, staffLoginLabel }: LoginProps) {
                         <a href={staffLoginUrl} className="button-secondary w-full">
                             {staffLoginLabel ?? 'Staff sign in'}
                         </a>
-                        <p className="text-center text-xs text-muted">or use a public account below</p>
+                        <p className="text-center text-xs text-muted">
+                            Staff must use the button above. Public accounts can sign in below.
+                        </p>
                     </div>
                 )}
                 {devTools && (

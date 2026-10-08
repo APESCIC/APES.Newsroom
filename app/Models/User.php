@@ -32,6 +32,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
             'role' => Role::class,
             'ldap_group_snapshot' => 'array',
+            'auth_epoch' => 'integer',
         ];
     }
 
@@ -69,5 +70,15 @@ class User extends Authenticatable implements MustVerifyEmail
         }
 
         return ! is_null($this->email_verified_at);
+    }
+
+    /**
+     * Staff-level and Cloudron accounts must authenticate through Cloudron
+     * SSO, where the live directory group check runs.
+     */
+    public function requiresSso(): bool
+    {
+        return $this->auth_provider === 'cloudron_oidc'
+            || ($this->role?->atLeast(Role::Staff) ?? false);
     }
 }
