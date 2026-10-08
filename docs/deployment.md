@@ -179,7 +179,8 @@ symlink edit inside `cloudron exec` if a deeper rollback is ever needed.
 `php artisan deploy:preflight --target=beta` checks git cleanliness (when
 run from a checkout), required env vars, `APP_DEBUG` being off for
 guarded targets, database/Redis connectivity, and pending migrations, and
-warns (without failing) if seeded `@apes.local` demo accounts exist. It
+warns (without failing) if the seeded demo accounts (`DemoAccounts::EMAILS`)
+exist. It
 never changes anything. `cloudron-activate.sh` also runs
 `newsroom:check-demo-accounts` after migrating; it prints a warning but
 never blocks a deploy. It's a single `php artisan ...` invocation, so it
