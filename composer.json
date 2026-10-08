@@ -9,7 +9,7 @@
         "php": "^8.4",
         "directorytree/ldaprecord-laravel": "^4.0",
         "firebase/php-jwt": "^7.2",
-        "inertiajs/inertia-laravel": "^2.0",
+        "inertiajs/inertia-laravel": "^3.5",
         "laravel/framework": "^13.17",
         "laravel/tinker": "^3.0",
         "league/oauth2-client": "^2.9",
