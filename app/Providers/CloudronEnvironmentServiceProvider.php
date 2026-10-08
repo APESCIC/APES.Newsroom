@@ -111,8 +111,16 @@ class CloudronEnvironmentServiceProvider extends ServiceProvider
         // provisioned for this app. Prefer it over a hand-maintained
         // APP_URL so redirects, signed links, and asset URLs stay correct
         // if the app is ever moved between beta and production domains.
-        if ($this->cloudronEnv('CLOUDRON_APP_ORIGIN')) {
-            Config::set('app.url', $this->cloudronEnv('CLOUDRON_APP_ORIGIN'));
+        $origin = $this->cloudronEnv('CLOUDRON_APP_ORIGIN');
+
+        if ($origin) {
+            Config::set('app.url', $origin);
+        }
+
+        // Cloudron always serves apps over HTTPS, so session cookies must
+        // never be sent over plain HTTP regardless of the shared .env.
+        if (is_string($origin) && str_starts_with($origin, 'https://')) {
+            Config::set('session.secure', true);
         }
     }
 

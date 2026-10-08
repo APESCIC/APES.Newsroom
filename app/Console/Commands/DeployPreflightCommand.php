@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Support\DemoAccounts;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -48,6 +49,7 @@ class DeployPreflightCommand extends Command
         $this->checkDatabase();
         $this->checkRedis();
         $this->checkPendingMigrations();
+        $this->checkDemoAccounts();
 
         $this->newLine();
         $this->renderResults();
@@ -182,6 +184,28 @@ class DeployPreflightCommand extends Command
         } catch (Throwable $e) {
             $this->record('database.migrations_pending', false, 'could not determine migration status');
         }
+    }
+
+    /**
+     * Warning only: demo accounts are reported but never fail preflight.
+     */
+    private function checkDemoAccounts(): void
+    {
+        try {
+            $emails = DemoAccounts::query()->pluck('email');
+        } catch (Throwable $e) {
+            $this->record('security.demo_accounts', true, 'skipped: could not query users');
+
+            return;
+        }
+
+        $this->record(
+            'security.demo_accounts',
+            true,
+            $emails->isEmpty()
+                ? 'none'
+                : 'WARNING: demo accounts with a known password exist ('.$emails->join(', ').') - delete them'
+        );
     }
 
     private function renderResults(): void

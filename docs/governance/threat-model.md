@@ -17,13 +17,13 @@
 | CSRF | Laravel CSRF + Inertia; session cookies |
 | Campaign spam / PECR breach | Double opt-in; suppressions; unsubscribe headers; import paths force `mail.default=array` for the run / never notify |
 | Open redirects | Redirect table only; fixed status codes; no user-controlled open redirect helper |
-| Session fixation / theft | HTTPS (Cloudron), secure cookies, short sessions |
+| Session fixation / theft | HTTPS (Cloudron) with HSTS; session cookies forced `Secure` on Cloudron and in production (#280); session ID regenerated on login; sessions revoked on SSO link or role change (#277); 120-minute sessions |
 | Dependency vulns | CI `composer audit` / `npm audit` |
 | Content injection via Ghost import | HTML→blocks conversion; legacy blocks sanitized; needs_import_review flag |
 
 ## Headers
 
-`SecurityHeaders` middleware sets CSP, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Permissions-Policy`.
+`SecurityHeaders` middleware sets CSP, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Permissions-Policy` on web and API responses, plus `Strict-Transport-Security` over HTTPS (see [`docs/deployment.md`](../deployment.md#transport-security-secure-cookies-hsts)).
 
 ## Residual risks requiring human sign-off
 

@@ -16,7 +16,8 @@ composer dev    # or: php artisan serve + npm run dev
 
 Uses SQLite with database-backed sessions, cache, and queue. No Docker
 required. Seeding creates password demo users for local role preview
-(see below).
+(see below). `DemoUsersSeeder` only runs when `APP_ENV` is `local` or
+`testing`; deploys warn if any `@apes.local` account exists.
 
 ## Role preview (local only)
 

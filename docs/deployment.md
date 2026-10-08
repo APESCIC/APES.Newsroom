@@ -178,8 +178,11 @@ symlink edit inside `cloudron exec` if a deeper rollback is ever needed.
 
 `php artisan deploy:preflight --target=beta` checks git cleanliness (when
 run from a checkout), required env vars, `APP_DEBUG` being off for
-guarded targets, database/Redis connectivity, and pending migrations. It
-never changes anything. It's a single `php artisan ...` invocation, so it
+guarded targets, database/Redis connectivity, and pending migrations, and
+warns (without failing) if seeded `@apes.local` demo accounts exist. It
+never changes anything. `cloudron-activate.sh` also runs
+`newsroom:check-demo-accounts` after migrating; it prints a warning but
+never blocks a deploy. It's a single `php artisan ...` invocation, so it
 runs identically from PowerShell, cmd, or bash - no separate Windows
 script to maintain. Run it locally against a non-production database
 before trusting a new environment, and it's what
@@ -299,11 +302,34 @@ OIDC credentials for LAMP apps are not auto-injected. Prefer
 (which reads `getenv`) sees them after `config:cache`. Also keep the same
 keys in `/app/data/shared/.env` if you maintain that file by hand.
 
+## Transport security (secure cookies, HSTS)
+
+- Session cookies are `Secure` whenever `CLOUDRON_APP_ORIGIN` is `https://`
+  (`CloudronEnvironmentServiceProvider`), and by default when
+  `APP_ENV=production`. Setting `SESSION_SECURE_COOKIE` explicitly still
+  overrides the default; do not set it to `false` on Cloudron.
+- `SecurityHeaders` sends `Strict-Transport-Security: max-age=31536000` on
+  HTTPS responses, and on every response when `app.url` is `https://` (the
+  Cloudron proxy terminates TLS). No `includeSubDomains` or `preload`.
+- Web and API responses both carry the baseline headers (CSP,
+  `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`,
+  `Permissions-Policy`).
+
+**Verify after a deploy:**
+
+```bash
+curl -sI https://www.apesnews.org.uk/ | grep -iE 'strict-transport|set-cookie'  <!-- pragma: allowlist secret -->
+```
+
+Expected: a `strict-transport-security: max-age=31536000` header, and every
+`set-cookie` line includes `secure`.
+
 ## End-to-end verification (beta)
 
 | Check | Expected |
 |-------|----------|
 | `GET /health` | `"cache": true`, `"database": true` |
+| `curl -sI /` | HSTS header; session cookies marked `secure` |
 | `deploy:preflight --target=beta` | Redis reachable |
 | Visit `/login` | Staff sign-in button visible |
 | Staff sign-in | Redirect to Cloudron OIDC |

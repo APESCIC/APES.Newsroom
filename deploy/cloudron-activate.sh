@@ -99,6 +99,9 @@ fi
 echo "==> Running database migrations"
 "${WWW_DATA_PHP[@]}" "${RELEASE_DIR}/artisan" migrate --force --no-interaction
 
+echo "==> Checking for seeded demo accounts (warning only)"
+"${WWW_DATA_PHP[@]}" "${RELEASE_DIR}/artisan" newsroom:check-demo-accounts --no-interaction || true
+
 echo "==> Syncing Change Log Hub releases from changelog/releases"
 "${WWW_DATA_PHP[@]}" "${RELEASE_DIR}/artisan" newsroom:sync-releases --no-interaction
 
