@@ -12,10 +12,17 @@ class DemoUsersSeeder extends Seeder
      * Seed password-based demo users for local role preview.
      *
      * All accounts use password "password". Role is force-filled because
-     * it is not mass-assignable on User.
+     * it is not mass-assignable on User. Refuses to run outside local and
+     * testing, even when called directly with --class.
      */
     public function run(): void
     {
+        if (! app()->environment(['local', 'testing'])) {
+            $this->command?->warn('DemoUsersSeeder skipped: demo accounts are only seeded in local and testing.');
+
+            return;
+        }
+
         $users = [
             [
                 'name' => 'Public Demo',

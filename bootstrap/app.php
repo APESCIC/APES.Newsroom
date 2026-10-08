@@ -34,6 +34,10 @@ return Application::configure(basePath: dirname(__DIR__))
             SecurityHeaders::class,
         ]);
 
+        $middleware->api(append: [
+            SecurityHeaders::class,
+        ]);
+
         $middleware->validateCsrfTokens(except: [
             'stripe/webhook',
         ]);
