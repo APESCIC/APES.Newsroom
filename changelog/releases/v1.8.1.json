@@ -1,0 +1,34 @@
+{
+  "version": "v1.8.1",
+  "released_at": "2026-10-08",
+  "previous_version": "v1.8.0",
+  "theme": "Critical authentication hardening",
+  "change_types": [
+    "security",
+    "changed",
+    "removed"
+  ],
+  "topic_tags": [
+    "public-facing",
+    "internal-only"
+  ],
+  "summary": "Sign-in is hardened across the Newsroom: staff must use Cloudron single sign-on, sign-in and signup forms are rate limited, session cookies are secure by default, and Admin API tokens can only be issued and revoked on the server.",
+  "detailed_changes": [
+    "Staff and Cloudron accounts can now sign in only through Cloudron single sign-on; magic links, passwords and password resets are refused for them (#276).",
+    "Staff SSO accounts are linked by stable identity, with email matching only for verified addresses, and signed-in sessions are revoked when an account is linked or its role changes (#277).",
+    "Cloudron sign-in now uses PKCE and a nonce, and fully validates the ID token issuer, audience, expiry and signature (#278).",
+    "Magic-link, registration, password-reset, mailing-signup and SSO callback requests are rate limited, with a friendly retry message on forms (#279).",
+    "Session cookies are marked secure in production and responses send HSTS; API responses now carry the same security headers (#280).",
+    "Demo user seeding is restricted to local and testing environments, and deploy preflight warns if demo accounts exist (#281).",
+    "Removed the Admin API endpoint for creating tokens; tokens are issued, listed and revoked with server commands, and are revoked automatically when a user is demoted below Staff (#282).",
+    "Security reports now go through GitHub private vulnerability reporting; see SECURITY.md (#283)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /login, /register, /forgot-password, magic links, /auth/cloudron callback, mailing and newsletter signup, /api/admin/v1",
+    "User groups affected: staff and admins (SSO only); public members (rate-limited forms)",
+    "Public impact: public sign-in is unchanged apart from rate limits on repeated attempts",
+    "Internal impact: staff must use the SSO button; Admin API tokens are managed with artisan on the server"
+  ],
+  "pr": 323
+}
