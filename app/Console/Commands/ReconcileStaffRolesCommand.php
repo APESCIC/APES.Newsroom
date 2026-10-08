@@ -5,7 +5,9 @@ namespace App\Console\Commands;
 use App\Enums\Role;
 use App\Exceptions\Auth\LdapUnreachableException;
 use App\Models\User;
+use App\Services\Audit\AuditLogger;
 use App\Services\Auth\LdapGroupLookup;
+use App\Services\Auth\UserSessionRevoker;
 use Illuminate\Console\Command;
 
 /**
@@ -20,7 +22,7 @@ class ReconcileStaffRolesCommand extends Command
 
     protected $description = 'Reconcile Cloudron staff roles from current LDAP group membership';
 
-    public function handle(LdapGroupLookup $ldap): int
+    public function handle(LdapGroupLookup $ldap, UserSessionRevoker $sessions, AuditLogger $audit): int
     {
         $staffUsers = User::query()
             ->where('auth_provider', 'cloudron_oidc')
@@ -56,10 +58,16 @@ class ReconcileStaffRolesCommand extends Command
                 ->values();
 
             if ($matchedRoles->isEmpty()) {
+                $previousRole = $user->role;
+
                 $user->forceFill([
                     'role' => Role::Public,
                     'ldap_group_snapshot' => $groups,
                 ])->save();
+
+                if ($previousRole !== Role::Public) {
+                    $this->recordRoleChange($user, $previousRole, $sessions, $audit);
+                }
 
                 $demoted++;
                 $this->line("Demoted {$user->email} — no recognised LDAP groups");
@@ -70,10 +78,16 @@ class ReconcileStaffRolesCommand extends Command
             $role = $matchedRoles->sortByDesc(fn (Role $role) => $role->rank())->first();
 
             if ($user->role !== $role || $user->ldap_group_snapshot !== $groups) {
+                $previousRole = $user->role;
+
                 $user->forceFill([
                     'role' => $role,
                     'ldap_group_snapshot' => $groups,
                 ])->save();
+
+                if ($previousRole !== $role) {
+                    $this->recordRoleChange($user, $previousRole, $sessions, $audit);
+                }
 
                 $updated++;
                 $this->line("Updated {$user->email} → {$role->value}");
@@ -83,5 +97,16 @@ class ReconcileStaffRolesCommand extends Command
         $this->info("Reconciliation complete: {$updated} updated, {$demoted} demoted.");
 
         return self::SUCCESS;
+    }
+
+    private function recordRoleChange(User $user, Role $previousRole, UserSessionRevoker $sessions, AuditLogger $audit): void
+    {
+        $sessions->revoke($user);
+
+        $audit->record(null, 'staff.role_changed', $user, [
+            'from' => $previousRole->value,
+            'to' => $user->role->value,
+            'source' => 'staff:reconcile-roles',
+        ]);
     }
 }

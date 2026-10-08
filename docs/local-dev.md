@@ -32,7 +32,9 @@ sessions without Cloudron OIDC:
 | Admin | `admin@apes.local` | `/admin/moderation` |
 | Super admin | `superadmin@apes.local` | `/admin/moderation` |
 
-Demo password for all seeded users: `password`.
+Demo password for all seeded users: `password`. Only the public demo user
+can sign in with it: staff-level accounts are refused password, magic-link
+and password-reset sign-in (issue #276), so use the role preview for them.
 
 Endpoints (`POST /_dev/login/{role}`, `POST /_dev/logout`) are registered
 only when `APP_ENV=local`, and the controller also returns 404 outside
@@ -100,6 +102,11 @@ CLOUDRON_OIDC_CLIENT_SECRET=<localhost-client-secret>
 CLOUDRON_OIDC_PROVIDER_NAME=Cloudron
 ```
 
+Sign-in uses PKCE (S256) and a nonce, and the callback verifies the ID
+token against the discovery document's `jwks_uri`. `CLOUDRON_OIDC_ISSUER`
+must match the token's `iss` claim (a trailing slash is ignored), and the
+client ID must be in its `aud` claim.
+
 **LDAP — option A: Cloudron directory**
 
 Copy `CLOUDRON_LDAP_*` values from Cloudron `/app/data/credentials.txt`
@@ -156,7 +163,9 @@ PHPUnit covers auth logic without live services:
 composer test
 ```
 
-`StaffOidcLoginTest` mocks LDAP lookup. `LdapGroupLookupTest` uses
+`StaffOidcLoginTest` mocks LDAP lookup. `CloudronOidcProviderTest` signs
+ID tokens with a throwaway RSA key and fakes the discovery, JWKS, token and
+userinfo endpoints. `LdapGroupLookupTest` uses
 LdapRecord's directory emulator. `LoginPageTest` verifies the staff
 button appears only when OIDC is configured.
 

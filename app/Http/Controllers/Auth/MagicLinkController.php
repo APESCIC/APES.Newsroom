@@ -7,6 +7,7 @@ use App\Http\Requests\Auth\MagicLinkRequest;
 use App\Models\MagicLinkToken;
 use App\Models\User;
 use App\Notifications\MagicLinkNotification;
+use App\Services\Auth\SsoOnlyPolicy;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,11 +27,11 @@ class MagicLinkController extends Controller
      * Always responds the same way whether or not the email exists, to
      * avoid leaking which addresses have accounts.
      */
-    public function store(MagicLinkRequest $request): Response
+    public function store(MagicLinkRequest $request, SsoOnlyPolicy $ssoOnly): Response
     {
         $user = User::where('email', $request->validated('email'))->first();
 
-        if ($user) {
+        if ($user && ! $ssoOnly->refuses($user, 'magic_link_request', $request)) {
             $token = Str::random(64);
 
             $user->magicLinkTokens()->create([
@@ -50,11 +51,12 @@ class MagicLinkController extends Controller
         return Inertia::render('Auth/MagicLinkSent');
     }
 
-    public function consume(Request $request, string $token): RedirectResponse
+    public function consume(Request $request, string $token, SsoOnlyPolicy $ssoOnly): RedirectResponse
     {
         $magicLinkToken = MagicLinkToken::where('token_hash', hash('sha256', $token))->first();
 
-        if (! $magicLinkToken || $magicLinkToken->isExpired() || $magicLinkToken->isUsed()) {
+        if (! $magicLinkToken || $magicLinkToken->isExpired() || $magicLinkToken->isUsed()
+            || $ssoOnly->refuses($magicLinkToken->user, 'magic_link_consume', $request)) {
             abort(403, 'This magic link is invalid or has expired.');
         }
 

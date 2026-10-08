@@ -3,13 +3,16 @@
 namespace App\Providers;
 
 use App\Enums\Role;
+use App\Http\Middleware\EnsureAuthEpoch;
 use App\Models\User;
 use App\Services\Membership\FakeStripeBillingClient;
 use App\Services\Membership\StripeApiBillingClient;
 use App\Services\Membership\StripeBillingClient;
 use App\Services\Settings\SettingsRepository;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -44,6 +47,12 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('access-staff-area', fn (User $user) => $user->role->atLeast(Role::Staff));
         Gate::define('access-admin-area', fn (User $user) => $user->role->atLeast(Role::Admin));
         Gate::define('access-super-admin-area', fn (User $user) => $user->role->atLeast(Role::SuperAdmin));
+
+        Event::listen(Login::class, function (Login $event) {
+            if ($event->guard === 'web' && $event->user instanceof User) {
+                session()->put(EnsureAuthEpoch::SESSION_KEY, (int) $event->user->auth_epoch);
+            }
+        });
 
         RateLimiter::for('content-api', function (Request $request) {
             $perMinute = max(1, (int) config('newsroom.content_api.rate_per_minute', 120));

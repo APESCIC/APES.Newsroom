@@ -19,8 +19,8 @@ class CloudronOidcCallbackSuccessTest extends TestCase
     {
         $provider = Mockery::mock(CloudronOidcProvider::class);
         $provider->shouldReceive('exchangeCodeForIdentity')
-            ->with('valid-code')
-            ->andReturn(new StaffOidcIdentity(sub: 'oidc-1', email: 'staff@example.com', name: 'Staff User'));
+            ->with('valid-code', 'test-pkce', 'test-nonce')
+            ->andReturn(new StaffOidcIdentity(sub: 'oidc-1', email: 'staff@example.com', name: 'Staff User', emailVerified: true));
         $this->app->instance(CloudronOidcProvider::class, $provider);
 
         $reconciler = Mockery::mock(StaffReconciler::class);
@@ -29,7 +29,11 @@ class CloudronOidcCallbackSuccessTest extends TestCase
             ->andReturn(StaffReconcileResult::allow($user));
         $this->app->instance(StaffReconciler::class, $reconciler);
 
-        $response = $this->withSession(['cloudron_oidc_state' => 'test-state'])
+        $response = $this->withSession([
+            'cloudron_oidc_state' => 'test-state',
+            'cloudron_oidc_nonce' => 'test-nonce',
+            'cloudron_oidc_pkce' => 'test-pkce',
+        ])
             ->get('/auth/cloudron/callback?code=valid-code&state=test-state');
 
         $response->assertRedirect(route('home'));

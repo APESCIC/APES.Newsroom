@@ -5,6 +5,7 @@ namespace App\Services\Auth;
 use App\Enums\Role;
 use App\Exceptions\Auth\LdapUnreachableException;
 use App\Models\User;
+use App\Services\Audit\AuditLogger;
 
 /**
  * Reconciles a Cloudron OIDC identity into a local staff User record,
@@ -16,7 +17,13 @@ use App\Models\User;
  */
 class StaffReconciler
 {
-    public function __construct(private readonly LdapGroupLookup $ldap) {}
+    private const ADMIN_REVIEW_MESSAGE = 'Staff sign-in failed: this account needs to be linked by an administrator. Please contact the newsroom team.';
+
+    public function __construct(
+        private readonly LdapGroupLookup $ldap,
+        private readonly UserSessionRevoker $sessions,
+        private readonly AuditLogger $audit,
+    ) {}
 
     public function reconcile(StaffOidcIdentity $identity): StaffReconcileResult
     {
@@ -38,13 +45,30 @@ class StaffReconciler
 
         $role = collect($matchedRoles)->sortByDesc(fn (Role $role) => $role->rank())->first();
 
-        // Match by OIDC sub or email (any auth_provider). A public/password
-        // account with the same verified email must be linked, not inserted —
-        // otherwise users.email unique constraint fails with a 500.
-        $user = User::query()
-            ->where('external_id', $identity->sub)
-            ->orWhere('email', $identity->email)
-            ->first() ?? new User;
+        $user = User::query()->where('external_id', $identity->sub)->first();
+
+        if ($user !== null) {
+            $emailTakenByAnotherAccount = $user->email !== $identity->email
+                && User::query()->where('email', $identity->email)->whereKeyNot($user->getKey())->exists();
+
+            if ($emailTakenByAnotherAccount) {
+                return StaffReconcileResult::deny(self::ADMIN_REVIEW_MESSAGE);
+            }
+        } else {
+            // An existing account with the same email (any auth_provider) is
+            // linked rather than inserted, but only when both the directory
+            // and the local account have verified that email.
+            $user = User::query()->where('email', $identity->email)->first();
+
+            if ($user !== null && (! $identity->emailVerified || $user->email_verified_at === null)) {
+                return StaffReconcileResult::deny(self::ADMIN_REVIEW_MESSAGE);
+            }
+        }
+
+        $user ??= new User;
+        $existed = $user->exists;
+        $linked = $existed && ($user->auth_provider !== 'cloudron_oidc' || $user->external_id !== $identity->sub);
+        $previousRole = $existed ? $user->role : null;
 
         $user->forceFill([
             'external_id' => $identity->sub,
@@ -56,6 +80,26 @@ class StaffReconciler
             'role' => $role,
             'ldap_group_snapshot' => $groups,
         ])->save();
+
+        $promoted = $previousRole !== null && $role->rank() > $previousRole->rank();
+
+        if ($linked || $promoted) {
+            $this->sessions->revoke($user);
+        }
+
+        if ($linked) {
+            $this->audit->record(null, 'staff.account_linked', $user, [
+                'external_id' => $identity->sub,
+            ]);
+        }
+
+        if ($previousRole !== null && $previousRole !== $role) {
+            $this->audit->record(null, 'staff.role_changed', $user, [
+                'from' => $previousRole->value,
+                'to' => $role->value,
+                'source' => 'oidc_login',
+            ]);
+        }
 
         return StaffReconcileResult::allow($user);
     }
