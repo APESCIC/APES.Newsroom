@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
 use App\Support\DemoAccounts;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\DemoUsersSeeder;
@@ -42,6 +43,15 @@ class DemoAccountSeedingTest extends TestCase
 
         $this->artisan('newsroom:check-demo-accounts')
             ->expectsOutputToContain('WARNING: 4 demo account(s)')
+            ->assertSuccessful();
+    }
+
+    public function test_import_fallback_author_is_not_a_demo_account(): void
+    {
+        User::factory()->create(['email' => 'import-fallback@apes.local']);
+
+        $this->artisan('newsroom:check-demo-accounts')
+            ->expectsOutput('No demo accounts found.')
             ->assertSuccessful();
     }
 }
