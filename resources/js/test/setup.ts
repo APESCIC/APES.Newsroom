@@ -48,6 +48,7 @@ vi.mock('@inertiajs/react', async () => {
             put: (...args: unknown[]) => getInertiaMock().put(...args),
             patch: (...args: unknown[]) => getInertiaMock().patch(...args),
             delete: (...args: unknown[]) => getInertiaMock().delete(...args),
+            visit: (...args: unknown[]) => getInertiaMock().visit(...args),
         },
         useForm: <T extends Record<string, unknown>>(initial: T) => {
             const [data, setFormData] = React.useState(initial);
@@ -171,5 +172,6 @@ afterEach(() => {
     inertiaMock.put.mockReset();
     inertiaMock.patch.mockReset();
     inertiaMock.delete.mockReset();
+    inertiaMock.visit.mockReset();
     inertiaMock.visits = [];
 });

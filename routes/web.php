@@ -3,6 +3,7 @@
 use App\Enums\Role;
 use App\Http\Controllers\Account\EmailChangeController as AccountEmailChangeController;
 use App\Http\Controllers\Account\MembershipCheckoutController;
+use App\Http\Controllers\Account\PasskeyController as AccountPasskeyController;
 use App\Http\Controllers\Account\PasswordController as AccountPasswordController;
 use App\Http\Controllers\Account\SecurityController as AccountSecurityController;
 use App\Http\Controllers\Account\SessionController as AccountSessionController;
@@ -130,6 +131,19 @@ Route::middleware(['auth', 'verified'])->prefix('account')->name('account.')->gr
     Route::delete('/two-factor', [AccountTwoFactorController::class, 'destroy'])
         ->middleware('auth.recent')
         ->name('two-factor.destroy');
+    Route::post('/passkeys/options', [AccountPasskeyController::class, 'options'])
+        ->middleware(['auth.recent', 'throttle:passkey-manage'])
+        ->name('passkeys.options');
+    Route::post('/passkeys', [AccountPasskeyController::class, 'store'])
+        ->middleware(['auth.recent', 'throttle:passkey-manage'])
+        ->name('passkeys.store');
+    Route::patch('/passkeys/{passkey}', [AccountPasskeyController::class, 'update'])
+        ->whereNumber('passkey')
+        ->name('passkeys.update');
+    Route::delete('/passkeys/{passkey}', [AccountPasskeyController::class, 'destroy'])
+        ->whereNumber('passkey')
+        ->middleware('auth.recent')
+        ->name('passkeys.destroy');
     Route::get('/mailing', [PreferenceController::class, 'showAccount'])->name('mailing');
     Route::post('/mailing', [PreferenceController::class, 'updateAccount'])->name('mailing.update');
     Route::get('/public-profile', [ProfileController::class, 'edit'])->name('public-profile');

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Account;
 
 use App\Http\Controllers\Controller;
+use App\Models\Passkey;
 use App\Models\User;
 use App\Models\UserSession;
 use App\Services\Auth\RecentAuthentication;
@@ -30,6 +31,16 @@ class SecurityController extends Controller
             'status' => session('status'),
             'two_factor' => $user->requiresSso() ? null : $this->twoFactorState($user, $twoFactor, $recent->isRecent($request)),
             'recovery_codes' => session(TwoFactorController::RECOVERY_CODES_FLASH),
+            'passkeys' => $user->requiresSso() ? null : $user->passkeys()
+                ->oldest()
+                ->get()
+                ->map(fn (Passkey $passkey) => [
+                    'id' => $passkey->getKey(),
+                    'name' => $passkey->name,
+                    'created_at' => $passkey->created_at?->toIso8601String(),
+                    'last_used_at' => $passkey->last_used_at?->toIso8601String(),
+                ])
+                ->values(),
             'sessions' => $user->sessions()
                 ->live()
                 ->latest('last_seen_at')
