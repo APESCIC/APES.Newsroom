@@ -19,7 +19,7 @@ class AdminSettingsTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
 
-        $this->actingAs($admin)
+        $this->actingAs($admin)->withRecentAuthentication()
             ->get('/admin/settings')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
@@ -38,7 +38,7 @@ class AdminSettingsTest extends TestCase
         $admin = User::factory()->admin()->create();
         app(SettingsRepository::class)->set(SettingDefinitions::EDITOR_DRIVER, 'tinymce');
 
-        $this->actingAs($admin)
+        $this->actingAs($admin)->withRecentAuthentication()
             ->get('/admin/settings')
             ->assertInertia(fn (Assert $page) => $page->where('settings.0.value', 'tinymce'));
     }
@@ -47,7 +47,7 @@ class AdminSettingsTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
 
-        $this->actingAs($admin)
+        $this->actingAs($admin)->withRecentAuthentication()
             ->from('/admin/settings')
             ->put('/admin/settings', ['settings' => ['editor' => ['driver' => 'word']]])
             ->assertRedirect('/admin/settings')
@@ -61,7 +61,7 @@ class AdminSettingsTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
 
-        $this->actingAs($admin)
+        $this->actingAs($admin)->withRecentAuthentication()
             ->from('/admin/settings')
             ->put('/admin/settings', ['settings' => []])
             ->assertSessionHasErrors('settings.editor.driver');
@@ -71,7 +71,7 @@ class AdminSettingsTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
 
-        $this->actingAs($admin)
+        $this->actingAs($admin)->withRecentAuthentication()
             ->put('/admin/settings', ['settings' => ['editor' => ['driver' => 'tinymce']]])
             ->assertRedirect('/admin/settings')
             ->assertSessionHasNoErrors()
@@ -91,7 +91,7 @@ class AdminSettingsTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
 
-        $this->actingAs($admin)
+        $this->actingAs($admin)->withRecentAuthentication()
             ->put('/admin/settings', ['settings' => ['editor' => ['driver' => 'editorjs']]])
             ->assertRedirect('/admin/settings')
             ->assertSessionHas('status', 'Settings saved.');

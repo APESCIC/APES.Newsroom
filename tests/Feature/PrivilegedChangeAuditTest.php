@@ -48,7 +48,7 @@ class PrivilegedChangeAuditTest extends TestCase
     {
         $staff = User::factory()->staff()->create();
 
-        $this->actingAs($staff)->post(route('staff.webhooks.store'), [
+        $this->actingAs($staff)->withRecentAuthentication()->post(route('staff.webhooks.store'), [
             'name' => 'Partner',
             'url' => 'https://hooks.example.com/in?key=query-credential',
             'events' => ['post.published'],
@@ -57,7 +57,7 @@ class PrivilegedChangeAuditTest extends TestCase
         $webhook = WebhookEndpoint::query()->sole();
         $originalSecret = $webhook->secret;
 
-        $this->actingAs($staff)->patch(route('staff.webhooks.update', $webhook), [
+        $this->actingAs($staff)->withRecentAuthentication()->patch(route('staff.webhooks.update', $webhook), [
             'name' => 'Partner renamed',
             'url' => 'https://hooks.example.com/in?key=query-credential',
             'events' => ['post.published'],
@@ -67,7 +67,7 @@ class PrivilegedChangeAuditTest extends TestCase
 
         $rotatedSecret = $webhook->fresh()->secret;
 
-        $this->actingAs($staff)->delete(route('staff.webhooks.destroy', $webhook))->assertRedirect();
+        $this->actingAs($staff)->withRecentAuthentication()->delete(route('staff.webhooks.destroy', $webhook))->assertRedirect();
 
         $logs = AuditLog::query()->where('action', 'like', 'webhook.%')->orderBy('id')->get();
 

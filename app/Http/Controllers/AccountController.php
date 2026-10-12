@@ -7,11 +7,13 @@ use App\Models\AuditLog;
 use App\Models\MembershipPlan;
 use App\Services\Account\AccountDeletionPolicy;
 use App\Services\Account\AccountEmailChangeService;
+use App\Services\Auth\RecentAuthentication;
 use App\Services\Membership\MembershipService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -58,8 +60,14 @@ class AccountController extends Controller
         ]);
     }
 
-    public function update(UpdateAccountRequest $request): RedirectResponse
+    public function update(UpdateAccountRequest $request, RecentAuthentication $recentAuth): RedirectResponse
     {
+        $emailChanged = Str::lower(trim((string) $request->validated('email'))) !== Str::lower((string) $request->user()->email);
+
+        if ($emailChanged && ! $recentAuth->isRecent($request)) {
+            return $recentAuth->challenge($request);
+        }
+
         $this->accountUpdater->update(
             $request->user(),
             $request->validated(),

@@ -3,6 +3,7 @@
 use App\Http\Middleware\EnsureAuthEpoch;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\RequireRecentAuthentication;
 use App\Http\Middleware\ResolveRedirects;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
@@ -50,6 +51,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'role' => EnsureRole::class,
+            'auth.recent' => RequireRecentAuthentication::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

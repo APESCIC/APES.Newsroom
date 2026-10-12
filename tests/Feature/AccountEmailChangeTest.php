@@ -34,7 +34,7 @@ class AccountEmailChangeTest extends TestCase
         $this->subscription($oldContact, MailingList::ApesShelterRescue, SubscriptionStatus::Pending);
         $this->subscription($oldContact, MailingList::ApesPetCareClinic, SubscriptionStatus::Unsubscribed);
 
-        $this->actingAs($user)->patch(route('account.update'), [
+        $this->actingAs($user)->withRecentAuthentication()->patch(route('account.update'), [
             'name' => $user->name,
             'email' => 'new@example.com',
         ])->assertRedirect();
@@ -91,7 +91,7 @@ class AccountEmailChangeTest extends TestCase
 
         $user = User::factory()->create(['email' => 'absent@example.com']);
 
-        $this->actingAs($user)->patch(route('account.update'), [
+        $this->actingAs($user)->withRecentAuthentication()->patch(route('account.update'), [
             'name' => $user->name,
             'email' => 'new-absent@example.com',
         ])->assertRedirect();
@@ -113,7 +113,7 @@ class AccountEmailChangeTest extends TestCase
         $this->subscription($oldContact, MailingList::ApesCic, SubscriptionStatus::Confirmed, now());
         Suppression::create(['email' => 'suppressed@example.com', 'reason' => 'objection']);
 
-        $this->actingAs($user)->patch(route('account.update'), [
+        $this->actingAs($user)->withRecentAuthentication()->patch(route('account.update'), [
             'name' => $user->name,
             'email' => 'replacement@example.com',
         ])->assertRedirect();
@@ -141,7 +141,7 @@ class AccountEmailChangeTest extends TestCase
             SubscriptionStatus::Unsubscribed,
         );
 
-        $this->actingAs($user)->patch(route('account.update'), [
+        $this->actingAs($user)->withRecentAuthentication()->patch(route('account.update'), [
             'name' => $user->name,
             'email' => 'withdrawn@example.com',
         ])->assertRedirect();
@@ -165,7 +165,7 @@ class AccountEmailChangeTest extends TestCase
             'reason' => 'recipient_objection',
         ]);
 
-        $this->actingAs($user)->patch(route('account.update'), [
+        $this->actingAs($user)->withRecentAuthentication()->patch(route('account.update'), [
             'name' => $user->name,
             'email' => 'blocked@example.com',
         ])->assertRedirect();
@@ -223,7 +223,7 @@ class AccountEmailChangeTest extends TestCase
     {
         $user = User::factory()->staff()->create(['email' => 'staff@example.com']);
 
-        $this->actingAs($user)->patch(route('account.update'), [
+        $this->actingAs($user)->withRecentAuthentication()->patch(route('account.update'), [
             'name' => $user->name,
             'email' => 'changed@example.com',
         ])->assertSessionHasErrors('email');

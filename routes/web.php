@@ -2,6 +2,8 @@
 
 use App\Enums\Role;
 use App\Http\Controllers\Account\MembershipCheckoutController;
+use App\Http\Controllers\Account\PasswordController as AccountPasswordController;
+use App\Http\Controllers\Account\SecurityController as AccountSecurityController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Admin\GhostContentImportController;
 use App\Http\Controllers\Admin\GhostMembersImportController;
@@ -98,7 +100,11 @@ Route::middleware(['auth', 'verified'])->prefix('account')->name('account.')->gr
     Route::get('/', [AccountController::class, 'show'])->name('show');
     Route::patch('/', [AccountController::class, 'update'])->name('update');
     Route::get('/export', [AccountController::class, 'export'])->name('export');
-    Route::delete('/', [AccountController::class, 'destroy'])->name('destroy');
+    Route::delete('/', [AccountController::class, 'destroy'])->middleware('auth.recent')->name('destroy');
+    Route::get('/security', [AccountSecurityController::class, 'show'])->name('security');
+    Route::put('/password', [AccountPasswordController::class, 'update'])
+        ->middleware('throttle:password-change')
+        ->name('password.update');
     Route::get('/mailing', [PreferenceController::class, 'showAccount'])->name('mailing');
     Route::post('/mailing', [PreferenceController::class, 'updateAccount'])->name('mailing.update');
     Route::get('/public-profile', [ProfileController::class, 'edit'])->name('public-profile');
@@ -134,7 +140,7 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Admin->value])
         Route::post('/imports/ghost-members', [GhostMembersImportController::class, 'upload'])->name('imports.ghost-members.upload');
         Route::get('/imports/ghost-members/{run}/report', [GhostMembersImportController::class, 'report'])->name('imports.ghost-members.report');
         Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
-        Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
+        Route::put('/settings', [SettingsController::class, 'update'])->middleware('auth.recent')->name('settings.update');
     });
 
 Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
@@ -171,9 +177,11 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
         Route::get('/metrics', StaffMetricsController::class)->name('metrics.index');
         Route::get('/members', StaffMemberController::class)->name('members.index');
         Route::get('/webhooks', [StaffWebhookController::class, 'index'])->name('webhooks.index');
-        Route::post('/webhooks', [StaffWebhookController::class, 'store'])->name('webhooks.store');
-        Route::patch('/webhooks/{webhook}', [StaffWebhookController::class, 'update'])->name('webhooks.update');
-        Route::delete('/webhooks/{webhook}', [StaffWebhookController::class, 'destroy'])->name('webhooks.destroy');
+        Route::middleware('auth.recent')->group(function () {
+            Route::post('/webhooks', [StaffWebhookController::class, 'store'])->name('webhooks.store');
+            Route::patch('/webhooks/{webhook}', [StaffWebhookController::class, 'update'])->name('webhooks.update');
+            Route::delete('/webhooks/{webhook}', [StaffWebhookController::class, 'destroy'])->name('webhooks.destroy');
+        });
 
         Route::get('/newsletters', [StaffNewsletterController::class, 'index'])->name('newsletters.index');
         Route::get('/newsletters/new', [StaffNewsletterController::class, 'create'])->name('newsletters.create');

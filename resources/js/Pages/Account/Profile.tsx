@@ -123,6 +123,14 @@ export default function Profile({
                 </div>
 
                 <div className="glass-form-panel mt-6">
+                    <h2 className="text-lg font-bold text-body">Sign-in and security</h2>
+                    <p className="mt-1 text-sm text-muted">Change your password and review where you are signed in.</p>
+                    <Link href="/account/security" className="mt-2 inline-block text-sm text-teal-deep hover:underline">
+                        Manage sign-in and security
+                    </Link>
+                </div>
+
+                <div className="glass-form-panel mt-6">
                     <h2 className="text-lg font-bold text-body">Membership</h2>
                     <p className="mt-2 text-sm text-body">{membership.status_label}</p>
                     {membership.is_paying && membership.interval ? (

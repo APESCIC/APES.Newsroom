@@ -27,8 +27,8 @@ class MembershipPortalTest extends TestCase
         $this->post('/register', [
             'name' => 'Jamie Fox',
             'email' => 'jamie@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
+            'password' => 'correct-horse-battery-staple',
+            'password_confirmation' => 'correct-horse-battery-staple',
         ])->assertRedirect(route('verification.notice'));
 
         $user = User::query()->where('email', 'jamie@example.com')->firstOrFail();
@@ -57,8 +57,8 @@ class MembershipPortalTest extends TestCase
         $this->post('/register', [
             'name' => 'Reader',
             'email' => 'reader@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
+            'password' => 'correct-horse-battery-staple',
+            'password_confirmation' => 'correct-horse-battery-staple',
         ])->assertRedirect();
 
         $user = User::query()->where('email', 'reader@example.com')->firstOrFail();

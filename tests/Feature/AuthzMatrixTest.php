@@ -18,9 +18,9 @@ class AuthzMatrixTest extends TestCase
         $public = User::factory()->create();
         $post = Post::factory()->create();
 
-        $this->actingAs($public)->get('/staff/posts')->assertForbidden();
-        $this->actingAs($public)->get('/admin/moderation')->assertForbidden();
-        $this->actingAs($public)->post("/staff/posts/{$post->id}/publish")->assertForbidden();
+        $this->actingAs($public)->withRecentAuthentication()->get('/staff/posts')->assertForbidden();
+        $this->actingAs($public)->withRecentAuthentication()->get('/admin/moderation')->assertForbidden();
+        $this->actingAs($public)->withRecentAuthentication()->post("/staff/posts/{$post->id}/publish")->assertForbidden();
     }
 
     public function test_staff_can_edit_own_draft_but_not_publish(): void
@@ -29,10 +29,10 @@ class AuthzMatrixTest extends TestCase
         $own = Post::factory()->create(['author_id' => $staff->id]);
         $other = Post::factory()->create();
 
-        $this->actingAs($staff)->get("/staff/posts/{$own->id}/edit")->assertOk();
-        $this->actingAs($staff)->get("/staff/posts/{$other->id}/edit")->assertForbidden();
-        $this->actingAs($staff)->post("/staff/posts/{$own->id}/publish")->assertForbidden();
-        $this->actingAs($staff)->get('/admin/moderation')->assertForbidden();
+        $this->actingAs($staff)->withRecentAuthentication()->get("/staff/posts/{$own->id}/edit")->assertOk();
+        $this->actingAs($staff)->withRecentAuthentication()->get("/staff/posts/{$other->id}/edit")->assertForbidden();
+        $this->actingAs($staff)->withRecentAuthentication()->post("/staff/posts/{$own->id}/publish")->assertForbidden();
+        $this->actingAs($staff)->withRecentAuthentication()->get('/admin/moderation')->assertForbidden();
     }
 
     public function test_guest_is_redirected_from_admin_settings(): void
@@ -44,8 +44,8 @@ class AuthzMatrixTest extends TestCase
     public function test_public_and_staff_cannot_access_admin_settings(): void
     {
         foreach ([User::factory()->create(), User::factory()->staff()->create()] as $user) {
-            $this->actingAs($user)->get('/admin/settings')->assertForbidden();
-            $this->actingAs($user)
+            $this->actingAs($user)->withRecentAuthentication()->get('/admin/settings')->assertForbidden();
+            $this->actingAs($user)->withRecentAuthentication()
                 ->put('/admin/settings', ['settings' => ['editor' => ['driver' => 'tinymce']]])
                 ->assertForbidden();
         }
@@ -56,8 +56,8 @@ class AuthzMatrixTest extends TestCase
     public function test_admin_and_super_admin_can_access_admin_settings(): void
     {
         foreach ([User::factory()->admin()->create(), User::factory()->superAdmin()->create()] as $user) {
-            $this->actingAs($user)->get('/admin/settings')->assertOk();
-            $this->actingAs($user)
+            $this->actingAs($user)->withRecentAuthentication()->get('/admin/settings')->assertOk();
+            $this->actingAs($user)->withRecentAuthentication()
                 ->put('/admin/settings', ['settings' => ['editor' => ['driver' => 'tinymce']]])
                 ->assertRedirect('/admin/settings');
         }
@@ -71,7 +71,7 @@ class AuthzMatrixTest extends TestCase
             'status' => PostStatus::InReview,
         ]);
 
-        $this->actingAs($admin)->post("/staff/posts/{$post->id}/publish")->assertRedirect();
+        $this->actingAs($admin)->withRecentAuthentication()->post("/staff/posts/{$post->id}/publish")->assertRedirect();
 
         $this->assertDatabaseHas('audit_logs', [
             'actor_id' => $admin->id,
