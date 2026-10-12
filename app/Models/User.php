@@ -53,6 +53,14 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * @return HasMany<EmailChangeRequest, $this>
+     */
+    public function emailChangeRequests(): HasMany
+    {
+        return $this->hasMany(EmailChangeRequest::class);
+    }
+
+    /**
      * @return HasMany<UserSession, $this>
      */
     public function sessions(): HasMany

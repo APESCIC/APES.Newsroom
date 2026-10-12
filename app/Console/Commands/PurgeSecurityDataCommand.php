@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\AuditLog;
+use App\Models\EmailChangeRequest;
 use App\Models\MagicLinkToken;
 use App\Models\UserSession;
 use Illuminate\Console\Command;
@@ -15,7 +16,7 @@ class PurgeSecurityDataCommand extends Command
 {
     protected $signature = 'newsroom:purge-security-data';
 
-    protected $description = 'Delete audit logs, spent sign-in tokens and old session records past their retention period';
+    protected $description = 'Delete audit logs, spent sign-in and email change tokens, and old session records past their retention period';
 
     public function handle(): int
     {
@@ -31,6 +32,8 @@ class PurgeSecurityDataCommand extends Command
                 ->orWhere('used_at', '<', $tokenCutoff))
             ->delete();
 
+        $emailChanges = EmailChangeRequest::query()->where('expires_at', '<', $tokenCutoff)->delete();
+
         $sessions = UserSession::query()
             ->where(fn (Builder $query) => $query
                 ->where('revoked_at', '<', $sessionCutoff)
@@ -40,7 +43,7 @@ class PurgeSecurityDataCommand extends Command
                     ->where('created_at', '<', $sessionCutoff)))
             ->delete();
 
-        $this->info("Purged {$auditLogs} audit log(s), {$magicLinks} magic link token(s) and {$sessions} session record(s).");
+        $this->info("Purged {$auditLogs} audit log(s), {$magicLinks} magic link token(s), {$emailChanges} email change request(s) and {$sessions} session record(s).");
 
         return self::SUCCESS;
     }

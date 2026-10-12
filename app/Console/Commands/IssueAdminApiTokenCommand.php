@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Enums\Role;
 use App\Models\ApiToken;
 use App\Models\User;
+use App\Notifications\Security\ApiTokenCreatedNotification;
 use App\Services\Audit\AuditLogger;
 use Illuminate\Console\Command;
 
@@ -32,6 +33,7 @@ class IssueAdminApiTokenCommand extends Command
             'owner_id' => $user->id,
             'source' => 'cli',
         ]);
+        $user->notify(new ApiTokenCreatedNotification($issued['model']->name));
         $this->info('Token id: '.$issued['model']->id);
         $this->line($issued['token']);
         $this->warn('Store this token now; it will not be shown again.');

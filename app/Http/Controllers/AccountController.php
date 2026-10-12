@@ -7,14 +7,14 @@ use App\Models\AuditLog;
 use App\Models\MembershipPlan;
 use App\Services\Account\AccountDeletionPolicy;
 use App\Services\Account\AccountEmailChangeService;
+use App\Services\Audit\AuditLogger;
 use App\Services\Auth\RecentAuthentication;
-use App\Services\Auth\UserSessionRevoker;
 use App\Services\Membership\MembershipService;
+use App\Support\EmailAddress;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -23,7 +23,7 @@ class AccountController extends Controller
 {
     public function __construct(
         private readonly AccountDeletionPolicy $deletionPolicy,
-        private readonly AccountEmailChangeService $accountUpdater,
+        private readonly AccountEmailChangeService $emailChanges,
         private readonly MembershipService $memberships,
     ) {}
 
@@ -32,9 +32,14 @@ class AccountController extends Controller
         $user = $request->user();
         $membership = $this->memberships->provisionFreeMember($user);
         $deletionBlockReason = $this->deletionPolicy->blockingReason($user);
+        $pendingEmail = $user->emailChangeRequests()->pending()->latest('id')->first();
 
         return Inertia::render('Account/Profile', [
             'user' => $user->only(['name', 'email', 'role', 'auth_provider']),
+            'pending_email' => $pendingEmail ? [
+                'email' => $pendingEmail->new_email,
+                'expires_at' => $pendingEmail->expires_at->toIso8601String(),
+            ] : null,
             'membership' => [
                 'status' => $membership->status->value,
                 'status_label' => $membership->status->label(),
@@ -61,26 +66,24 @@ class AccountController extends Controller
         ]);
     }
 
-    public function update(UpdateAccountRequest $request, RecentAuthentication $recentAuth, UserSessionRevoker $sessions): RedirectResponse
+    public function update(UpdateAccountRequest $request, RecentAuthentication $recentAuth, AuditLogger $audit): RedirectResponse
     {
-        $emailChanged = Str::lower(trim((string) $request->validated('email'))) !== Str::lower((string) $request->user()->email);
+        $user = $request->user();
+        $emailChanged = EmailAddress::normalize((string) $request->validated('email')) !== EmailAddress::normalize((string) $user->email);
 
         if ($emailChanged && ! $recentAuth->isRecent($request)) {
             return $recentAuth->challenge($request);
         }
 
-        $this->accountUpdater->update(
-            $request->user(),
-            $request->validated(),
-            $request->ip(),
-            $request->userAgent(),
-        );
+        $change = $this->emailChanges->request($user, $request->validated());
 
-        if ($emailChanged) {
-            $sessions->revokeOthers($request->user(), $request);
+        if ($change === null) {
+            return back()->with('status', 'profile-updated');
         }
 
-        return back()->with('status', 'profile-updated');
+        $audit->record($user, 'account.email_change_requested', $user, [], $request);
+
+        return back()->with('status', 'email-change-requested');
     }
 
     public function export(Request $request): StreamedResponse

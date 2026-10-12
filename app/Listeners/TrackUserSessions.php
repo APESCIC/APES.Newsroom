@@ -3,13 +3,16 @@
 namespace App\Listeners;
 
 use App\Models\User;
+use App\Notifications\Security\NewDeviceSignInNotification;
 use App\Services\Auth\SessionTracker;
+use App\Support\IpAddress;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Http\Request;
 
 /**
- * Records sign-ins and sign-outs in user_sessions (registered by Laravel
+ * Records sign-ins and sign-outs in user_sessions and warns the account
+ * holder about sign-ins from unfamiliar devices (registered by Laravel
  * event discovery).
  */
 class TrackUserSessions
@@ -25,7 +28,17 @@ class TrackUserSessions
             return;
         }
 
-        $this->tracker->start($event->user, $this->request, $event->remember);
+        $session = $this->tracker->start($event->user, $this->request, $event->remember);
+
+        if ($session->wasRecentlyCreated && $this->tracker->isUnfamiliarDevice($session)) {
+            $device = $session->browser ?? 'Unknown browser';
+
+            $event->user->notify(new NewDeviceSignInNotification(
+                $session->platform ? "{$device} on {$session->platform}" : $device,
+                IpAddress::mask($session->ip_address),
+                now()->timezone((string) config('app.timezone'))->format('j M Y, H:i T'),
+            ));
+        }
     }
 
     public function handleLogout(Logout $event): void

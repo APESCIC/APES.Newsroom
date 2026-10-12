@@ -26,8 +26,14 @@ type PlanOption = {
     currency: string;
 };
 
+type PendingEmail = {
+    email: string;
+    expires_at: string;
+};
+
 type ProfileProps = {
     user: ProfileUser;
+    pending_email?: PendingEmail | null;
     membership: MembershipSummary;
     plans?: PlanOption[];
     stripe_enabled?: boolean;
@@ -43,8 +49,42 @@ function formatMoney(amountPence: number, currency: string): string {
     }).format(amountPence / 100);
 }
 
+const EMAIL_STATUS_MESSAGES: Record<string, string> = {
+    'email-change-requested': 'Check your new inbox: we have sent a link to confirm the change.',
+    'email-change-resent': 'We have sent a new confirmation link.',
+    'email-change-cancelled': 'Email change cancelled. Your email address has not changed.',
+    'email-changed': 'Email address changed. Other sessions have been signed out.',
+};
+
+function PendingEmailNotice({ pending }: { pending: PendingEmail }) {
+    return (
+        <div className="mt-4 rounded-control border border-warning bg-warning-mist p-3 text-sm text-body" role="status">
+            <p>
+                Waiting for you to confirm <strong>{pending.email}</strong>. Your current email address stays in use until then.
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+                <button
+                    type="button"
+                    className="button-secondary px-3 py-1 text-sm"
+                    onClick={() => router.post('/account/email/resend', {}, { preserveScroll: true })}
+                >
+                    Resend link
+                </button>
+                <button
+                    type="button"
+                    className="button-secondary px-3 py-1 text-sm"
+                    onClick={() => router.delete('/account/email/pending', { preserveScroll: true })}
+                >
+                    Cancel change
+                </button>
+            </div>
+        </div>
+    );
+}
+
 export default function Profile({
     user,
+    pending_email = null,
     membership,
     plans = [],
     stripe_enabled = false,
@@ -52,14 +92,15 @@ export default function Profile({
     can_delete_account,
     deletion_block_reason,
 }: ProfileProps) {
-    const { data, setData, patch, processing, errors, delete: destroy } = useForm({
+    const { data, setData, patch, processing, errors, reset, delete: destroy } = useForm({
         name: user.name,
         email: user.email,
     });
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        patch('/account');
+        // The address only changes once the new one is confirmed.
+        patch('/account', { onSuccess: () => reset('email') });
     };
 
     const deleteAccount = () => {
@@ -91,6 +132,10 @@ export default function Profile({
 
                     {status === 'profile-updated' && <p className="status-badge-success mt-4">Profile updated.</p>}
                     {status === 'email-verified' && <p className="status-badge-success mt-4">Email verified.</p>}
+                    {status && EMAIL_STATUS_MESSAGES[status] && (
+                        <p className="status-badge-success mt-4" role="status">{EMAIL_STATUS_MESSAGES[status]}</p>
+                    )}
+                    {pending_email && <PendingEmailNotice pending={pending_email} />}
                     {status === 'membership-checkout-started' && (
                         <p className="status-badge-success mt-4" role="status">
                             Checkout completed. Your membership status updates when Stripe confirms payment.

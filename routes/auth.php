@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Account\EmailChangeController;
 use App\Http\Controllers\Account\ReauthenticationController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\CloudronOidcController;
@@ -41,6 +42,15 @@ Route::middleware('guest')->group(function () {
 Route::get('auth/cloudron/callback', [CloudronOidcController::class, 'callback'])
     ->middleware('throttle:oidc-callback')
     ->name('cloudron.callback');
+
+// Email change links work whether or not the browser is signed in: the
+// confirm link goes to the new address, the cancel link to the old one.
+Route::middleware(['signed', 'throttle:email-change-link'])->prefix('account/email-change/{emailChange}')->group(function () {
+    Route::get('confirm', [EmailChangeController::class, 'showConfirm'])->name('account.email.confirm');
+    Route::post('confirm', [EmailChangeController::class, 'confirm'])->name('account.email.confirm.store');
+    Route::get('cancel', [EmailChangeController::class, 'showCancel'])->name('account.email.cancel');
+    Route::post('cancel', [EmailChangeController::class, 'cancel'])->name('account.email.cancel.store');
+});
 
 Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');

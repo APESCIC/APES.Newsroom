@@ -5,8 +5,10 @@ namespace Tests\Feature\Auth;
 use App\Enums\Role;
 use App\Models\User;
 use App\Models\UserSession;
+use App\Notifications\ConfirmEmailChangeNotification;
 use App\Services\Auth\LdapGroupLookup;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
 use Mockery;
 use Tests\TestCase;
@@ -58,16 +60,23 @@ class SessionInvalidationTriggersTest extends TestCase
         $sessions->each(fn (UserSession $session) => $this->assertNotNull($session->fresh()->revoked_at));
     }
 
-    public function test_email_change_ends_other_sessions(): void
+    public function test_confirming_an_email_change_ends_other_sessions(): void
     {
+        Notification::fake();
         $user = User::factory()->create();
         $other = UserSession::factory()->for($user)->create();
 
-        $this->actingAs($user)->withRecentAuthentication()->get(route('account.show'));
-        $this->patch(route('account.update'), [
+        $this->actingAs($user)->withRecentAuthentication()->patch(route('account.update'), [
             'name' => $user->name,
             'email' => 'new-address@example.com',
-        ])->assertSessionHas('status', 'profile-updated');
+        ])->assertSessionHas('status', 'email-change-requested');
+        $this->assertNull($other->fresh()->revoked_at);
+
+        Notification::assertSentOnDemand(ConfirmEmailChangeNotification::class, function (ConfirmEmailChangeNotification $notification) {
+            $this->post($notification->url)->assertSessionHas('status', 'email-changed');
+
+            return true;
+        });
 
         $this->assertEndedExceptCurrent($user, $other);
     }
