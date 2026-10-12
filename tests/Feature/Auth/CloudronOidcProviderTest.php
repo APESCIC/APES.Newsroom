@@ -84,6 +84,24 @@ class CloudronOidcProviderTest extends TestCase
             && $request['code_verifier'] === 'pkce-verifier');
     }
 
+    public function test_authentication_methods_are_read_from_the_id_token(): void
+    {
+        $this->idToken = $this->signedIdToken(['amr' => ['pwd', 'otp', 'pwd', 'not a method', str_repeat('x', 40), 7]]);
+
+        $identity = app(CloudronOidcProvider::class)->exchangeCodeForIdentity('auth-code', 'pkce-verifier', self::NONCE);
+
+        $this->assertSame(['pwd', 'otp'], $identity->amr);
+    }
+
+    public function test_a_missing_or_malformed_amr_claim_is_treated_as_unreported(): void
+    {
+        $this->idToken = $this->signedIdToken();
+        $this->assertSame([], app(CloudronOidcProvider::class)->exchangeCodeForIdentity('auth-code', 'pkce-verifier', self::NONCE)->amr);
+
+        $this->idToken = $this->signedIdToken(['amr' => 'mfa']);
+        $this->assertSame([], app(CloudronOidcProvider::class)->exchangeCodeForIdentity('auth-code', 'pkce-verifier', self::NONCE)->amr);
+    }
+
     public function test_a_missing_id_token_is_rejected(): void
     {
         $this->assertRejected('did not include an ID token');

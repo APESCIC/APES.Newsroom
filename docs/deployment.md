@@ -276,6 +276,37 @@ For local development, create a **second** client with redirect URI
 `http://localhost:8000/auth/cloudron/callback` — see
 [`docs/local-dev.md`](local-dev.md).
 
+### Staff two-factor authentication (Cloudron)
+
+Staff MFA is enforced by Cloudron, not by the Newsroom (decision on #303):
+
+- Turn on **Users → Settings → Mandatory 2FA** in the Cloudron dashboard.
+  The setting covers every Cloudron user; it cannot be limited to the
+  `newsroom.*` groups. It is skipped for users from an external directory,
+  so enforce 2FA there if one is ever connected.
+- Cloudron's OIDC server documents only the `profile` and `email` claims
+  and does not say it sends `amr` (authentication methods). The Newsroom
+  records whatever `amr` the ID token carries in the `auth.oidc_allowed`
+  audit entry, and an empty list means "not reported". The app never blocks
+  staff sign-in on `amr`, because Cloudron would lock everyone out if it
+  stopped sending it.
+- Staff accounts cannot add passkeys or TOTP in the Newsroom, and passkey
+  sign-in refuses them, so staff authentication stays in one place.
+- Cloudron's **Impersonate** password and the superadmin one-time password
+  (`cloudron-support --owner-login`) bypass 2FA. Use them only for support,
+  and remove impersonate passwords afterwards.
+
+Revisit the decision if Cloudron starts sending `amr` with `otp` or `mfa`;
+the app could then require it for `newsroom.admin` and `newsroom.superadmin`.
+
+### Passkeys (relying party)
+
+Passkeys work with no extra settings: the relying party ID is the host of
+`APP_URL` (`www.apesnews.org.uk` on live) and only that exact origin is <!-- pragma: allowlist secret -->
+accepted. Set `PASSKEYS_RP_ID` and `PASSKEYS_ALLOWED_ORIGINS` only when the
+public host changes. Changing the RP ID invalidates every existing passkey,
+so members would have to add them again.
+
 ## LDAP group mapping
 
 Staff roles are derived from each user's `memberof` attribute in Cloudron

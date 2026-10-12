@@ -90,7 +90,25 @@ class CloudronOidcProvider
             name: (string) ($owner['name'] ?? $email),
             emailVerified: filter_var($owner['email_verified'] ?? $claims->email_verified ?? false, FILTER_VALIDATE_BOOLEAN),
             authTime: is_numeric($claims->auth_time ?? null) ? (int) $claims->auth_time : null,
+            amr: $this->authenticationMethods($claims->amr ?? null),
         );
+    }
+
+    /**
+     * Keeps only short method tokens such as "pwd", "otp" or "mfa" so a
+     * malformed claim cannot bloat the audit log.
+     *
+     * @return list<string>
+     */
+    private function authenticationMethods(mixed $amr): array
+    {
+        if (! is_array($amr)) {
+            return [];
+        }
+
+        $methods = array_filter($amr, fn ($method) => is_string($method) && preg_match('/^[A-Za-z0-9_-]{1,32}$/', $method) === 1);
+
+        return array_slice(array_values(array_unique($methods)), 0, 10);
     }
 
     private function validateIdToken(string $idToken, string $nonce): stdClass

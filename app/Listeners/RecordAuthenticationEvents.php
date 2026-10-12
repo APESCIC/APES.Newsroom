@@ -108,6 +108,7 @@ class RecordAuthenticationEvents
     {
         $this->audit->record($event->user, 'auth.oidc_allowed', $event->user, [
             'role' => $event->user->role->value,
+            'amr' => $event->amr,
         ], $this->request);
     }
 
