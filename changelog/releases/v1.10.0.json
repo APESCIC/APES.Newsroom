@@ -28,5 +28,6 @@
     "User groups affected: members who sign in with a password or emailed link; staff sign-in is unchanged",
     "Public impact: optional two-factor authentication, recovery codes, passkey management and passkey sign-in, new security emails",
     "Internal impact: new passkeys table and two-factor columns on users, new audit events, Cloudron staff two-factor documented, governance records updated"
-  ]
+  ],
+  "pr": 367
 }
