@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class AuditLogger
 {
@@ -21,6 +22,7 @@ class AuditLogger
             'subject_id' => $subject?->getKey(),
             'payload' => $payload,
             'ip_address' => $request?->ip(),
+            'user_agent' => filled($request?->userAgent()) ? Str::limit((string) $request->userAgent(), 509) : null,
         ]);
     }
 }

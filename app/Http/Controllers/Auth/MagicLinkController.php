@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Events\Auth\MagicLinkConsumed;
+use App\Events\Auth\MagicLinkRequested;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\MagicLinkRequest;
 use App\Models\MagicLinkToken;
@@ -46,6 +48,8 @@ class MagicLinkController extends Controller
             );
 
             $user->notify(new MagicLinkNotification($url));
+
+            MagicLinkRequested::dispatch($user);
         }
 
         return Inertia::render('Auth/MagicLinkSent');
@@ -65,6 +69,8 @@ class MagicLinkController extends Controller
         Auth::login($magicLinkToken->user);
 
         $request->session()->regenerate();
+
+        MagicLinkConsumed::dispatch($magicLinkToken->user);
 
         return redirect()->route('home');
     }

@@ -3,8 +3,10 @@
 namespace App\Console\Commands;
 
 use App\Models\ApiToken;
+use App\Services\Audit\AuditLogger;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 class RevokeAdminApiTokenCommand extends Command
 {
@@ -17,7 +19,7 @@ class RevokeAdminApiTokenCommand extends Command
 
     protected $description = 'Revoke (delete) Admin API tokens by id, name, owner, or all';
 
-    public function handle(): int
+    public function handle(AuditLogger $audit): int
     {
         $query = $this->selection();
 
@@ -39,7 +41,16 @@ class RevokeAdminApiTokenCommand extends Command
             return self::FAILURE;
         }
 
-        $query->delete();
+        DB::transaction(function () use ($query, $audit) {
+            foreach ($query->get() as $token) {
+                $audit->record(null, 'api_token.revoked', $token, [
+                    'name' => $token->name,
+                    'owner_id' => $token->user_id,
+                    'source' => 'cli',
+                ]);
+                $token->delete();
+            }
+        });
         $this->info("Revoked {$count} Admin API token(s).");
 
         return self::SUCCESS;

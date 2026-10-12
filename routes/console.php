@@ -10,3 +10,5 @@ Artisan::command('inspire', function () {
 
 Schedule::command('staff:reconcile-roles')->daily();
 Schedule::command('posts:publish-scheduled')->everyMinute();
+Schedule::command('newsroom:purge-security-data')->dailyAt('03:15');
+Schedule::command('auth:clear-resets')->dailyAt('03:20');

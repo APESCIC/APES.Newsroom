@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -15,6 +16,7 @@ class AuditLog extends Model
         'subject_id',
         'payload',
         'ip_address',
+        'user_agent',
     ];
 
     protected function casts(): array
@@ -22,6 +24,19 @@ class AuditLog extends Model
         return [
             'payload' => 'array',
         ];
+    }
+
+    /**
+     * Records of a user acting on their own account (sign-ins, password
+     * changes) rather than on protected newsroom data.
+     *
+     * @param  Builder<AuditLog>  $query
+     */
+    public function scopeSelfService(Builder $query): void
+    {
+        $query->where(fn (Builder $inner) => $inner
+            ->where('action', 'like', 'auth.%')
+            ->orWhere('action', 'like', 'account.%'));
     }
 
     /**

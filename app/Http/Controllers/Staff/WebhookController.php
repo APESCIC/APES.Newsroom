@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
 use App\Models\WebhookEndpoint;
+use App\Services\Audit\AuditLogger;
 use App\Services\Webhooks\OutboundWebhookDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,6 +14,8 @@ use Inertia\Response;
 
 class WebhookController extends Controller
 {
+    public function __construct(private readonly AuditLogger $audit) {}
+
     public function index(): Response
     {
         return Inertia::render('Staff/Webhooks/Index', [
@@ -41,13 +44,15 @@ class WebhookController extends Controller
             'is_active' => ['sometimes', 'boolean'],
         ]);
 
-        WebhookEndpoint::query()->create([
+        $webhook = WebhookEndpoint::query()->create([
             'name' => $validated['name'],
             'url' => $validated['url'],
             'secret' => WebhookEndpoint::generateSecret(),
             'events' => array_values($validated['events']),
             'is_active' => (bool) ($validated['is_active'] ?? true),
         ]);
+
+        $this->record($request, 'webhook.created', $webhook);
 
         return redirect()->route('staff.webhooks.index');
     }
@@ -70,19 +75,42 @@ class WebhookController extends Controller
             'is_active' => (bool) $validated['is_active'],
         ]);
 
-        if (! empty($validated['rotate_secret'])) {
+        $rotated = ! empty($validated['rotate_secret']);
+
+        if ($rotated) {
             $webhook->secret = WebhookEndpoint::generateSecret();
         }
 
         $webhook->save();
 
+        $this->record($request, 'webhook.updated', $webhook);
+
+        if ($rotated) {
+            $this->record($request, 'webhook.secret_rotated', $webhook);
+        }
+
         return redirect()->route('staff.webhooks.index');
     }
 
-    public function destroy(WebhookEndpoint $webhook): RedirectResponse
+    public function destroy(Request $request, WebhookEndpoint $webhook): RedirectResponse
     {
+        $this->record($request, 'webhook.deleted', $webhook);
+
         $webhook->delete();
 
         return redirect()->route('staff.webhooks.index');
+    }
+
+    /**
+     * Only the host is kept: query strings on webhook URLs can carry credentials.
+     */
+    private function record(Request $request, string $action, WebhookEndpoint $webhook): void
+    {
+        $this->audit->record($request->user(), $action, $webhook, [
+            'name' => $webhook->name,
+            'host' => parse_url($webhook->url, PHP_URL_HOST),
+            'events' => $webhook->events,
+            'is_active' => $webhook->is_active,
+        ], $request);
     }
 }
