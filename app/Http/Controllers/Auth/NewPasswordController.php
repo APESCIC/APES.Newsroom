@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Notifications\Security\PasswordChangedNotification;
 use App\Services\Auth\SsoOnlyPolicy;
 use App\Services\Auth\UserSessionRevoker;
 use Illuminate\Auth\Events\PasswordReset;
@@ -50,6 +51,7 @@ class NewPasswordController extends Controller
                 $sessions->revoke($user);
 
                 event(new PasswordReset($user));
+                $user->notify(new PasswordChangedNotification(viaReset: true));
             }
         );
 

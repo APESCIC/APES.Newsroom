@@ -5,168 +5,278 @@ namespace App\Services\Account;
 use App\Enums\ConsentAction;
 use App\Enums\MailingList;
 use App\Enums\SubscriptionStatus;
+use App\Exceptions\EmailChangeFailed;
 use App\Models\ConsentEvent;
+use App\Models\EmailChangeRequest;
 use App\Models\MailingContact;
 use App\Models\MailingListSubscription;
 use App\Models\Suppression;
 use App\Models\User;
+use App\Notifications\ConfirmEmailChangeNotification;
 use App\Notifications\ConfirmMailingListNotification;
+use App\Notifications\Security\EmailChangeRequestedNotification;
 use App\Services\Mailing\ConsentService;
+use App\Support\EmailAddress;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 
+/**
+ * Account email changes apply only once the new address is confirmed; the
+ * current address is told and can cancel until then. Links are signed
+ * without an expiry so an old link shows a friendly page; the request's own
+ * expires_at and single-use token decide whether it still works.
+ */
 class AccountEmailChangeService
 {
+    public const TTL_MINUTES = 60;
+
     /**
+     * Save the name straight away and start a confirmation for a new email.
+     * Returns null when the email is unchanged.
+     *
      * @param  array{name: string, email: string}  $attributes
      */
-    public function update(User $user, array $attributes, ?string $ip = null, ?string $userAgent = null): User
+    public function request(User $user, array $attributes): ?EmailChangeRequest
     {
-        return DB::transaction(function () use ($user, $attributes, $ip, $userAgent) {
+        return DB::transaction(function () use ($user, $attributes) {
             $lockedUser = User::query()->lockForUpdate()->findOrFail($user->id);
-            $oldEmail = $this->normalizeEmail($lockedUser->email);
-            $newEmail = $this->normalizeEmail($attributes['email']);
+            $lockedUser->update(['name' => $attributes['name']]);
 
-            if ($oldEmail === $newEmail) {
-                $lockedUser->update(['name' => $attributes['name']]);
+            $newEmail = EmailAddress::normalize($attributes['email']);
 
-                return $lockedUser->fresh();
+            if ($newEmail === EmailAddress::normalize($lockedUser->email)) {
+                return null;
             }
 
-            $oldContact = MailingContact::query()
-                ->where('email', $oldEmail)
-                ->lockForUpdate()
-                ->first();
-            $oldSuppressed = Suppression::query()
-                ->where('email', $oldEmail)
-                ->lockForUpdate()
-                ->exists();
-            $activeLists = [];
+            $lockedUser->emailChangeRequests()->pending()->update(['cancelled_at' => now()]);
 
-            if ($oldContact) {
-                $subscriptions = $oldContact->subscriptions()->lockForUpdate()->get();
+            $token = Str::random(64);
+            $change = $lockedUser->emailChangeRequests()->create([
+                'new_email' => $newEmail,
+                'token_hash' => hash('sha256', $token),
+                'expires_at' => now()->addMinutes(self::TTL_MINUTES),
+            ]);
 
-                foreach ($subscriptions as $subscription) {
-                    if (! in_array($subscription->status, [SubscriptionStatus::Confirmed, SubscriptionStatus::Pending], true)) {
-                        continue;
-                    }
+            DB::afterCommit(function () use ($lockedUser, $change, $token) {
+                $this->sendConfirmation($change, $token);
+                $lockedUser->notify(new EmailChangeRequestedNotification(
+                    EmailAddress::mask($change->new_email),
+                    URL::signedRoute('account.email.cancel', ['emailChange' => $change->id]),
+                ));
+            });
 
-                    if (! $oldSuppressed) {
-                        $activeLists[$subscription->list->value] = $subscription->list;
-                    }
+            return $change;
+        });
+    }
 
-                    $subscription->update([
-                        'status' => SubscriptionStatus::Unsubscribed,
-                        'confirm_token' => null,
-                        'unsubscribed_at' => now(),
-                    ]);
+    /**
+     * Send a fresh confirmation link for a pending change.
+     */
+    public function resend(EmailChangeRequest $change): void
+    {
+        $token = Str::random(64);
+        $change->update([
+            'token_hash' => hash('sha256', $token),
+            'expires_at' => now()->addMinutes(self::TTL_MINUTES),
+        ]);
 
-                    $this->recordEvent(
-                        $oldContact,
-                        $subscription->list,
-                        ConsentAction::Unsubscribed,
-                        ['account_email_changed_to' => $newEmail],
-                        $ip,
-                        $userAgent,
-                    );
-                }
+        $this->sendConfirmation($change, $token);
+    }
 
-                Suppression::query()->firstOrCreate(
-                    ['email' => $oldEmail],
-                    ['reason' => 'account_email_change'],
-                );
-                $this->recordEvent(
-                    $oldContact,
-                    null,
-                    ConsentAction::Suppressed,
-                    ['reason' => 'account_email_change'],
-                    $ip,
-                    $userAgent,
-                );
-                $oldContact->update(['user_id' => null]);
+    public function cancel(EmailChangeRequest $change): bool
+    {
+        return EmailChangeRequest::query()
+            ->whereKey($change->id)
+            ->pending()
+            ->update(['cancelled_at' => now()]) > 0;
+    }
+
+    /**
+     * Apply a pending change: move the account and its mailing consent to
+     * the new address. Existing list subscriptions are withdrawn from the
+     * old address and must be confirmed again from the new one.
+     *
+     * @throws EmailChangeFailed
+     */
+    public function confirm(EmailChangeRequest $change, string $token, ?string $ip = null, ?string $userAgent = null): User
+    {
+        return DB::transaction(function () use ($change, $token, $ip, $userAgent) {
+            $lockedChange = EmailChangeRequest::query()->lockForUpdate()->findOrFail($change->id);
+
+            if (! hash_equals($lockedChange->token_hash, hash('sha256', $token))) {
+                throw new EmailChangeFailed('This confirmation link is not valid. Use the latest link we sent.');
             }
+
+            if (! $lockedChange->isPending()) {
+                throw new EmailChangeFailed('This email change has expired or was cancelled. You can request it again from your account.');
+            }
+
+            $lockedUser = User::query()->lockForUpdate()->findOrFail($lockedChange->user_id);
+            $oldEmail = EmailAddress::normalize($lockedUser->email);
+            $newEmail = EmailAddress::normalize($lockedChange->new_email);
+
+            if ($lockedUser->auth_provider === 'cloudron_oidc') {
+                throw new EmailChangeFailed('This account\'s email address is managed by APES staff sign-in.');
+            }
+
+            if (User::query()->where('email', $newEmail)->whereKeyNot($lockedUser->id)->exists()) {
+                throw new EmailChangeFailed('That email address is now used by another account.');
+            }
+
+            $confirmations = $this->transferMailingConsent($lockedUser, $oldEmail, $newEmail, $ip, $userAgent);
 
             $lockedUser->forceFill([
-                'name' => $attributes['name'],
                 'email' => $newEmail,
-                'email_verified_at' => null,
+                'email_verified_at' => now(),
             ])->save();
 
-            $confirmations = [];
+            $lockedChange->update(['confirmed_at' => now()]);
 
-            if ($oldContact) {
-                $newContact = MailingContact::query()
-                    ->where('email', $newEmail)
-                    ->lockForUpdate()
-                    ->first();
-
-                if (! $newContact) {
-                    $newContact = MailingContact::query()->create([
-                        'email' => $newEmail,
-                        'user_id' => $lockedUser->id,
-                    ]);
-                } elseif ($newContact->user_id !== $lockedUser->id) {
-                    $newContact->update(['user_id' => $lockedUser->id]);
-                }
-
-                $newSuppressed = Suppression::query()
-                    ->where('email', $newEmail)
-                    ->lockForUpdate()
-                    ->exists();
-
-                if (! $newSuppressed) {
-                    foreach ($activeLists as $list) {
-                        $subscription = MailingListSubscription::query()
-                            ->where('mailing_contact_id', $newContact->id)
-                            ->where('list', $list->value)
-                            ->lockForUpdate()
-                            ->first();
-
-                        if ($subscription?->status === SubscriptionStatus::Unsubscribed) {
-                            continue;
-                        }
-
-                        $token = Str::random(64);
-                        $subscription ??= new MailingListSubscription([
-                            'mailing_contact_id' => $newContact->id,
-                            'list' => $list,
-                        ]);
-                        $subscription->fill([
-                            'status' => SubscriptionStatus::Pending,
-                            'confirm_token' => $token,
-                            'confirmed_at' => null,
-                            'unsubscribed_at' => null,
-                        ])->save();
-
-                        $this->recordEvent(
-                            $newContact,
-                            $list,
-                            ConsentAction::SignupRequested,
-                            ['confirm_token_issued' => true, 'account_email_changed_from' => $oldEmail],
-                            $ip,
-                            $userAgent,
-                        );
-                        $confirmations[] = [$newContact->id, $list, $token];
-                    }
-                }
-            }
-
-            $userId = $lockedUser->id;
-            DB::afterCommit(function () use ($userId, $confirmations) {
-                $updatedUser = User::query()->find($userId);
-                $updatedUser?->sendEmailVerificationNotification();
-
-                foreach ($confirmations as [$contactId, $list, $token]) {
-                    $contact = MailingContact::query()->find($contactId);
-                    $contact?->notify(new ConfirmMailingListNotification(
+            DB::afterCommit(function () use ($confirmations) {
+                foreach ($confirmations as [$contactId, $list, $confirmToken]) {
+                    MailingContact::query()->find($contactId)?->notify(new ConfirmMailingListNotification(
                         $list,
-                        url('/mailing/confirm/'.$token),
+                        url('/mailing/confirm/'.$confirmToken),
                     ));
                 }
             });
 
             return $lockedUser->fresh();
         });
+    }
+
+    private function sendConfirmation(EmailChangeRequest $change, string $token): void
+    {
+        Notification::route('mail', $change->new_email)->notify(new ConfirmEmailChangeNotification(
+            URL::signedRoute('account.email.confirm', [
+                'emailChange' => $change->id,
+                'token' => $token,
+            ]),
+            self::TTL_MINUTES,
+        ));
+    }
+
+    /**
+     * @return list<array{0: int, 1: MailingList, 2: string}> confirmation emails to send after commit
+     */
+    private function transferMailingConsent(User $user, string $oldEmail, string $newEmail, ?string $ip, ?string $userAgent): array
+    {
+        $oldContact = MailingContact::query()
+            ->where('email', $oldEmail)
+            ->lockForUpdate()
+            ->first();
+
+        if (! $oldContact) {
+            return [];
+        }
+
+        $oldSuppressed = Suppression::query()
+            ->where('email', $oldEmail)
+            ->lockForUpdate()
+            ->exists();
+        $activeLists = [];
+
+        foreach ($oldContact->subscriptions()->lockForUpdate()->get() as $subscription) {
+            if (! in_array($subscription->status, [SubscriptionStatus::Confirmed, SubscriptionStatus::Pending], true)) {
+                continue;
+            }
+
+            if (! $oldSuppressed) {
+                $activeLists[$subscription->list->value] = $subscription->list;
+            }
+
+            $subscription->update([
+                'status' => SubscriptionStatus::Unsubscribed,
+                'confirm_token' => null,
+                'unsubscribed_at' => now(),
+            ]);
+
+            $this->recordEvent(
+                $oldContact,
+                $subscription->list,
+                ConsentAction::Unsubscribed,
+                ['account_email_changed_to' => $newEmail],
+                $ip,
+                $userAgent,
+            );
+        }
+
+        Suppression::query()->firstOrCreate(
+            ['email' => $oldEmail],
+            ['reason' => 'account_email_change'],
+        );
+        $this->recordEvent(
+            $oldContact,
+            null,
+            ConsentAction::Suppressed,
+            ['reason' => 'account_email_change'],
+            $ip,
+            $userAgent,
+        );
+        $oldContact->update(['user_id' => null]);
+
+        $newContact = MailingContact::query()
+            ->where('email', $newEmail)
+            ->lockForUpdate()
+            ->first();
+
+        if (! $newContact) {
+            $newContact = MailingContact::query()->create([
+                'email' => $newEmail,
+                'user_id' => $user->id,
+            ]);
+        } elseif ($newContact->user_id !== $user->id) {
+            $newContact->update(['user_id' => $user->id]);
+        }
+
+        $newSuppressed = Suppression::query()
+            ->where('email', $newEmail)
+            ->lockForUpdate()
+            ->exists();
+
+        if ($newSuppressed) {
+            return [];
+        }
+
+        $confirmations = [];
+
+        foreach ($activeLists as $list) {
+            $subscription = MailingListSubscription::query()
+                ->where('mailing_contact_id', $newContact->id)
+                ->where('list', $list->value)
+                ->lockForUpdate()
+                ->first();
+
+            if ($subscription?->status === SubscriptionStatus::Unsubscribed) {
+                continue;
+            }
+
+            $token = Str::random(64);
+            $subscription ??= new MailingListSubscription([
+                'mailing_contact_id' => $newContact->id,
+                'list' => $list,
+            ]);
+            $subscription->fill([
+                'status' => SubscriptionStatus::Pending,
+                'confirm_token' => $token,
+                'confirmed_at' => null,
+                'unsubscribed_at' => null,
+            ])->save();
+
+            $this->recordEvent(
+                $newContact,
+                $list,
+                ConsentAction::SignupRequested,
+                ['confirm_token_issued' => true, 'account_email_changed_from' => $oldEmail],
+                $ip,
+                $userAgent,
+            );
+            $confirmations[] = [$newContact->id, $list, $token];
+        }
+
+        return $confirmations;
     }
 
     /**
@@ -192,10 +302,5 @@ class AccountEmailChangeService
             'user_agent' => $userAgent,
             'created_at' => now(),
         ]);
-    }
-
-    private function normalizeEmail(string $email): string
-    {
-        return Str::lower(trim($email));
     }
 }

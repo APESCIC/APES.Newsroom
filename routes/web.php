@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Role;
+use App\Http\Controllers\Account\EmailChangeController as AccountEmailChangeController;
 use App\Http\Controllers\Account\MembershipCheckoutController;
 use App\Http\Controllers\Account\PasswordController as AccountPasswordController;
 use App\Http\Controllers\Account\SecurityController as AccountSecurityController;
@@ -100,6 +101,10 @@ Route::get('/{channel}', [ChannelController::class, 'show'])
 Route::middleware(['auth', 'verified'])->prefix('account')->name('account.')->group(function () {
     Route::get('/', [AccountController::class, 'show'])->name('show');
     Route::patch('/', [AccountController::class, 'update'])->name('update');
+    Route::post('/email/resend', [AccountEmailChangeController::class, 'resend'])
+        ->middleware('throttle:email-change')
+        ->name('email.resend');
+    Route::delete('/email/pending', [AccountEmailChangeController::class, 'destroy'])->name('email.pending.destroy');
     Route::get('/export', [AccountController::class, 'export'])->name('export');
     Route::delete('/', [AccountController::class, 'destroy'])->middleware('auth.recent')->name('destroy');
     Route::get('/security', [AccountSecurityController::class, 'show'])->name('security');

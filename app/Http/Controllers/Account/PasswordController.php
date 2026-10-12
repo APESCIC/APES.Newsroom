@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Account;
 
 use App\Http\Controllers\Controller;
+use App\Notifications\Security\PasswordChangedNotification;
 use App\Services\Audit\AuditLogger;
 use App\Services\Auth\RecentAuthentication;
 use App\Services\Auth\SsoOnlyPolicy;
@@ -44,6 +45,7 @@ class PasswordController extends Controller
         $this->audit->record($user, 'account.password_changed', $user, [
             'first_password' => $settingFirstPassword,
         ], $request);
+        $user->notify(new PasswordChangedNotification);
 
         return back()->with('status', 'password-updated');
     }

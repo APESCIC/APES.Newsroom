@@ -22,6 +22,8 @@ class SessionTracker
 
     private const TOUCH_INTERVAL_SECONDS = 300;
 
+    private const FAMILIAR_DEVICE_DAYS = 90;
+
     public function start(User $user, Request $request, bool $remembered): UserSession
     {
         // A "remember me" sign-in starts a new session on the same browser;
@@ -125,6 +127,29 @@ class SessionTracker
             'platform' => is_string($platform) && $platform !== '' && $platform !== DeviceDetector::UNKNOWN ? Str::limit($platform, 97) : null,
             'device_type' => $device !== '' ? Str::limit($device, 29) : null,
         ];
+    }
+
+    /**
+     * True when the user has signed in before but not with this browser,
+     * OS and device type in the last 90 days. A first tracked sign-in is
+     * not unfamiliar: there is nothing to compare it with.
+     */
+    public function isUnfamiliarDevice(UserSession $session): bool
+    {
+        $history = UserSession::query()
+            ->where('user_id', $session->user_id)
+            ->whereKeyNot($session->getKey());
+
+        if (! (clone $history)->exists()) {
+            return false;
+        }
+
+        return ! $history
+            ->where('last_seen_at', '>=', now()->subDays(self::FAMILIAR_DEVICE_DAYS))
+            ->where('browser', $session->browser)
+            ->where('platform', $session->platform)
+            ->where('device_type', $session->device_type)
+            ->exists();
     }
 
     public function forgetDevice(): void
