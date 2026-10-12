@@ -64,10 +64,13 @@ class PasskeyCeremony
         });
     }
 
-    public function authenticationOptions(Request $request): string
+    /**
+     * @param  User|null  $for  limit the ceremony to this account's passkeys
+     */
+    public function authenticationOptions(Request $request, ?User $for = null): string
     {
         $options = Config::getAction('generate_passkey_authentication_options', GeneratePasskeyAuthenticationOptionsAction::class)
-            ->execute();
+            ->execute($for);
 
         $request->session()->put(self::AUTHENTICATION_KEY, $options);
 

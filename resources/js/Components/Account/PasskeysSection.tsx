@@ -1,6 +1,7 @@
 import { router, useForm, usePage } from '@inertiajs/react';
-import { browserSupportsWebAuthn, startRegistration, WebAuthnError } from '@simplewebauthn/browser';
+import { browserSupportsWebAuthn, startRegistration } from '@simplewebauthn/browser';
 import { FormEvent, FormEventHandler, useState } from 'react';
+import { registrationErrorMessage, requestPasskeyOptions } from '../Auth/passkeys';
 
 export type AccountPasskey = {
     id: number;
@@ -9,24 +10,8 @@ export type AccountPasskey = {
     last_used_at: string | null;
 };
 
-function xsrfToken(): string {
-    return decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? '');
-}
-
 function formatDate(value: string): string {
     return new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium' }).format(new Date(value));
-}
-
-function registrationErrorMessage(error: unknown): string {
-    if (error instanceof WebAuthnError && error.code === 'ERROR_AUTHENTICATOR_PREVIOUSLY_REGISTERED') {
-        return 'This device already has a passkey for your account.';
-    }
-
-    if (error instanceof Error && (error.name === 'NotAllowedError' || error.name === 'AbortError')) {
-        return 'Passkey setup was cancelled or timed out.';
-    }
-
-    return 'Your browser could not create a passkey. Please try again.';
 }
 
 function AddPasskeyForm() {
@@ -41,11 +26,7 @@ function AddPasskeyForm() {
         setBusy(true);
 
         try {
-            const response = await fetch('/account/passkeys/options', {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: { Accept: 'application/json', 'X-XSRF-TOKEN': xsrfToken() },
-            });
+            const response = await requestPasskeyOptions('/account/passkeys/options');
 
             if (response.status === 423) {
                 router.visit('/account/confirm-identity');

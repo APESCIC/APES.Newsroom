@@ -27,11 +27,12 @@ class PendingTwoFactorLogin
      * Sign the user in, or start the second-factor challenge when they have
      * two-factor enabled.
      *
-     * @param  string  $via  first factor used: 'password' or 'magic_link'
+     * @param  string  $via  first factor used: 'password', 'magic_link' or 'passkey'
+     * @param  bool  $multiFactor  the first factor already proved two factors (a user-verified passkey)
      */
-    public function signIn(Request $request, User $user, bool $remember, string $via, string $destination): RedirectResponse
+    public function signIn(Request $request, User $user, bool $remember, string $via, string $destination, bool $multiFactor = false): RedirectResponse
     {
-        if (! $user->hasTwoFactorEnabled()) {
+        if ($multiFactor || ! $user->hasTwoFactorEnabled()) {
             Auth::guard('web')->login($user, $remember);
             $request->session()->regenerate();
 
