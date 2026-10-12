@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateAccountRequest;
+use App\Models\AuditLog;
 use App\Models\MembershipPlan;
 use App\Services\Account\AccountDeletionPolicy;
 use App\Services\Account\AccountEmailChangeService;
@@ -107,6 +108,7 @@ class AccountController extends Controller
             $reason = $this->deletionPolicy->blockingReason($lockedUser);
 
             if ($reason === null) {
+                AuditLog::query()->where('actor_id', $lockedUser->id)->selfService()->update(['actor_id' => null]);
                 $lockedUser->delete();
             }
 

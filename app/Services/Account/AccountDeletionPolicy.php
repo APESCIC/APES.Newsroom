@@ -35,7 +35,7 @@ class AccountDeletionPolicy
         return Post::query()->where('author_id', $user->id)->exists()
             || PostRevision::query()->where('editor_id', $user->id)->exists()
             || Campaign::query()->where('created_by', $user->id)->exists()
-            || AuditLog::query()->where('actor_id', $user->id)->exists()
+            || AuditLog::query()->where('actor_id', $user->id)->whereNot(fn ($query) => $query->selfService())->exists()
             || ModerationAudit::query()->where('actor_id', $user->id)->exists()
             || ImportRun::query()->where('actor_id', $user->id)->exists();
     }

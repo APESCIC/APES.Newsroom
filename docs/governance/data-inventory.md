@@ -14,6 +14,11 @@ Bambie Murphy (APES CIC / repository owner) on 2026-08-06. See the
 | Campaign delivery | `campaigns`, `campaign_recipients` | Consent / legitimate interests for send operations | 24 months operational metrics | Admins |
 | Engagement | `profiles`, `comments`, `reactions`, `moderation_reports`, `moderation_audits` | Consent / legitimate interests for community features | Soft-deleted comments 12 months; moderation audits 24 months | Admins |
 | Privileged audits | `audit_logs`, `import_runs` | Legitimate interests (security / accountability) | 24 months | Admins / super admins |
+| Authentication events | `audit_logs` (`auth.*`: sign-in, failure, lockout, sign-out, registration, verification, reset, magic link, staff SSO allow/deny), with IP address and user agent. No passwords, tokens or links; failed attempts against unknown emails store no email. | Legitimate interests (account security / incident response) | 24 months; on self-service deletion the records are detached from the account (actor cleared) and age out on schedule | Admins / super admins |
+| Integration changes | `audit_logs` (`api_token.*`, `webhook.*`): token name/owner, webhook name/host/events. Never token values or webhook secrets. | Legitimate interests (security / accountability) | 24 months | Admins / super admins |
+| Sign-in tokens | `magic_link_tokens` (SHA-256 hash only), `password_reset_tokens` (hashed) | Necessary for service | Magic links purged 7 days after expiry/use; reset tokens cleared after expiry | System |
+| API credentials | `api_tokens` (SHA-256 hash, name, last used), `webhook_endpoints` (signing secret) | Legitimate interests (integrations) | Until revoked / deleted | Staff (webhooks), operators (tokens via CLI) |
+| Webhook deliveries | `webhook_deliveries` (event payloads, status) | Legitimate interests (integrations) | Operational; no automated purge yet | Staff |
 | Session / CSRF | cookies, session store (Redis/file) | Necessary for service | Session lifetime | System |
 | Logs | application logs on Cloudron | Legitimate interests (security/ops) | 90 days (ops default) | Ops / admins |
 

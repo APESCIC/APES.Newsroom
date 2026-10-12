@@ -10,7 +10,9 @@ Draft retention periods for operators. Confirm with legal before cutover.
 | Consent events | 2 years after last relevant mailing activity | Anonymise email if erasure required and suppression must remain |
 | Suppressions | Indefinite while needed to honour objection | Keep hashed/minimal email if full erasure conflicts with PECR honouring |
 | Campaign recipients | 24 months | Delete or aggregate |
-| Moderation audits / audit logs | 24 months | Delete |
+| Moderation audits / audit logs (including authentication events) | 24 months (`SECURITY_AUDIT_RETENTION_MONTHS`) | Delete — `audit_logs` enforced daily by `newsroom:purge-security-data` |
+| Magic link tokens | 7 days after expiry or use (`SECURITY_MAGIC_LINK_RETENTION_DAYS`) | Delete — `newsroom:purge-security-data` |
+| Password reset tokens | Until expiry (60 minutes) | Delete — scheduled `auth:clear-resets` |
 | Import runs / reports | 24 months | Delete files + DB rows |
 | Application logs | 90 days | Rotate / purge |
 | Backups (Cloudron) | Per Cloudron backup policy (document at deploy time) | Restore drills recorded on #3/#11 |
