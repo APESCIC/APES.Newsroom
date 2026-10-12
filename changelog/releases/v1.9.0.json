@@ -1,0 +1,38 @@
+{
+  "version": "v1.9.0",
+  "released_at": "2026-10-12",
+  "previous_version": "v1.8.1",
+  "theme": "Account security foundations",
+  "change_types": [
+    "security",
+    "added",
+    "changed"
+  ],
+  "topic_tags": [
+    "public-facing",
+    "internal-only",
+    "compliance"
+  ],
+  "summary": "Account security gets stronger foundations: members can see and end their signed-in sessions, change their password, and receive emails about important account changes. Email address changes now take effect only after you confirm them from the new address, and sensitive actions ask you to confirm it's you.",
+  "detailed_changes": [
+    "Sign-ins, sign-outs, failed attempts, password resets and email verification are now recorded in the audit log (#265, #284).",
+    "Changes to roles, Admin API tokens, webhooks and site settings are recorded in the audit log (#285).",
+    "A daily job removes audit entries, used sign-in links, expired email change requests and old session records once they pass their retention period (#286).",
+    "New passwords must be at least 12 characters, and in production passwords known from public data breaches are refused. Only a short fragment of a hash is sent for that check, never the password (#266, #287).",
+    "Members who use a password can change it from Account security; other signed-in sessions are ended when it changes (#288).",
+    "Deleting your account, changing your email, signing out other sessions and changing webhooks or site settings now ask you to confirm it's you if you have not signed in recently, using your password, single sign-on or an emailed code (#289).",
+    "Account security lists your signed-in sessions with browser, operating system, a partly hidden IP address and when each was last used. You can sign out a single session or every other session (#267, #290, #291).",
+    "Sessions are ended automatically after a password reset or change, an email change, or a change of role (#292).",
+    "The sign-in form has a remember-me option that keeps you signed in on that device for up to 30 days (#293).",
+    "Security emails are sent when your password changes, an email change is requested, you sign in from a new device or an Admin API token is created. Each one explains what to do if it wasn't you (#268, #294).",
+    "Email changes are applied only after you confirm them from a link sent to the new address. Your current address is told about the request and can cancel it, and mailing preferences move to the new address only once it is confirmed (#295)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /login, /account, /account/security, /account/confirm-identity, email change confirmation and cancel links",
+    "User groups affected: all signed-in members, staff and admins",
+    "Public impact: new Account security page, remember-me on sign-in, security notification emails, confirmation step for email changes",
+    "Internal impact: richer audit log, daily security data purge, re-authentication before sensitive admin settings and webhook changes"
+  ],
+  "pr": 333
+}
