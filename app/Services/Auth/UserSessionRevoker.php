@@ -14,15 +14,18 @@ use Illuminate\Support\Str;
  * Redis sessions cannot be looked up by user, so revocation bumps
  * users.auth_epoch; EnsureAuthEpoch logs out any session that was
  * started under an older epoch. Database sessions are also deleted
- * outright.
+ * outright, and the user_sessions records are marked ended.
  */
 class UserSessionRevoker
 {
+    public function __construct(private readonly SessionTracker $tracker) {}
+
     public function revoke(User $user): void
     {
         $user->increment('auth_epoch', 1, ['remember_token' => Str::random(60)]);
 
         $this->deleteDatabaseSessions($user);
+        $this->tracker->endAll($user);
     }
 
     /**
@@ -37,6 +40,10 @@ class UserSessionRevoker
         $request->session()->put(EnsureAuthEpoch::SESSION_KEY, (int) $user->auth_epoch);
 
         $this->deleteDatabaseSessions($user, except: $request->session()->getId());
+
+        $current = $this->tracker->current($request);
+        $current?->forceFill(['remembered' => false])->save();
+        $this->tracker->endAll($user, exceptId: $current?->getKey());
     }
 
     private function deleteDatabaseSessions(User $user, ?string $except = null): void

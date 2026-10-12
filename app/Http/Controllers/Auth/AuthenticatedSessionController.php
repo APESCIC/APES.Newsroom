@@ -21,6 +21,7 @@ class AuthenticatedSessionController extends Controller
             'staffLoginLabel' => $discoveryUrl
                 ? 'Log in with '.config('services.cloudron_oidc.provider_name')
                 : null,
+            'rememberDays' => max(1, intdiv((int) config('auth.guards.web.remember', 43200), 1440)),
         ]);
     }
 

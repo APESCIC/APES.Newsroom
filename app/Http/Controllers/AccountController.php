@@ -8,6 +8,7 @@ use App\Models\MembershipPlan;
 use App\Services\Account\AccountDeletionPolicy;
 use App\Services\Account\AccountEmailChangeService;
 use App\Services\Auth\RecentAuthentication;
+use App\Services\Auth\UserSessionRevoker;
 use App\Services\Membership\MembershipService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -60,7 +61,7 @@ class AccountController extends Controller
         ]);
     }
 
-    public function update(UpdateAccountRequest $request, RecentAuthentication $recentAuth): RedirectResponse
+    public function update(UpdateAccountRequest $request, RecentAuthentication $recentAuth, UserSessionRevoker $sessions): RedirectResponse
     {
         $emailChanged = Str::lower(trim((string) $request->validated('email'))) !== Str::lower((string) $request->user()->email);
 
@@ -74,6 +75,10 @@ class AccountController extends Controller
             $request->ip(),
             $request->userAgent(),
         );
+
+        if ($emailChanged) {
+            $sessions->revokeOthers($request->user(), $request);
+        }
 
         return back()->with('status', 'profile-updated');
     }

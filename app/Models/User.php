@@ -53,6 +53,14 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * @return HasMany<UserSession, $this>
+     */
+    public function sessions(): HasMany
+    {
+        return $this->hasMany(UserSession::class);
+    }
+
+    /**
      * @return HasOne<Profile, $this>
      */
     public function profile(): HasOne

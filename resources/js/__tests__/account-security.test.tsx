@@ -1,7 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import ConfirmIdentity from '../Pages/Account/ConfirmIdentity';
-import Security from '../Pages/Account/Security';
+import Security, { type AccountSession } from '../Pages/Account/Security';
+import Login from '../Pages/Auth/Login';
 import { getInertiaMock } from '../test/inertia';
 
 describe('account security page', () => {
@@ -31,6 +32,78 @@ describe('account security page', () => {
 
         expect(screen.queryByLabelText('New password')).not.toBeInTheDocument();
         expect(screen.getByText(/APES staff sign-in/)).toBeInTheDocument();
+    });
+});
+
+describe('account sessions list', () => {
+    const sessions: AccountSession[] = [
+        {
+            id: 1,
+            browser: 'Chrome',
+            platform: 'Windows',
+            device_type: 'desktop',
+            ip: '198.51.100.x',
+            last_active_at: '2026-10-12T10:00:00+00:00',
+            remembered: false,
+            current: true,
+        },
+        {
+            id: 2,
+            browser: 'Mobile Safari',
+            platform: 'iOS',
+            device_type: 'smartphone',
+            ip: '203.0.113.x',
+            last_active_at: '2026-10-11T08:30:00+00:00',
+            remembered: true,
+            current: false,
+        },
+    ];
+
+    it('shows each device with a marker for this one', () => {
+        render(<Security sso_managed={false} has_password sessions={sessions} />);
+
+        expect(screen.getByText('This device')).toBeInTheDocument();
+        expect(screen.getByText(/Mobile Safari on iOS/)).toBeInTheDocument();
+        expect(screen.getByText(/IP 203\.0\.113\.x/)).toBeInTheDocument();
+        expect(screen.getByText(/Remembered/)).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Sign out Chrome on Windows' })).not.toBeInTheDocument();
+    });
+
+    it('signs out a single session', () => {
+        render(<Security sso_managed={false} has_password sessions={sessions} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Sign out Mobile Safari on iOS' }));
+
+        expect(getInertiaMock().delete).toHaveBeenCalledWith('/account/sessions/2', { preserveScroll: true });
+    });
+
+    it('signs out all other sessions', () => {
+        render(<Security sso_managed={false} has_password sessions={sessions} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Sign out all other sessions' }));
+
+        expect(getInertiaMock().delete).toHaveBeenCalledWith('/account/sessions/others', { preserveScroll: true });
+    });
+
+    it('hides "sign out all" when this is the only session', () => {
+        render(<Security sso_managed={false} has_password sessions={[sessions[0]]} />);
+
+        expect(screen.queryByRole('button', { name: 'Sign out all other sessions' })).not.toBeInTheDocument();
+    });
+});
+
+describe('login remember me', () => {
+    it('sends the remember choice with the sign-in', () => {
+        render(<Login staffLoginUrl={null} staffLoginLabel={null} rememberDays={30} />);
+
+        fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'reader@example.com' } });
+        fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'secret-value' } });
+        fireEvent.click(screen.getByLabelText('Keep me signed in on this device for 30 days'));
+        fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
+
+        const visit = getInertiaMock().visits.at(-1);
+        expect(visit?.url).toBe('/login');
+        expect(visit?.data).toMatchObject({ email: 'reader@example.com', remember: true });
     });
 });
 

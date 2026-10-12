@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\AuditLog;
 use App\Models\MagicLinkToken;
+use App\Models\UserSession;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -14,12 +15,13 @@ class PurgeSecurityDataCommand extends Command
 {
     protected $signature = 'newsroom:purge-security-data';
 
-    protected $description = 'Delete audit logs and spent sign-in tokens past their retention period';
+    protected $description = 'Delete audit logs, spent sign-in tokens and old session records past their retention period';
 
     public function handle(): int
     {
         $auditCutoff = now()->subMonths(max(1, (int) config('security.audit_retention_months', 24)));
         $tokenCutoff = now()->subDays(max(1, (int) config('security.magic_link_token_retention_days', 7)));
+        $sessionCutoff = now()->subDays(max(1, (int) config('security.session_record_retention_days', 90)));
 
         $auditLogs = AuditLog::query()->where('created_at', '<', $auditCutoff)->delete();
 
@@ -29,7 +31,16 @@ class PurgeSecurityDataCommand extends Command
                 ->orWhere('used_at', '<', $tokenCutoff))
             ->delete();
 
-        $this->info("Purged {$auditLogs} audit log(s) and {$magicLinks} magic link token(s).");
+        $sessions = UserSession::query()
+            ->where(fn (Builder $query) => $query
+                ->where('revoked_at', '<', $sessionCutoff)
+                ->orWhere('last_seen_at', '<', $sessionCutoff)
+                ->orWhere(fn (Builder $never) => $never
+                    ->whereNull('last_seen_at')
+                    ->where('created_at', '<', $sessionCutoff)))
+            ->delete();
+
+        $this->info("Purged {$auditLogs} audit log(s), {$magicLinks} magic link token(s) and {$sessions} session record(s).");
 
         return self::SUCCESS;
     }

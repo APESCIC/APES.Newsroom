@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\AuditLog;
 use App\Models\MagicLinkToken;
 use App\Models\User;
+use App\Models\UserSession;
 use DateTimeInterface;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -57,13 +58,32 @@ class PurgeSecurityDataCommandTest extends TestCase
         $live = $this->token($user, expiresAt: now()->addMinutes(10));
 
         $this->artisan('newsroom:purge-security-data')
-            ->expectsOutput('Purged 0 audit log(s) and 2 magic link token(s).')
+            ->expectsOutput('Purged 0 audit log(s), 2 magic link token(s) and 0 session record(s).')
             ->assertSuccessful();
 
         $this->assertModelMissing($longExpired);
         $this->assertModelMissing($longUsed);
         $this->assertModelExists($recentlyExpired);
         $this->assertModelExists($live);
+    }
+
+    public function test_session_records_are_purged_ninety_days_after_last_use_or_sign_out(): void
+    {
+        $user = User::factory()->create();
+
+        $stale = $this->sessionRecord($user, lastSeen: now()->subDays(91));
+        $longRevoked = $this->sessionRecord($user, lastSeen: now()->subDays(10), revokedAt: now()->subDays(91));
+        $recentlyRevoked = $this->sessionRecord($user, lastSeen: now()->subDays(10), revokedAt: now()->subDays(89));
+        $active = $this->sessionRecord($user, lastSeen: now()->subMinutes(5));
+
+        $this->artisan('newsroom:purge-security-data')
+            ->expectsOutput('Purged 0 audit log(s), 0 magic link token(s) and 2 session record(s).')
+            ->assertSuccessful();
+
+        $this->assertModelMissing($stale);
+        $this->assertModelMissing($longRevoked);
+        $this->assertModelExists($recentlyRevoked);
+        $this->assertModelExists($active);
     }
 
     public function test_purge_and_reset_token_cleanup_are_scheduled_daily(): void
@@ -91,5 +111,14 @@ class PurgeSecurityDataCommandTest extends TestCase
         $token->forceFill(['used_at' => $usedAt])->save();
 
         return $token;
+    }
+
+    private function sessionRecord(User $user, DateTimeInterface $lastSeen, ?DateTimeInterface $revokedAt = null): UserSession
+    {
+        return $user->sessions()->create([
+            'session_key_hash' => hash('sha256', str()->random(40)),
+            'last_seen_at' => $lastSeen,
+            'revoked_at' => $revokedAt,
+        ]);
     }
 }

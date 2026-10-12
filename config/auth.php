@@ -41,6 +41,8 @@ return [
         'web' => [
             'driver' => 'session',
             'provider' => 'users',
+            // "Remember me" cookie lifetime in minutes (default 30 days).
+            'remember' => (int) env('AUTH_REMEMBER_MINUTES', 43200),
         ],
     ],
 
