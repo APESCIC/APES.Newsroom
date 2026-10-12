@@ -6,6 +6,7 @@ use App\Http\Controllers\Account\MembershipCheckoutController;
 use App\Http\Controllers\Account\PasswordController as AccountPasswordController;
 use App\Http\Controllers\Account\SecurityController as AccountSecurityController;
 use App\Http\Controllers\Account\SessionController as AccountSessionController;
+use App\Http\Controllers\Account\TwoFactorController as AccountTwoFactorController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Admin\GhostContentImportController;
 use App\Http\Controllers\Admin\GhostMembersImportController;
@@ -117,6 +118,12 @@ Route::middleware(['auth', 'verified'])->prefix('account')->name('account.')->gr
     Route::put('/password', [AccountPasswordController::class, 'update'])
         ->middleware('throttle:password-change')
         ->name('password.update');
+    Route::post('/two-factor', [AccountTwoFactorController::class, 'store'])
+        ->middleware('auth.recent')
+        ->name('two-factor.store');
+    Route::post('/two-factor/confirm', [AccountTwoFactorController::class, 'confirm'])
+        ->middleware(['auth.recent', 'throttle:two-factor-setup'])
+        ->name('two-factor.confirm');
     Route::get('/mailing', [PreferenceController::class, 'showAccount'])->name('mailing');
     Route::post('/mailing', [PreferenceController::class, 'updateAccount'])->name('mailing.update');
     Route::get('/public-profile', [ProfileController::class, 'edit'])->name('public-profile');

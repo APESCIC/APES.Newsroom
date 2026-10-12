@@ -14,6 +14,7 @@ use App\Notifications\Security\RecoveryCodesRegeneratedNotification;
 use App\Notifications\Security\SecurityNotification;
 use App\Notifications\Security\TwoFactorDisabledNotification;
 use App\Notifications\Security\TwoFactorEnabledNotification;
+use App\Services\Auth\TwoFactor\TwoFactorService;
 use DateTimeInterface;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,11 +22,12 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Tests\Support\InteractsWithTwoFactor;
 use Tests\TestCase;
 
 class SecurityNotificationsTest extends TestCase
 {
-    use RefreshDatabase;
+    use InteractsWithTwoFactor, RefreshDatabase;
 
     private const NEW_PASSWORD = 'correct-horse-battery-staple';
 
@@ -138,6 +140,18 @@ class SecurityNotificationsTest extends TestCase
             ApiTokenCreatedNotification::class,
             fn (ApiTokenCreatedNotification $notification) => $notification->tokenName === 'publishing-bot',
         );
+    }
+
+    public function test_turning_on_two_factor_notifies_the_account_holder(): void
+    {
+        $user = User::factory()->create();
+        app(TwoFactorService::class)->beginSetup($user);
+
+        $this->actingAs($user)
+            ->withSession($this->recentlyConfirmed())
+            ->post(route('account.two-factor.confirm'), ['code' => $this->totpFor($user)]);
+
+        Notification::assertSentTo($user, TwoFactorEnabledNotification::class);
     }
 
     /**

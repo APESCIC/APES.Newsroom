@@ -1,5 +1,6 @@
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
+import TwoFactorSection, { type TwoFactorState } from '../../Components/Account/TwoFactorSection';
 import AccountLayout from '../../Components/Layout/AccountLayout';
 
 export type AccountSession = {
@@ -17,11 +18,14 @@ type SecurityProps = {
     sso_managed: boolean;
     has_password: boolean;
     status?: string | null;
+    two_factor?: TwoFactorState | null;
+    recovery_codes?: string[] | null;
     sessions?: AccountSession[];
 };
 
 const STATUS_MESSAGES: Record<string, string> = {
     'password-updated': 'Password updated. Other sessions have been signed out.',
+    'two-factor-enabled': 'Two-factor authentication is on.',
     'session-ended': 'That session has been signed out.',
     'other-sessions-ended': 'All other sessions have been signed out.',
 };
@@ -169,7 +173,7 @@ function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
     );
 }
 
-export default function Security({ sso_managed, has_password, status, sessions = [] }: SecurityProps) {
+export default function Security({ sso_managed, has_password, status, two_factor, recovery_codes, sessions = [] }: SecurityProps) {
     const statusMessage = status ? STATUS_MESSAGES[status] : undefined;
 
     return (
@@ -198,8 +202,9 @@ export default function Security({ sso_managed, has_password, status, sessions =
                 <PasswordSection hasPassword={has_password} />
             )}
 
-            <SessionsSection sessions={sessions} />
+            {!sso_managed && two_factor && <TwoFactorSection state={two_factor} recoveryCodes={recovery_codes} />}
 
+            <SessionsSection sessions={sessions} />
         </AccountLayout>
     );
 }
