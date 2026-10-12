@@ -35,6 +35,63 @@ describe('account security page', () => {
     });
 });
 
+describe('two-factor setup', () => {
+    it('offers setup when two-factor is off', () => {
+        render(<Security sso_managed={false} has_password two_factor={{ enabled: false, recovery_codes_remaining: 0, setup: null }} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Set up two-factor' }));
+
+        expect(getInertiaMock().post).toHaveBeenCalledWith('/account/two-factor', {}, { preserveScroll: true });
+    });
+
+    it('shows the QR code and key, then confirms with a code', () => {
+        render(
+            <Security
+                sso_managed={false}
+                has_password
+                two_factor={{
+                    enabled: false,
+                    recovery_codes_remaining: 0,
+                    setup: { qr_image: 'data:image/svg+xml;base64,PHN2Zy8+', secret: 'ABCDEFGHIJKLMNOP' },
+                }}
+            />,
+        );
+
+        expect(screen.getByAltText('QR code for your authenticator app')).toHaveAttribute('src', 'data:image/svg+xml;base64,PHN2Zy8+');
+        expect(screen.getByText('ABCD EFGH IJKL MNOP')).toBeInTheDocument();
+
+        fireEvent.change(screen.getByLabelText('Code from your app'), { target: { value: '123456' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Turn on two-factor' }));
+
+        const visit = getInertiaMock().visits.at(-1);
+        expect(visit?.url).toBe('/account/two-factor/confirm');
+        expect(visit?.data).toMatchObject({ code: '123456' });
+    });
+
+    it('shows recovery codes once with a download option', () => {
+        render(
+            <Security
+                sso_managed={false}
+                has_password
+                status="two-factor-enabled"
+                two_factor={{ enabled: true, recovery_codes_remaining: 8, setup: null }}
+                recovery_codes={['abcde-fghjk', 'mnpqr-stuvw']}
+            />,
+        );
+
+        expect(screen.getByRole('status')).toHaveTextContent('Two-factor authentication is on.');
+        expect(screen.getByRole('list', { name: 'Recovery codes' })).toHaveTextContent('abcde-fghjk');
+        expect(screen.getByRole('button', { name: 'Download codes' })).toBeInTheDocument();
+        expect(screen.getByText('8 recovery codes left.')).toBeInTheDocument();
+    });
+
+    it('hides two-factor for SSO-managed accounts', () => {
+        render(<Security sso_managed has_password={false} two_factor={null} />);
+
+        expect(screen.queryByRole('heading', { name: 'Two-factor authentication' })).not.toBeInTheDocument();
+    });
+});
+
 describe('account sessions list', () => {
     const sessions: AccountSession[] = [
         {

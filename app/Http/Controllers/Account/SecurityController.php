@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Account;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Models\UserSession;
+use App\Services\Auth\RecentAuthentication;
 use App\Services\Auth\SessionTracker;
+use App\Services\Auth\TwoFactor\TwoFactorService;
 use App\Support\IpAddress;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -12,8 +15,12 @@ use Inertia\Response;
 
 class SecurityController extends Controller
 {
-    public function show(Request $request, SessionTracker $tracker): Response
-    {
+    public function show(
+        Request $request,
+        SessionTracker $tracker,
+        TwoFactorService $twoFactor,
+        RecentAuthentication $recent,
+    ): Response {
         $user = $request->user();
         $currentId = $tracker->current($request)?->getKey();
 
@@ -21,6 +28,8 @@ class SecurityController extends Controller
             'sso_managed' => $user->requiresSso(),
             'has_password' => filled($user->password),
             'status' => session('status'),
+            'two_factor' => $user->requiresSso() ? null : $this->twoFactorState($user, $twoFactor, $recent->isRecent($request)),
+            'recovery_codes' => session(TwoFactorController::RECOVERY_CODES_FLASH),
             'sessions' => $user->sessions()
                 ->live()
                 ->latest('last_seen_at')
@@ -38,5 +47,25 @@ class SecurityController extends Controller
                 ->sortByDesc('current')
                 ->values(),
         ]);
+    }
+
+    /**
+     * The setup secret is only sent while identity was recently confirmed,
+     * so a lapsed session must restart setup rather than reveal it.
+     *
+     * @return array{enabled: bool, recovery_codes_remaining: int, setup: array{qr_image: string, secret: string}|null}
+     */
+    private function twoFactorState(User $user, TwoFactorService $twoFactor, bool $recentlyConfirmed): array
+    {
+        $pending = ! $user->hasTwoFactorEnabled() && $user->two_factor_secret !== null;
+
+        return [
+            'enabled' => $user->hasTwoFactorEnabled(),
+            'recovery_codes_remaining' => $user->hasTwoFactorEnabled() ? $twoFactor->remainingRecoveryCodes($user) : 0,
+            'setup' => $pending && $recentlyConfirmed ? [
+                'qr_image' => 'data:image/svg+xml;base64,'.base64_encode($twoFactor->qrSvg($user, $user->two_factor_secret)),
+                'secret' => $user->two_factor_secret,
+            ] : null,
+        ];
     }
 }

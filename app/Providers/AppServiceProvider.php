@@ -116,6 +116,8 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('email-change-link', fn (Request $request) => Limit::perMinute(10)->by($request->ip()));
 
+        RateLimiter::for('two-factor-setup', fn (Request $request) => Limit::perMinute(5)->by('two-factor-setup:'.$request->user()?->id));
+
         RateLimiter::for('reauth', fn (Request $request) => [
             Limit::perMinute(5)->by('reauth-user:'.$request->user()?->id),
             Limit::perMinute(20)->by('reauth-ip:'.$request->ip()),

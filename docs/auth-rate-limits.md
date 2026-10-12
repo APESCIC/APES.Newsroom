@@ -21,6 +21,12 @@ Signed-in account security endpoints (v1.9.0, epic #263):
 | `email-change` | `POST /account/email/resend` | 3 per minute per user, and 10 per minute per IP |
 | `email-change-link` | `GET` and `POST /account/email-change/{id}/confirm` and `/cancel` (signed links) | 10 per minute per IP |
 
+Multi-factor endpoints (v1.10.0):
+
+| Limiter | Endpoint(s) | Limit |
+|---------|-------------|-------|
+| `two-factor-setup` | `POST /account/two-factor/confirm` | 5 per minute per user |
+
 Limits that already existed before #279:
 
 | Endpoint | Limit |
