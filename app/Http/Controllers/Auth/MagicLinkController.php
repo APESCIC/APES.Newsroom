@@ -9,10 +9,10 @@ use App\Http\Requests\Auth\MagicLinkRequest;
 use App\Models\MagicLinkToken;
 use App\Models\User;
 use App\Notifications\MagicLinkNotification;
+use App\Services\Auth\PendingTwoFactorLogin;
 use App\Services\Auth\SsoOnlyPolicy;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -55,7 +55,7 @@ class MagicLinkController extends Controller
         return Inertia::render('Auth/MagicLinkSent');
     }
 
-    public function consume(Request $request, string $token, SsoOnlyPolicy $ssoOnly): RedirectResponse
+    public function consume(Request $request, string $token, SsoOnlyPolicy $ssoOnly, PendingTwoFactorLogin $login): RedirectResponse
     {
         $magicLinkToken = MagicLinkToken::where('token_hash', hash('sha256', $token))->first();
 
@@ -66,12 +66,8 @@ class MagicLinkController extends Controller
 
         $magicLinkToken->forceFill(['used_at' => now()])->save();
 
-        Auth::login($magicLinkToken->user);
-
-        $request->session()->regenerate();
-
         MagicLinkConsumed::dispatch($magicLinkToken->user);
 
-        return redirect()->route('home');
+        return $login->signIn($request, $magicLinkToken->user, false, 'magic_link', route('home'));
     }
 }

@@ -25,6 +25,7 @@ Multi-factor endpoints (v1.10.0):
 
 | Limiter | Endpoint(s) | Limit |
 |---------|-------------|-------|
+| `two-factor` | `POST /two-factor-challenge` | 5 per minute per pending user, and 20 per minute per IP. Separately, 5 wrong codes abandon the pending sign-in (`PendingTwoFactorLogin::MAX_ATTEMPTS`) |
 | `two-factor-setup` | `POST /account/two-factor/confirm` | 5 per minute per user |
 
 Limits that already existed before #279:
