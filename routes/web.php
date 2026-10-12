@@ -124,6 +124,12 @@ Route::middleware(['auth', 'verified'])->prefix('account')->name('account.')->gr
     Route::post('/two-factor/confirm', [AccountTwoFactorController::class, 'confirm'])
         ->middleware(['auth.recent', 'throttle:two-factor-setup'])
         ->name('two-factor.confirm');
+    Route::post('/two-factor/recovery-codes', [AccountTwoFactorController::class, 'regenerateRecoveryCodes'])
+        ->middleware('auth.recent')
+        ->name('two-factor.recovery-codes');
+    Route::delete('/two-factor', [AccountTwoFactorController::class, 'destroy'])
+        ->middleware('auth.recent')
+        ->name('two-factor.destroy');
     Route::get('/mailing', [PreferenceController::class, 'showAccount'])->name('mailing');
     Route::post('/mailing', [PreferenceController::class, 'updateAccount'])->name('mailing.update');
     Route::get('/public-profile', [ProfileController::class, 'edit'])->name('public-profile');

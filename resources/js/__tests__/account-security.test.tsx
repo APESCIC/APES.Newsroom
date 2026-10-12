@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import ConfirmIdentity from '../Pages/Account/ConfirmIdentity';
 import Security, { type AccountSession } from '../Pages/Account/Security';
 import Login from '../Pages/Auth/Login';
@@ -190,6 +190,82 @@ describe('two-factor challenge page', () => {
         const visit = getInertiaMock().visits.at(-1);
         expect(visit?.url).toBe('/two-factor-challenge');
         expect(visit?.data).toMatchObject({ code: '123456' });
+    });
+
+    it('switches to a recovery code', () => {
+        render(<TwoFactorChallenge />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Use a recovery code instead' }));
+        expect(screen.queryByLabelText('Authentication code')).not.toBeInTheDocument();
+
+        fireEvent.change(screen.getByLabelText('Recovery code'), { target: { value: 'abcde-fghjk' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+
+        const visit = getInertiaMock().visits.at(-1);
+        expect(visit?.url).toBe('/two-factor-challenge');
+        expect(visit?.data).toMatchObject({ code: '', recovery_code: 'abcde-fghjk' });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Use your authenticator app instead' }));
+        expect(screen.getByLabelText('Authentication code')).toBeInTheDocument();
+    });
+});
+
+describe('managing two-factor', () => {
+    const enabled = { enabled: true, recovery_codes_remaining: 8, setup: null };
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('gets new recovery codes after confirmation', () => {
+        vi.spyOn(window, 'confirm').mockReturnValue(true);
+        render(<Security sso_managed={false} has_password two_factor={enabled} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Get new recovery codes' }));
+
+        expect(getInertiaMock().post).toHaveBeenCalledWith('/account/two-factor/recovery-codes', {}, { preserveScroll: true });
+    });
+
+    it('turns two-factor off after confirmation', () => {
+        vi.spyOn(window, 'confirm').mockReturnValue(true);
+        render(<Security sso_managed={false} has_password two_factor={enabled} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Turn off two-factor' }));
+
+        expect(getInertiaMock().delete).toHaveBeenCalledWith('/account/two-factor', { preserveScroll: true });
+    });
+
+    it('does nothing when the confirmation is dismissed', () => {
+        vi.spyOn(window, 'confirm').mockReturnValue(false);
+        render(<Security sso_managed={false} has_password two_factor={enabled} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Turn off two-factor' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Get new recovery codes' }));
+
+        expect(getInertiaMock().delete).not.toHaveBeenCalled();
+        expect(getInertiaMock().post).not.toHaveBeenCalled();
+    });
+
+    it('warns when recovery codes are running low', () => {
+        render(<Security sso_managed={false} has_password status="recovery-code-used" two_factor={{ ...enabled, recovery_codes_remaining: 1 }} />);
+
+        expect(screen.getByRole('status')).toHaveTextContent('You signed in with a recovery code.');
+        expect(screen.getByText('1 recovery code left.')).toBeInTheDocument();
+        expect(screen.getByText(/running low on recovery codes/)).toBeInTheDocument();
+    });
+
+    it('cancels a pending setup', () => {
+        render(
+            <Security
+                sso_managed={false}
+                has_password
+                two_factor={{ enabled: false, recovery_codes_remaining: 0, setup: { qr_image: 'data:image/svg+xml;base64,PHN2Zy8+', secret: 'ABCD' } }}
+            />,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: 'Cancel setup' }));
+
+        expect(getInertiaMock().delete).toHaveBeenCalledWith('/account/two-factor', { preserveScroll: true });
     });
 });
 

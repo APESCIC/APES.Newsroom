@@ -100,8 +100,10 @@ class PendingTwoFactorLogin
 
     /**
      * Second factor accepted: sign the pending user in.
+     *
+     * @param  string|null  $destination  overrides the intended page
      */
-    public function complete(Request $request, User $user, string $method): RedirectResponse
+    public function complete(Request $request, User $user, string $method, ?string $destination = null): RedirectResponse
     {
         $pending = $this->pending($request);
         $this->clear($request);
@@ -114,7 +116,7 @@ class PendingTwoFactorLogin
             'via' => $pending['via'] ?? null,
         ], $request);
 
-        return redirect()->intended(route('home'));
+        return $destination !== null ? redirect()->to($destination) : redirect()->intended(route('home'));
     }
 
     public function clear(Request $request): void
