@@ -16,12 +16,13 @@ const DEV_ROLES = [
 ] as const;
 
 export default function Login({ staffLoginUrl, staffLoginLabel, rememberDays = 30 }: LoginProps) {
-    const { devTools } = usePage<{ devTools?: boolean }>().props;
+    const { devTools, errors: pageErrors } = usePage<{ devTools?: boolean; errors?: Record<string, string> }>().props;
     const { data, setData, post, processing, errors, reset } = useForm({
         email: '',
         password: '',
         remember: false,
     });
+    const emailError = errors.email ?? pageErrors?.email;
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -65,7 +66,7 @@ export default function Login({ staffLoginUrl, staffLoginLabel, rememberDays = 3
                     <div>
                         <label htmlFor="email" className="text-sm font-bold text-body">Email</label>
                         <input id="email" type="email" value={data.email} onChange={(e) => setData('email', e.target.value)} required autoFocus className="form-input mt-1" />
-                        {errors.email && <p className="text-sm text-danger">{errors.email}</p>}
+                        {emailError && <p className="text-sm text-danger">{emailError}</p>}
                     </div>
                     <div>
                         <label htmlFor="password" className="text-sm font-bold text-body">Password</label>

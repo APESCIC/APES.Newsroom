@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Enums\Role;
 use App\Http\Middleware\EnsureAuthEpoch;
 use App\Models\User;
+use App\Services\Auth\PendingTwoFactorLogin;
 use App\Services\Auth\RecentAuthentication;
 use App\Services\Membership\FakeStripeBillingClient;
 use App\Services\Membership\StripeApiBillingClient;
@@ -115,6 +116,11 @@ class AppServiceProvider extends ServiceProvider
         ]);
 
         RateLimiter::for('email-change-link', fn (Request $request) => Limit::perMinute(10)->by($request->ip()));
+
+        RateLimiter::for('two-factor', fn (Request $request) => [
+            Limit::perMinute(5)->by('two-factor-user:'.($request->session()->get(PendingTwoFactorLogin::SESSION_KEY.'.user_id') ?? $request->ip())),
+            Limit::perMinute(20)->by('two-factor-ip:'.$request->ip()),
+        ]);
 
         RateLimiter::for('two-factor-setup', fn (Request $request) => Limit::perMinute(5)->by('two-factor-setup:'.$request->user()?->id));
 

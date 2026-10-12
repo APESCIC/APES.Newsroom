@@ -4,6 +4,8 @@ namespace App\Http\Requests\Auth;
 
 use App\Models\User;
 use App\Services\Auth\SsoOnlyPolicy;
+use Illuminate\Auth\Events\Attempting;
+use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -30,16 +32,28 @@ class LoginRequest extends FormRequest
     }
 
     /**
-     * Attempt to authenticate the request's credentials, throwing on failure.
+     * Check the request's credentials without signing in, throwing on
+     * failure. The caller decides whether a second factor is needed first.
      */
-    public function authenticate(): void
+    public function authenticate(): User
     {
         $this->ensureIsNotRateLimited();
 
         $user = User::where('email', $this->string('email')->toString())->first();
         $refused = app(SsoOnlyPolicy::class)->refuses($user, 'password_login', $this);
 
-        if ($refused || ! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        $guard = Auth::guard('web');
+        $credentials = $this->only('email', 'password');
+
+        if (! $refused) {
+            event(new Attempting('web', $credentials, $this->boolean('remember')));
+        }
+
+        if ($refused || ! $guard->validate($credentials)) {
+            if (! $refused) {
+                event(new Failed('web', $guard->getLastAttempted(), $credentials));
+            }
+
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
@@ -48,6 +62,15 @@ class LoginRequest extends FormRequest
         }
 
         RateLimiter::clear($this->throttleKey());
+
+        /** @var User $authenticated */
+        $authenticated = $guard->getLastAttempted();
+
+        if (config('hashing.rehash_on_login', true)) {
+            $guard->getProvider()->rehashPasswordIfRequired($authenticated, $credentials);
+        }
+
+        return $authenticated;
     }
 
     /**

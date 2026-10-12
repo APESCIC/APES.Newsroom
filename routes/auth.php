@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -17,6 +18,11 @@ Route::middleware('guest')->group(function () {
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
+
+    Route::get('two-factor-challenge', [TwoFactorChallengeController::class, 'create'])->name('two-factor.challenge');
+    Route::post('two-factor-challenge', [TwoFactorChallengeController::class, 'store'])
+        ->middleware('throttle:two-factor')
+        ->name('two-factor.challenge.store');
 
     Route::get('login/magic-link', [MagicLinkController::class, 'create'])->name('magic-link.request');
     Route::post('login/magic-link', [MagicLinkController::class, 'store'])

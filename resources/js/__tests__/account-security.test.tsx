@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest';
 import ConfirmIdentity from '../Pages/Account/ConfirmIdentity';
 import Security, { type AccountSession } from '../Pages/Account/Security';
 import Login from '../Pages/Auth/Login';
-import { getInertiaMock } from '../test/inertia';
+import TwoFactorChallenge from '../Pages/Auth/TwoFactorChallenge';
+import { getInertiaMock, setMockPage } from '../test/inertia';
 
 describe('account security page', () => {
     it('asks password users for their current password', () => {
@@ -161,6 +162,34 @@ describe('login remember me', () => {
         const visit = getInertiaMock().visits.at(-1);
         expect(visit?.url).toBe('/login');
         expect(visit?.data).toMatchObject({ email: 'reader@example.com', remember: true });
+    });
+});
+
+describe('login after an abandoned challenge', () => {
+    it('shows the reason the user was sent back', () => {
+        const original = getInertiaMock().page.props;
+        setMockPage({ ...original, errors: { email: 'Your sign-in has expired. Please sign in again.' } });
+
+        try {
+            render(<Login staffLoginUrl={null} staffLoginLabel={null} />);
+
+            expect(screen.getByText('Your sign-in has expired. Please sign in again.')).toBeInTheDocument();
+        } finally {
+            setMockPage(original);
+        }
+    });
+});
+
+describe('two-factor challenge page', () => {
+    it('sends the authentication code', () => {
+        render(<TwoFactorChallenge />);
+
+        fireEvent.change(screen.getByLabelText('Authentication code'), { target: { value: '123456' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+
+        const visit = getInertiaMock().visits.at(-1);
+        expect(visit?.url).toBe('/two-factor-challenge');
+        expect(visit?.data).toMatchObject({ code: '123456' });
     });
 });
 

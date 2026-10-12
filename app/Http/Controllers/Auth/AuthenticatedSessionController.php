@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Services\Auth\PendingTwoFactorLogin;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -25,13 +26,11 @@ class AuthenticatedSessionController extends Controller
         ]);
     }
 
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(LoginRequest $request, PendingTwoFactorLogin $login): RedirectResponse
     {
-        $request->authenticate();
+        $user = $request->authenticate();
 
-        $request->session()->regenerate();
-
-        return redirect()->intended(route('home'));
+        return $login->signIn($request, $user, $request->boolean('remember'), 'password', route('home'));
     }
 
     public function destroy(Request $request): RedirectResponse
