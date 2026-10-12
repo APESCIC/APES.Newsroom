@@ -33,9 +33,13 @@ class CloudronOidcProvider
 
     private ?GenericProvider $provider = null;
 
-    public function authorizationUrl(string $nonce): string
+    /**
+     * @param  array<string, string|int>  $extra  Additional authorization parameters (e.g. max_age, prompt).
+     */
+    public function authorizationUrl(string $nonce, array $extra = []): string
     {
         return $this->provider()->getAuthorizationUrl([
+            ...$extra,
             'scope' => ['openid', 'email', 'profile'],
             'nonce' => $nonce,
         ]);
@@ -85,6 +89,7 @@ class CloudronOidcProvider
             email: $email,
             name: (string) ($owner['name'] ?? $email),
             emailVerified: filter_var($owner['email_verified'] ?? $claims->email_verified ?? false, FILTER_VALIDATE_BOOLEAN),
+            authTime: is_numeric($claims->auth_time ?? null) ? (int) $claims->auth_time : null,
         );
     }
 

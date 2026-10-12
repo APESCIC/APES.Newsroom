@@ -9,5 +9,6 @@ final readonly class StaffOidcIdentity
         public string $email,
         public string $name,
         public bool $emailVerified = false,
+        public ?int $authTime = null,
     ) {}
 }

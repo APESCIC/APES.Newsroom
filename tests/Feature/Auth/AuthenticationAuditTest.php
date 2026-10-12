@@ -228,6 +228,7 @@ class AuthenticationAuditTest extends TestCase
         AuditLog::query()->create(['actor_id' => $user->id, 'action' => 'settings.updated']);
 
         $this->actingAs($user)
+            ->withRecentAuthentication()
             ->from(route('account.show'))
             ->delete(route('account.destroy'))
             ->assertSessionHasErrors('delete_account');

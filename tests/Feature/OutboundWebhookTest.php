@@ -30,7 +30,7 @@ class OutboundWebhookTest extends TestCase
     {
         $staff = User::factory()->staff()->create();
 
-        $this->actingAs($staff)
+        $this->actingAs($staff)->withRecentAuthentication()
             ->post(route('staff.webhooks.store'), [
                 'name' => 'CI sink',
                 'url' => 'https://example.com/hooks/newsroom',

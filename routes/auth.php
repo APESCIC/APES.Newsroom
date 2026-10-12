@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Account\ReauthenticationController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\CloudronOidcController;
 use App\Http\Controllers\Auth\EmailVerificationController;
@@ -33,13 +34,29 @@ Route::middleware('guest')->group(function () {
     Route::post('reset-password', [NewPasswordController::class, 'store'])->name('password.store');
 
     Route::get('auth/cloudron/redirect', [CloudronOidcController::class, 'redirect'])->name('cloudron.redirect');
-    Route::get('auth/cloudron/callback', [CloudronOidcController::class, 'callback'])
-        ->middleware('throttle:oidc-callback')
-        ->name('cloudron.callback');
 });
+
+// Shared by sign-in (guests) and SSO re-authentication (signed-in staff);
+// the controller sends signed-in users without a re-auth request home.
+Route::get('auth/cloudron/callback', [CloudronOidcController::class, 'callback'])
+    ->middleware('throttle:oidc-callback')
+    ->name('cloudron.callback');
 
 Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+
+    Route::get('account/confirm-identity', [ReauthenticationController::class, 'show'])->name('account.confirm-identity');
+    Route::post('account/confirm-identity/password', [ReauthenticationController::class, 'confirmPassword'])
+        ->middleware('throttle:reauth')
+        ->name('account.confirm-identity.password');
+    Route::post('account/confirm-identity/code/send', [ReauthenticationController::class, 'sendCode'])
+        ->middleware('throttle:reauth')
+        ->name('account.confirm-identity.code.send');
+    Route::post('account/confirm-identity/code', [ReauthenticationController::class, 'confirmCode'])
+        ->middleware('throttle:reauth')
+        ->name('account.confirm-identity.code');
+    Route::get('account/confirm-identity/sso', [CloudronOidcController::class, 'reauthenticate'])
+        ->name('account.confirm-identity.sso');
 
     Route::get('verify-email', [EmailVerificationController::class, 'notice'])->name('verification.notice');
     Route::get('verify-email/{id}/{hash}', [EmailVerificationController::class, 'verify'])

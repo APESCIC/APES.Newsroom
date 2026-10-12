@@ -5,18 +5,25 @@ namespace App\Providers;
 use App\Enums\Role;
 use App\Http\Middleware\EnsureAuthEpoch;
 use App\Models\User;
+use App\Services\Auth\RecentAuthentication;
 use App\Services\Membership\FakeStripeBillingClient;
 use App\Services\Membership\StripeApiBillingClient;
 use App\Services\Membership\StripeBillingClient;
 use App\Services\Settings\SettingsRepository;
+use App\Support\Auth\PasswordPolicy;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Contracts\Validation\UncompromisedVerifier;
+use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Illuminate\Validation\NotPwnedVerifier;
+use Illuminate\Validation\Rules\Password;
 use Stripe\StripeClient;
 
 class AppServiceProvider extends ServiceProvider
@@ -38,6 +45,11 @@ class AppServiceProvider extends ServiceProvider
                 new StripeClient((string) config('services.stripe.secret')),
             );
         });
+
+        $this->app->extend(UncompromisedVerifier::class, fn ($verifier, $app) => new NotPwnedVerifier(
+            $app->make(HttpFactory::class),
+            max(1, (int) config('security.password.breached_check_timeout', 5)),
+        ));
     }
 
     /**
@@ -49,9 +61,15 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('access-admin-area', fn (User $user) => $user->role->atLeast(Role::Admin));
         Gate::define('access-super-admin-area', fn (User $user) => $user->role->atLeast(Role::SuperAdmin));
 
+        Password::defaults(fn () => PasswordPolicy::rule());
+
         Event::listen(Login::class, function (Login $event) {
             if ($event->guard === 'web' && $event->user instanceof User) {
                 session()->put(EnsureAuthEpoch::SESSION_KEY, (int) $event->user->auth_epoch);
+
+                if (! Auth::guard('web')->viaRemember()) {
+                    app(RecentAuthentication::class)->stamp(request());
+                }
             }
         });
 
@@ -88,5 +106,12 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('mailing-signup', fn (Request $request) => Limit::perMinute(10)->by($request->ip()));
 
         RateLimiter::for('oidc-callback', fn (Request $request) => Limit::perMinute(20)->by($request->ip()));
+
+        RateLimiter::for('password-change', fn (Request $request) => Limit::perMinute(5)->by('user:'.$request->user()?->id));
+
+        RateLimiter::for('reauth', fn (Request $request) => [
+            Limit::perMinute(5)->by('reauth-user:'.$request->user()?->id),
+            Limit::perMinute(20)->by('reauth-ip:'.$request->ip()),
+        ]);
     }
 }

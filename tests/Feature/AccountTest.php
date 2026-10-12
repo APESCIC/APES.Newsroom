@@ -36,7 +36,7 @@ class AccountTest extends TestCase
     {
         $publicUser = User::factory()->create();
 
-        $this->actingAs($publicUser)
+        $this->actingAs($publicUser)->withRecentAuthentication()
             ->get(route('account.show'))
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Account/Profile')
@@ -46,7 +46,7 @@ class AccountTest extends TestCase
 
         $staff = User::factory()->staff()->create();
 
-        $this->actingAs($staff)
+        $this->actingAs($staff)->withRecentAuthentication()
             ->get(route('account.show'))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('can_delete_account', false)
@@ -57,7 +57,7 @@ class AccountTest extends TestCase
     {
         $user = User::factory()->create(['name' => 'Old Name']);
 
-        $this->actingAs($user)
+        $this->actingAs($user)->withRecentAuthentication()
             ->patch(route('account.update'), ['name' => 'New Name', 'email' => $user->email])
             ->assertRedirect();
 
@@ -68,7 +68,7 @@ class AccountTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->get(route('account.export'));
+        $response = $this->actingAs($user)->withRecentAuthentication()->get(route('account.export'));
 
         $response->assertOk();
         $response->assertHeader('content-type', 'application/json');
@@ -79,7 +79,7 @@ class AccountTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->actingAs($user)
+        $this->actingAs($user)->withRecentAuthentication()
             ->delete(route('account.destroy'))
             ->assertRedirect(route('home'));
 
@@ -111,7 +111,7 @@ class AccountTest extends TestCase
             ]));
 
         foreach ($accounts as $account) {
-            $this->actingAs($account)
+            $this->actingAs($account)->withRecentAuthentication()
                 ->from(route('account.show'))
                 ->delete(route('account.destroy'))
                 ->assertRedirect(route('account.show'))
@@ -130,7 +130,7 @@ class AccountTest extends TestCase
         ]);
         $post = Post::factory()->create(['author_id' => $user->id]);
 
-        $this->actingAs($user)
+        $this->actingAs($user)->withRecentAuthentication()
             ->from(route('account.show'))
             ->delete(route('account.destroy'))
             ->assertRedirect(route('account.show'))
@@ -208,7 +208,7 @@ class AccountTest extends TestCase
             'reason' => 'A public report',
         ]);
 
-        $this->actingAs($user)
+        $this->actingAs($user)->withRecentAuthentication()
             ->delete(route('account.destroy'))
             ->assertRedirect(route('home'));
 
