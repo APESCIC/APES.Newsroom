@@ -1,0 +1,32 @@
+{
+  "version": "v1.10.0",
+  "released_at": "2026-10-12",
+  "previous_version": "v1.9.0",
+  "theme": "Two-factor sign-in and passkeys",
+  "change_types": [
+    "security",
+    "added"
+  ],
+  "topic_tags": [
+    "public-facing",
+    "internal-only",
+    "compliance"
+  ],
+  "summary": "Members can now protect their accounts with two-factor authentication from an authenticator app, and sign in with a passkey instead of a password. Passkeys use your fingerprint, face, screen lock or a security key, and cannot be used on a fake copy of the site.",
+  "detailed_changes": [
+    "You can turn on two-factor authentication from Account security by scanning a QR code with an authenticator app. You get 8 single-use recovery codes to keep somewhere safe (#269, #296, #297).",
+    "With two-factor on, signing in with a password or an emailed link asks for a 6-digit code. Each code works once, and after 5 wrong codes you have to start signing in again (#298).",
+    "If you lose your phone, a recovery code gets you in. You can get a new set of recovery codes or turn two-factor off after confirming it's you, and we email you when either happens (#299).",
+    "You can add passkeys from Account security, give each one a name, rename them and remove them. We email you when a passkey is added or removed, and your passkeys are included in your data export (#270, #300, #301).",
+    "The sign-in page has a \"Sign in with a passkey\" button, and supported browsers offer your passkey straight from the email field. A passkey that checks your fingerprint, face or PIN counts as two-factor, so you are not asked for a code as well (#302).",
+    "If you use two-factor, you can answer the code step with a passkey instead (#302).",
+    "Staff continue to sign in through Cloudron single sign-on, where two-factor is enforced by Cloudron. The sign-in methods Cloudron reports are now recorded in the audit log (#303)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /login, /two-factor-challenge, /account/security, /account/export",
+    "User groups affected: members who sign in with a password or emailed link; staff sign-in is unchanged",
+    "Public impact: optional two-factor authentication, recovery codes, passkey management and passkey sign-in, new security emails",
+    "Internal impact: new passkeys table and two-factor columns on users, new audit events, Cloudron staff two-factor documented, governance records updated"
+  ]
+}
