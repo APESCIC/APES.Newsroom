@@ -283,7 +283,8 @@ Staff MFA is enforced by Cloudron, not by the Newsroom (decision on #303):
 - Turn on **Users → Settings → Mandatory 2FA** in the Cloudron dashboard.
   The setting covers every Cloudron user; it cannot be limited to the
   `newsroom.*` groups. It is skipped for users from an external directory,
-  so enforce 2FA there if one is ever connected.
+  so enforce 2FA there if one is ever connected. Enabled on the live
+  Cloudron on 2026-10-12 (#369).
 - Cloudron's OIDC server documents only the `profile` and `email` claims
   and does not say it sends `amr` (authentication methods). The Newsroom
   records whatever `amr` the ID token carries in the `auth.oidc_allowed`

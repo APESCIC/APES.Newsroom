@@ -36,5 +36,5 @@
 - Live SMTP misconfiguration on beta/production
 - Incomplete WCAG evidence until formal a11y review
 - Production cutover authorization (#11)
-- Cloudron Mandatory 2FA must stay on; the app cannot verify it because Cloudron does not report `amr`. Cloudron impersonate and superadmin one-time passwords bypass 2FA (#303)
+- Cloudron Mandatory 2FA is on (confirmed 2026-10-12, #369) and must stay on; the app cannot verify it because Cloudron does not report `amr`. Cloudron impersonate and superadmin one-time passwords bypass 2FA (#303)
 - Two-factor and passkeys are optional for members; an account with neither is protected only by its password or email inbox
