@@ -189,6 +189,18 @@ class AuthenticationAuditTest extends TestCase
         $log = $this->singleLog('auth.oidc_allowed');
         $this->assertSame($user->id, $log->actor_id);
         $this->assertSame('staff', $log->payload['role']);
+        $this->assertSame([], $log->payload['amr']);
+    }
+
+    public function test_oidc_sign_in_records_reported_authentication_methods_without_blocking(): void
+    {
+        $user = User::factory()->staff()->create(['external_id' => 'oidc-1', 'email' => 'staff@example.com']);
+        $this->mockOidc(StaffReconcileResult::allow($user), ['pwd', 'otp']);
+
+        $this->oidcCallback()->assertRedirect(route('home'));
+
+        $this->assertAuthenticatedAs($user);
+        $this->assertSame(['pwd', 'otp'], $this->singleLog('auth.oidc_allowed')->payload['amr']);
     }
 
     public function test_oidc_sign_in_denied_is_recorded_with_a_reason_category(): void
@@ -254,11 +266,14 @@ class AuthenticationAuditTest extends TestCase
         }
     }
 
-    private function mockOidc(StaffReconcileResult $result): void
+    /**
+     * @param  list<string>  $amr
+     */
+    private function mockOidc(StaffReconcileResult $result, array $amr = []): void
     {
         $provider = Mockery::mock(CloudronOidcProvider::class);
         $provider->shouldReceive('exchangeCodeForIdentity')
-            ->andReturn(new StaffOidcIdentity(sub: 'oidc-1', email: 'staff@example.com', name: 'Staff User', emailVerified: true));
+            ->andReturn(new StaffOidcIdentity(sub: 'oidc-1', email: 'staff@example.com', name: 'Staff User', emailVerified: true, amr: $amr));
         $this->app->instance(CloudronOidcProvider::class, $provider);
 
         $reconciler = Mockery::mock(StaffReconciler::class);

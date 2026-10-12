@@ -9,5 +9,8 @@ class OidcSignInAllowed
 {
     use Dispatchable;
 
-    public function __construct(public readonly User $user) {}
+    /**
+     * @param  list<string>  $amr
+     */
+    public function __construct(public readonly User $user, public readonly array $amr = []) {}
 }

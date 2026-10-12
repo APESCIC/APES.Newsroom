@@ -103,7 +103,7 @@ class CloudronOidcController extends Controller
 
         $request->session()->regenerate();
 
-        OidcSignInAllowed::dispatch($result->user);
+        OidcSignInAllowed::dispatch($result->user, $identity->amr);
 
         return redirect()->route('home');
     }
