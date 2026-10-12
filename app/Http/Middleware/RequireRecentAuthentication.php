@@ -18,6 +18,8 @@ class RequireRecentAuthentication
         }
 
         if ($request->expectsJson()) {
+            $request->session()->put('url.intended', url()->previous(route('account.show')));
+
             abort(423, 'Please confirm your identity to continue.');
         }
 

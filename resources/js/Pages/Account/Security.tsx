@@ -1,5 +1,6 @@
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
+import PasskeysSection, { type AccountPasskey } from '../../Components/Account/PasskeysSection';
 import TwoFactorSection, { type TwoFactorState } from '../../Components/Account/TwoFactorSection';
 import AccountLayout from '../../Components/Layout/AccountLayout';
 
@@ -20,6 +21,7 @@ type SecurityProps = {
     status?: string | null;
     two_factor?: TwoFactorState | null;
     recovery_codes?: string[] | null;
+    passkeys?: AccountPasskey[] | null;
     sessions?: AccountSession[];
 };
 
@@ -29,6 +31,9 @@ const STATUS_MESSAGES: Record<string, string> = {
     'two-factor-disabled': 'Two-factor authentication is off.',
     'recovery-codes-regenerated': 'New recovery codes created. Your old codes no longer work.',
     'recovery-code-used': 'You signed in with a recovery code. That code no longer works.',
+    'passkey-added': 'Passkey added. You can now use it to sign in.',
+    'passkey-renamed': 'Passkey renamed.',
+    'passkey-removed': 'Passkey removed.',
     'session-ended': 'That session has been signed out.',
     'other-sessions-ended': 'All other sessions have been signed out.',
 };
@@ -176,7 +181,7 @@ function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
     );
 }
 
-export default function Security({ sso_managed, has_password, status, two_factor, recovery_codes, sessions = [] }: SecurityProps) {
+export default function Security({ sso_managed, has_password, status, two_factor, recovery_codes, passkeys, sessions = [] }: SecurityProps) {
     const statusMessage = status ? STATUS_MESSAGES[status] : undefined;
 
     return (
@@ -204,6 +209,8 @@ export default function Security({ sso_managed, has_password, status, two_factor
             ) : (
                 <PasswordSection hasPassword={has_password} />
             )}
+
+            {!sso_managed && passkeys && <PasskeysSection passkeys={passkeys} />}
 
             {!sso_managed && two_factor && <TwoFactorSection state={two_factor} recoveryCodes={recovery_codes} />}
 

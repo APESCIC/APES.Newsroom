@@ -105,6 +105,14 @@ class AccountController extends Controller
                 'interval' => $user->membership->interval,
                 'current_period_end' => $user->membership->current_period_end?->toIso8601String(),
             ] : null,
+            'security' => [
+                'two_factor_enabled' => $user->hasTwoFactorEnabled(),
+                'passkeys' => $user->passkeys()->oldest()->get()->map(fn ($passkey) => [
+                    'name' => $passkey->name,
+                    'created_at' => $passkey->created_at?->toIso8601String(),
+                    'last_used_at' => $passkey->last_used_at?->toIso8601String(),
+                ])->all(),
+            ],
         ];
 
         $filename = 'apes-newsroom-account-'.now()->format('Y-m-d').'.json';
