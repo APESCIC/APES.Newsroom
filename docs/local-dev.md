@@ -156,6 +156,27 @@ Expected health response when Redis is configured:
 3. Authenticate at Cloudron OIDC
 4. Callback reconciles LDAP groups and stores the session in Redis
 
+## Passkeys locally
+
+Browsers refuse WebAuthn on IP addresses, so passkeys only work at
+`http://localhost:8000` (the `.env.example` default). Opening the app at
+`http://127.0.0.1:8000` shows the passkey buttons but the browser rejects
+every ceremony.
+
+The relying party ID and the allowed origin come from `APP_URL` at boot
+(after Cloudron supplies `CLOUDRON_APP_ORIGIN` in production). Override
+them only for unusual setups:
+
+```env
+# PASSKEYS_RP_ID=localhost
+# PASSKEYS_ALLOWED_ORIGINS=http://localhost:8000
+```
+
+Chrome DevTools > More tools > WebAuthn can add a virtual authenticator if
+you have no platform passkey. Automated tests use
+`tests/Support/FakeAuthenticator.php`, which signs real assertions with a
+throwaway P-256 key.
+
 ## Automated tests
 
 PHPUnit covers auth logic without live services:

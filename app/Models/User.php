@@ -12,13 +12,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\LaravelPasskeys\Models\Concerns\HasPasskeys;
+use Spatie\LaravelPasskeys\Models\Concerns\InteractsWithPasskeys;
 
 #[Fillable(['name', 'email', 'password', 'auth_provider', 'external_id'])]
 #[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes', 'two_factor_last_used_step'])]
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable implements HasPasskeys, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, InteractsWithPasskeys, Notifiable;
 
     /**
      * Get the attributes that should be cast.
@@ -47,6 +49,15 @@ class User extends Authenticatable implements MustVerifyEmail
     public function hasTwoFactorEnabled(): bool
     {
         return $this->two_factor_secret !== null && $this->two_factor_confirmed_at !== null;
+    }
+
+    /**
+     * WebAuthn user handle: opaque, so authenticators never hold the
+     * sequential account id.
+     */
+    public function getPasskeyId(): string
+    {
+        return hash_hmac('sha256', 'passkey-user:'.$this->getKey(), (string) config('app.key'));
     }
 
     /**

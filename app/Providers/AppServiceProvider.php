@@ -64,6 +64,8 @@ class AppServiceProvider extends ServiceProvider
 
         Password::defaults(fn () => PasswordPolicy::rule());
 
+        $this->configurePasskeyRelyingParty();
+
         Event::listen(Login::class, function (Login $event) {
             if ($event->guard === 'web' && $event->user instanceof User) {
                 session()->put(EnsureAuthEpoch::SESSION_KEY, (int) $event->user->auth_epoch);
@@ -128,5 +130,23 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(5)->by('reauth-user:'.$request->user()?->id),
             Limit::perMinute(20)->by('reauth-ip:'.$request->ip()),
         ]);
+    }
+
+    /**
+     * Runs at boot so the Cloudron origin (set during register) is final.
+     */
+    private function configurePasskeyRelyingParty(): void
+    {
+        $appUrl = parse_url((string) config('app.url'));
+        $host = $appUrl['host'] ?? 'localhost';
+
+        if (! config('passkeys.relying_party.id')) {
+            config(['passkeys.relying_party.id' => $host]);
+        }
+
+        if (config('passkeys.allowed_origins') === []) {
+            $port = isset($appUrl['port']) ? ':'.$appUrl['port'] : '';
+            config(['passkeys.allowed_origins' => [($appUrl['scheme'] ?? 'https').'://'.$host.$port]]);
+        }
     }
 }
