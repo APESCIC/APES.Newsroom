@@ -37,11 +37,14 @@ through the guarded deploy workflow.
 
 ## Account security features
 
-Members can protect their own accounts from **Account → Security**: review
+Members can protect their own accounts from **Account → Security**: turn on
+two-factor authentication with an authenticator app, add passkeys, review
 and sign out signed-in sessions, change their password, and watch for the
-security emails sent when a password, email address, device or API token
-changes. If you get one of those emails and it wasn't you, reset your
-password and sign out other sessions. Controls are summarised in
+security emails sent when a password, email address, device, API token,
+two-factor setting or passkey changes. If you get one of those emails and it
+wasn't you, reset your password and sign out other sessions. Staff sign in
+through Cloudron single sign-on, where two-factor is enforced by Cloudron.
+Controls are summarised in
 [`docs/governance/threat-model.md`](docs/governance/threat-model.md).
 
 ## Maintainers
