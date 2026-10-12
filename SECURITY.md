@@ -35,6 +35,15 @@ you, and fix it on a private fork or branch where appropriate. The advisory is
 published, with credit if you want it, only after the fix has been deployed
 through the guarded deploy workflow.
 
+## Account security features
+
+Members can protect their own accounts from **Account → Security**: review
+and sign out signed-in sessions, change their password, and watch for the
+security emails sent when a password, email address, device or API token
+changes. If you get one of those emails and it wasn't you, reset your
+password and sign out other sessions. Controls are summarised in
+[`docs/governance/threat-model.md`](docs/governance/threat-model.md).
+
 ## Maintainers
 
 - Track remediation work in GitHub issues without exploit details; keep

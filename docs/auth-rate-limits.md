@@ -12,6 +12,15 @@ applied with `throttle:<name>` in `routes/auth.php` and `routes/web.php`.
 | `mailing-signup` | `POST /mailing/signup`, `POST /newsletters/{slug}/signup` (including `?embed=1`) | 10 per minute per IP, shared across both routes |
 | `oidc-callback` | `GET /auth/cloudron/callback` | 20 per minute per IP |
 
+Signed-in account security endpoints (v1.9.0, epic #263):
+
+| Limiter | Endpoint(s) | Limit |
+|---------|-------------|-------|
+| `password-change` | `PUT /account/password` | 5 per minute per user |
+| `reauth` | `POST /account/confirm-identity/password`, `POST /account/confirm-identity/code/send`, `POST /account/confirm-identity/code` | 5 per minute per user, and 20 per minute per IP |
+| `email-change` | `POST /account/email/resend` | 3 per minute per user, and 10 per minute per IP |
+| `email-change-link` | `GET` and `POST /account/email-change/{id}/confirm` and `/cancel` (signed links) | 10 per minute per IP |
+
 Limits that already existed before #279:
 
 | Endpoint | Limit |
