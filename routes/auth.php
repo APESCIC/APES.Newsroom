@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\CloudronOidcController;
 use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\Auth\PasskeyLoginController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\TwoFactorChallengeController;
@@ -23,6 +24,19 @@ Route::middleware('guest')->group(function () {
     Route::post('two-factor-challenge', [TwoFactorChallengeController::class, 'store'])
         ->middleware('throttle:two-factor')
         ->name('two-factor.challenge.store');
+    Route::post('two-factor-challenge/passkey/options', [TwoFactorChallengeController::class, 'passkeyOptions'])
+        ->middleware('throttle:two-factor')
+        ->name('two-factor.challenge.passkey-options');
+    Route::post('two-factor-challenge/passkey', [TwoFactorChallengeController::class, 'passkey'])
+        ->middleware('throttle:two-factor')
+        ->name('two-factor.challenge.passkey');
+
+    Route::post('passkeys/login/options', [PasskeyLoginController::class, 'options'])
+        ->middleware('throttle:passkey-login-options')
+        ->name('passkey-login.options');
+    Route::post('passkeys/login', [PasskeyLoginController::class, 'store'])
+        ->middleware('throttle:passkey-login')
+        ->name('passkey-login.store');
 
     Route::get('login/magic-link', [MagicLinkController::class, 'create'])->name('magic-link.request');
     Route::post('login/magic-link', [MagicLinkController::class, 'store'])

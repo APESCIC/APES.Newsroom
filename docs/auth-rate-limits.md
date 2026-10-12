@@ -25,7 +25,9 @@ Multi-factor endpoints (v1.10.0):
 
 | Limiter | Endpoint(s) | Limit |
 |---------|-------------|-------|
-| `two-factor` | `POST /two-factor-challenge` | 5 per minute per pending user, and 20 per minute per IP. Separately, 5 wrong codes abandon the pending sign-in (`PendingTwoFactorLogin::MAX_ATTEMPTS`) |
+| `passkey-login-options` | `POST /passkeys/login/options` (also fetched for browser autofill on every login page view) | 30 per minute per IP |
+| `passkey-login` | `POST /passkeys/login` | 10 per minute per IP |
+| `two-factor` | `POST /two-factor-challenge`, `POST /two-factor-challenge/passkey/options`, `POST /two-factor-challenge/passkey` | 5 per minute per pending user, and 20 per minute per IP. Separately, 5 wrong codes abandon the pending sign-in (`PendingTwoFactorLogin::MAX_ATTEMPTS`) |
 | `two-factor-setup` | `POST /account/two-factor/confirm` | 5 per minute per user |
 | `passkey-manage` | `POST /account/passkeys/options`, `POST /account/passkeys` | 10 per minute per user. Each account can hold at most 20 passkeys (`PasskeyController::MAX_PASSKEYS`) |
 

@@ -1,6 +1,14 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import {
+    browserSupportsWebAuthn,
+    browserSupportsWebAuthnAutofill,
+    startAuthentication,
+    WebAuthnAbortService,
+    type AuthenticationResponseJSON,
+} from '@simplewebauthn/browser';
+import { FormEventHandler, useEffect, useRef, useState } from 'react';
 import AuthCard from '../../Components/Auth/AuthCard';
+import { requestPasskeyOptions, signInErrorMessage } from '../../Components/Auth/passkeys';
 
 interface LoginProps {
     staffLoginUrl: string | null;
@@ -15,6 +23,12 @@ const DEV_ROLES = [
     { key: 'super_admin', label: 'Super admin' },
 ] as const;
 
+const PASSKEY_OPTIONS_URL = '/passkeys/login/options';
+
+function submitPasskey(credential: AuthenticationResponseJSON, remember: boolean, onFinish: () => void): void {
+    router.post('/passkeys/login', { credential: JSON.stringify(credential), remember }, { onFinish });
+}
+
 export default function Login({ staffLoginUrl, staffLoginLabel, rememberDays = 30 }: LoginProps) {
     const { devTools, errors: pageErrors } = usePage<{ devTools?: boolean; errors?: Record<string, string> }>().props;
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -23,6 +37,46 @@ export default function Login({ staffLoginUrl, staffLoginLabel, rememberDays = 3
         remember: false,
     });
     const emailError = errors.email ?? pageErrors?.email;
+    const [supportsPasskeys] = useState(() => browserSupportsWebAuthn());
+    const [passkeyBusy, setPasskeyBusy] = useState(false);
+    const [passkeyError, setPasskeyError] = useState<string | null>(null);
+    const remember = useRef(data.remember);
+
+    useEffect(() => {
+        remember.current = data.remember;
+    }, [data.remember]);
+
+    useEffect(() => {
+        let active = true;
+
+        void (async () => {
+            if (!(await browserSupportsWebAuthnAutofill())) {
+                return;
+            }
+
+            const response = await requestPasskeyOptions(PASSKEY_OPTIONS_URL);
+
+            if (!response.ok || !active) {
+                return;
+            }
+
+            try {
+                const credential = await startAuthentication({ optionsJSON: await response.json(), useBrowserAutofill: true });
+
+                if (active) {
+                    setPasskeyBusy(true);
+                    submitPasskey(credential, remember.current, () => setPasskeyBusy(false));
+                }
+            } catch {
+                // Autofill was dismissed or replaced by another sign-in attempt.
+            }
+        })();
+
+        return () => {
+            active = false;
+            WebAuthnAbortService.cancelCeremony();
+        };
+    }, []);
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -30,6 +84,29 @@ export default function Login({ staffLoginUrl, staffLoginLabel, rememberDays = 3
             onFinish: () => reset('password'),
         });
     };
+
+    const signInWithPasskey = async () => {
+        setPasskeyError(null);
+        setPasskeyBusy(true);
+
+        try {
+            const response = await requestPasskeyOptions(PASSKEY_OPTIONS_URL);
+
+            if (!response.ok) {
+                setPasskeyError('Could not start passkey sign-in. Please try again.');
+                setPasskeyBusy(false);
+                return;
+            }
+
+            const credential = await startAuthentication({ optionsJSON: await response.json() });
+            submitPasskey(credential, remember.current, () => setPasskeyBusy(false));
+        } catch (caught) {
+            setPasskeyError(signInErrorMessage(caught));
+            setPasskeyBusy(false);
+        }
+    };
+
+    const passkeyMessage = passkeyError ?? pageErrors?.passkey;
 
     return (
         <>
@@ -65,7 +142,16 @@ export default function Login({ staffLoginUrl, staffLoginLabel, rememberDays = 3
                 <form onSubmit={submit} className="flex flex-col gap-4">
                     <div>
                         <label htmlFor="email" className="text-sm font-bold text-body">Email</label>
-                        <input id="email" type="email" value={data.email} onChange={(e) => setData('email', e.target.value)} required autoFocus className="form-input mt-1" />
+                        <input
+                            id="email"
+                            type="email"
+                            autoComplete="username webauthn"
+                            value={data.email}
+                            onChange={(e) => setData('email', e.target.value)}
+                            required
+                            autoFocus
+                            className="form-input mt-1"
+                        />
                         {emailError && <p className="text-sm text-danger">{emailError}</p>}
                     </div>
                     <div>
@@ -88,6 +174,14 @@ export default function Login({ staffLoginUrl, staffLoginLabel, rememberDays = 3
                         Log in
                     </button>
                 </form>
+                {supportsPasskeys && (
+                    <div className="mt-4 flex flex-col gap-2">
+                        <button type="button" onClick={signInWithPasskey} disabled={passkeyBusy} className="button-secondary w-full">
+                            {passkeyBusy ? 'Waiting for your passkey…' : 'Sign in with a passkey'}
+                        </button>
+                        {passkeyMessage && <p className="text-sm text-danger">{passkeyMessage}</p>}
+                    </div>
+                )}
                 <p className="mt-6 flex flex-col gap-1 text-sm text-muted">
                     <Link href="/login/magic-link" className="text-teal-deep hover:underline">Email me a sign-in link instead</Link>
                     <Link href="/forgot-password" className="text-teal-deep hover:underline">Forgot your password?</Link>
