@@ -134,6 +134,15 @@ vi.mock('@inertiajs/react', async () => {
                     return restored;
                 });
             }, [defaultData]);
+            const clearErrors = React.useCallback((...fields: string[]) => {
+                setErrors((current) => {
+                    if (fields.length === 0) {
+                        return {};
+                    }
+
+                    return Object.fromEntries(Object.entries(current).filter(([key]) => !fields.includes(key)));
+                });
+            }, []);
 
             return {
                 data,
@@ -144,6 +153,7 @@ vi.mock('@inertiajs/react', async () => {
                 delete: destroy,
                 processing,
                 errors,
+                clearErrors,
                 transform,
                 setDefaults,
                 isDirty: JSON.stringify(data) !== JSON.stringify(defaultData),

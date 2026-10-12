@@ -26,6 +26,9 @@ type SecurityProps = {
 const STATUS_MESSAGES: Record<string, string> = {
     'password-updated': 'Password updated. Other sessions have been signed out.',
     'two-factor-enabled': 'Two-factor authentication is on.',
+    'two-factor-disabled': 'Two-factor authentication is off.',
+    'recovery-codes-regenerated': 'New recovery codes created. Your old codes no longer work.',
+    'recovery-code-used': 'You signed in with a recovery code. That code no longer works.',
     'session-ended': 'That session has been signed out.',
     'other-sessions-ended': 'All other sessions have been signed out.',
 };

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Account;
 
 use App\Http\Controllers\Controller;
+use App\Notifications\Security\RecoveryCodesRegeneratedNotification;
+use App\Notifications\Security\TwoFactorDisabledNotification;
 use App\Notifications\Security\TwoFactorEnabledNotification;
 use App\Services\Audit\AuditLogger;
 use App\Services\Auth\TwoFactor\TwoFactorService;
@@ -59,5 +61,40 @@ class TwoFactorController extends Controller
         return redirect()->route('account.security')
             ->with('status', 'two-factor-enabled')
             ->with(self::RECOVERY_CODES_FLASH, $codes);
+    }
+
+    public function regenerateRecoveryCodes(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($user->hasTwoFactorEnabled(), 404);
+
+        $codes = $this->twoFactor->replaceRecoveryCodes($user);
+
+        $this->audit->record($user, 'account.recovery_codes_regenerated', $user, [], $request);
+        $user->notify(new RecoveryCodesRegeneratedNotification);
+
+        return redirect()->route('account.security')
+            ->with('status', 'recovery-codes-regenerated')
+            ->with(self::RECOVERY_CODES_FLASH, $codes);
+    }
+
+    /**
+     * Turn two-factor off, or cancel a setup that was never confirmed.
+     */
+    public function destroy(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        $wasEnabled = $user->hasTwoFactorEnabled();
+
+        $this->twoFactor->disable($user);
+
+        if (! $wasEnabled) {
+            return redirect()->route('account.security');
+        }
+
+        $this->audit->record($user, 'account.two_factor_disabled', $user, [], $request);
+        $user->notify(new TwoFactorDisabledNotification);
+
+        return redirect()->route('account.security')->with('status', 'two-factor-disabled');
     }
 }

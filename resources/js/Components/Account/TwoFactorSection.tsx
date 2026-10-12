@@ -7,6 +7,8 @@ export type TwoFactorState = {
     setup: { qr_image: string; secret: string } | null;
 };
 
+const LOW_RECOVERY_CODES = 2;
+
 function formatSecret(secret: string): string {
     return secret.replace(/(.{4})/g, '$1 ').trim();
 }
@@ -102,12 +104,52 @@ export default function TwoFactorSection({ state, recoveryCodes }: { state: TwoF
             {recoveryCodes && recoveryCodes.length > 0 && <RecoveryCodesPanel codes={recoveryCodes} />}
 
             {state.enabled && (
-                <p className="mt-3 text-sm text-body">
-                    {state.recovery_codes_remaining} recovery {state.recovery_codes_remaining === 1 ? 'code' : 'codes'} left.
-                </p>
+                <>
+                    <p className="mt-3 text-sm text-body">
+                        {state.recovery_codes_remaining} recovery {state.recovery_codes_remaining === 1 ? 'code' : 'codes'} left.
+                    </p>
+                    {state.recovery_codes_remaining <= LOW_RECOVERY_CODES && (
+                        <p className="mt-1 text-sm text-danger">You are running low on recovery codes. Get new ones so you do not get locked out.</p>
+                    )}
+                    <div className="mt-4 flex flex-wrap gap-3">
+                        <button
+                            type="button"
+                            className="button-secondary"
+                            onClick={() => {
+                                if (confirm('Get new recovery codes? Your current codes will stop working.')) {
+                                    router.post('/account/two-factor/recovery-codes', {}, { preserveScroll: true });
+                                }
+                            }}
+                        >
+                            Get new recovery codes
+                        </button>
+                        <button
+                            type="button"
+                            className="button-secondary"
+                            onClick={() => {
+                                if (confirm('Turn off two-factor authentication? Signing in will only need your password or email link.')) {
+                                    router.delete('/account/two-factor', { preserveScroll: true });
+                                }
+                            }}
+                        >
+                            Turn off two-factor
+                        </button>
+                    </div>
+                </>
             )}
 
-            {!state.enabled && state.setup && <SetupForm setup={state.setup} />}
+            {!state.enabled && state.setup && (
+                <>
+                    <SetupForm setup={state.setup} />
+                    <button
+                        type="button"
+                        className="button-secondary mt-3"
+                        onClick={() => router.delete('/account/two-factor', { preserveScroll: true })}
+                    >
+                        Cancel setup
+                    </button>
+                </>
+            )}
 
             {!state.enabled && !state.setup && (
                 <button
