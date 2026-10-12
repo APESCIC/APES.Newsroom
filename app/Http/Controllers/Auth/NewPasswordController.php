@@ -5,12 +5,12 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\Auth\SsoOnlyPolicy;
+use App\Services\Auth\UserSessionRevoker;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password as PasswordRule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -26,7 +26,7 @@ class NewPasswordController extends Controller
         ]);
     }
 
-    public function store(Request $request, SsoOnlyPolicy $ssoOnly): RedirectResponse
+    public function store(Request $request, SsoOnlyPolicy $ssoOnly, UserSessionRevoker $sessions): RedirectResponse
     {
         $request->validate([
             'token' => ['required'],
@@ -44,11 +44,10 @@ class NewPasswordController extends Controller
 
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
-            function (User $user, string $password) {
-                $user->forceFill([
-                    'password' => Hash::make($password),
-                    'remember_token' => Str::random(60),
-                ])->save();
+            function (User $user, string $password) use ($sessions) {
+                $user->forceFill(['password' => Hash::make($password)])->save();
+
+                $sessions->revoke($user);
 
                 event(new PasswordReset($user));
             }

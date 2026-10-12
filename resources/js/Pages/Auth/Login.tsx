@@ -5,6 +5,7 @@ import AuthCard from '../../Components/Auth/AuthCard';
 interface LoginProps {
     staffLoginUrl: string | null;
     staffLoginLabel: string | null;
+    rememberDays?: number;
 }
 
 const DEV_ROLES = [
@@ -14,7 +15,7 @@ const DEV_ROLES = [
     { key: 'super_admin', label: 'Super admin' },
 ] as const;
 
-export default function Login({ staffLoginUrl, staffLoginLabel }: LoginProps) {
+export default function Login({ staffLoginUrl, staffLoginLabel, rememberDays = 30 }: LoginProps) {
     const { devTools } = usePage<{ devTools?: boolean }>().props;
     const { data, setData, post, processing, errors, reset } = useForm({
         email: '',
@@ -78,6 +79,10 @@ export default function Login({ staffLoginUrl, staffLoginLabel }: LoginProps) {
                         />
                         {errors.password && <p className="text-sm text-danger">{errors.password}</p>}
                     </div>
+                    <label className="flex items-center gap-2 text-sm text-body">
+                        <input type="checkbox" checked={data.remember} onChange={(e) => setData('remember', e.target.checked)} />
+                        Keep me signed in on this device for {rememberDays} {rememberDays === 1 ? 'day' : 'days'}
+                    </label>
                     <button type="submit" disabled={processing} className="button-primary">
                         Log in
                     </button>

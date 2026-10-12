@@ -4,6 +4,7 @@ use App\Enums\Role;
 use App\Http\Controllers\Account\MembershipCheckoutController;
 use App\Http\Controllers\Account\PasswordController as AccountPasswordController;
 use App\Http\Controllers\Account\SecurityController as AccountSecurityController;
+use App\Http\Controllers\Account\SessionController as AccountSessionController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Admin\GhostContentImportController;
 use App\Http\Controllers\Admin\GhostMembersImportController;
@@ -102,6 +103,12 @@ Route::middleware(['auth', 'verified'])->prefix('account')->name('account.')->gr
     Route::get('/export', [AccountController::class, 'export'])->name('export');
     Route::delete('/', [AccountController::class, 'destroy'])->middleware('auth.recent')->name('destroy');
     Route::get('/security', [AccountSecurityController::class, 'show'])->name('security');
+    Route::delete('/sessions/others', [AccountSessionController::class, 'destroyOthers'])
+        ->middleware('auth.recent')
+        ->name('sessions.destroy-others');
+    Route::delete('/sessions/{session}', [AccountSessionController::class, 'destroy'])
+        ->whereNumber('session')
+        ->name('sessions.destroy');
     Route::put('/password', [AccountPasswordController::class, 'update'])
         ->middleware('throttle:password-change')
         ->name('password.update');

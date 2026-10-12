@@ -16,6 +16,8 @@ return [
 
     'magic_link_token_retention_days' => (int) env('SECURITY_MAGIC_LINK_RETENTION_DAYS', 7),
 
+    'session_record_retention_days' => (int) env('SECURITY_SESSION_RECORD_RETENTION_DAYS', 90),
+
     /*
     |--------------------------------------------------------------------------
     | Password policy

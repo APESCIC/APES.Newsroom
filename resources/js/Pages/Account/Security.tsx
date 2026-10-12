@@ -1,12 +1,100 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import AccountLayout from '../../Components/Layout/AccountLayout';
+
+export type AccountSession = {
+    id: number;
+    browser: string | null;
+    platform: string | null;
+    device_type: string | null;
+    ip: string | null;
+    last_active_at: string | null;
+    remembered: boolean;
+    current: boolean;
+};
 
 type SecurityProps = {
     sso_managed: boolean;
     has_password: boolean;
     status?: string | null;
+    sessions?: AccountSession[];
 };
+
+const STATUS_MESSAGES: Record<string, string> = {
+    'password-updated': 'Password updated. Other sessions have been signed out.',
+    'session-ended': 'That session has been signed out.',
+    'other-sessions-ended': 'All other sessions have been signed out.',
+};
+
+function describeDevice(session: AccountSession): string {
+    const browser = session.browser ?? 'Unknown browser';
+
+    return session.platform ? `${browser} on ${session.platform}` : browser;
+}
+
+function formatLastActive(value: string | null): string {
+    if (!value) {
+        return 'Unknown';
+    }
+
+    return new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
+}
+
+function SessionsSection({ sessions }: { sessions: AccountSession[] }) {
+    const { errors } = usePage<{ errors?: Record<string, string> }>().props;
+    const hasOthers = sessions.some((session) => !session.current);
+
+    return (
+        <section aria-labelledby="sessions-heading" className="mt-10">
+            <h2 id="sessions-heading" className="text-lg font-bold text-body">Where you're signed in</h2>
+            <p className="mt-1 text-sm text-muted">
+                If you don't recognise a session, sign it out and change your password.
+            </p>
+            {errors?.session && <p className="mt-2 text-sm text-danger">{errors.session}</p>}
+            <ul className="mt-4 flex flex-col gap-3">
+                {sessions.map((session) => (
+                    <li key={session.id} className="flex flex-wrap items-start justify-between gap-3 rounded-control border border-border p-3">
+                        <div>
+                            <p className="text-sm font-bold text-body">
+                                {describeDevice(session)}
+                                {session.current && <span className="status-badge-success ml-2">This device</span>}
+                            </p>
+                            <p className="text-xs text-muted">
+                                {[
+                                    session.device_type ? session.device_type.charAt(0).toUpperCase() + session.device_type.slice(1) : null,
+                                    session.ip ? `IP ${session.ip}` : null,
+                                    `Last active ${formatLastActive(session.last_active_at)}`,
+                                    session.remembered ? 'Remembered' : null,
+                                ]
+                                    .filter(Boolean)
+                                    .join(' · ')}
+                            </p>
+                        </div>
+                        {!session.current && (
+                            <button
+                                type="button"
+                                className="button-secondary px-3 py-1 text-sm"
+                                aria-label={`Sign out ${describeDevice(session)}`}
+                                onClick={() => router.delete(`/account/sessions/${session.id}`, { preserveScroll: true })}
+                            >
+                                Sign out
+                            </button>
+                        )}
+                    </li>
+                ))}
+            </ul>
+            {hasOthers && (
+                <button
+                    type="button"
+                    className="button-secondary mt-4"
+                    onClick={() => router.delete('/account/sessions/others', { preserveScroll: true })}
+                >
+                    Sign out all other sessions
+                </button>
+            )}
+        </section>
+    );
+}
 
 function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
     const { data, setData, put, processing, errors, reset } = useForm({
@@ -81,7 +169,9 @@ function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
     );
 }
 
-export default function Security({ sso_managed, has_password, status }: SecurityProps) {
+export default function Security({ sso_managed, has_password, status, sessions = [] }: SecurityProps) {
+    const statusMessage = status ? STATUS_MESSAGES[status] : undefined;
+
     return (
         <AccountLayout
             title="Sign-in and security"
@@ -91,9 +181,9 @@ export default function Security({ sso_managed, has_password, status }: Security
         >
             <Head title="Sign-in and security" />
 
-            {status === 'password-updated' && (
+            {statusMessage && (
                 <p className="status-badge-success mt-4" role="status">
-                    Password updated. Other sessions have been signed out.
+                    {statusMessage}
                 </p>
             )}
 
@@ -107,6 +197,9 @@ export default function Security({ sso_managed, has_password, status }: Security
             ) : (
                 <PasswordSection hasPassword={has_password} />
             )}
+
+            <SessionsSection sessions={sessions} />
+
         </AccountLayout>
     );
 }
