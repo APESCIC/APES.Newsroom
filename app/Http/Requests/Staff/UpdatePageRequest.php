@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Staff;
 
 use App\Enums\ContentVisibility;
-use App\Enums\Role;
 use App\Models\Page;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -12,7 +11,9 @@ class UpdatePageRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->role->atLeast(Role::Staff) ?? false;
+        $page = $this->route('page');
+
+        return $page instanceof Page && ($this->user()?->can('update', $page) ?? false);
     }
 
     /**

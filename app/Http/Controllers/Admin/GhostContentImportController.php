@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Jobs\ProcessGhostContentImportJob;
 use App\Models\ImportRun;
@@ -11,6 +10,7 @@ use App\Services\Import\GhostContentImporter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -152,9 +152,7 @@ class GhostContentImportController extends Controller
 
     private function authorizeStaff(): void
     {
-        if (! request()->user()?->role->atLeast(Role::Staff)) {
-            abort(403);
-        }
+        Gate::authorize('access-staff-area');
     }
 
     private function extractMediaArchive(string $zipPath, string $destination): void

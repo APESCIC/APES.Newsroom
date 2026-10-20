@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Admin;
 
 use App\Enums\ReleaseChannel;
-use App\Enums\Role;
 use App\Models\Release;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -13,7 +12,7 @@ class StoreReleaseRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->role->atLeast(Role::Admin) ?? false;
+        return $this->user()?->can('create', Release::class) ?? false;
     }
 
     /**

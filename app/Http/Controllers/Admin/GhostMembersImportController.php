@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Jobs\ProcessGhostMembersImportJob;
 use App\Models\ImportRun;
 use App\Services\Audit\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -91,8 +91,6 @@ class GhostMembersImportController extends Controller
 
     private function authorizeAdmin(): void
     {
-        if (! request()->user()?->role->atLeast(Role::Admin)) {
-            abort(403);
-        }
+        Gate::authorize('access-admin-area');
     }
 }

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Staff;
 
 use App\Enums\PostStatus;
-use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Staff\StorePageRequest;
 use App\Http\Requests\Staff\UpdatePageRequest;
@@ -13,6 +12,7 @@ use App\Services\EditorJs\BlockValidator;
 use App\Services\Publishing\PublicPagePresenter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -28,7 +28,7 @@ class PageController extends Controller
     {
         $query = Page::query()->with('author');
 
-        if ($request->user()->role === Role::Staff) {
+        if ($request->user()->cannot('viewAll', Page::class)) {
             $query->where('author_id', $request->user()->id);
         }
 
@@ -156,7 +156,7 @@ class PageController extends Controller
 
     private function authorizeEdit(Request $request, Page $page): void
     {
-        abort_unless($page->isEditableBy($request->user()), 403);
+        Gate::authorize('update', $page);
     }
 
     private function assertNoConflict(Page $page, ?string $expectedUpdatedAt): void

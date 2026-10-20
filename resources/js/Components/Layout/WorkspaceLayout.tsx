@@ -25,13 +25,13 @@ function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: Wo
         links.push({ href: '/staff/newsletters', label: 'Newsletters', icon: 'document', active: active === 'newsletters' });
         links.push({ href: '/staff/membership-plans', label: 'Plans', icon: 'document', active: active === 'membership-plans' });
         links.push({ href: '/staff/offers', label: 'Offers', icon: 'document', active: active === 'offers' });
-        links.push({ href: '/staff/members', label: 'Members', icon: 'document', active: active === 'members' });
-        links.push({ href: '/staff/webhooks', label: 'Webhooks', icon: 'document', active: active === 'webhooks' });
         links.push({ href: '/staff/metrics', label: 'Metrics', icon: 'document', active: active === 'metrics' });
     }
 
     if (area === 'Admin' && auth.can.accessAdmin) {
         links.push({ href: '/admin/moderation', label: 'Moderation', icon: 'shield', active: active === 'moderation' });
+        links.push({ href: '/admin/members', label: 'Members', icon: 'document', active: active === 'members' });
+        links.push({ href: '/admin/webhooks', label: 'Webhooks', icon: 'document', active: active === 'webhooks' });
         links.push({ href: '/admin/releases', label: 'Releases', icon: 'document', active: active === 'releases' });
         links.push({ href: '/admin/settings', label: 'Settings', icon: 'settings', active: active === 'settings' });
     }

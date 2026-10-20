@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api\Admin\V1;
 use App\Enums\Channel;
 use App\Enums\ContentVisibility;
 use App\Enums\MailingList;
-use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Models\Post;
 use App\Services\Publishing\EditorialPostWriter;
@@ -22,7 +21,7 @@ class AdminPostController extends Controller
         $user = $request->user();
         $query = Post::query()->with(['author', 'tags'])->latest('updated_at');
 
-        if ($user->role === Role::Staff) {
+        if ($user->cannot('viewAll', Post::class)) {
             $query->where('author_id', $user->id);
         }
 
@@ -42,7 +41,7 @@ class AdminPostController extends Controller
 
     public function show(Request $request, Post $post): JsonResponse
     {
-        abort_unless($post->isEditableBy($request->user()), 403);
+        abort_if($request->user()->cannot('update', $post), 403);
         $post->load(['author', 'tags', 'authors']);
 
         return response()->json(['data' => $this->serialize($post, full: true)]);
@@ -58,7 +57,7 @@ class AdminPostController extends Controller
 
     public function update(Request $request, Post $post): JsonResponse
     {
-        abort_unless($post->isEditableBy($request->user()), 403);
+        abort_if($request->user()->cannot('update', $post), 403);
         $validated = $this->validatePayload($request, creating: false, post: $post);
         $post = $this->writer->update($request->user(), $post, $validated);
 

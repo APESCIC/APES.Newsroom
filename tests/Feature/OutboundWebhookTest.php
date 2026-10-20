@@ -26,18 +26,18 @@ class OutboundWebhookTest extends TestCase
         $this->withoutVite();
     }
 
-    public function test_staff_can_create_webhook_endpoint(): void
+    public function test_admin_can_create_webhook_endpoint(): void
     {
-        $staff = User::factory()->staff()->create();
+        $admin = User::factory()->admin()->create();
 
-        $this->actingAs($staff)->withRecentAuthentication()
-            ->post(route('staff.webhooks.store'), [
+        $this->actingAs($admin)->withRecentAuthentication()
+            ->post(route('admin.webhooks.store'), [
                 'name' => 'CI sink',
                 'url' => 'https://example.com/hooks/newsroom',
                 'events' => ['post.published', 'member.created'],
                 'is_active' => true,
             ])
-            ->assertRedirect(route('staff.webhooks.index'));
+            ->assertRedirect(route('admin.webhooks.index'));
 
         $endpoint = WebhookEndpoint::query()->firstOrFail();
         $this->assertStringStartsWith('whsec_', $endpoint->secret);

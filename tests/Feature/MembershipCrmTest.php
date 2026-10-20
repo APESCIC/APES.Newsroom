@@ -23,9 +23,9 @@ class MembershipCrmTest extends TestCase
         $this->withoutVite();
     }
 
-    public function test_staff_can_list_filter_and_see_recent_reads(): void
+    public function test_admin_can_list_filter_and_see_recent_reads(): void
     {
-        $staff = User::factory()->staff()->create();
+        $staff = User::factory()->admin()->create();
 
         $free = User::factory()->create(['name' => 'Free Reader', 'email' => 'free@example.com']);
         app(MembershipService::class)->ensureMembership($free);
@@ -48,14 +48,14 @@ class MembershipCrmTest extends TestCase
         ]);
 
         $this->actingAs($staff)
-            ->get(route('staff.members.index'))
+            ->get(route('admin.members.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('Staff/Members/Index')
+                ->component('Admin/Members/Index')
                 ->has('members.data', 2));
 
         $this->actingAs($staff)
-            ->get(route('staff.members.index', ['status' => 'paying']))
+            ->get(route('admin.members.index', ['status' => 'paying']))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->has('members.data', 1)
@@ -64,7 +64,7 @@ class MembershipCrmTest extends TestCase
                 ->where('members.data.0.recent_reads.0.path', '/articles/'.$post->slug));
 
         $this->actingAs($staff)
-            ->get(route('staff.members.index', ['q' => 'Free Reader']))
+            ->get(route('admin.members.index', ['q' => 'Free Reader']))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->has('members.data', 1)
@@ -72,14 +72,14 @@ class MembershipCrmTest extends TestCase
                 ->where('members.data.0.is_paying', false));
     }
 
-    public function test_staff_crm_excludes_staff_accounts(): void
+    public function test_crm_excludes_staff_accounts(): void
     {
         $staff = User::factory()->staff()->create(['email' => 'editor@example.com']);
         $member = User::factory()->create(['email' => 'member@example.com']);
         app(MembershipService::class)->ensureMembership($member);
 
-        $this->actingAs($staff)
-            ->get(route('staff.members.index', ['q' => 'editor@example.com']))
+        $this->actingAs(User::factory()->admin()->create())
+            ->get(route('admin.members.index', ['q' => 'editor@example.com']))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page->has('members.data', 0));
 
@@ -88,6 +88,13 @@ class MembershipCrmTest extends TestCase
 
     public function test_guests_cannot_access_member_crm(): void
     {
-        $this->get(route('staff.members.index'))->assertRedirect();
+        $this->get(route('admin.members.index'))->assertRedirect();
+    }
+
+    public function test_staff_cannot_access_member_crm(): void
+    {
+        $this->actingAs(User::factory()->staff()->create())
+            ->get(route('admin.members.index'))
+            ->assertForbidden();
     }
 }

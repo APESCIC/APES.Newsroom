@@ -3,7 +3,6 @@
 namespace App\Services\Publishing;
 
 use App\Enums\PostStatus;
-use App\Enums\Role;
 use App\Models\Post;
 use App\Models\PostRevision;
 use App\Models\Redirect;
@@ -59,9 +58,7 @@ class EditorialPostWriter
      */
     public function update(User $actor, Post $post, array $validated): Post
     {
-        if (! $post->isEditableBy($actor)) {
-            abort(403);
-        }
+        abort_if($actor->cannot('update', $post), 403);
 
         $post->loadMissing(['tags', 'authors']);
 
@@ -115,9 +112,7 @@ class EditorialPostWriter
 
     public function publish(User $actor, Post $post): Post
     {
-        if (! $actor->role->atLeast(Role::Admin)) {
-            abort(403);
-        }
+        abort_if($actor->cannot('publish', Post::class), 403);
 
         $didPublish = false;
         $publishedPost = DB::transaction(function () use ($actor, $post, &$didPublish) {
@@ -163,9 +158,7 @@ class EditorialPostWriter
 
     public function unpublish(User $actor, Post $post): Post
     {
-        if (! $actor->role->atLeast(Role::Admin)) {
-            abort(403);
-        }
+        abort_if($actor->cannot('publish', Post::class), 403);
 
         $post->update([
             'status' => PostStatus::Unpublished,

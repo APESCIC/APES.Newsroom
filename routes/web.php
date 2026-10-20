@@ -11,9 +11,11 @@ use App\Http\Controllers\Account\TwoFactorController as AccountTwoFactorControll
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Admin\GhostContentImportController;
 use App\Http\Controllers\Admin\GhostMembersImportController;
+use App\Http\Controllers\Admin\MemberController as AdminMemberController;
 use App\Http\Controllers\Admin\ModerationController;
 use App\Http\Controllers\Admin\ReleaseController as AdminReleaseController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\WebhookController as AdminWebhookController;
 use App\Http\Controllers\AnalyticsConsentController;
 use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\ArticleController;
@@ -40,14 +42,12 @@ use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\Staff\AiAssistController as StaffAiAssistController;
 use App\Http\Controllers\Staff\CampaignController as StaffCampaignController;
 use App\Http\Controllers\Staff\MediaController as StaffMediaController;
-use App\Http\Controllers\Staff\MemberController as StaffMemberController;
 use App\Http\Controllers\Staff\MembershipPlanController as StaffMembershipPlanController;
 use App\Http\Controllers\Staff\MetricsController as StaffMetricsController;
 use App\Http\Controllers\Staff\NewsletterController as StaffNewsletterController;
 use App\Http\Controllers\Staff\OfferController as StaffOfferController;
 use App\Http\Controllers\Staff\PageController as StaffPageController;
 use App\Http\Controllers\Staff\PostController as StaffPostController;
-use App\Http\Controllers\Staff\WebhookController as StaffWebhookController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\TagRssController;
 use Illuminate\Support\Facades\Route;
@@ -180,6 +180,13 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Admin->value])
         Route::get('/imports/ghost-members/{run}/report', [GhostMembersImportController::class, 'report'])->name('imports.ghost-members.report');
         Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
         Route::put('/settings', [SettingsController::class, 'update'])->middleware('auth.recent')->name('settings.update');
+        Route::get('/members', AdminMemberController::class)->name('members.index');
+        Route::get('/webhooks', [AdminWebhookController::class, 'index'])->name('webhooks.index');
+        Route::middleware('auth.recent')->group(function () {
+            Route::post('/webhooks', [AdminWebhookController::class, 'store'])->name('webhooks.store');
+            Route::patch('/webhooks/{webhook}', [AdminWebhookController::class, 'update'])->name('webhooks.update');
+            Route::delete('/webhooks/{webhook}', [AdminWebhookController::class, 'destroy'])->name('webhooks.destroy');
+        });
     });
 
 Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
@@ -214,13 +221,8 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
         Route::post('/posts/{post}/campaign/test-send', [StaffCampaignController::class, 'testSend'])->name('posts.campaign.test');
 
         Route::get('/metrics', StaffMetricsController::class)->name('metrics.index');
-        Route::get('/members', StaffMemberController::class)->name('members.index');
-        Route::get('/webhooks', [StaffWebhookController::class, 'index'])->name('webhooks.index');
-        Route::middleware('auth.recent')->group(function () {
-            Route::post('/webhooks', [StaffWebhookController::class, 'store'])->name('webhooks.store');
-            Route::patch('/webhooks/{webhook}', [StaffWebhookController::class, 'update'])->name('webhooks.update');
-            Route::delete('/webhooks/{webhook}', [StaffWebhookController::class, 'destroy'])->name('webhooks.destroy');
-        });
+        Route::permanentRedirect('/members', '/admin/members')->name('members.legacy');
+        Route::permanentRedirect('/webhooks', '/admin/webhooks')->name('webhooks.legacy');
 
         Route::get('/newsletters', [StaffNewsletterController::class, 'index'])->name('newsletters.index');
         Route::get('/newsletters/new', [StaffNewsletterController::class, 'create'])->name('newsletters.create');

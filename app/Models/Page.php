@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Enums\ContentVisibility;
 use App\Enums\PostStatus;
-use App\Enums\Role;
 use Database\Factories\PageFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -50,14 +49,5 @@ class Page extends Model
         return $query->where('status', PostStatus::Published)
             ->whereNotNull('published_at')
             ->where('published_at', '<=', now());
-    }
-
-    public function isEditableBy(User $user): bool
-    {
-        if ($user->role->atLeast(Role::Admin)) {
-            return true;
-        }
-
-        return $this->author_id === $user->id && $user->role->atLeast(Role::Staff);
     }
 }
