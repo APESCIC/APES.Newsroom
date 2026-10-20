@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreReleaseRequest;
 use App\Models\Release;
 use App\Services\Audit\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -176,8 +176,6 @@ class ReleaseController extends Controller
 
     private function authorizeAdmin(): void
     {
-        if (! request()->user()?->role->atLeast(Role::Admin)) {
-            abort(403);
-        }
+        Gate::authorize('viewAny', Release::class);
     }
 }

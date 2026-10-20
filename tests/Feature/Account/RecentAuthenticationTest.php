@@ -46,21 +46,21 @@ class RecentAuthenticationTest extends TestCase
                     ->patch(route('account.update'), ['name' => $user->name, 'email' => 'new@example.com']),
             ],
             'webhook create' => [
-                fn () => User::factory()->staff()->create(),
-                fn (TestCase $test, User $user) => $test->from(route('staff.webhooks.index'))->post(route('staff.webhooks.store'), [
+                fn () => User::factory()->admin()->create(),
+                fn (TestCase $test, User $user) => $test->from(route('admin.webhooks.index'))->post(route('admin.webhooks.store'), [
                     'name' => 'Partner', 'url' => 'https://hooks.example.com', 'events' => ['post.published'],
                 ]),
             ],
             'webhook rotate' => [
-                fn () => User::factory()->staff()->create(),
-                fn (TestCase $test, User $user) => $test->from(route('staff.webhooks.index'))->patch(
-                    route('staff.webhooks.update', self::webhook()),
+                fn () => User::factory()->admin()->create(),
+                fn (TestCase $test, User $user) => $test->from(route('admin.webhooks.index'))->patch(
+                    route('admin.webhooks.update', self::webhook()),
                     ['name' => 'Partner', 'url' => 'https://hooks.example.com', 'events' => ['post.published'], 'is_active' => true, 'rotate_secret' => true],
                 ),
             ],
             'webhook delete' => [
-                fn () => User::factory()->staff()->create(),
-                fn (TestCase $test, User $user) => $test->from(route('staff.webhooks.index'))->delete(route('staff.webhooks.destroy', self::webhook())),
+                fn () => User::factory()->admin()->create(),
+                fn (TestCase $test, User $user) => $test->from(route('admin.webhooks.index'))->delete(route('admin.webhooks.destroy', self::webhook())),
             ],
             'settings update' => [
                 fn () => User::factory()->admin()->create(),
@@ -255,9 +255,9 @@ class RecentAuthenticationTest extends TestCase
 
         $this->get(route('account.confirm-identity.sso'))->assertRedirect('https://my.example.com/auth');
 
-        $this->withSession(['url.intended' => route('staff.webhooks.index')])
+        $this->withSession(['url.intended' => route('admin.webhooks.index')])
             ->get('/auth/cloudron/callback?code=c&state=reauth-state')
-            ->assertRedirect(route('staff.webhooks.index'));
+            ->assertRedirect(route('admin.webhooks.index'));
 
         $this->assertNotNull(session(RecentAuthentication::SESSION_KEY));
         $this->assertAuthenticatedAs($staff);

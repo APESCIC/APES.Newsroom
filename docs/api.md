@@ -110,7 +110,7 @@ Writes run through `BlockValidator` and the same field rules as the staff editor
 
 ## Outbound webhooks
 
-Staff configure endpoints at `/staff/webhooks`. Distinct from inbound Stripe webhooks.
+Admins configure endpoints at `/admin/webhooks` (admin-only since v1.11.0; `/staff/webhooks` redirects there). Distinct from inbound Stripe webhooks.
 
 ### Events
 

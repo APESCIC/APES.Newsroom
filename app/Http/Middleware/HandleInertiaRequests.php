@@ -2,7 +2,6 @@
 
 namespace App\Http\Middleware;
 
-use App\Enums\Role;
 use App\Http\Controllers\AnalyticsConsentController;
 use App\Models\Release;
 use App\Services\Settings\SettingsRepository;
@@ -45,8 +44,8 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user()?->only(['id', 'name', 'email', 'role']),
                 'can' => [
-                    'accessStaff' => $request->user()?->role->atLeast(Role::Staff) ?? false,
-                    'accessAdmin' => $request->user()?->role->atLeast(Role::Admin) ?? false,
+                    'accessStaff' => $request->user()?->can('access-staff-area') ?? false,
+                    'accessAdmin' => $request->user()?->can('access-admin-area') ?? false,
                 ],
             ],
             'currentRelease' => fn () => $this->currentReleasePayload(),
@@ -60,7 +59,7 @@ class HandleInertiaRequests extends Middleware
             ],
         ];
 
-        if ($request->user()?->role->atLeast(Role::Staff)) {
+        if ($request->user()?->can('access-staff-area')) {
             $shared['editorDriver'] = fn () => app(SettingsRepository::class)->get(SettingDefinitions::EDITOR_DRIVER);
         }
 

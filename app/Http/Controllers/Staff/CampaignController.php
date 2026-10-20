@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Staff;
 
-use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Models\Post;
 use App\Services\Mailing\CampaignService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -46,8 +46,6 @@ class CampaignController extends Controller
 
     private function authorizeAdmin(): void
     {
-        if (! request()->user()->role->atLeast(Role::Admin)) {
-            abort(403);
-        }
+        Gate::authorize('publish', Post::class);
     }
 }

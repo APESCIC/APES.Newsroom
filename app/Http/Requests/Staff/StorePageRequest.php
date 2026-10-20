@@ -3,7 +3,7 @@
 namespace App\Http\Requests\Staff;
 
 use App\Enums\ContentVisibility;
-use App\Enums\Role;
+use App\Models\Page;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -11,7 +11,7 @@ class StorePageRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->role->atLeast(Role::Staff) ?? false;
+        return $this->user()?->can('create', Page::class) ?? false;
     }
 
     /**

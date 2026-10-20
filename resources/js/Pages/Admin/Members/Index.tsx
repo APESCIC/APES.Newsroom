@@ -55,14 +55,14 @@ export default function Index({ members, filters }: { members: Paginator<MemberR
     function applyFilters(event: FormEvent) {
         event.preventDefault();
         router.get(
-            '/staff/members',
+            '/admin/members',
             { q: q || undefined, status: status === 'all' ? undefined : status },
             { preserveState: true, replace: true },
         );
     }
 
     return (
-        <WorkspaceLayout area="Staff" active="members" title="Members">
+        <WorkspaceLayout area="Admin" active="members" title="Members">
             <Head title="Members" />
             <div className="mx-auto max-w-4xl flex flex-col gap-6">
                 <p className="text-sm text-muted">

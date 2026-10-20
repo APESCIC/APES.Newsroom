@@ -31,7 +31,7 @@ function CreateForm({ availableEvents }: { availableEvents: string[] }) {
             className="glass-form-panel flex flex-col gap-3"
             onSubmit={(e: FormEvent) => {
                 e.preventDefault();
-                post('/staff/webhooks', { onSuccess: () => reset() });
+                post('/admin/webhooks', { onSuccess: () => reset() });
             }}
         >
             <h2 className="text-lg font-bold text-body">Add endpoint</h2>
@@ -84,7 +84,7 @@ function EndpointCard({ endpoint, availableEvents }: { endpoint: Endpoint; avail
             className="glass-form-panel flex flex-col gap-3"
             onSubmit={(e: FormEvent) => {
                 e.preventDefault();
-                patch(`/staff/webhooks/${endpoint.id}`);
+                patch(`/admin/webhooks/${endpoint.id}`);
             }}
         >
             <div className="flex items-baseline justify-between gap-3">
@@ -127,7 +127,7 @@ function EndpointCard({ endpoint, availableEvents }: { endpoint: Endpoint; avail
                     className="button-secondary w-fit"
                     onClick={() => {
                         if (confirm('Delete this webhook endpoint?')) {
-                            destroy(`/staff/webhooks/${endpoint.id}`);
+                            destroy(`/admin/webhooks/${endpoint.id}`);
                         }
                     }}
                 >
@@ -146,7 +146,7 @@ export default function Index({
     availableEvents: string[];
 }) {
     return (
-        <WorkspaceLayout area="Staff" active="webhooks" title="Webhooks">
+        <WorkspaceLayout area="Admin" active="webhooks" title="Webhooks">
             <Head title="Webhooks" />
             <div className="mx-auto max-w-3xl flex flex-col gap-6">
                 <p className="text-sm text-muted">

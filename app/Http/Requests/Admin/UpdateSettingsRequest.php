@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Admin;
 
-use App\Enums\Role;
 use App\Support\Settings\SettingDefinitions;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -10,7 +9,7 @@ class UpdateSettingsRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->role->atLeast(Role::Admin) ?? false;
+        return $this->user()?->can('access-admin-area') ?? false;
     }
 
     /**

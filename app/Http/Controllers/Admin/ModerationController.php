@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\ModerationStatus;
-use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Models\Comment;
 use App\Models\ModerationReport;
@@ -14,6 +13,7 @@ use App\Services\Engagement\ProfileService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -253,8 +253,6 @@ class ModerationController extends Controller
 
     private function authorizeAdmin(): void
     {
-        if (! request()->user()?->role->atLeast(Role::Admin)) {
-            abort(403);
-        }
+        Gate::authorize('access-admin-area');
     }
 }

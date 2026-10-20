@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateSettingsRequest;
 use App\Services\Audit\AuditLogger;
@@ -10,6 +9,7 @@ use App\Services\Settings\SettingsRepository;
 use App\Support\Settings\SettingDefinitions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -75,8 +75,6 @@ class SettingsController extends Controller
 
     private function authorizeAdmin(): void
     {
-        if (! request()->user()?->role->atLeast(Role::Admin)) {
-            abort(403);
-        }
+        Gate::authorize('access-admin-area');
     }
 }

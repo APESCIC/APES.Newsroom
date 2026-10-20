@@ -46,9 +46,9 @@ class PrivilegedChangeAuditTest extends TestCase
 
     public function test_webhook_create_update_rotate_and_delete_are_audited_without_secrets(): void
     {
-        $staff = User::factory()->staff()->create();
+        $staff = User::factory()->admin()->create();
 
-        $this->actingAs($staff)->withRecentAuthentication()->post(route('staff.webhooks.store'), [
+        $this->actingAs($staff)->withRecentAuthentication()->post(route('admin.webhooks.store'), [
             'name' => 'Partner',
             'url' => 'https://hooks.example.com/in?key=query-credential',
             'events' => ['post.published'],
@@ -57,7 +57,7 @@ class PrivilegedChangeAuditTest extends TestCase
         $webhook = WebhookEndpoint::query()->sole();
         $originalSecret = $webhook->secret;
 
-        $this->actingAs($staff)->withRecentAuthentication()->patch(route('staff.webhooks.update', $webhook), [
+        $this->actingAs($staff)->withRecentAuthentication()->patch(route('admin.webhooks.update', $webhook), [
             'name' => 'Partner renamed',
             'url' => 'https://hooks.example.com/in?key=query-credential',
             'events' => ['post.published'],
@@ -67,7 +67,7 @@ class PrivilegedChangeAuditTest extends TestCase
 
         $rotatedSecret = $webhook->fresh()->secret;
 
-        $this->actingAs($staff)->withRecentAuthentication()->delete(route('staff.webhooks.destroy', $webhook))->assertRedirect();
+        $this->actingAs($staff)->withRecentAuthentication()->delete(route('admin.webhooks.destroy', $webhook))->assertRedirect();
 
         $logs = AuditLog::query()->where('action', 'like', 'webhook.%')->orderBy('id')->get();
 

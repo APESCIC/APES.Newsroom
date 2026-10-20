@@ -24,6 +24,7 @@ use App\Services\Webhooks\OutboundWebhookDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -43,7 +44,7 @@ class PostController extends Controller
     {
         $query = Post::query()->with('author');
 
-        if ($request->user()->role === Role::Staff) {
+        if ($request->user()->cannot('viewAll', Post::class)) {
             $query->where('author_id', $request->user()->id);
         }
 
@@ -84,13 +85,13 @@ class PostController extends Controller
                 'q' => $q,
             ],
             'channels' => $this->channelOptions(),
-            'canReview' => $request->user()->role->atLeast(Role::Admin),
+            'canReview' => $request->user()->can('review', Post::class),
         ]);
     }
 
     public function reviewQueue(Request $request): Response
     {
-        abort_unless($request->user()->role->atLeast(Role::Admin), 403);
+        Gate::authorize('review', Post::class);
 
         $posts = Post::query()
             ->with('author')
@@ -127,7 +128,7 @@ class PostController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                 ]),
-            'canPublish' => $request->user()->role->atLeast(Role::Admin),
+            'canPublish' => $request->user()->can('publish', Post::class),
             'revisions' => [],
         ]);
     }
@@ -175,7 +176,7 @@ class PostController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                 ]),
-            'canPublish' => $request->user()->role->atLeast(Role::Admin),
+            'canPublish' => $request->user()->can('publish', Post::class),
             'revisions' => $post->revisions()->latest()->limit(20)->get()->map(fn (PostRevision $revision) => [
                 'id' => $revision->id,
                 'title' => $revision->title,
@@ -246,7 +247,7 @@ class PostController extends Controller
 
     public function reject(Request $request, Post $post): RedirectResponse
     {
-        $this->authorizeAdmin();
+        $this->authorizePublish();
 
         $validated = $request->validate([
             'review_notes' => ['required', 'string', 'max:2000'],
@@ -262,7 +263,7 @@ class PostController extends Controller
 
     public function schedule(Request $request, Post $post): RedirectResponse
     {
-        $this->authorizeAdmin();
+        $this->authorizePublish();
 
         $request->validate(['scheduled_for' => ['required', 'date', 'after:now']]);
 
@@ -276,7 +277,7 @@ class PostController extends Controller
 
     public function publish(Request $request, Post $post): RedirectResponse
     {
-        $this->authorizeAdmin();
+        $this->authorizePublish();
 
         $didPublish = false;
         $publishedPost = DB::transaction(function () use ($request, $post, &$didPublish) {
@@ -322,7 +323,7 @@ class PostController extends Controller
 
     public function unpublish(Request $request, Post $post): RedirectResponse
     {
-        $this->authorizeAdmin();
+        $this->authorizePublish();
 
         $post->update([
             'status' => PostStatus::Unpublished,
@@ -336,11 +337,7 @@ class PostController extends Controller
 
     public function destroy(Request $request, Post $post): RedirectResponse
     {
-        $this->authorizeEdit($post);
-
-        if ($request->user()->role === Role::Staff && $post->author_id !== $request->user()->id) {
-            abort(403);
-        }
+        Gate::authorize('delete', $post);
 
         $post->update(['status' => PostStatus::Deleted]);
         $post->delete();
@@ -383,16 +380,12 @@ class PostController extends Controller
 
     private function authorizeEdit(Post $post): void
     {
-        if (! $post->isEditableBy(request()->user())) {
-            abort(403);
-        }
+        Gate::authorize('update', $post);
     }
 
-    private function authorizeAdmin(): void
+    private function authorizePublish(): void
     {
-        if (! request()->user()->role->atLeast(Role::Admin)) {
-            abort(403);
-        }
+        Gate::authorize('publish', Post::class);
     }
 
     private function saveRevision(Post $post, int $editorId): void
