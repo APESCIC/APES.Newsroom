@@ -9,6 +9,7 @@ use App\Http\Controllers\Account\SecurityController as AccountSecurityController
 use App\Http\Controllers\Account\SessionController as AccountSessionController;
 use App\Http\Controllers\Account\TwoFactorController as AccountTwoFactorController;
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\GhostContentImportController;
 use App\Http\Controllers\Admin\GhostMembersImportController;
 use App\Http\Controllers\Admin\MemberController as AdminMemberController;
@@ -180,6 +181,8 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Admin->value])
         Route::get('/imports/ghost-members/{run}/report', [GhostMembersImportController::class, 'report'])->name('imports.ghost-members.report');
         Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
         Route::put('/settings', [SettingsController::class, 'update'])->middleware('auth.recent')->name('settings.update');
+        Route::get('/audit-log', [AuditLogController::class, 'index'])->name('audit-log.index');
+        Route::get('/audit-log/export', [AuditLogController::class, 'export'])->middleware('auth.recent')->name('audit-log.export');
         Route::get('/members', AdminMemberController::class)->name('members.index');
         Route::get('/webhooks', [AdminWebhookController::class, 'index'])->name('webhooks.index');
         Route::middleware('auth.recent')->group(function () {

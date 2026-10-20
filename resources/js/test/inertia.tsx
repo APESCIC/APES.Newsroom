@@ -25,6 +25,7 @@ const inertiaMock = {
             },
         } as SharedPageProps,
     },
+    get: vi.fn(),
     post: vi.fn(),
     put: vi.fn(),
     patch: vi.fn(),
@@ -35,6 +36,7 @@ const inertiaMock = {
 
 export function setMockPage(props: SharedPageProps) {
     inertiaMock.page = { props };
+    inertiaMock.get.mockReset();
     inertiaMock.post.mockReset();
     inertiaMock.put.mockReset();
     inertiaMock.patch.mockReset();

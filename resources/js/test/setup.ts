@@ -44,6 +44,7 @@ vi.mock('@inertiajs/react', async () => {
             return React.createElement(as, as === 'a' ? { ...attributes, href } : attributes, children);
         },
         router: {
+            get: (...args: unknown[]) => getInertiaMock().get(...args),
             post: (...args: unknown[]) => getInertiaMock().post(...args),
             put: (...args: unknown[]) => getInertiaMock().put(...args),
             patch: (...args: unknown[]) => getInertiaMock().patch(...args),
@@ -168,6 +169,7 @@ vi.mock('@inertiajs/react', async () => {
 afterEach(() => {
     cleanup();
     const inertiaMock = getTestInertiaMock();
+    inertiaMock.get.mockReset();
     inertiaMock.post.mockReset();
     inertiaMock.put.mockReset();
     inertiaMock.patch.mockReset();
