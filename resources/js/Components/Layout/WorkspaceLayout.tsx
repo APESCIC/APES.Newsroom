@@ -6,7 +6,19 @@ import LineIcon, { type IconName } from '../Icons/LineIcon';
 
 type WorkspaceArea = 'Admin' | 'Staff';
 
-export type WorkspaceActive = 'moderation' | 'posts' | 'pages' | 'newsletters' | 'membership-plans' | 'offers' | 'metrics' | 'members' | 'webhooks' | 'releases' | 'settings';
+export type WorkspaceActive =
+    | 'moderation'
+    | 'posts'
+    | 'pages'
+    | 'newsletters'
+    | 'membership-plans'
+    | 'offers'
+    | 'metrics'
+    | 'members'
+    | 'webhooks'
+    | 'releases'
+    | 'settings'
+    | 'audit-log';
 
 type WorkspaceLink = {
     href: string;
@@ -32,6 +44,7 @@ function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: Wo
         links.push({ href: '/admin/moderation', label: 'Moderation', icon: 'shield', active: active === 'moderation' });
         links.push({ href: '/admin/members', label: 'Members', icon: 'document', active: active === 'members' });
         links.push({ href: '/admin/webhooks', label: 'Webhooks', icon: 'document', active: active === 'webhooks' });
+        links.push({ href: '/admin/audit-log', label: 'Audit log', icon: 'review', active: active === 'audit-log' });
         links.push({ href: '/admin/releases', label: 'Releases', icon: 'document', active: active === 'releases' });
         links.push({ href: '/admin/settings', label: 'Settings', icon: 'settings', active: active === 'settings' });
     }

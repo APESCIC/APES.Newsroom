@@ -40,6 +40,8 @@ class AuthzMatrixTest extends TestCase
      * @var array<string, Role>
      */
     private const MATRIX = [
+        'admin.audit-log.index' => Role::Admin,
+        'admin.audit-log.export' => Role::Admin,
         'admin.imports.ghost-content' => Role::Staff,
         'admin.imports.ghost-content.upload' => Role::Staff,
         'admin.imports.ghost-content.confirm' => Role::Staff,
