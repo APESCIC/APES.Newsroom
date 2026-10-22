@@ -17,8 +17,7 @@ export function availableActions(user: UserDetail): SecurityAction[] {
     if (!user.can.manage_security) return [];
 
     const base = `/admin/users/${user.id}`;
-
-    return user.locked
+    const access: SecurityAction[] = user.locked
         ? [
               {
                   key: 'unlock',
@@ -41,6 +40,56 @@ export function availableActions(user: UserDetail): SecurityAction[] {
                   destructive: true,
               },
           ];
+
+    const credentials: SecurityAction[] = [
+        {
+            key: 'sign-out',
+            label: 'Sign out everywhere',
+            title: 'Sign out of every session?',
+            description: `Every browser and remembered device signed in as ${user.name} will be signed out.`,
+            confirmLabel: 'Sign out everywhere',
+            url: `${base}/sign-out`,
+            destructive: false,
+        },
+    ];
+
+    if (!user.sso_managed && user.sign_in_method === 'password') {
+        credentials.push({
+            key: 'password-reset',
+            label: 'Force password reset',
+            title: 'Force a password reset?',
+            description: `The current password stops working, ${user.name} is signed out everywhere, and a reset link is emailed to them.`,
+            confirmLabel: 'Force password reset',
+            url: `${base}/password-reset`,
+            destructive: true,
+        });
+    }
+
+    if (!user.sso_managed && user.two_factor_enabled) {
+        credentials.push({
+            key: 'two-factor-reset',
+            label: 'Turn off two-factor',
+            title: 'Turn off two-factor sign-in?',
+            description: 'The authenticator app and recovery codes stop working. Use this when the user has lost their device.',
+            confirmLabel: 'Turn off two-factor',
+            url: `${base}/two-factor/reset`,
+            destructive: true,
+        });
+    }
+
+    if (!user.sso_managed && user.passkeys.length > 0) {
+        credentials.push({
+            key: 'passkeys-remove',
+            label: 'Remove passkeys',
+            title: `Remove ${user.passkeys.length} passkey${user.passkeys.length === 1 ? '' : 's'}?`,
+            description: 'Every passkey on the account is deleted and can no longer be used to sign in.',
+            confirmLabel: 'Remove passkeys',
+            url: `${base}/passkeys/remove`,
+            destructive: true,
+        });
+    }
+
+    return [...access, ...credentials];
 }
 
 export default function UserSecurityActions({ user }: { user: UserDetail }) {
@@ -56,6 +105,10 @@ export default function UserSecurityActions({ user }: { user: UserDetail }) {
     if (actions.length === 0) {
         return <p className="text-sm text-muted">You cannot change security settings for this account.</p>;
     }
+
+    const ssoNote = user.sso_managed ? (
+        <p className="text-sm text-muted">Password, two-factor and passkeys for this account are managed by Cloudron SSO.</p>
+    ) : null;
 
     function confirm(reason: string) {
         if (!active) return;
@@ -86,6 +139,7 @@ export default function UserSecurityActions({ user }: { user: UserDetail }) {
                     </button>
                 ))}
             </div>
+            {ssoNote}
             <ReasonConfirmDialog
                 open={active !== null}
                 title={active?.title ?? ''}
