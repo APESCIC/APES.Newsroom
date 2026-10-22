@@ -136,6 +136,23 @@ describe('Admin users pages', () => {
         expect(access.getByText('Password, two-factor and passkeys for this account are managed by Cloudron SSO.')).toBeInTheDocument();
     });
 
+    it('lets a super admin remove a stale elevated role and explains the directory otherwise', async () => {
+        const user = userEvent.setup();
+        const { unmount } = render(<UsersShow user={{ ...detail, role: 'staff', can: { manage_security: true, change_role: true } }} />);
+
+        const account = within(screen.getByRole('region', { name: 'Account' }));
+        await user.click(account.getByRole('button', { name: 'Change role to Public' }));
+        const dialog = within(screen.getByRole('dialog', { name: "Remove this account's elevated role?" }));
+        await user.type(dialog.getByLabelText('Reason (recorded in the audit log)'), 'Left the newsroom');
+        await user.click(dialog.getByRole('button', { name: 'Change role to Public' }));
+        expect(getInertiaMock().patch).toHaveBeenCalledWith('/admin/users/9/role', { role: 'public', reason: 'Left the newsroom' }, expect.anything());
+        unmount();
+
+        render(<UsersShow user={{ ...detail, role: 'staff', role_source: { type: 'directory', groups: ['newsroom-staff'] } }} />);
+        expect(screen.getByText('This role comes from Cloudron directory groups and can only be changed in Cloudron.')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Change role to Public' })).not.toBeInTheDocument();
+    });
+
     it('shows lock details and offers unlock for a locked account', () => {
         render(
             <UsersShow

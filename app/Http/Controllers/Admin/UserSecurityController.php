@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\Admin\AccountLockService;
 use App\Services\Admin\AdminSecurityActions;
+use App\Services\Admin\UserRoleChanger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -102,6 +105,17 @@ class UserSecurityController extends Controller
         $removed = $this->actions->removePasskeys($user, $request->user(), $reason, $request);
 
         return back()->with('status', "Removed {$removed} passkey".($removed === 1 ? '' : 's').'.');
+    }
+
+    public function changeRole(Request $request, User $user, UserRoleChanger $roles): RedirectResponse
+    {
+        Gate::authorize('changeRole', $user);
+        $reason = $this->reason($request);
+        $validated = $request->validate(['role' => ['required', Rule::enum(Role::class)]]);
+
+        $roles->change($user, Role::from($validated['role']), $request->user(), $reason, $request);
+
+        return back()->with('status', 'Role changed and sessions signed out.');
     }
 
     /**
