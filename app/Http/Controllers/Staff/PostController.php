@@ -16,7 +16,7 @@ use App\Models\Redirect;
 use App\Models\Tag;
 use App\Models\User;
 use App\Services\Audit\AuditLogger;
-use App\Services\EditorJs\BlockValidator;
+use App\Services\EditorJs\EditorContent;
 use App\Services\Integrations\SlackEditorialNotifier;
 use App\Services\Mailing\CampaignService;
 use App\Services\Publishing\PublicArticlePresenter;
@@ -33,7 +33,7 @@ use Inertia\Response;
 class PostController extends Controller
 {
     public function __construct(
-        private readonly BlockValidator $validator,
+        private readonly EditorContent $editorContent,
         private readonly CampaignService $campaigns,
         private readonly AuditLogger $audit,
         private readonly OutboundWebhookDispatcher $webhooks,
@@ -136,7 +136,8 @@ class PostController extends Controller
     public function store(StorePostRequest $request): RedirectResponse
     {
         $validated = $request->validated();
-        $content = $this->validator->validate($validated['content']);
+        $content = $this->editorContent->fromPayload($validated);
+        $validated = EditorContent::withoutEditorFields($validated);
         $tags = $validated['tags'] ?? [];
         $coAuthorIds = $validated['co_author_ids'] ?? [];
         unset($validated['tags'], $validated['co_author_ids'], $validated['expected_updated_at']);
@@ -203,7 +204,8 @@ class PostController extends Controller
             }
         }
 
-        $content = $this->validator->validate($validated['content']);
+        $content = $this->editorContent->fromPayload($validated);
+        $validated = EditorContent::withoutEditorFields($validated);
         $tags = $validated['tags'] ?? [];
         $coAuthorIds = $validated['co_author_ids'] ?? [];
         unset($validated['tags'], $validated['co_author_ids']);
@@ -457,6 +459,7 @@ class PostController extends Controller
             'slug' => $post->slug,
             'excerpt' => $post->excerpt,
             'content' => $post->content,
+            'content_html' => $this->editorContent->editorHtml($post->content),
             'status' => $post->status->value,
             'visibility' => $post->visibility?->value ?? 'public',
             'channel' => $post->channel->value,
