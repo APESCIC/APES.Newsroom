@@ -40,7 +40,35 @@ export type UserDetail = UserRow & {
     }[];
     api_tokens: { id: number; name: string; created_at: string | null; last_used_at: string | null }[];
     security_events: SecurityEvent[];
+    login_history: LoginEvent[];
 };
+
+export type LoginEvent = {
+    id: number;
+    action: string;
+    result: 'success' | 'failure' | 'info';
+    method: string | null;
+    created_at: string | null;
+    ip_address: string | null;
+    browser: string | null;
+    platform: string | null;
+    device_type: string | null;
+};
+
+export function resultLabel(result: LoginEvent['result']): string {
+    switch (result) {
+        case 'success':
+            return 'Succeeded';
+        case 'failure':
+            return 'Failed';
+        case 'info':
+            return 'Event';
+        default: {
+            const unreachable: never = result;
+            return unreachable;
+        }
+    }
+}
 
 export function roleLabel(role: Role): string {
     switch (role) {

@@ -1,7 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
-import { formatWhen, methodLabel, roleLabel, type UserDetail } from './types';
+import { formatWhen, methodLabel, resultLabel, roleLabel, type UserDetail } from './types';
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
     return (
@@ -106,6 +106,39 @@ export default function Show({ user }: { user: UserDetail }) {
                                 </li>
                             ))}
                         </ul>
+                    )}
+                </Section>
+
+                <Section title="Sign-in history">
+                    {user.login_history.length === 0 ? (
+                        <Empty>No sign-in activity recorded.</Empty>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-sm">
+                                <thead className="text-muted">
+                                    <tr>
+                                        <th scope="col" className="py-2 pr-4">When</th>
+                                        <th scope="col" className="py-2 pr-4">Result</th>
+                                        <th scope="col" className="py-2 pr-4">Event</th>
+                                        <th scope="col" className="py-2 pr-4">Method</th>
+                                        <th scope="col" className="py-2 pr-4">IP address</th>
+                                        <th scope="col" className="py-2">Device</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {user.login_history.map((event) => (
+                                        <tr key={event.id} className="border-t border-border">
+                                            <td className="py-2 pr-4 text-body">{formatWhen(event.created_at)}</td>
+                                            <td className={`py-2 pr-4 font-semibold ${event.result === 'failure' ? 'text-danger' : 'text-body'}`}>{resultLabel(event.result)}</td>
+                                            <td className="py-2 pr-4 font-mono text-body">{event.action.replace(/^auth\./, '')}</td>
+                                            <td className="py-2 pr-4 text-body">{event.method ?? '—'}</td>
+                                            <td className="py-2 pr-4 text-body">{event.ip_address ?? '—'}</td>
+                                            <td className="py-2 text-body">{[event.browser, event.platform].filter(Boolean).join(' on ') || '—'}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     )}
                 </Section>
 
