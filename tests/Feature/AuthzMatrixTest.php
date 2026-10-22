@@ -58,6 +58,7 @@ class AuthzMatrixTest extends TestCase
         'admin.users.password-reset' => Role::Admin,
         'admin.users.two-factor.reset' => Role::Admin,
         'admin.users.passkeys.remove' => Role::Admin,
+        'admin.users.role' => Role::SuperAdmin,
         'admin.moderation.index' => Role::Admin,
         'admin.moderation.comments' => Role::Admin,
         'admin.moderation.comments.restore' => Role::Admin,

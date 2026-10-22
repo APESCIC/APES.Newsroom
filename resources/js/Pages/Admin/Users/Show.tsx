@@ -1,5 +1,6 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
+import UserRoleControl from '../../../Components/Admin/UserRoleControl';
 import UserSecurityActions from '../../../Components/Admin/UserSecurityActions';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
 import type { SharedPageProps } from '../../../types/page';
@@ -81,6 +82,7 @@ export default function Show({ user }: { user: UserDetail }) {
                             <dd className="text-body">{formatWhen(user.created_at)}</dd>
                         </div>
                     </dl>
+                    <UserRoleControl user={user} />
                 </Section>
 
                 <Section title="Second factor">

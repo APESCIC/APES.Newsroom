@@ -39,13 +39,13 @@ class UserPolicy
     }
 
     /**
-     * In-app role changes apply only to non-SSO accounts; directory groups
-     * stay the source of truth for staff roles.
+     * In-app role changes apply only to accounts that do not sign in through
+     * Cloudron SSO; directory groups stay the source of truth for SSO roles.
      */
     public function changeRole(User $actor, User $user): bool
     {
         return $actor->role === Role::SuperAdmin
             && ! $actor->is($user)
-            && ! $user->requiresSso();
+            && $user->auth_provider !== 'cloudron_oidc';
     }
 }

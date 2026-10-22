@@ -194,6 +194,7 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Admin->value])
             Route::post('/users/{user}/password-reset', [AdminUserSecurityController::class, 'forcePasswordReset'])->whereNumber('user')->name('users.password-reset');
             Route::post('/users/{user}/two-factor/reset', [AdminUserSecurityController::class, 'resetTwoFactor'])->whereNumber('user')->name('users.two-factor.reset');
             Route::post('/users/{user}/passkeys/remove', [AdminUserSecurityController::class, 'removePasskeys'])->whereNumber('user')->name('users.passkeys.remove');
+            Route::patch('/users/{user}/role', [AdminUserSecurityController::class, 'changeRole'])->whereNumber('user')->name('users.role');
         });
         Route::get('/members', AdminMemberController::class)->name('members.index');
         Route::get('/webhooks', [AdminWebhookController::class, 'index'])->name('webhooks.index');
