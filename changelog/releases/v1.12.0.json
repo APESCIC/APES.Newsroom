@@ -1,0 +1,40 @@
+{
+  "version": "v1.12.0",
+  "slug": "release-v1-12-0",
+  "released_at": "2026-10-22",
+  "previous_version": "v1.11.0",
+  "theme": "TinyMCE editor and editor switching",
+  "change_types": [
+    "added",
+    "changed",
+    "fixed",
+    "security"
+  ],
+  "topic_tags": [
+    "internal-only",
+    "public-facing",
+    "accessibility"
+  ],
+  "summary": "Admins can now choose TinyMCE, a familiar word-processor style editor, for staff posts and pages instead of Editor.js. Bold, italic, links and inline code now stay in articles in both editors, and content is still stored the same way, so readers, search, email and the Admin API see no difference.",
+  "detailed_changes": [
+    "Bold, italic, inline code and links in paragraphs, headings, lists, quotes and tables are now kept when a post is saved and shown on public pages and in emails, in both editors. Only these safe formats and http, https or mailto links are allowed; anything else is removed (#390).",
+    "Characters such as & that Editor.js saved as codes now display correctly on public pages instead of showing the code (#390).",
+    "TinyMCE is available as a staff editor. It is installed with the Newsroom under its GPL licence and makes no requests to Tiny Cloud, and it only loads on staff editor screens when the site uses it (#255, #256).",
+    "In TinyMCE, staff can use headings, bold, italic, inline code, links, lists, quotes, images with alt text and captions, tables, horizontal lines, and embeds from YouTube, Vimeo, X, Instagram and CodePen. Pasted fonts, colours and styles are removed (#256).",
+    "Callouts, toggles, galleries, video, audio, files, bookmarks, products, link previews and Markdown or HTML snippets appear in TinyMCE as read-only grey boxes. They can be moved or deleted, and their contents are kept exactly as they were (#257, #258).",
+    "The editor choice on the admin Settings page now explains the difference between Editor.js and TinyMCE. Staff get the new editor the next time they open a post or page (#260).",
+    "If the editor setting changes while someone has a draft open, they keep their current editor, their work saves correctly, and a notice tells them to reload to switch (#261).",
+    "Restoring a revision now shows the restored text in the open editor straight away, so a later autosave can no longer overwrite it (#261).",
+    "Text inserted from the AI writing assistant now appears in the editor immediately (#256).",
+    "TinyMCE content is converted back to the stored block format on the server and checked again before saving; scripts, event handlers, unsafe links and tampered blocks are removed or rejected (#257, #259).",
+    "The editor content security policy now allows local blob images for previews while an upload finishes; no third-party sources were added (#255)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff/posts editor, /staff/pages editor, /admin/settings, public articles and pages, email campaigns",
+    "User groups affected: staff and admins (TinyMCE option, inline formatting, AI insert, revision restore); readers and subscribers (formatting and characters display correctly)",
+    "Public impact: bold, italic, links and inline code now appear in articles and emails; no change for content without formatting",
+    "Internal impact: TinyMCE bundled as a lazily loaded chunk; new content_html save path for staff editors; Admin API content format unchanged; Editor.js remains the default"
+  ],
+  "pr": 0
+}
