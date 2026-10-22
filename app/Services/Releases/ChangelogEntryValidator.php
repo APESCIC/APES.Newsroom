@@ -109,6 +109,11 @@ class ChangelogEntryValidator
             $errors[] = 'pr must be an integer when present';
         }
 
+        if (array_key_exists('slug', $payload)
+            && (! is_string($payload['slug']) || preg_match('/^release-[a-z0-9]+(-[a-z0-9]+)*$/', $payload['slug']) !== 1)) {
+            $errors[] = 'slug must look like release-v1-11-0 when present';
+        }
+
         return $errors;
     }
 

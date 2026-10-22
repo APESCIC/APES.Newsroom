@@ -44,6 +44,20 @@ security emails sent when a password, email address, device, API token,
 two-factor setting or passkey changes. If you get one of those emails and it
 wasn't you, reset your password and sign out other sessions. Staff sign in
 through Cloudron single sign-on, where two-factor is enforced by Cloudron.
+
+Administrators have a security console in the admin area. They can:
+
+- find any account and review its sessions, sign-in history and security events
+- lock a compromised account, sign it out everywhere, force a password reset,
+  turn off two-factor or remove passkeys (each action needs a reason and a fresh
+  identity check, is audit-logged, and is emailed to the account holder)
+- browse and export the audit log
+- set the security policy: minimum password length, breached-password check,
+  idle session lifetime, emailed sign-in links, and roles that must use
+  two-factor
+- manage Admin API tokens (expiry, abilities, revocation), named Content API
+  keys and encrypted webhook secrets, all shown only once
+
 Controls are summarised in
 [`docs/governance/threat-model.md`](docs/governance/threat-model.md).
 

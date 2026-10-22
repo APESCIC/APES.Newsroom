@@ -96,16 +96,44 @@ class ReleaseChangelogSyncTest extends TestCase
         ]);
     }
 
+    public function test_explicit_slug_keeps_versions_with_the_same_digits_apart(): void
+    {
+        $entry = ['summary' => 'S', 'detailed_changes' => ['D'], 'change_types' => ['added'], 'topic_tags' => ['public-facing']];
+        $this->writeEntry('v1.1.10.json', ['version' => 'v1.1.10', ...$entry]);
+        $this->writeEntry('v1.11.0.json', ['version' => 'v1.11.0', 'slug' => 'release-v1-11-0', ...$entry]);
+
+        app(ReleaseChangelogSync::class)->sync();
+
+        $this->assertDatabaseHas('releases', ['slug' => 'release-v1110', 'version' => 'v1.1.10']);
+        $this->assertDatabaseHas('releases', ['slug' => 'release-v1-11-0', 'version' => 'v1.11.0', 'is_current' => true]);
+    }
+
+    public function test_sync_refuses_to_overwrite_another_version_with_a_colliding_slug(): void
+    {
+        $entry = ['summary' => 'S', 'detailed_changes' => ['D'], 'change_types' => ['added'], 'topic_tags' => ['public-facing']];
+        $this->writeEntry('v1.1.10.json', ['version' => 'v1.1.10', ...$entry]);
+        $this->writeEntry('v1.11.0.json', ['version' => 'v1.11.0', ...$entry]);
+
+        try {
+            app(ReleaseChangelogSync::class)->sync();
+            $this->fail('Expected the slug collision to be refused.');
+        } catch (\RuntimeException $e) {
+            $this->assertStringContainsString('release-v1110', $e->getMessage());
+        }
+
+        $this->assertDatabaseHas('releases', ['slug' => 'release-v1110', 'version' => 'v1.1.10']);
+    }
+
     public function test_artisan_sync_command_loads_repo_changelog_files(): void
     {
         config(['newsroom.changelog_path' => null]);
 
         $exit = Artisan::call('newsroom:sync-releases');
         $this->assertSame(0, $exit);
-        $this->assertGreaterThanOrEqual(55, Release::query()->count());
+        $this->assertGreaterThanOrEqual(56, Release::query()->count());
 
         $current = Release::query()->where('is_current', true)->firstOrFail();
-        $this->assertSame('v1.10.0', $current->version);
+        $this->assertSame('v1.11.0', $current->version);
         $this->assertSame(ReleaseChannel::Beta, $current->channel);
     }
 

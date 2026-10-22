@@ -32,6 +32,10 @@ authorized operations even when following this document.
   apache/app.conf          DocumentRoot -> /app/data/current/public
 ```
 
+Keep `APP_KEY` stable. Two-factor secrets and webhook signing secrets are
+encrypted with it, so rotating it makes them unreadable: members would need to
+set up two-factor again and every webhook secret would need rotating.
+
 Activating a release is a symlink swap (`deploy/cloudron-activate.sh`), so
 it is atomic from Apache's point of view. Rolling back
 (`deploy/cloudron-rollback.sh`) swaps it back to whatever `previous_release`

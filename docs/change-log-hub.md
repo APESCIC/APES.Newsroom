@@ -15,7 +15,11 @@ deploy.
    - `change_types` — one or more of: `added`, `changed`, `fixed`, `removed`, `security`
    - `topic_tags` — one or more of: `compliance`, `accessibility`, `public-facing`, `internal-only`
 3. Optionally set `theme`, `affected_areas`, `released_at`, `previous_version`,
-   `pr`, or full `version_decision` / `validation` lists.
+   `pr`, `slug`, or full `version_decision` / `validation` lists.
+   The default slug drops the dots from the version (`v1.2.3` → `release-v123`),
+   so versions such as `v1.1.10` and `v1.11.0` would collide. Set a distinct
+   `slug` (for example `release-v1-11-0`) when that happens; the sync refuses
+   to reuse a slug that already belongs to another version.
 4. Open the PR. CI runs `php artisan newsroom:check-pr-changelog` and fails if
    the entry is missing or invalid.
 5. Merge, then deploy beta as usual. Activate runs
