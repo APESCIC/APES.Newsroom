@@ -3,6 +3,7 @@ import Delimiter from '@editorjs/delimiter';
 import Embed from '@editorjs/embed';
 import Header from '@editorjs/header';
 import Image from '@editorjs/image';
+import InlineCode from '@editorjs/inline-code';
 import LinkTool from '@editorjs/link';
 import EditorjsList from '@editorjs/list';
 import Paragraph from '@editorjs/paragraph';
@@ -67,6 +68,7 @@ export default function EditorJsField({ initialData, onChange }: Props) {
                 },
                 header: {
                     class: Header,
+                    inlineToolbar: true,
                     config: {
                         levels: [2, 3, 4],
                         defaultLevel: 2,
@@ -94,7 +96,11 @@ export default function EditorJsField({ initialData, onChange }: Props) {
                         captionPlaceholder: 'Caption',
                     },
                 },
-                table: Table,
+                table: {
+                    class: Table,
+                    inlineToolbar: true,
+                },
+                inlineCode: InlineCode,
                 delimiter: Delimiter,
                 callout: CalloutTool,
                 gallery: GalleryTool,

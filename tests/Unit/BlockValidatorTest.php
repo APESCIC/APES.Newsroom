@@ -17,6 +17,40 @@ class BlockValidatorTest extends TestCase
         $this->assertCount(1, $result['blocks']);
     }
 
+    public function test_inline_formatting_is_kept_in_text_blocks_and_stripped_elsewhere(): void
+    {
+        $inline = 'A <b>bold</b> <a href="https://example.com" onclick="x()">link</a> <span style="color:red">x</span>';
+        $expected = 'A <strong>bold</strong> <a href="https://example.com" rel="noopener noreferrer">link</a> x';
+
+        $result = (new BlockValidator)->validate([
+            'blocks' => [
+                ['type' => 'paragraph', 'data' => ['text' => $inline]],
+                ['type' => 'header', 'data' => ['text' => $inline, 'level' => 2]],
+                ['type' => 'list', 'data' => ['style' => 'unordered', 'items' => [$inline, ['content' => $inline]]]],
+                ['type' => 'quote', 'data' => ['text' => $inline, 'caption' => '<em>Cap</em>']],
+                ['type' => 'table', 'data' => ['withHeadings' => false, 'content' => [[$inline]]]],
+                ['type' => 'callout', 'data' => ['text' => '<em>Plain</em> callout']],
+            ],
+        ]);
+
+        $this->assertSame($expected, $result['blocks'][0]['data']['text']);
+        $this->assertSame($expected, $result['blocks'][1]['data']['text']);
+        $this->assertSame([$expected, $expected], $result['blocks'][2]['data']['items']);
+        $this->assertSame($expected, $result['blocks'][3]['data']['text']);
+        $this->assertSame('Cap', $result['blocks'][3]['data']['caption']);
+        $this->assertSame([[$expected]], $result['blocks'][4]['data']['content']);
+        $this->assertSame('Plain callout', $result['blocks'][5]['data']['text']);
+    }
+
+    public function test_javascript_link_in_inline_text_is_rejected(): void
+    {
+        $this->expectException(ValidationException::class);
+
+        (new BlockValidator)->validate([
+            'blocks' => [['type' => 'paragraph', 'data' => ['text' => '<a href="javascript:alert(1)">x</a>']]],
+        ]);
+    }
+
     public function test_script_in_text_is_rejected(): void
     {
         $this->expectException(ValidationException::class);
