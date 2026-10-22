@@ -9,6 +9,7 @@ use App\Models\UserSession;
 use App\Services\Auth\RecentAuthentication;
 use App\Services\Auth\SessionTracker;
 use App\Services\Auth\TwoFactor\TwoFactorService;
+use App\Services\Auth\TwoFactorRequirement;
 use App\Support\IpAddress;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -21,12 +22,14 @@ class SecurityController extends Controller
         SessionTracker $tracker,
         TwoFactorService $twoFactor,
         RecentAuthentication $recent,
+        TwoFactorRequirement $requirement,
     ): Response {
         $user = $request->user();
         $currentId = $tracker->current($request)?->getKey();
 
         return Inertia::render('Account/Security', [
             'sso_managed' => $user->requiresSso(),
+            'two_factor_required' => $requirement->isUnmet($user),
             'has_password' => filled($user->password),
             'status' => session('status'),
             'two_factor' => $user->requiresSso() ? null : $this->twoFactorState($user, $twoFactor, $recent->isRecent($request)),
