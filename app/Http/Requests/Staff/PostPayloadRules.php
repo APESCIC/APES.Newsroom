@@ -9,6 +9,8 @@ use Illuminate\Validation\Rule;
 
 trait PostPayloadRules
 {
+    use EditorPayloadRules;
+
     /**
      * Normalize Glass Studio composer wire format before validation.
      * Empty optional selects/strings mirror ConvertEmptyStringsToNull; keep
@@ -47,7 +49,7 @@ trait PostPayloadRules
         return [
             'title' => ['required', 'string', 'max:255'],
             'excerpt' => ['nullable', 'string', 'max:1000'],
-            'content' => ['required', 'array'],
+            ...$this->editorPayloadRules(),
             'channel' => ['required', Rule::enum(Channel::class)],
             'visibility' => ['sometimes', Rule::enum(ContentVisibility::class)],
             'hero_image' => ['nullable', 'string', 'max:2048'],

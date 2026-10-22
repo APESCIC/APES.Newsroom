@@ -9,6 +9,8 @@ use Illuminate\Validation\Rule;
 
 class UpdatePageRequest extends FormRequest
 {
+    use EditorPayloadRules;
+
     public function authorize(): bool
     {
         $page = $this->route('page');
@@ -28,7 +30,7 @@ class UpdatePageRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', 'alpha_dash', Rule::unique('pages', 'slug')->ignore($page->id)],
             'excerpt' => ['nullable', 'string', 'max:1000'],
-            'content' => ['required', 'array'],
+            ...$this->editorPayloadRules(),
             'visibility' => ['sometimes', Rule::enum(ContentVisibility::class)],
             'hero_image' => ['nullable', 'string', 'max:2048'],
             'hero_image_alt' => ['nullable', 'string', 'max:255'],

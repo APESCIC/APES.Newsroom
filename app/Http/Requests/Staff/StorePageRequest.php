@@ -9,6 +9,8 @@ use Illuminate\Validation\Rule;
 
 class StorePageRequest extends FormRequest
 {
+    use EditorPayloadRules;
+
     public function authorize(): bool
     {
         return $this->user()?->can('create', Page::class) ?? false;
@@ -23,7 +25,7 @@ class StorePageRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'alpha_dash', Rule::unique('pages', 'slug')],
             'excerpt' => ['nullable', 'string', 'max:1000'],
-            'content' => ['required', 'array'],
+            ...$this->editorPayloadRules(),
             'visibility' => ['sometimes', Rule::enum(ContentVisibility::class)],
             'hero_image' => ['nullable', 'string', 'max:2048'],
             'hero_image_alt' => ['nullable', 'string', 'max:255'],

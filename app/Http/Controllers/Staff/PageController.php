@@ -8,7 +8,7 @@ use App\Http\Requests\Staff\StorePageRequest;
 use App\Http\Requests\Staff\UpdatePageRequest;
 use App\Models\Page;
 use App\Models\Redirect;
-use App\Services\EditorJs\BlockValidator;
+use App\Services\EditorJs\EditorContent;
 use App\Services\Publishing\PublicPagePresenter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,7 +21,7 @@ use Inertia\Response;
 class PageController extends Controller
 {
     public function __construct(
-        private readonly BlockValidator $validator,
+        private readonly EditorContent $editorContent,
     ) {}
 
     public function index(Request $request): Response
@@ -61,7 +61,8 @@ class PageController extends Controller
     public function store(StorePageRequest $request): RedirectResponse
     {
         $validated = $request->validated();
-        $content = $this->validator->validate($validated['content']);
+        $content = $this->editorContent->fromPayload($validated);
+        $validated = EditorContent::withoutEditorFields($validated);
         unset($validated['expected_updated_at']);
 
         $page = Page::create([
@@ -92,7 +93,8 @@ class PageController extends Controller
         $this->assertNoConflict($page, $validated['expected_updated_at'] ?? null);
         unset($validated['expected_updated_at']);
 
-        $content = $this->validator->validate($validated['content']);
+        $content = $this->editorContent->fromPayload($validated);
+        $validated = EditorContent::withoutEditorFields($validated);
         $oldSlug = $page->slug;
         $wasPublished = $page->status === PostStatus::Published;
 
@@ -185,6 +187,7 @@ class PageController extends Controller
             'slug' => $page->slug,
             'excerpt' => $page->excerpt,
             'content' => $page->content,
+            'content_html' => $this->editorContent->editorHtml($page->content),
             'status' => $page->status->value,
             'visibility' => $page->visibility?->value ?? 'public',
             'hero_image' => $page->hero_image,
