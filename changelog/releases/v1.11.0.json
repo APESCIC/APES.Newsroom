@@ -1,0 +1,40 @@
+{
+  "version": "v1.11.0",
+  "slug": "release-v1-11-0",
+  "released_at": "2026-10-22",
+  "previous_version": "v1.10.0",
+  "theme": "Admin security console",
+  "change_types": [
+    "security",
+    "added",
+    "changed"
+  ],
+  "topic_tags": [
+    "internal-only",
+    "public-facing",
+    "compliance"
+  ],
+  "summary": "Administrators get a security console: they can find any account and see its sign-in history, lock a compromised account, sign it out everywhere or reset its credentials, browse and export the audit log, set the site's security policy, and manage API tokens, Content API keys and webhook secrets without ever seeing a stored secret again.",
+  "detailed_changes": [
+    "Admins can open Users to search every account by name or email and filter by role, sign-in method, email status, lock status and second factor. Each account page shows its role and where it comes from, active sessions, Admin API tokens, passkeys and recent security events (#271, #304).",
+    "Each account page also shows its recent sign-in history: whether each attempt succeeded, the method used, the IP address and the device (#272, #309).",
+    "Admins can lock an account. A locked account is signed out everywhere and cannot sign in by password, email link, passkey or staff single sign-on, request a reset, or use API tokens until it is unlocked. The account holder is told by email (#305).",
+    "Admins can sign an account out everywhere, force a password reset, turn off two-factor or remove passkeys when a device is lost or an account is compromised. Every action needs a reason and a fresh identity check, is recorded in the audit log and is emailed to the account holder. Staff accounts managed by single sign-on can only be signed out (#306).",
+    "Super admins can remove an out-of-date staff or admin role from an account that does not use single sign-on. Staff and admin roles still come only from the Cloudron directory, and the last super admin cannot be removed (#307).",
+    "A new Audit log page lists privileged and security events with filters for who, what, which record, when and from where, and can export the filtered list as CSV. Exports need a fresh identity check and are themselves recorded (#272, #308).",
+    "The Settings page has a new Security section: minimum password length (never below 12), refusing breached passwords, how long an idle session lasts, whether emailed sign-in links are allowed, and which roles must use two-factor sign-in. Changes apply straight away and are recorded in the audit log (#273, #310).",
+    "When a role must use two-factor sign-in, members in that role are asked to add an authenticator app or passkey before they can use the rest of the site. Staff who sign in through Cloudron are exempt because Cloudron enforces its own two-factor (#311).",
+    "Admins can create Admin API tokens with an expiry and a limited set of abilities (read, edit or publish posts), see when each was last used, and revoke them with a reason. A new token is shown once. Expired and revoked tokens stop working immediately (#274, #312).",
+    "Webhook signing secrets are now encrypted in the database and shown in full only once, right after an endpoint is created or its secret is rotated (#313).",
+    "The Content API now uses named keys that admins create and revoke, so each partner can have its own key and keys can be rotated without downtime. Keys are stored only as hashes. The single key from the server environment keeps working while integrations move over (#314).",
+    "Permission checks across staff and admin screens now use one set of rules, and every staff and admin page is covered by an automated access test. The member list and webhook settings are now admin-only and have moved to the admin area (#275, #315)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /admin/users, /admin/audit-log, /admin/settings, /admin/api-tokens, /admin/content-api-keys, /admin/members, /admin/webhooks, /account/security, /login",
+    "User groups affected: admins and super admins (new tools); staff (member list and webhooks now admin-only); members (accounts can be locked, roles can be required to use two-factor)",
+    "Public impact: account lock and admin-action emails, optional required two-factor setup, emailed sign-in links can be switched off",
+    "Internal impact: new lock columns on users, expiry, abilities and revocation on api_tokens, new content_api_keys table, encrypted webhook secrets, new audit events and authorization policies, governance records updated"
+  ],
+  "pr": 383
+}

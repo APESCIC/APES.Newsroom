@@ -72,11 +72,19 @@ class ReleaseChangelogSync
         foreach ($paths as $path) {
             $payload = $this->validator->parseFile($path);
             $version = (string) $payload['version'];
-            $slug = Release::slugFromVersion($version);
+            $slug = is_string($payload['slug'] ?? null) && $payload['slug'] !== ''
+                ? $payload['slug']
+                : Release::slugFromVersion($version);
             $bump = $this->bumpLabel($previousVersion, $version);
             $versionType = "{$bump} {$channelSuffix}";
 
             $existing = Release::query()->where('slug', $slug)->first();
+
+            if ($existing !== null && $existing->version !== $version) {
+                throw new RuntimeException(
+                    "Slug [{$slug}] already belongs to {$existing->version}; set a distinct \"slug\" in ".basename($path).'.',
+                );
+            }
             $releasedAt = $payload['released_at']
                 ?? $existing?->released_at?->toDateString()
                 ?? Carbon::today()->toDateString();
