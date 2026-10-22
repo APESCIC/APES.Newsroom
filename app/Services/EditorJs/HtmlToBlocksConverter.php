@@ -388,6 +388,10 @@ class HtmlToBlocksConverter
 
     private function plainText(Element $element): string
     {
+        foreach ($element->querySelectorAll(implode(',', self::DROPPED_TAGS)) as $dropped) {
+            $dropped->remove();
+        }
+
         return trim(preg_replace('/\s+/u', ' ', $element->textContent ?? '') ?? '');
     }
 
