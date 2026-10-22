@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Services\Auth\PendingTwoFactorLogin;
+use App\Services\Settings\SettingsRepository;
+use App\Support\Settings\SettingDefinitions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -23,6 +25,7 @@ class AuthenticatedSessionController extends Controller
                 ? 'Log in with '.config('services.cloudron_oidc.provider_name')
                 : null,
             'rememberDays' => max(1, intdiv((int) config('auth.guards.web.remember', 43200), 1440)),
+            'magicLinksEnabled' => (bool) app(SettingsRepository::class)->get(SettingDefinitions::MAGIC_LINKS_ENABLED),
         ]);
     }
 

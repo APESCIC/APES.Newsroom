@@ -16,6 +16,10 @@ const adminProps: SharedPageProps = {
 
 const editorSetting: SettingDefinition = {
     key: 'editor.driver',
+    section: 'Editor',
+    min: null,
+    max: null,
+    unit: null,
     label: 'Staff editor',
     help: 'Rich-text editor used on staff post and page screens.',
     type: 'enum',
@@ -105,6 +109,46 @@ describe('Admin settings page', () => {
             expect(screen.queryByRole('link', { name: 'Settings' })).not.toBeInTheDocument();
             unmount();
         }
+    });
+
+    it('renders number, checkbox and multi-choice settings in their sections and submits typed values', async () => {
+        const user = userEvent.setup();
+        const base = { section: 'Security', help: 'Help text.', options: [], min: null, max: null, unit: null };
+        const settings: SettingDefinition[] = [
+            editorSetting,
+            { ...base, key: 'security.password.min_length', label: 'Minimum password length', type: 'int', value: 12, min: 12, max: 128, unit: 'characters' },
+            { ...base, key: 'security.magic_links.enabled', label: 'Allow email sign-in links', type: 'bool', value: true },
+            {
+                ...base,
+                key: 'security.two_factor.required_roles',
+                label: 'Roles that must use two-factor sign-in',
+                type: 'multi_enum',
+                value: [],
+                options: [
+                    { value: 'public', label: 'Public' },
+                    { value: 'staff', label: 'Staff' },
+                ],
+            },
+        ];
+        render(<SettingsIndex settings={settings} />);
+
+        expect(screen.getByRole('heading', { name: 'Security' })).toBeInTheDocument();
+        expect(screen.getByText('Between 12 and 128.')).toBeInTheDocument();
+
+        const length = screen.getByLabelText('Minimum password length');
+        await user.clear(length);
+        await user.type(length, '16');
+        await user.click(screen.getByLabelText('Allow email sign-in links'));
+        await user.click(within(screen.getByRole('group', { name: 'Roles that must use two-factor sign-in' })).getByLabelText('Public'));
+        await user.click(screen.getByRole('button', { name: 'Save settings' }));
+
+        const [visit] = getInertiaMock().visits;
+        expect(visit.data).toEqual({
+            settings: {
+                editor: { driver: 'editorjs' },
+                security: { password: { min_length: 16 }, magic_links: { enabled: false }, two_factor: { required_roles: ['public'] } },
+            },
+        });
     });
 
     it('shows the saved flash message', () => {

@@ -14,6 +14,7 @@ interface LoginProps {
     staffLoginUrl: string | null;
     staffLoginLabel: string | null;
     rememberDays?: number;
+    magicLinksEnabled?: boolean;
 }
 
 const DEV_ROLES = [
@@ -29,7 +30,7 @@ function submitPasskey(credential: AuthenticationResponseJSON, remember: boolean
     router.post('/passkeys/login', { credential: JSON.stringify(credential), remember }, { onFinish });
 }
 
-export default function Login({ staffLoginUrl, staffLoginLabel, rememberDays = 30 }: LoginProps) {
+export default function Login({ staffLoginUrl, staffLoginLabel, rememberDays = 30, magicLinksEnabled = true }: LoginProps) {
     const { devTools, errors: pageErrors } = usePage<{ devTools?: boolean; errors?: Record<string, string> }>().props;
     const { data, setData, post, processing, errors, reset } = useForm({
         email: '',
@@ -183,7 +184,9 @@ export default function Login({ staffLoginUrl, staffLoginLabel, rememberDays = 3
                     </div>
                 )}
                 <p className="mt-6 flex flex-col gap-1 text-sm text-muted">
-                    <Link href="/login/magic-link" className="text-teal-deep hover:underline">Email me a sign-in link instead</Link>
+                    {magicLinksEnabled && (
+                        <Link href="/login/magic-link" className="text-teal-deep hover:underline">Email me a sign-in link instead</Link>
+                    )}
                     <Link href="/forgot-password" className="text-teal-deep hover:underline">Forgot your password?</Link>
                     <span>
                         Need an account? <Link href="/register" className="text-teal-deep hover:underline">Register</Link>

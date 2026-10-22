@@ -4,6 +4,7 @@ namespace App\Http\Requests\Admin;
 
 use App\Support\Settings\SettingDefinitions;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Arr;
 
 class UpdateSettingsRequest extends FormRequest
 {
@@ -23,7 +24,9 @@ class UpdateSettingsRequest extends FormRequest
         $rules = ['settings' => ['required', 'array']];
 
         foreach (array_keys(SettingDefinitions::all()) as $key) {
-            $rules['settings.'.$key] = SettingDefinitions::rules($key);
+            foreach (SettingDefinitions::rules($key) as $suffix => $keyRules) {
+                $rules['settings.'.$key.$suffix] = $keyRules;
+            }
         }
 
         return $rules;
@@ -44,14 +47,19 @@ class UpdateSettingsRequest extends FormRequest
     }
 
     /**
+     * Only the settings present in the request; omitted ones keep their value.
+     *
      * @return array<string, mixed>
      */
     public function settingValues(): array
     {
+        $validated = $this->validated();
         $values = [];
 
         foreach (array_keys(SettingDefinitions::all()) as $key) {
-            $values[$key] = $this->validated('settings.'.$key);
+            if (Arr::has($validated, 'settings.'.$key)) {
+                $values[$key] = SettingDefinitions::cast($key, Arr::get($validated, 'settings.'.$key));
+            }
         }
 
         return $values;
