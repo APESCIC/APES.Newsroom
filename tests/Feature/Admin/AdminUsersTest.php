@@ -46,14 +46,14 @@ class AdminUsersTest extends TestCase
 
     public function test_list_searches_and_filters(): void
     {
-        $admin = User::factory()->admin()->create(['name' => 'Ada Admin']);
+        $admin = User::factory()->admin()->create(['name' => 'Ada Admin', 'email' => 'ada@test.invalid']);
         User::factory()->create(['name' => 'Paula Password', 'email' => 'paula@example.com']);
-        User::factory()->create(['name' => 'Mia Magic', 'password' => null]);
-        User::factory()->unverified()->create(['name' => 'Una Unverified']);
-        User::factory()->staff()->create(['name' => 'Sam Staff']);
-        $enrolled = User::factory()->create(['name' => 'Tom Totp']);
+        User::factory()->create(['name' => 'Mia Magic', 'email' => 'mia@test.invalid', 'password' => null]);
+        User::factory()->unverified()->create(['name' => 'Una Unverified', 'email' => 'una@test.invalid']);
+        User::factory()->staff()->create(['name' => 'Sam Staff', 'email' => 'sam@test.invalid']);
+        $enrolled = User::factory()->create(['name' => 'Tom Totp', 'email' => 'tom@test.invalid']);
         $enrolled->forceFill(['two_factor_secret' => 'JBSWY3DPEHPK3PXP', 'two_factor_confirmed_at' => now()])->save();
-        $passkeyUser = User::factory()->create(['name' => 'Pat Passkey']);
+        $passkeyUser = User::factory()->create(['name' => 'Pat Passkey', 'email' => 'pat@test.invalid']);
         $this->createPasskey($passkeyUser);
 
         $cases = [

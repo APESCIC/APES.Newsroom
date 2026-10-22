@@ -22,7 +22,25 @@ class SettingsRepositoryTest extends TestCase
     public function test_unsaved_setting_returns_declared_default(): void
     {
         $this->assertSame('editorjs', $this->repository()->get(SettingDefinitions::EDITOR_DRIVER));
-        $this->assertSame([SettingDefinitions::EDITOR_DRIVER => 'editorjs'], $this->repository()->all());
+        $this->assertSame(array_keys(SettingDefinitions::all()), array_keys($this->repository()->all()));
+        $this->assertSame(true, $this->repository()->get(SettingDefinitions::MAGIC_LINKS_ENABLED));
+        $this->assertSame([], $this->repository()->get(SettingDefinitions::TWO_FACTOR_REQUIRED_ROLES));
+    }
+
+    public function test_typed_settings_accept_only_values_of_their_type_and_bounds(): void
+    {
+        $this->assertTrue(SettingDefinitions::accepts(SettingDefinitions::PASSWORD_MIN_LENGTH, 16));
+        $this->assertFalse(SettingDefinitions::accepts(SettingDefinitions::PASSWORD_MIN_LENGTH, 11));
+        $this->assertFalse(SettingDefinitions::accepts(SettingDefinitions::PASSWORD_MIN_LENGTH, 129));
+        $this->assertFalse(SettingDefinitions::accepts(SettingDefinitions::PASSWORD_MIN_LENGTH, '16'));
+        $this->assertTrue(SettingDefinitions::accepts(SettingDefinitions::MAGIC_LINKS_ENABLED, false));
+        $this->assertFalse(SettingDefinitions::accepts(SettingDefinitions::MAGIC_LINKS_ENABLED, 'no'));
+        $this->assertTrue(SettingDefinitions::accepts(SettingDefinitions::TWO_FACTOR_REQUIRED_ROLES, ['public', 'admin']));
+        $this->assertFalse(SettingDefinitions::accepts(SettingDefinitions::TWO_FACTOR_REQUIRED_ROLES, ['public', 'public']));
+        $this->assertFalse(SettingDefinitions::accepts(SettingDefinitions::TWO_FACTOR_REQUIRED_ROLES, ['owner']));
+
+        Setting::query()->create(['key' => SettingDefinitions::PASSWORD_MIN_LENGTH, 'value' => 4]);
+        $this->assertSame(12, $this->repository()->get(SettingDefinitions::PASSWORD_MIN_LENGTH));
     }
 
     public function test_undeclared_key_is_rejected_on_read(): void

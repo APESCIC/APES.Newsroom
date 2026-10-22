@@ -24,8 +24,9 @@ class AdminSettingsTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Admin/Settings/Index')
-                ->has('settings', 1)
+                ->has('settings', count(SettingDefinitions::all()))
                 ->where('settings.0.key', SettingDefinitions::EDITOR_DRIVER)
+                ->where('settings.0.section', 'Editor')
                 ->where('settings.0.type', 'enum')
                 ->where('settings.0.value', 'editorjs')
                 ->where('settings.0.options.0.value', 'editorjs')
@@ -57,14 +58,26 @@ class AdminSettingsTest extends TestCase
         $this->assertSame(0, AuditLog::query()->where('action', 'settings.updated')->count());
     }
 
-    public function test_missing_value_returns_inline_error(): void
+    public function test_blank_value_returns_inline_error(): void
     {
         $admin = User::factory()->admin()->create();
 
         $this->actingAs($admin)->withRecentAuthentication()
             ->from('/admin/settings')
-            ->put('/admin/settings', ['settings' => []])
+            ->put('/admin/settings', ['settings' => ['editor' => ['driver' => '']]])
             ->assertSessionHasErrors('settings.editor.driver');
+    }
+
+    public function test_omitted_settings_keep_their_value(): void
+    {
+        $admin = User::factory()->admin()->create();
+        app(SettingsRepository::class)->set(SettingDefinitions::PASSWORD_MIN_LENGTH, 20);
+
+        $this->actingAs($admin)->withRecentAuthentication()
+            ->put('/admin/settings', ['settings' => ['editor' => ['driver' => 'tinymce']]])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(20, app(SettingsRepository::class)->get(SettingDefinitions::PASSWORD_MIN_LENGTH));
     }
 
     public function test_valid_value_persists_writes_audit_log_and_flashes(): void

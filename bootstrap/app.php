@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Middleware\ApplySessionLifetime;
 use App\Http\Middleware\EnsureAccountNotLocked;
 use App\Http\Middleware\EnsureAuthEpoch;
+use App\Http\Middleware\EnsureMagicLinksEnabled;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RequireRecentAuthentication;
@@ -30,6 +32,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->authenticateSessions();
 
+        $middleware->web(prepend: [
+            ApplySessionLifetime::class,
+        ]);
+
         $middleware->web(append: [
             EnsureAuthEpoch::class,
             EnsureAccountNotLocked::class,
@@ -56,6 +62,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => EnsureRole::class,
             'auth.recent' => RequireRecentAuthentication::class,
+            'magic-links.enabled' => EnsureMagicLinksEnabled::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

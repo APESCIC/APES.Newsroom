@@ -38,13 +38,15 @@ Route::middleware('guest')->group(function () {
         ->middleware('throttle:passkey-login')
         ->name('passkey-login.store');
 
-    Route::get('login/magic-link', [MagicLinkController::class, 'create'])->name('magic-link.request');
-    Route::post('login/magic-link', [MagicLinkController::class, 'store'])
-        ->middleware('throttle:magic-link')
-        ->name('magic-link.store');
-    Route::get('login/magic-link/{token}', [MagicLinkController::class, 'consume'])
-        ->middleware('signed')
-        ->name('magic-link.consume');
+    Route::middleware('magic-links.enabled')->group(function () {
+        Route::get('login/magic-link', [MagicLinkController::class, 'create'])->name('magic-link.request');
+        Route::post('login/magic-link', [MagicLinkController::class, 'store'])
+            ->middleware('throttle:magic-link')
+            ->name('magic-link.store');
+        Route::get('login/magic-link/{token}', [MagicLinkController::class, 'consume'])
+            ->middleware('signed')
+            ->name('magic-link.consume');
+    });
 
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
     Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])

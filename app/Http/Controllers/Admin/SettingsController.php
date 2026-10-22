@@ -30,13 +30,17 @@ class SettingsController extends Controller
         foreach (SettingDefinitions::all() as $key => $definition) {
             $settings[] = [
                 'key' => $key,
+                'section' => $definition['section'],
                 'label' => $definition['label'],
                 'help' => $definition['help'],
                 'type' => $definition['type'],
-                'options' => collect($definition['options'])
+                'options' => collect($definition['options'] ?? [])
                     ->map(fn (string $label, string $value) => ['value' => $value, 'label' => $label])
                     ->values()
                     ->all(),
+                'min' => $definition['min'] ?? null,
+                'max' => $definition['max'] ?? null,
+                'unit' => $definition['unit'] ?? null,
                 'value' => $values[$key],
             ];
         }
