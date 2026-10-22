@@ -30,6 +30,10 @@ const detail: UserDetail = {
     sessions: [{ id: 3, browser: 'Firefox', platform: 'Windows', device_type: 'desktop', ip_address: '198.51.100.7', remembered: true, last_seen_at: null }],
     api_tokens: [],
     security_events: [{ id: 4, action: 'account.password_changed', created_at: null, actor: null, ip_address: null, payload: [] }],
+    login_history: [
+        { id: 5, action: 'auth.failed', result: 'failure', method: null, created_at: null, ip_address: '198.51.100.1', browser: 'Firefox', platform: 'Windows', device_type: 'desktop' },
+        { id: 6, action: 'auth.passkey_login', result: 'success', method: 'passkey', created_at: null, ip_address: '198.51.100.2', browser: null, platform: null, device_type: null },
+    ],
 };
 
 describe('Admin users pages', () => {
@@ -75,6 +79,19 @@ describe('Admin users pages', () => {
         expect(within(screen.getByRole('region', { name: 'Active sessions' })).getByText(/Firefox on Windows/)).toBeInTheDocument();
         expect(within(screen.getByRole('region', { name: 'Admin API tokens' })).getByText('No tokens.')).toBeInTheDocument();
         expect(within(screen.getByRole('region', { name: 'Recent security events' })).getByText('account.password_changed')).toBeInTheDocument();
+    });
+
+    it('shows sign-in history with result, method, IP and device', () => {
+        render(<UsersShow user={detail} />);
+
+        const history = within(screen.getByRole('region', { name: 'Sign-in history' }));
+        const rows = history.getAllByRole('row');
+        expect(rows).toHaveLength(3);
+        expect(within(rows[1]).getByText('Failed')).toBeInTheDocument();
+        expect(within(rows[1]).getByText('Firefox on Windows')).toBeInTheDocument();
+        expect(within(rows[2]).getByText('passkey_login')).toBeInTheDocument();
+        expect(within(rows[2]).getByText('passkey')).toBeInTheDocument();
+        expect(within(rows[2]).getByText('198.51.100.2')).toBeInTheDocument();
     });
 
     it('explains that SSO accounts get their second factor from Cloudron', () => {

@@ -8,6 +8,7 @@ use App\Models\Passkey;
 use App\Models\User;
 use App\Models\UserSession;
 use App\Services\Audit\AuditLogQuery;
+use App\Services\Auth\SessionTracker;
 use App\Services\Auth\TwoFactor\TwoFactorService;
 
 /**
@@ -18,7 +19,12 @@ class AdminUserPresenter
 {
     private const RECENT_EVENTS = 20;
 
-    public function __construct(private readonly TwoFactorService $twoFactor) {}
+    private const LOGIN_HISTORY = 25;
+
+    public function __construct(
+        private readonly TwoFactorService $twoFactor,
+        private readonly SessionTracker $sessions,
+    ) {}
 
     /**
      * @return array<string, mixed>
@@ -73,7 +79,74 @@ class AdminUserPresenter
                 'last_used_at' => $token->last_used_at?->toIso8601String(),
             ])->values()->all(),
             'security_events' => $this->securityEvents($user),
+            'login_history' => $this->loginHistory($user),
         ];
+    }
+
+    /**
+     * Recent sign-in activity: attempts, second-factor steps and sign-outs.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function loginHistory(User $user): array
+    {
+        return AuditLog::query()
+            ->where('action', 'like', 'auth.%')
+            ->where(fn ($query) => $query
+                ->where('actor_id', $user->id)
+                ->orWhere(fn ($subject) => $subject
+                    ->where('subject_type', $user->getMorphClass())
+                    ->where('subject_id', $user->id)))
+            ->latest('id')
+            ->limit(self::LOGIN_HISTORY)
+            ->get()
+            ->map(function (AuditLog $log) {
+                $device = $this->sessions->describe($log->user_agent);
+
+                return [
+                    'id' => $log->id,
+                    'action' => $log->action,
+                    'result' => self::loginResult($log->action),
+                    'method' => self::loginMethod($log),
+                    'created_at' => $log->created_at?->toIso8601String(),
+                    'ip_address' => $log->ip_address,
+                    'browser' => $device['browser'],
+                    'platform' => $device['platform'],
+                    'device_type' => $device['device_type'],
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    public static function loginResult(string $action): string
+    {
+        return match ($action) {
+            'auth.login', 'auth.passkey_login', 'auth.two_factor_passed', 'auth.oidc_allowed',
+            'auth.magic_link_used', 'auth.recovery_code_used' => 'success',
+            'auth.failed', 'auth.lockout', 'auth.two_factor_failed', 'auth.oidc_denied',
+            'auth.sso_required_refused', 'auth.locked_refused' => 'failure',
+            default => 'info',
+        };
+    }
+
+    private static function loginMethod(AuditLog $log): ?string
+    {
+        $payload = $log->payload ?? [];
+        $explicit = $payload['method'] ?? $payload['via'] ?? null;
+
+        if (is_string($explicit) && $explicit !== '') {
+            return $explicit;
+        }
+
+        return match (true) {
+            str_contains($log->action, 'passkey') => 'passkey',
+            str_contains($log->action, 'magic_link') => 'magic_link',
+            str_contains($log->action, 'oidc') => 'sso',
+            str_contains($log->action, 'recovery_code') => 'recovery_code',
+            str_contains($log->action, 'two_factor') => 'totp',
+            default => null,
+        };
     }
 
     public static function signInMethod(User $user): string
