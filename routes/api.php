@@ -20,10 +20,10 @@ Route::prefix('content/v1')
 Route::prefix('admin/v1')
     ->middleware([AuthenticateAdminApiToken::class, 'throttle:admin-api'])
     ->group(function () {
-        Route::get('/posts', [AdminPostController::class, 'index']);
-        Route::post('/posts', [AdminPostController::class, 'store']);
-        Route::get('/posts/{post}', [AdminPostController::class, 'show']);
-        Route::patch('/posts/{post}', [AdminPostController::class, 'update']);
-        Route::post('/posts/{post}/publish', [AdminPostController::class, 'publish']);
-        Route::post('/posts/{post}/unpublish', [AdminPostController::class, 'unpublish']);
+        Route::get('/posts', [AdminPostController::class, 'index'])->middleware('token.ability:posts:read');
+        Route::post('/posts', [AdminPostController::class, 'store'])->middleware('token.ability:posts:write');
+        Route::get('/posts/{post}', [AdminPostController::class, 'show'])->middleware('token.ability:posts:read');
+        Route::patch('/posts/{post}', [AdminPostController::class, 'update'])->middleware('token.ability:posts:write');
+        Route::post('/posts/{post}/publish', [AdminPostController::class, 'publish'])->middleware('token.ability:posts:publish');
+        Route::post('/posts/{post}/unpublish', [AdminPostController::class, 'unpublish'])->middleware('token.ability:posts:publish');
     });

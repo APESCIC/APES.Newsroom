@@ -33,8 +33,8 @@ class AdminApiTokenManagementTest extends TestCase
 
         $this->artisan('newsroom:list-admin-api-tokens')
             ->expectsTable(
-                ['ID', 'Name', 'Owner', 'Role', 'Last used', 'Created'],
-                [[$issued['model']->id, 'ci', 'staffer@example.com', 'staff', 'never', $issued['model']->created_at->toDateTimeString()]],
+                ['ID', 'Name', 'Owner', 'Role', 'Status', 'Abilities', 'Expires', 'Last used', 'Created'],
+                [[$issued['model']->id, 'ci', 'staffer@example.com', 'staff', 'active', 'all', 'never', 'never', $issued['model']->created_at->toDateTimeString()]],
             )
             ->doesntExpectOutputToContain($issued['token'])
             ->assertSuccessful();

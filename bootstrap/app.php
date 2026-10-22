@@ -5,6 +5,7 @@ use App\Http\Middleware\EnsureAccountNotLocked;
 use App\Http\Middleware\EnsureAuthEpoch;
 use App\Http\Middleware\EnsureMagicLinksEnabled;
 use App\Http\Middleware\EnsureRole;
+use App\Http\Middleware\EnsureTokenAbility;
 use App\Http\Middleware\EnsureTwoFactorEnrolled;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RequireRecentAuthentication;
@@ -65,6 +66,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => EnsureRole::class,
             'auth.recent' => RequireRecentAuthentication::class,
             'magic-links.enabled' => EnsureMagicLinksEnabled::class,
+            'token.ability' => EnsureTokenAbility::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

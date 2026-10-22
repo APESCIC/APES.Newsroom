@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\PostStatus;
 use App\Enums\Role;
+use App\Models\ApiToken;
 use App\Models\AuditLog;
 use App\Models\Comment;
 use App\Models\ImportRun;
@@ -42,6 +43,9 @@ class AuthzMatrixTest extends TestCase
     private const MATRIX = [
         'admin.audit-log.index' => Role::Admin,
         'admin.audit-log.export' => Role::Admin,
+        'admin.api-tokens.index' => Role::Admin,
+        'admin.api-tokens.store' => Role::Admin,
+        'admin.api-tokens.destroy' => Role::Admin,
         'admin.imports.ghost-content' => Role::Staff,
         'admin.imports.ghost-content.upload' => Role::Staff,
         'admin.imports.ghost-content.confirm' => Role::Staff,
@@ -327,6 +331,7 @@ class AuthzMatrixTest extends TestCase
                 ]),
                 'page' => Page::factory()->create(['author_id' => $user->id]),
                 'user' => User::factory()->create(),
+                'apiToken' => ApiToken::issue(User::factory()->staff()->create(), 'matrix')['model'],
                 'release' => Release::factory()->create(['slug' => 'release-'.Str::lower(Str::random(12))]),
                 'webhook' => WebhookEndpoint::query()->create([
                     'name' => 'Partner',

@@ -41,7 +41,7 @@ export type UserDetail = UserRow & {
         remembered: boolean;
         last_seen_at: string | null;
     }[];
-    api_tokens: { id: number; name: string; created_at: string | null; last_used_at: string | null }[];
+    api_tokens: { id: number; name: string; status?: 'active' | 'expired' | 'revoked'; created_at: string | null; last_used_at: string | null }[];
     security_events: SecurityEvent[];
     login_history: LoginEvent[];
 };

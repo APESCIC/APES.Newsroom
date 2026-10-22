@@ -27,12 +27,15 @@ class ListAdminApiTokensCommand extends Command
         }
 
         $this->table(
-            ['ID', 'Name', 'Owner', 'Role', 'Last used', 'Created'],
+            ['ID', 'Name', 'Owner', 'Role', 'Status', 'Abilities', 'Expires', 'Last used', 'Created'],
             $tokens->map(fn (ApiToken $token) => [
                 $token->id,
                 $token->name,
                 $token->user?->email ?? '(deleted user)',
                 $token->user?->role->value ?? '-',
+                $token->status(),
+                $token->abilities === null ? 'all' : implode(', ', $token->abilities),
+                $token->expires_at?->toDateTimeString() ?? 'never',
                 $token->last_used_at?->toDateTimeString() ?? 'never',
                 $token->created_at?->toDateTimeString() ?? '-',
             ])->all(),
