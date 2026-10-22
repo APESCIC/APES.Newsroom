@@ -47,6 +47,7 @@ export default function Index({ filters, users, roles }: { filters: UserFilters;
                             <option value="">Any</option>
                             <option value="verified">Email verified</option>
                             <option value="unverified">Email not verified</option>
+                            <option value="locked">Locked</option>
                         </select>
                     </label>
                     <label className="text-sm font-bold text-body">
@@ -86,6 +87,7 @@ export default function Index({ filters, users, roles }: { filters: UserFilters;
                                                 {user.name}
                                             </Link>
                                             <p className="text-xs text-muted">{user.email}</p>
+                                            {user.locked && <p className="text-xs font-bold text-danger">Locked</p>}
                                         </td>
                                         <td className="px-4 py-3 text-body">{roleLabel(user.role)}</td>
                                         <td className="px-4 py-3 text-body">{methodLabel(user.sign_in_method)}</td>

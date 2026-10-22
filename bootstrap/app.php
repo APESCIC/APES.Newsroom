@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureAccountNotLocked;
 use App\Http\Middleware\EnsureAuthEpoch;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -31,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [
             EnsureAuthEpoch::class,
+            EnsureAccountNotLocked::class,
             TrackUserSession::class,
             ResolveRedirects::class,
             HandleInertiaRequests::class,

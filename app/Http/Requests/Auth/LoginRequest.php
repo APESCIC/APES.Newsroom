@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Auth;
 
 use App\Models\User;
+use App\Services\Auth\AccountLockPolicy;
 use App\Services\Auth\SsoOnlyPolicy;
 use Illuminate\Auth\Events\Attempting;
 use Illuminate\Auth\Events\Failed;
@@ -40,7 +41,8 @@ class LoginRequest extends FormRequest
         $this->ensureIsNotRateLimited();
 
         $user = User::where('email', $this->string('email')->toString())->first();
-        $refused = app(SsoOnlyPolicy::class)->refuses($user, 'password_login', $this);
+        $refused = app(SsoOnlyPolicy::class)->refuses($user, 'password_login', $this)
+            || app(AccountLockPolicy::class)->refuses($user, 'password_login', $this);
 
         $guard = Auth::guard('web');
         $credentials = $this->only('email', 'password');

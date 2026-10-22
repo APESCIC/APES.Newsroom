@@ -24,6 +24,10 @@ class AuthenticateAdminApiToken
             return response()->json(['message' => 'Invalid Admin API token.'], 401);
         }
 
+        if ($token->user->isLocked()) {
+            return response()->json(['message' => 'Token owner account is locked.'], 403);
+        }
+
         if (! $token->user->role->atLeast(Role::Staff)) {
             return response()->json(['message' => 'Token owner lacks staff access.'], 403);
         }

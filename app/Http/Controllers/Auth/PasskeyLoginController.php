@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\Audit\AuditLogger;
+use App\Services\Auth\AccountLockPolicy;
 use App\Services\Auth\Passkeys\PasskeyCeremony;
 use App\Services\Auth\PendingTwoFactorLogin;
 use App\Services\Auth\SsoOnlyPolicy;
@@ -24,6 +25,7 @@ class PasskeyLoginController extends Controller
         private readonly PasskeyCeremony $ceremony,
         private readonly PendingTwoFactorLogin $login,
         private readonly SsoOnlyPolicy $ssoOnly,
+        private readonly AccountLockPolicy $locks,
         private readonly AuditLogger $audit,
     ) {}
 
@@ -42,7 +44,9 @@ class PasskeyLoginController extends Controller
         $assertion = $this->ceremony->authenticate($request, $validated['credential']);
         $user = $assertion?->passkey->authenticatable;
 
-        if (! $user instanceof User || $this->ssoOnly->refuses($user, 'passkey_login', $request)) {
+        if (! $user instanceof User
+            || $this->ssoOnly->refuses($user, 'passkey_login', $request)
+            || $this->locks->refuses($user, 'passkey_login', $request)) {
             throw ValidationException::withMessages(['passkey' => 'That passkey could not be used to sign in.']);
         }
 

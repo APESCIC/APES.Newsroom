@@ -40,6 +40,7 @@ class AdminUserPresenter
             'email_verified' => $user->hasVerifiedEmail(),
             'two_factor_enabled' => $user->hasTwoFactorEnabled(),
             'passkeys_count' => (int) ($user->passkeys_count ?? $user->passkeys()->count()),
+            'locked' => $user->isLocked(),
             'created_at' => $user->created_at?->toIso8601String(),
         ];
     }
@@ -47,10 +48,19 @@ class AdminUserPresenter
     /**
      * @return array<string, mixed>
      */
-    public function detail(User $user): array
+    public function detail(User $user, User $actor): array
     {
         return [
             ...$this->row($user),
+            'lock' => $user->isLocked() ? [
+                'locked_at' => $user->locked_at?->toIso8601String(),
+                'reason' => $user->locked_reason,
+                'by' => $user->lockedBy?->only(['id', 'name']),
+            ] : null,
+            'can' => [
+                'manage_security' => $actor->can('manageSecurity', $user),
+                'change_role' => $actor->can('changeRole', $user),
+            ],
             'email_verified_at' => $user->email_verified_at?->toIso8601String(),
             'sso_managed' => $user->requiresSso(),
             'role_source' => $user->auth_provider === 'cloudron_oidc'

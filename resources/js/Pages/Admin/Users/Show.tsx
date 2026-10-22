@@ -1,6 +1,8 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
+import UserSecurityActions from '../../../Components/Admin/UserSecurityActions';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
+import type { SharedPageProps } from '../../../types/page';
 import { formatWhen, methodLabel, resultLabel, roleLabel, type UserDetail } from './types';
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -17,6 +19,8 @@ function Empty({ children }: { children: string }) {
 }
 
 export default function Show({ user }: { user: UserDetail }) {
+    const { flash } = usePage<SharedPageProps>().props;
+
     return (
         <WorkspaceLayout
             area="Admin"
@@ -31,6 +35,25 @@ export default function Show({ user }: { user: UserDetail }) {
         >
             <Head title={`${user.name} · Users`} />
             <div className="mx-auto flex max-w-4xl flex-col gap-6">
+                {flash?.status && (
+                    <p role="status" className="workspace-glass-card px-4 py-3 text-sm font-semibold text-body">
+                        {flash.status}
+                    </p>
+                )}
+
+                <Section title="Account access">
+                    {user.lock ? (
+                        <p className="text-sm font-semibold text-danger">
+                            Locked {formatWhen(user.lock.locked_at)}
+                            {user.lock.by ? ` by ${user.lock.by.name}` : ''}
+                            {user.lock.reason ? ` · ${user.lock.reason}` : ''}
+                        </p>
+                    ) : (
+                        <p className="text-sm text-body">Active. The account can sign in.</p>
+                    )}
+                    <UserSecurityActions user={user} />
+                </Section>
+
                 <Section title="Account">
                     <dl className="grid gap-3 text-sm sm:grid-cols-2">
                         <div>

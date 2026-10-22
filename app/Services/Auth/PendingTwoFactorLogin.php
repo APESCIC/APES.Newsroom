@@ -66,7 +66,7 @@ class PendingTwoFactorLogin
 
         $user = User::find($pending['user_id']);
 
-        if (! $user || ! $user->hasTwoFactorEnabled()) {
+        if (! $user || ! $user->hasTwoFactorEnabled() || $user->isLocked()) {
             $this->clear($request);
 
             return null;

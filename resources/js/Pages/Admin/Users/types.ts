@@ -11,6 +11,7 @@ export type UserRow = {
     email_verified: boolean;
     two_factor_enabled: boolean;
     passkeys_count: number;
+    locked: boolean;
     created_at: string | null;
 };
 
@@ -24,6 +25,8 @@ export type SecurityEvent = {
 };
 
 export type UserDetail = UserRow & {
+    lock: { locked_at: string | null; reason: string | null; by: { id: number; name: string } | null } | null;
+    can: { manage_security: boolean; change_role: boolean };
     email_verified_at: string | null;
     sso_managed: boolean;
     role_source: { type: 'directory' | 'in_app'; groups: string[] };
