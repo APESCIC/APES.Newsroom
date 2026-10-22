@@ -85,6 +85,7 @@ class AdminUserPresenter
             'api_tokens' => $user->apiTokens()->latest()->get()->map(fn (ApiToken $token) => [
                 'id' => $token->id,
                 'name' => $token->name,
+                'status' => $token->status(),
                 'created_at' => $token->created_at?->toIso8601String(),
                 'last_used_at' => $token->last_used_at?->toIso8601String(),
             ])->values()->all(),

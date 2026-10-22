@@ -9,6 +9,7 @@ use App\Http\Controllers\Account\SecurityController as AccountSecurityController
 use App\Http\Controllers\Account\SessionController as AccountSessionController;
 use App\Http\Controllers\Account\TwoFactorController as AccountTwoFactorController;
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\Admin\ApiTokenController as AdminApiTokenController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\GhostContentImportController;
 use App\Http\Controllers\Admin\GhostMembersImportController;
@@ -195,6 +196,11 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Admin->value])
             Route::post('/users/{user}/two-factor/reset', [AdminUserSecurityController::class, 'resetTwoFactor'])->whereNumber('user')->name('users.two-factor.reset');
             Route::post('/users/{user}/passkeys/remove', [AdminUserSecurityController::class, 'removePasskeys'])->whereNumber('user')->name('users.passkeys.remove');
             Route::patch('/users/{user}/role', [AdminUserSecurityController::class, 'changeRole'])->whereNumber('user')->name('users.role');
+        });
+        Route::get('/api-tokens', [AdminApiTokenController::class, 'index'])->name('api-tokens.index');
+        Route::middleware('auth.recent')->group(function () {
+            Route::post('/api-tokens', [AdminApiTokenController::class, 'store'])->name('api-tokens.store');
+            Route::delete('/api-tokens/{apiToken}', [AdminApiTokenController::class, 'destroy'])->whereNumber('apiToken')->name('api-tokens.destroy');
         });
         Route::get('/members', AdminMemberController::class)->name('members.index');
         Route::get('/webhooks', [AdminWebhookController::class, 'index'])->name('webhooks.index');

@@ -10,6 +10,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 class AuthenticateAdminApiToken
 {
+    public const TOKEN_ATTRIBUTE = 'admin_api_token';
+
     public function handle(Request $request, Closure $next): Response
     {
         $plain = $this->extractBearer($request);
@@ -24,6 +26,14 @@ class AuthenticateAdminApiToken
             return response()->json(['message' => 'Invalid Admin API token.'], 401);
         }
 
+        if ($token->isRevoked()) {
+            return response()->json(['message' => 'Admin API token has been revoked.'], 401);
+        }
+
+        if ($token->isExpired()) {
+            return response()->json(['message' => 'Admin API token has expired.'], 401);
+        }
+
         if ($token->user->isLocked()) {
             return response()->json(['message' => 'Token owner account is locked.'], 403);
         }
@@ -33,6 +43,7 @@ class AuthenticateAdminApiToken
         }
 
         $token->forceFill(['last_used_at' => now()])->save();
+        $request->attributes->set(self::TOKEN_ATTRIBUTE, $token);
         $request->setUserResolver(fn () => $token->user);
 
         return $next($request);

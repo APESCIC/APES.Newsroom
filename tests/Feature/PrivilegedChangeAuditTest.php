@@ -24,7 +24,7 @@ class PrivilegedChangeAuditTest extends TestCase
         $log = AuditLog::query()->where('action', 'api_token.issued')->sole();
 
         $this->assertSame($token->id, $log->subject_id);
-        $this->assertSame(['name' => 'ci', 'owner_id' => $staff->id, 'source' => 'cli'], $log->payload);
+        $this->assertSame(['name' => 'ci', 'owner_id' => $staff->id, 'abilities' => null, 'expires_at' => null, 'source' => 'cli'], $log->payload);
         $this->assertStringNotContainsString($token->token_hash, (string) json_encode($log->getAttributes()));
         $this->assertStringNotContainsString('nr_admin_', (string) json_encode($log->getAttributes()));
     }

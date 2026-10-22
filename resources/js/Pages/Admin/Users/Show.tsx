@@ -174,7 +174,10 @@ export default function Show({ user }: { user: UserDetail }) {
                         <ul className="flex flex-col gap-2 text-sm">
                             {user.api_tokens.map((token) => (
                                 <li key={token.id} className="flex flex-wrap justify-between gap-2">
-                                    <span className="text-body">{token.name}</span>
+                                    <span className="text-body">
+                                        {token.name}
+                                        {token.status && token.status !== 'active' ? ` (${token.status})` : ''}
+                                    </span>
                                     <span className="text-muted">
                                         created {formatWhen(token.created_at)} · last used {formatWhen(token.last_used_at)}
                                     </span>

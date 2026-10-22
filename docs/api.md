@@ -65,17 +65,29 @@ The `v1` path segment is the Content API contract. Breaking changes require a ne
 
 Staff-owned bearer tokens (`Authorization: Bearer nr_admin_…`). Tokens are hashed at rest in `api_tokens`.
 
-Tokens can only be issued, listed and revoked with artisan on the server. The API cannot create tokens (removed in #282). On Cloudron, run artisan through the www-data wrapper (see [`deployment.md`](deployment.md#artisan-must-preserve-cloudron_-www-data)).
+Admins manage tokens at **`/admin/api-tokens`**: create a token for an active staff account with a name, abilities and an expiry of 30, 90, 180 or 365 days (the plain token is shown once), and revoke it with a reason. Creation and revocation need recent re-authentication, are audit-logged, and the owner is emailed when a token is created. The API itself cannot create tokens (removed in #282).
+
+Tokens are refused with `401` once revoked or expired, and with `403` while the owner's account is locked.
+
+| Ability | Grants |
+|---------|--------|
+| `posts:read` | `GET /posts`, `GET /posts/{id}` |
+| `posts:write` | `POST /posts`, `PATCH /posts/{id}` |
+| `posts:publish` | `POST /posts/{id}/publish`, `POST /posts/{id}/unpublish` |
+
+A request without the needed ability gets `403`. Tokens issued before v1.11.0 have no ability list and keep full access until revoked.
+
+Artisan remains available on the server. On Cloudron, run artisan through the www-data wrapper (see [`deployment.md`](deployment.md#artisan-must-preserve-cloudron_-www-data)).
 
 ```bash
-# Issue a token (plain token shown once)
-php artisan newsroom:issue-admin-api-token staff@example.com --name=ci
+# Issue a token (plain token shown once); omit --ability for all abilities, --expires-days for no expiry
+php artisan newsroom:issue-admin-api-token staff@example.com --name=ci --ability=posts:read --ability=posts:write --expires-days=90
 
-# List tokens: id, name, owner, role, last used, created (never the secret)
+# List tokens: id, name, owner, role, status, abilities, expiry, last used, created (never the secret)
 php artisan newsroom:list-admin-api-tokens
 php artisan newsroom:list-admin-api-tokens --user=staff@example.com
 
-# Revoke by id, by name, by owner, or all (asks for confirmation unless --force)
+# Revoke (delete) by id, by name, by owner, or all (asks for confirmation unless --force)
 php artisan newsroom:revoke-admin-api-token 12
 php artisan newsroom:revoke-admin-api-token --name=ci --user=staff@example.com
 php artisan newsroom:revoke-admin-api-token --user=staff@example.com
