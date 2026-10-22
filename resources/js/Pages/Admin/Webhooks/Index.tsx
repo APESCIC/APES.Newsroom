@@ -141,9 +141,11 @@ function EndpointCard({ endpoint, availableEvents }: { endpoint: Endpoint; avail
 export default function Index({
     endpoints,
     availableEvents,
+    revealedSecret = null,
 }: {
     endpoints: Endpoint[];
     availableEvents: string[];
+    revealedSecret?: { id: number; name: string; secret: string } | null;
 }) {
     return (
         <WorkspaceLayout area="Admin" active="webhooks" title="Webhooks">
@@ -153,6 +155,14 @@ export default function Index({
                     Outbound signed webhooks (HMAC-SHA256). Delivery is queued with retries and never blocks publish or
                     membership flows.
                 </p>
+                {revealedSecret && (
+                    <section className="workspace-glass-card flex flex-col gap-2 p-4" aria-label="Signing secret">
+                        <p className="font-semibold text-body">
+                            Signing secret for "{revealedSecret.name}". Copy it into the receiving service now: it will not be shown again.
+                        </p>
+                        <code className="break-all rounded-control bg-white px-3 py-2 font-mono text-sm text-body">{revealedSecret.secret}</code>
+                    </section>
+                )}
                 <CreateForm availableEvents={availableEvents} />
                 {endpoints.map((endpoint) => (
                     <EndpointCard key={endpoint.id} endpoint={endpoint} availableEvents={availableEvents} />
