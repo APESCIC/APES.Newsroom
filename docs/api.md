@@ -115,6 +115,8 @@ Default: **60 requests per minute** per authenticated user (`throttle:admin-api`
 
 Writes run through `BlockValidator` and the same field rules as the staff editors (`PostPayloadRules` shape). Invalid Editor.js blocks return `422`.
 
+`content` is always Editor.js JSON, whichever editor the site uses for staff (Editor.js or TinyMCE, see [`docs/editors.md`](editors.md)). The Admin API does not accept TinyMCE `content_html`. Paragraph, header, list item, quote and table cell text is inline HTML, as Editor.js stores it: only `strong`, `em`, `code`, `br` and `a` links (http, https or mailto) are kept, `b`/`i` become `strong`/`em`, and other markup is removed. Send `&`, `<` and `>` as plain characters or entities; they are stored escaped (for example `&amp;`). Captions, alt text and custom block fields remain plain text.
+
 ### Endpoints
 
 | Method | Path | Notes |

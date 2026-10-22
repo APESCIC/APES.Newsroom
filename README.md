@@ -39,7 +39,8 @@ and completion evidence. Agents and contributors must follow
 - Public home, channel, article, author, tag, archive, search, RSS, sitemap,
   and Change Log Hub surfaces for the three APES channels.
 - Versioned Editor.js content with staff drafts, review, scheduling, publishing,
-  preview, revisions, redirects, and SEO controls.
+  preview, revisions, redirects, and SEO controls, edited in Editor.js or
+  TinyMCE (see [Editors](#editors)).
 - Password, verification, reset, and magic-link journeys for public accounts;
   Cloudron OIDC and LDAP-governed roles for staff.
 - Per-channel mailing lists with double opt-in, consent evidence, suppressions,
@@ -61,6 +62,19 @@ LDAP, backups, and runtime process management.
 maps the platform's `CLOUDRON_*` environment values without storing credentials
 in this repository. The release layout, queue worker, scheduler, health checks,
 and rollback path are documented in the [deployment runbook](docs/deployment.md).
+
+## Editors
+
+Staff write posts and pages in either Editor.js (the default) or TinyMCE. An
+admin chooses one for the whole site with the `editor.driver` setting on
+**Admin panel → Settings**. Content is always stored as Editor.js blocks, so
+switching needs no migration and public pages, search, email and the Admin API
+are unaffected. In TinyMCE, blocks it cannot edit (callouts, galleries, embeds
+and similar) appear as read-only boxes that keep their data.
+
+TinyMCE is bundled from npm and self-hosted under GPLv2+ (`license_key: 'gpl'`);
+it is never loaded from Tiny Cloud. See [`docs/editors.md`](docs/editors.md) for
+admin and staff guidance.
 
 ## Local setup
 

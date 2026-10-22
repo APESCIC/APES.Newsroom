@@ -45,6 +45,16 @@
 | Image blocks | Alt text required before save |
 | Preview | Same renderer as production; `noindex` |
 
+## TinyMCE workspace
+
+| Surface | Checks |
+|---------|--------|
+| Editing area | Iframe titled "Article body editor. Press Alt+0 for keyboard help."; TinyMCE keyboard help on Alt+0 |
+| Toolbar | Every button has an accessible name; menus and dialogs keyboard-operable (Alt+F10 to reach the toolbar) |
+| Read-only blocks | `role="group"` with an `aria-label` such as "Callout block. Read-only here; edit it in Editor.js."; help text linked with `aria-describedby` |
+| Images | Alternative description field offered; save fails without alt text |
+| Editor change notice | `role="status"` when the site editor changes while a draft is open |
+
 ## Mailing preferences
 
 | Surface | Checks |
