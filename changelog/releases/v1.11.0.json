@@ -36,5 +36,5 @@
     "Public impact: account lock and admin-action emails, optional required two-factor setup, emailed sign-in links can be switched off",
     "Internal impact: new lock columns on users, expiry, abilities and revocation on api_tokens, new content_api_keys table, encrypted webhook secrets, new audit events and authorization policies, governance records updated"
   ],
-  "pr": null
+  "pr": 383
 }
