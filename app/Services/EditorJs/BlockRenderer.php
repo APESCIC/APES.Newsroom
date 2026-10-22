@@ -7,6 +7,10 @@ namespace App\Services\EditorJs;
  */
 class BlockRenderer
 {
+    public function __construct(
+        private readonly InlineHtmlSanitizer $inline = new InlineHtmlSanitizer,
+    ) {}
+
     /**
      * @param  array<string, mixed>  $document
      */
@@ -30,10 +34,10 @@ class BlockRenderer
         $data = is_array($block['data'] ?? null) ? $block['data'] : [];
 
         return match ($type) {
-            'paragraph' => '<p>'.e($data['text'] ?? '').'</p>',
-            'header' => '<h'.(int) ($data['level'] ?? 2).'>'.e($data['text'] ?? '').'</h'.(int) ($data['level'] ?? 2).'>',
+            'paragraph' => '<p>'.$this->inlineHtml($data['text'] ?? '').'</p>',
+            'header' => '<h'.(int) ($data['level'] ?? 2).'>'.$this->inlineHtml($data['text'] ?? '').'</h'.(int) ($data['level'] ?? 2).'>',
             'list' => $this->renderList($data),
-            'quote' => '<blockquote><p>'.e($data['text'] ?? '').'</p>'.(($data['caption'] ?? '') ? '<cite>'.e($data['caption']).'</cite>' : '').'</blockquote>',
+            'quote' => '<blockquote><p>'.$this->inlineHtml($data['text'] ?? '').'</p>'.(($data['caption'] ?? '') ? '<cite>'.e($data['caption']).'</cite>' : '').'</blockquote>',
             'image' => $this->renderImage($data),
             'table' => $this->renderTable($data),
             'delimiter' => '<hr />',
@@ -242,7 +246,7 @@ class BlockRenderer
         $items = '';
 
         foreach ($data['items'] ?? [] as $item) {
-            $items .= '<li>'.e(is_array($item) ? (string) ($item['content'] ?? $item['text'] ?? '') : (string) $item).'</li>';
+            $items .= '<li>'.$this->inlineHtml(is_array($item) ? ($item['content'] ?? $item['text'] ?? '') : $item).'</li>';
         }
 
         return "<{$tag}>{$items}</{$tag}>";
@@ -279,7 +283,7 @@ class BlockRenderer
             $tag = ($withHeadings && $rowIndex === 0) ? 'th' : 'td';
 
             foreach ($row as $cell) {
-                $cells .= "<{$tag}>".e((string) $cell)."</{$tag}>";
+                $cells .= "<{$tag}>".$this->inlineHtml($cell)."</{$tag}>";
             }
 
             $body .= "<tr>{$cells}</tr>";
@@ -299,6 +303,11 @@ class BlockRenderer
         $caption = ($data['caption'] ?? '') ? '<figcaption>'.e($data['caption']).'</figcaption>' : '';
 
         return "<figure class=\"embed\"><iframe src=\"{$src}\" width=\"{$width}\" height=\"{$height}\" loading=\"lazy\" referrerpolicy=\"no-referrer\" allowfullscreen title=\"Embedded content\"></iframe>{$caption}</figure>";
+    }
+
+    private function inlineHtml(mixed $text): string
+    {
+        return is_scalar($text) ? $this->inline->sanitize((string) $text) : '';
     }
 
     /**

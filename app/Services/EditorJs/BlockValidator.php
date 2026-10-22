@@ -44,6 +44,10 @@ class BlockValidator
         'codepen',
     ];
 
+    public function __construct(
+        private readonly InlineHtmlSanitizer $inline = new InlineHtmlSanitizer,
+    ) {}
+
     /**
      * @param  array<string, mixed>  $document
      * @return array<string, mixed>
@@ -128,7 +132,7 @@ class BlockValidator
      */
     private function validateParagraph(array $data, int $index): array
     {
-        return ['text' => $this->sanitizeText($data['text'] ?? '', $index, 'paragraph')];
+        return ['text' => $this->sanitizeInline($data['text'] ?? '', $index, 'paragraph')];
     }
 
     /**
@@ -146,7 +150,7 @@ class BlockValidator
         }
 
         return [
-            'text' => $this->sanitizeText($data['text'] ?? '', $index, 'header'),
+            'text' => $this->sanitizeInline($data['text'] ?? '', $index, 'header'),
             'level' => $level,
         ];
     }
@@ -171,10 +175,10 @@ class BlockValidator
             'items' => array_map(
                 function ($item) use ($index) {
                     if (is_array($item)) {
-                        return $this->sanitizeText((string) ($item['content'] ?? $item['text'] ?? ''), $index, 'list item');
+                        return $this->sanitizeInline((string) ($item['content'] ?? $item['text'] ?? ''), $index, 'list item');
                     }
 
-                    return $this->sanitizeText((string) $item, $index, 'list item');
+                    return $this->sanitizeInline((string) $item, $index, 'list item');
                 },
                 $items
             ),
@@ -188,7 +192,7 @@ class BlockValidator
     private function validateQuote(array $data, int $index): array
     {
         return [
-            'text' => $this->sanitizeText($data['text'] ?? '', $index, 'quote'),
+            'text' => $this->sanitizeInline($data['text'] ?? '', $index, 'quote'),
             'caption' => $this->sanitizeText($data['caption'] ?? '', $index, 'quote caption'),
         ];
     }
@@ -247,7 +251,7 @@ class BlockValidator
             }
 
             $rows[] = array_map(
-                fn ($cell) => $this->sanitizeText((string) $cell, $index, 'table cell'),
+                fn ($cell) => $this->sanitizeInline((string) $cell, $index, 'table cell'),
                 $row
             );
         }
@@ -589,6 +593,23 @@ class BlockValidator
 
     private function sanitizeText(string $text, int $index, string $context): string
     {
+        $this->guardText($text, $index, $context);
+
+        return strip_tags($text);
+    }
+
+    /**
+     * Text fields that Editor.js and TinyMCE store as inline HTML (bold, italic, links, code).
+     */
+    private function sanitizeInline(string $text, int $index, string $context): string
+    {
+        $this->guardText($text, $index, $context);
+
+        return $this->inline->sanitize($text);
+    }
+
+    private function guardText(string $text, int $index, string $context): void
+    {
         if (strlen($text) > 10000) {
             throw ValidationException::withMessages([
                 'content' => "Text in {$context} at index {$index} exceeds maximum length.",
@@ -600,7 +621,5 @@ class BlockValidator
                 'content' => "Disallowed content in {$context} at index {$index}.",
             ]);
         }
-
-        return strip_tags($text);
     }
 }

@@ -62,6 +62,46 @@ class BlockRendererTest extends TestCase
         $this->assertStringContainsString('class="gallery-item-caption">First</span>', $html);
     }
 
+    public function test_inline_formatting_renders_in_text_blocks(): void
+    {
+        $document = (new BlockValidator)->validate([
+            'blocks' => [
+                ['type' => 'paragraph', 'data' => ['text' => 'A <b>bold</b> and <a href="https://example.com">link</a>']],
+                ['type' => 'header', 'data' => ['text' => 'Head <em>em</em>', 'level' => 3]],
+                ['type' => 'list', 'data' => ['style' => 'ordered', 'items' => ['<code>x</code>']]],
+                ['type' => 'quote', 'data' => ['text' => '<i>Said</i>', 'caption' => 'Who']],
+                ['type' => 'table', 'data' => ['withHeadings' => true, 'content' => [['<strong>H</strong>'], ['c']]]],
+            ],
+        ]);
+
+        $html = (new BlockRenderer)->toHtml($document);
+
+        $this->assertStringContainsString('<p>A <strong>bold</strong> and <a href="https://example.com" rel="noopener noreferrer">link</a></p>', $html);
+        $this->assertStringContainsString('<h3>Head <em>em</em></h3>', $html);
+        $this->assertStringContainsString('<ol><li><code>x</code></li></ol>', $html);
+        $this->assertStringContainsString('<blockquote><p><em>Said</em></p><cite>Who</cite></blockquote>', $html);
+        $this->assertStringContainsString('<th><strong>H</strong></th>', $html);
+    }
+
+    public function test_plain_text_and_unvalidated_stored_html_render_safely(): void
+    {
+        $html = (new BlockRenderer)->toHtml([
+            'blocks' => [
+                ['type' => 'paragraph', 'data' => ['text' => 'Tom & Jerry say a < b']],
+                ['type' => 'paragraph', 'data' => ['text' => 'Saved &amp; escaped']],
+                ['type' => 'paragraph', 'data' => ['text' => '<img src=x onerror=alert(1)>Old <a href="javascript:x">row</a>']],
+                ['type' => 'list', 'data' => ['items' => [['nested' => true]]]],
+            ],
+        ]);
+
+        $this->assertStringContainsString('<p>Tom &amp; Jerry say a &lt; b</p>', $html);
+        $this->assertStringContainsString('<p>Saved &amp; escaped</p>', $html);
+        $this->assertStringContainsString('<p>Old row</p>', $html);
+        $this->assertStringNotContainsString('onerror', $html);
+        $this->assertStringNotContainsString('javascript:', $html);
+        $this->assertStringContainsString('<ul><li></li></ul>', $html);
+    }
+
     public function test_unknown_block_types_are_silently_dropped(): void
     {
         $html = (new BlockRenderer)->toHtml([
