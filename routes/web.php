@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\ModerationController;
 use App\Http\Controllers\Admin\ReleaseController as AdminReleaseController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Admin\UserSecurityController as AdminUserSecurityController;
 use App\Http\Controllers\Admin\WebhookController as AdminWebhookController;
 use App\Http\Controllers\AnalyticsConsentController;
 use App\Http\Controllers\ArchiveController;
@@ -186,6 +187,10 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Admin->value])
         Route::get('/audit-log/export', [AuditLogController::class, 'export'])->middleware('auth.recent')->name('audit-log.export');
         Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
         Route::get('/users/{user}', [AdminUserController::class, 'show'])->whereNumber('user')->name('users.show');
+        Route::middleware('auth.recent')->group(function () {
+            Route::post('/users/{user}/lock', [AdminUserSecurityController::class, 'lock'])->whereNumber('user')->name('users.lock');
+            Route::post('/users/{user}/unlock', [AdminUserSecurityController::class, 'unlock'])->whereNumber('user')->name('users.unlock');
+        });
         Route::get('/members', AdminMemberController::class)->name('members.index');
         Route::get('/webhooks', [AdminWebhookController::class, 'index'])->name('webhooks.index');
         Route::middleware('auth.recent')->group(function () {

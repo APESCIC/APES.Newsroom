@@ -27,7 +27,7 @@ class UserController extends Controller
             'q' => ['nullable', 'string', 'max:120'],
             'role' => ['nullable', Rule::enum(Role::class)],
             'method' => ['nullable', Rule::in(['sso', 'password', 'passwordless'])],
-            'status' => ['nullable', Rule::in(['verified', 'unverified'])],
+            'status' => ['nullable', Rule::in(['verified', 'unverified', 'locked'])],
             'security' => ['nullable', Rule::in(['two_factor', 'passkey', 'none'])],
         ]);
 
@@ -59,7 +59,7 @@ class UserController extends Controller
         Gate::authorize('view', $user);
 
         return Inertia::render('Admin/Users/Show', [
-            'user' => $this->presenter->detail($user),
+            'user' => $this->presenter->detail($user, $request->user()),
         ]);
     }
 
@@ -90,6 +90,7 @@ class UserController extends Controller
         match ($filters['status']) {
             'verified' => $query->where(fn (Builder $inner) => $inner->whereNotNull('email_verified_at')->orWhere('auth_provider', 'cloudron_oidc')),
             'unverified' => $query->whereNull('email_verified_at')->where('auth_provider', '!=', 'cloudron_oidc'),
+            'locked' => $query->whereNotNull('locked_at'),
             default => null,
         };
 

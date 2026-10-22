@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Notifications\Security\PasswordChangedNotification;
+use App\Services\Auth\AccountLockPolicy;
 use App\Services\Auth\SsoOnlyPolicy;
 use App\Services\Auth\UserSessionRevoker;
 use Illuminate\Auth\Events\PasswordReset;
@@ -27,7 +28,7 @@ class NewPasswordController extends Controller
         ]);
     }
 
-    public function store(Request $request, SsoOnlyPolicy $ssoOnly, UserSessionRevoker $sessions): RedirectResponse
+    public function store(Request $request, SsoOnlyPolicy $ssoOnly, AccountLockPolicy $locks, UserSessionRevoker $sessions): RedirectResponse
     {
         $request->validate([
             'token' => ['required'],
@@ -37,7 +38,7 @@ class NewPasswordController extends Controller
 
         $user = User::where('email', $request->input('email'))->first();
 
-        if ($ssoOnly->refuses($user, 'password_reset_complete', $request)) {
+        if ($ssoOnly->refuses($user, 'password_reset_complete', $request) || $locks->refuses($user, 'password_reset_complete', $request)) {
             throw ValidationException::withMessages([
                 'email' => [__(Password::INVALID_TOKEN)],
             ]);

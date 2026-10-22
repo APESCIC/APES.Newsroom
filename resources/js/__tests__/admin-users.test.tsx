@@ -17,11 +17,14 @@ const row: UserRow = {
     email_verified: true,
     two_factor_enabled: true,
     passkeys_count: 2,
+    locked: false,
     created_at: '2026-10-01T10:00:00+00:00',
 };
 
 const detail: UserDetail = {
     ...row,
+    lock: null,
+    can: { manage_security: true, change_role: false },
     email_verified_at: '2026-10-01T10:00:00+00:00',
     sso_managed: false,
     role_source: { type: 'in_app', groups: [] },
@@ -92,6 +95,42 @@ describe('Admin users pages', () => {
         expect(within(rows[2]).getByText('passkey_login')).toBeInTheDocument();
         expect(within(rows[2]).getByText('passkey')).toBeInTheDocument();
         expect(within(rows[2]).getByText('198.51.100.2')).toBeInTheDocument();
+    });
+
+    it('locks an account after asking for a reason', async () => {
+        const user = userEvent.setup();
+        render(<UsersShow user={detail} />);
+
+        const access = within(screen.getByRole('region', { name: 'Account access' }));
+        expect(access.getByText('Active. The account can sign in.')).toBeInTheDocument();
+        await user.click(access.getByRole('button', { name: 'Lock account' }));
+
+        const dialog = within(screen.getByRole('dialog', { name: 'Lock this account?' }));
+        await user.type(dialog.getByLabelText('Reason (recorded in the audit log)'), 'Suspicious sign-ins');
+        await user.click(dialog.getByRole('button', { name: 'Lock account' }));
+
+        expect(getInertiaMock().post).toHaveBeenCalledWith('/admin/users/9/lock', { reason: 'Suspicious sign-ins' }, expect.objectContaining({ preserveScroll: true }));
+    });
+
+    it('shows lock details and offers unlock for a locked account', () => {
+        render(
+            <UsersShow
+                user={{ ...detail, locked: true, lock: { locked_at: null, reason: 'Phished', by: { id: 1, name: 'Alex Admin' } } }}
+            />,
+        );
+
+        const access = within(screen.getByRole('region', { name: 'Account access' }));
+        expect(access.getByText(/by Alex Admin · Phished/)).toBeInTheDocument();
+        expect(access.getByRole('button', { name: 'Unlock account' })).toBeInTheDocument();
+        expect(access.queryByRole('button', { name: 'Lock account' })).not.toBeInTheDocument();
+    });
+
+    it('hides security actions the admin may not take', () => {
+        render(<UsersShow user={{ ...detail, can: { manage_security: false, change_role: false } }} />);
+
+        const access = within(screen.getByRole('region', { name: 'Account access' }));
+        expect(access.queryByRole('button')).not.toBeInTheDocument();
+        expect(access.getByText('You cannot change security settings for this account.')).toBeInTheDocument();
     });
 
     it('explains that SSO accounts get their second factor from Cloudron', () => {

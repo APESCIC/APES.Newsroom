@@ -6,6 +6,7 @@ use App\Events\Auth\OidcSignInAllowed;
 use App\Events\Auth\OidcSignInDenied;
 use App\Exceptions\Auth\OidcValidationException;
 use App\Http\Controllers\Controller;
+use App\Services\Auth\AccountLockPolicy;
 use App\Services\Auth\CloudronOidcProvider;
 use App\Services\Auth\RecentAuthentication;
 use App\Services\Auth\StaffOidcIdentity;
@@ -29,6 +30,7 @@ class CloudronOidcController extends Controller
         private readonly CloudronOidcProvider $provider,
         private readonly StaffReconciler $reconciler,
         private readonly RecentAuthentication $recentAuth,
+        private readonly AccountLockPolicy $locks,
     ) {}
 
     public function redirect(Request $request): RedirectResponse
@@ -97,6 +99,10 @@ class CloudronOidcController extends Controller
 
         if (! $result->allowed) {
             return $this->fail(null, 'directory_denied', $result->denialReason ?? 'Staff sign-in failed: access denied.');
+        }
+
+        if ($this->locks->refuses($result->user, 'oidc_callback', $request)) {
+            return $this->fail(null, 'account_locked', 'Staff sign-in failed: access denied.');
         }
 
         auth()->login($result->user);

@@ -9,6 +9,7 @@ use App\Http\Requests\Auth\MagicLinkRequest;
 use App\Models\MagicLinkToken;
 use App\Models\User;
 use App\Notifications\MagicLinkNotification;
+use App\Services\Auth\AccountLockPolicy;
 use App\Services\Auth\PendingTwoFactorLogin;
 use App\Services\Auth\SsoOnlyPolicy;
 use Illuminate\Http\RedirectResponse;
@@ -29,11 +30,11 @@ class MagicLinkController extends Controller
      * Always responds the same way whether or not the email exists, to
      * avoid leaking which addresses have accounts.
      */
-    public function store(MagicLinkRequest $request, SsoOnlyPolicy $ssoOnly): Response
+    public function store(MagicLinkRequest $request, SsoOnlyPolicy $ssoOnly, AccountLockPolicy $locks): Response
     {
         $user = User::where('email', $request->validated('email'))->first();
 
-        if ($user && ! $ssoOnly->refuses($user, 'magic_link_request', $request)) {
+        if ($user && ! $ssoOnly->refuses($user, 'magic_link_request', $request) && ! $locks->refuses($user, 'magic_link_request', $request)) {
             $token = Str::random(64);
 
             $user->magicLinkTokens()->create([
@@ -55,12 +56,13 @@ class MagicLinkController extends Controller
         return Inertia::render('Auth/MagicLinkSent');
     }
 
-    public function consume(Request $request, string $token, SsoOnlyPolicy $ssoOnly, PendingTwoFactorLogin $login): RedirectResponse
+    public function consume(Request $request, string $token, SsoOnlyPolicy $ssoOnly, AccountLockPolicy $locks, PendingTwoFactorLogin $login): RedirectResponse
     {
         $magicLinkToken = MagicLinkToken::where('token_hash', hash('sha256', $token))->first();
 
         if (! $magicLinkToken || $magicLinkToken->isExpired() || $magicLinkToken->isUsed()
-            || $ssoOnly->refuses($magicLinkToken->user, 'magic_link_consume', $request)) {
+            || $ssoOnly->refuses($magicLinkToken->user, 'magic_link_consume', $request)
+            || $locks->refuses($magicLinkToken->user, 'magic_link_consume', $request)) {
             abort(403, 'This magic link is invalid or has expired.');
         }
 

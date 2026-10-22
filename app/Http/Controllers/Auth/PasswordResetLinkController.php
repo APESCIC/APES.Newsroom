@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\Auth\AccountLockPolicy;
 use App\Services\Auth\SsoOnlyPolicy;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,13 +19,13 @@ class PasswordResetLinkController extends Controller
         return Inertia::render('Auth/ForgotPassword');
     }
 
-    public function store(Request $request, SsoOnlyPolicy $ssoOnly): RedirectResponse
+    public function store(Request $request, SsoOnlyPolicy $ssoOnly, AccountLockPolicy $locks): RedirectResponse
     {
         $request->validate(['email' => ['required', 'email']]);
 
         $user = User::where('email', $request->input('email'))->first();
 
-        if (! $ssoOnly->refuses($user, 'password_reset_request', $request)) {
+        if (! $ssoOnly->refuses($user, 'password_reset_request', $request) && ! $locks->refuses($user, 'password_reset_request', $request)) {
             Password::sendResetLink($request->only('email'));
         }
 

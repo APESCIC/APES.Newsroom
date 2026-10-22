@@ -52,6 +52,8 @@ class AuthzMatrixTest extends TestCase
         'admin.members.index' => Role::Admin,
         'admin.users.index' => Role::Admin,
         'admin.users.show' => Role::Admin,
+        'admin.users.lock' => Role::Admin,
+        'admin.users.unlock' => Role::Admin,
         'admin.moderation.index' => Role::Admin,
         'admin.moderation.comments' => Role::Admin,
         'admin.moderation.comments.restore' => Role::Admin,
