@@ -7,6 +7,7 @@ use App\Enums\Role;
 use App\Models\ApiToken;
 use App\Models\AuditLog;
 use App\Models\Comment;
+use App\Models\ContentApiKey;
 use App\Models\ImportRun;
 use App\Models\MembershipPlan;
 use App\Models\ModerationReport;
@@ -46,6 +47,9 @@ class AuthzMatrixTest extends TestCase
         'admin.api-tokens.index' => Role::Admin,
         'admin.api-tokens.store' => Role::Admin,
         'admin.api-tokens.destroy' => Role::Admin,
+        'admin.content-api-keys.index' => Role::Admin,
+        'admin.content-api-keys.store' => Role::Admin,
+        'admin.content-api-keys.destroy' => Role::Admin,
         'admin.imports.ghost-content' => Role::Staff,
         'admin.imports.ghost-content.upload' => Role::Staff,
         'admin.imports.ghost-content.confirm' => Role::Staff,
@@ -332,6 +336,7 @@ class AuthzMatrixTest extends TestCase
                 'page' => Page::factory()->create(['author_id' => $user->id]),
                 'user' => User::factory()->create(),
                 'apiToken' => ApiToken::issue(User::factory()->staff()->create(), 'matrix')['model'],
+                'contentApiKey' => ContentApiKey::issue('matrix', null)['model'],
                 'release' => Release::factory()->create(['slug' => 'release-'.Str::lower(Str::random(12))]),
                 'webhook' => WebhookEndpoint::query()->create([
                     'name' => 'Partner',

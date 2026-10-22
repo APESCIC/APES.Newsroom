@@ -11,14 +11,20 @@ Base paths:
 
 ### Authentication
 
-Site-level Content API key required on every request. Configure via `NEWSROOM_CONTENT_API_KEY`.
+A Content API key is required on every request. Admins manage **named keys** at `/admin/content-api-keys`:
+
+- Each consumer gets its own key (`nr_content_…`), shown once when created. Only a SHA-256 hash and the first 15 characters are stored.
+- Any number of keys can be active at once, so a key can be rotated by creating the new one, switching the consumer over, then revoking the old one.
+- Revoking a key (with a reason) refuses it immediately. Creation and revocation need recent re-authentication and are audit-logged (`content_api_key.created`, `content_api_key.revoked`).
+
+The single `NEWSROOM_CONTENT_API_KEY` environment key is still accepted as a fallback while integrations move to named keys. Remove it from the environment once nothing uses it.
 
 Accepted headers (either):
 
 - `X-Newsroom-Content-Key: <key>`
 - `Authorization: Newsroom-Key <key>`
 
-Missing or invalid key → `401`. Empty/unconfigured key → `503`.
+Missing or invalid key → `401`. No active named key and no environment key → `503`.
 
 ### Rate limits
 
