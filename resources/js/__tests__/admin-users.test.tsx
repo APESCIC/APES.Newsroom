@@ -112,6 +112,30 @@ describe('Admin users pages', () => {
         expect(getInertiaMock().post).toHaveBeenCalledWith('/admin/users/9/lock', { reason: 'Suspicious sign-ins' }, expect.objectContaining({ preserveScroll: true }));
     });
 
+    it('offers credential resets only where they apply', async () => {
+        const user = userEvent.setup();
+        const { unmount } = render(<UsersShow user={detail} />);
+
+        let access = within(screen.getByRole('region', { name: 'Account access' }));
+        for (const label of ['Sign out everywhere', 'Force password reset', 'Turn off two-factor', 'Remove passkeys']) {
+            expect(access.getByRole('button', { name: label })).toBeInTheDocument();
+        }
+
+        await user.click(access.getByRole('button', { name: 'Remove passkeys' }));
+        const dialog = within(screen.getByRole('dialog', { name: 'Remove 1 passkey?' }));
+        await user.type(dialog.getByLabelText('Reason (recorded in the audit log)'), 'Device stolen');
+        await user.click(dialog.getByRole('button', { name: 'Remove passkeys' }));
+        expect(getInertiaMock().post).toHaveBeenCalledWith('/admin/users/9/passkeys/remove', { reason: 'Device stolen' }, expect.anything());
+        unmount();
+
+        render(<UsersShow user={{ ...detail, sso_managed: true, sign_in_method: 'sso', role: 'staff' }} />);
+        access = within(screen.getByRole('region', { name: 'Account access' }));
+        expect(access.getByRole('button', { name: 'Sign out everywhere' })).toBeInTheDocument();
+        expect(access.queryByRole('button', { name: 'Force password reset' })).not.toBeInTheDocument();
+        expect(access.queryByRole('button', { name: 'Turn off two-factor' })).not.toBeInTheDocument();
+        expect(access.getByText('Password, two-factor and passkeys for this account are managed by Cloudron SSO.')).toBeInTheDocument();
+    });
+
     it('shows lock details and offers unlock for a locked account', () => {
         render(
             <UsersShow

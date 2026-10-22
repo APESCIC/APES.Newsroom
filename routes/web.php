@@ -190,6 +190,10 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Admin->value])
         Route::middleware('auth.recent')->group(function () {
             Route::post('/users/{user}/lock', [AdminUserSecurityController::class, 'lock'])->whereNumber('user')->name('users.lock');
             Route::post('/users/{user}/unlock', [AdminUserSecurityController::class, 'unlock'])->whereNumber('user')->name('users.unlock');
+            Route::post('/users/{user}/sign-out', [AdminUserSecurityController::class, 'signOut'])->whereNumber('user')->name('users.sign-out');
+            Route::post('/users/{user}/password-reset', [AdminUserSecurityController::class, 'forcePasswordReset'])->whereNumber('user')->name('users.password-reset');
+            Route::post('/users/{user}/two-factor/reset', [AdminUserSecurityController::class, 'resetTwoFactor'])->whereNumber('user')->name('users.two-factor.reset');
+            Route::post('/users/{user}/passkeys/remove', [AdminUserSecurityController::class, 'removePasskeys'])->whereNumber('user')->name('users.passkeys.remove');
         });
         Route::get('/members', AdminMemberController::class)->name('members.index');
         Route::get('/webhooks', [AdminWebhookController::class, 'index'])->name('webhooks.index');
