@@ -11,6 +11,7 @@ use App\Http\Controllers\Account\TwoFactorController as AccountTwoFactorControll
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Admin\ApiTokenController as AdminApiTokenController;
 use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\ContentApiKeyController as AdminContentApiKeyController;
 use App\Http\Controllers\Admin\GhostContentImportController;
 use App\Http\Controllers\Admin\GhostMembersImportController;
 use App\Http\Controllers\Admin\MemberController as AdminMemberController;
@@ -201,6 +202,11 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Admin->value])
         Route::middleware('auth.recent')->group(function () {
             Route::post('/api-tokens', [AdminApiTokenController::class, 'store'])->name('api-tokens.store');
             Route::delete('/api-tokens/{apiToken}', [AdminApiTokenController::class, 'destroy'])->whereNumber('apiToken')->name('api-tokens.destroy');
+        });
+        Route::get('/content-api-keys', [AdminContentApiKeyController::class, 'index'])->name('content-api-keys.index');
+        Route::middleware('auth.recent')->group(function () {
+            Route::post('/content-api-keys', [AdminContentApiKeyController::class, 'store'])->name('content-api-keys.store');
+            Route::delete('/content-api-keys/{contentApiKey}', [AdminContentApiKeyController::class, 'destroy'])->whereNumber('contentApiKey')->name('content-api-keys.destroy');
         });
         Route::get('/members', AdminMemberController::class)->name('members.index');
         Route::get('/webhooks', [AdminWebhookController::class, 'index'])->name('webhooks.index');
