@@ -18,7 +18,8 @@ export type WorkspaceActive =
     | 'webhooks'
     | 'releases'
     | 'settings'
-    | 'audit-log';
+    | 'audit-log'
+    | 'users';
 
 type WorkspaceLink = {
     href: string;
@@ -41,6 +42,7 @@ function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: Wo
     }
 
     if (area === 'Admin' && auth.can.accessAdmin) {
+        links.push({ href: '/admin/users', label: 'Users', icon: 'user', active: active === 'users' });
         links.push({ href: '/admin/moderation', label: 'Moderation', icon: 'shield', active: active === 'moderation' });
         links.push({ href: '/admin/members', label: 'Members', icon: 'document', active: active === 'members' });
         links.push({ href: '/admin/webhooks', label: 'Webhooks', icon: 'document', active: active === 'webhooks' });

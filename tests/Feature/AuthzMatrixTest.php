@@ -50,6 +50,8 @@ class AuthzMatrixTest extends TestCase
         'admin.imports.ghost-members.upload' => Role::Admin,
         'admin.imports.ghost-members.report' => Role::Admin,
         'admin.members.index' => Role::Admin,
+        'admin.users.index' => Role::Admin,
+        'admin.users.show' => Role::Admin,
         'admin.moderation.index' => Role::Admin,
         'admin.moderation.comments' => Role::Admin,
         'admin.moderation.comments.restore' => Role::Admin,
@@ -317,6 +319,7 @@ class AuthzMatrixTest extends TestCase
                     'title' => 'Revision',
                 ]),
                 'page' => Page::factory()->create(['author_id' => $user->id]),
+                'user' => User::factory()->create(),
                 'release' => Release::factory()->create(['slug' => 'release-'.Str::lower(Str::random(12))]),
                 'webhook' => WebhookEndpoint::query()->create([
                     'name' => 'Partner',
