@@ -17,6 +17,7 @@ export type AccountSession = {
 
 type SecurityProps = {
     sso_managed: boolean;
+    two_factor_required?: boolean;
     has_password: boolean;
     status?: string | null;
     two_factor?: TwoFactorState | null;
@@ -181,8 +182,17 @@ function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
     );
 }
 
-export default function Security({ sso_managed, has_password, status, two_factor, recovery_codes, passkeys, sessions = [] }: SecurityProps) {
-    const statusMessage = status ? STATUS_MESSAGES[status] : undefined;
+export default function Security({
+    sso_managed,
+    two_factor_required = false,
+    has_password,
+    status,
+    two_factor,
+    recovery_codes,
+    passkeys,
+    sessions = [],
+}: SecurityProps) {
+    const statusMessage = status && status !== 'two-factor-required' ? STATUS_MESSAGES[status] : undefined;
 
     return (
         <AccountLayout
@@ -197,6 +207,15 @@ export default function Security({ sso_managed, has_password, status, two_factor
                 <p className="status-badge-success mt-4" role="status">
                     {statusMessage}
                 </p>
+            )}
+
+            {two_factor_required && (
+                <div className="mt-4 rounded-card border-l-4 border-[var(--color-danger)] bg-white p-4" role="alert">
+                    <p className="font-semibold text-body">Two-factor sign-in is required for your account.</p>
+                    <p className="mt-1 text-sm text-muted">
+                        Add a passkey or set up an authenticator app below. The rest of the Newsroom is available once one is set up.
+                    </p>
+                </div>
             )}
 
             {sso_managed ? (

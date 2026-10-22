@@ -21,6 +21,17 @@ describe('account security page', () => {
         expect(visit?.data).toMatchObject({ current_password: 'old-password-value', password: 'a-much-longer-password' });
     });
 
+    it('explains when the security policy requires two-factor sign-in', () => {
+        const { unmount } = render(<Security sso_managed={false} has_password two_factor_required status="two-factor-required" />);
+
+        expect(screen.getByRole('alert')).toHaveTextContent('Two-factor sign-in is required for your account.');
+        expect(screen.queryByRole('status')).not.toBeInTheDocument();
+        unmount();
+
+        render(<Security sso_managed={false} has_password />);
+        expect(screen.queryByText('Two-factor sign-in is required for your account.')).not.toBeInTheDocument();
+    });
+
     it('lets magic-link users set a first password without a current one', () => {
         render(<Security sso_managed={false} has_password={false} />);
 
