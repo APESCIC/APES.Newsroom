@@ -298,6 +298,17 @@ class AuthzMatrixTest extends TestCase
             ->assertHeader('Content-Security-Policy');
     }
 
+    public function test_csp_allows_self_hosted_tinymce_without_third_party_origins(): void
+    {
+        $csp = (string) $this->get('/')->headers->get('Content-Security-Policy');
+
+        $this->assertStringContainsString("img-src 'self' data: blob: https:;", $csp);
+        $this->assertStringContainsString("script-src 'self' 'unsafe-inline';", $csp);
+        $this->assertStringContainsString("connect-src 'self';", $csp);
+        $this->assertStringNotContainsString('tiny.cloud', $csp);
+        $this->assertStringNotContainsString('tinymce.com', $csp);
+    }
+
     private function userWithRole(Role $role): User
     {
         $factory = User::factory();

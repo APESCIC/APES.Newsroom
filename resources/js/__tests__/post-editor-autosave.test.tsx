@@ -3,6 +3,7 @@ import type { OutputData } from '@editorjs/editorjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import PostEdit from '../Pages/Staff/Posts/Edit';
 import { getInertiaMock, setMockPage } from '../test/inertia';
+import type { SharedPageProps } from '../types/page';
 
 vi.mock('../Components/editor/EditorJsField', () => ({
     default: ({ initialData, onChange }: { initialData: OutputData; onChange: (data: OutputData) => void }) => (
@@ -10,6 +11,17 @@ vi.mock('../Components/editor/EditorJsField', () => ({
             <output data-testid="editor-content">{JSON.stringify(initialData)}</output>
             <button type="button" onClick={() => onChange({ blocks: [{ type: 'paragraph', data: { text: 'Changed' } }] })}>
                 Change body
+            </button>
+        </>
+    ),
+}));
+
+vi.mock('../Components/editor/TinyMceField', () => ({
+    default: ({ initialHtml, onChange }: { initialHtml: string; onChange: (html: string) => void }) => (
+        <>
+            <output data-testid="tinymce-content">{initialHtml}</output>
+            <button type="button" onClick={() => onChange('<p>Typed in TinyMCE</p>')}>
+                Type in TinyMCE
             </button>
         </>
     ),
@@ -278,6 +290,20 @@ describe('post editor autosave', () => {
         expect(getInertiaMock().patch).not.toHaveBeenCalled();
     });
 
+    it('sends Editor.js blocks with the editor it was opened in', () => {
+        render(<PostEdit post={persistedPost} {...props} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Change body' }));
+        act(() => vi.advanceTimersByTime(8_000));
+
+        const payload = getInertiaMock().patch.mock.calls[0][2] as Record<string, unknown>;
+        expect(payload).toMatchObject({
+            editor: 'editorjs',
+            content: { blocks: [{ type: 'paragraph', data: { text: 'Changed' } }] },
+        });
+        expect(payload).not.toHaveProperty('content_html');
+    });
+
     it('surfaces failed-request field errors and does not retry while they remain', () => {
         render(<PostEdit post={persistedPost} {...props} />);
 
@@ -303,5 +329,82 @@ describe('post editor autosave', () => {
         fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Still blocked by visible errors' } });
         act(() => vi.advanceTimersByTime(16_000));
         expect(getInertiaMock().patch).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe('post editor autosave with TinyMCE', () => {
+    const staffProps: SharedPageProps = {
+        appName: 'APES Newsroom',
+        auth: {
+            user: { id: 1, name: 'Alex Editor', email: 'alex@example.test', role: 'admin' },
+            can: { accessStaff: true, accessAdmin: true },
+        },
+        errors: {},
+    };
+    const tinyPost: PersistedPost = { ...persistedPost, content_html: '<p>Original</p>' };
+
+    beforeEach(() => {
+        vi.useFakeTimers();
+        setMockPage({ ...staffProps, editorDriver: 'tinymce' });
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    async function renderTinyPost() {
+        const view = render(<PostEdit post={tinyPost} {...props} />);
+        await act(async () => {});
+
+        return view;
+    }
+
+    it('autosaves TinyMCE HTML without the block payload', async () => {
+        await renderTinyPost();
+        expect(screen.getByTestId('tinymce-content')).toHaveTextContent('<p>Original</p>');
+
+        act(() => vi.advanceTimersByTime(8_000));
+        expect(getInertiaMock().patch).not.toHaveBeenCalled();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Type in TinyMCE' }));
+        act(() => vi.advanceTimersByTime(8_000));
+
+        expect(getInertiaMock().patch).toHaveBeenCalledTimes(1);
+        const payload = getInertiaMock().patch.mock.calls[0][2] as Record<string, unknown>;
+        expect(payload).toMatchObject({ editor: 'tinymce', content_html: '<p>Typed in TinyMCE</p>' });
+        expect(payload).not.toHaveProperty('content');
+    });
+
+    it('keeps the editor HTML after a save even when the server stops sending editor HTML', async () => {
+        const { rerender } = await renderTinyPost();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Type in TinyMCE' }));
+        act(() => vi.advanceTimersByTime(8_000));
+        const options = getInertiaMock().patch.mock.calls[0][1] as {
+            onSuccess?: (page: { props: { post: PersistedPost } }) => void;
+        };
+
+        getInertiaMock().page = { props: { ...staffProps, editorDriver: 'editorjs' } };
+        act(() => options.onSuccess?.({
+            props: { post: { ...tinyPost, content_html: null, updated_at: '2026-08-10T09:01:00+00:00' } },
+        }));
+        rerender(<PostEdit post={{ ...tinyPost, content_html: null, updated_at: '2026-08-10T09:01:00+00:00' }} {...props} />);
+
+        expect(screen.getByText(/The site editor is now Editor\.js/)).toHaveAttribute('role', 'status');
+        expect(screen.getByTestId('tinymce-content')).toBeInTheDocument();
+
+        act(() => vi.advanceTimersByTime(8_000));
+        expect(getInertiaMock().patch).toHaveBeenCalledTimes(1);
+
+        fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Retitled' } });
+        act(() => vi.advanceTimersByTime(8_000));
+
+        expect(getInertiaMock().patch).toHaveBeenCalledTimes(2);
+        expect(getInertiaMock().patch.mock.calls[1][2]).toMatchObject({
+            title: 'Retitled',
+            editor: 'tinymce',
+            content_html: '<p>Typed in TinyMCE</p>',
+            expected_updated_at: '2026-08-10T09:01:00+00:00',
+        });
     });
 });
