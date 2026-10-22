@@ -36,5 +36,5 @@
     "Public impact: bold, italic, links and inline code now appear in articles and emails; no change for content without formatting",
     "Internal impact: TinyMCE bundled as a lazily loaded chunk; new content_html save path for staff editors; Admin API content format unchanged; Editor.js remains the default"
   ],
-  "pr": 0
+  "pr": 462
 }
