@@ -34,6 +34,37 @@ class AdminSettingsTest extends TestCase
                 ->where('settings.0.help', fn (string $help) => $help !== ''));
     }
 
+    public function test_editor_help_explains_the_trade_offs_between_editors(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)->withRecentAuthentication()
+            ->get('/admin/settings')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('settings.0.help', function (string $help) {
+                return str_contains($help, 'Editor.js has every block tool')
+                    && str_contains($help, 'read-only grey boxes')
+                    && str_contains($help, 'always stored as Editor.js blocks')
+                    && ! str_contains($help, 'falls back');
+            }));
+    }
+
+    public function test_default_editor_is_editorjs_and_switching_reaches_staff_editors(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $this->assertSame('editorjs', app(SettingsRepository::class)->get(SettingDefinitions::EDITOR_DRIVER));
+
+        $this->actingAs($admin)->withRecentAuthentication()
+            ->put('/admin/settings', ['settings' => ['editor' => ['driver' => 'tinymce']]])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->actingAs($admin)
+            ->get('/staff/posts/new')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('editorDriver', 'tinymce'));
+    }
+
     public function test_edit_reflects_saved_value(): void
     {
         $admin = User::factory()->admin()->create();

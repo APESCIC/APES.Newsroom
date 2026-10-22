@@ -52,7 +52,7 @@ final class SettingDefinitions
             self::EDITOR_DRIVER => [
                 'section' => 'Editor',
                 'label' => 'Staff editor',
-                'help' => 'Rich-text editor used on staff post and page screens. Content is always stored as Editor.js blocks. TinyMCE support arrives in a later release; until then it falls back to Editor.js.',
+                'help' => 'Editor on staff post and page screens. Editor.js has every block tool, including callouts, toggles, galleries, video, audio, files, bookmarks, products and embeds. TinyMCE offers familiar word-processor editing; those blocks show there as read-only grey boxes that are edited in Editor.js. Content is always stored as Editor.js blocks, so you can switch at any time: staff get the new editor the next time they open a post or page.',
                 'type' => 'enum',
                 'default' => 'editorjs',
                 'options' => [
