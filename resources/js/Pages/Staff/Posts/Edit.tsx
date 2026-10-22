@@ -1,10 +1,12 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useCallback, useEffect, useRef, useState } from 'react';
 import type { OutputData } from '@editorjs/editorjs';
-import EditorField from '../../../Components/editor/EditorField';
+import EditorField, { type EditorFieldHandle } from '../../../Components/editor/EditorField';
+import EditorSessionNotice from '../../../Components/editor/EditorSessionNotice';
 import AiAssistPanel from '../../../Components/Staff/AiAssistPanel';
 import UnsplashPicker from '../../../Components/Staff/UnsplashPicker';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
+import type { EditorDriver } from '../../../types/editor';
 import type { SharedPageProps } from '../../../types/page';
 
 type Channel = { value: string; label: string };
@@ -17,6 +19,7 @@ type PostData = {
     slug: string;
     excerpt: string | null;
     content: OutputData;
+    content_html?: string | null;
     status: string;
     visibility?: string;
     channel: string;
@@ -48,7 +51,9 @@ type PostForm = {
     title: string;
     slug: string;
     excerpt: string;
+    editor: EditorDriver;
     content: OutputData;
+    content_html: string;
     channel: string;
     visibility: string;
     hero_image: string;
@@ -77,7 +82,9 @@ const INLINE_ERROR_FIELDS = [
     'visibility',
     'excerpt',
     'tags',
+    'editor',
     'content',
+    'content_html',
     'hero_image',
     'hero_image_alt',
     'hero_image_caption',
@@ -93,12 +100,14 @@ const INLINE_ERROR_FIELDS = [
     'expected_updated_at',
 ] as const;
 
-function formFromPost(post: PostData | null, channels: Channel[]): PostForm {
+function formFromPost(post: PostData | null, channels: Channel[], editor: EditorDriver): PostForm {
     return {
         title: post?.title ?? '',
         slug: post?.slug ?? '',
         excerpt: post?.excerpt ?? '',
+        editor,
         content: post?.content ?? emptyContent,
+        content_html: post?.content_html ?? '',
         channel: post?.channel ?? channels[0]?.value ?? 'apes_cic',
         visibility: post?.visibility ?? 'public',
         hero_image: post?.hero_image ?? '',
@@ -188,11 +197,13 @@ export default function PostEdit({
     const isNew = post === null;
     const page = usePage<SharedPageProps>();
     const pageErrors = (page.props as { errors?: FormErrors }).errors;
-    const editorDriver = page.props.editorDriver ?? 'editorjs';
+    const siteEditor = page.props.editorDriver ?? 'editorjs';
+    const [sessionEditor] = useState<EditorDriver>(siteEditor);
     const [scheduleAt, setScheduleAt] = useState(post?.scheduled_for ?? '');
     const [rejectNotes, setRejectNotes] = useState('');
     const autosaveTimer = useRef<number | null>(null);
     const previousPostId = useRef<number | null>(post?.id ?? null);
+    const editorField = useRef<EditorFieldHandle | null>(null);
 
     const {
         data,
@@ -204,13 +215,22 @@ export default function PostEdit({
         setDefaults,
         isDirty,
         errors: formErrors,
-    } = useForm<PostForm>(formFromPost(post, channels));
+    } = useForm<PostForm>(formFromPost(post, channels, sessionEditor));
+
+    // TinyMCE is uncontrolled after mount, so its own HTML stays the source of
+    // truth for the session; server-rendered editor HTML never replaces it.
+    const contentHtml = useRef(data.content_html);
+    contentHtml.current = data.content_html;
 
     const errors = mergeErrors(pageErrors, formErrors as FormErrors);
     const hasErrors = Object.keys(errors).length > 0;
     const extraErrors = leftoverErrors(errors);
 
-    transform(({ tags_text: tagsText, ...form }) => ({ ...form, tags: parseTags(tagsText) }));
+    transform(({ tags_text: tagsText, content, content_html: html, ...form }) => ({
+        ...form,
+        ...(form.editor === 'tinymce' ? { content_html: html } : { content }),
+        tags: parseTags(tagsText),
+    }));
 
     useEffect(() => {
         const nextPostId = post?.id ?? null;
@@ -219,11 +239,11 @@ export default function PostEdit({
         }
 
         previousPostId.current = nextPostId;
-        const authoritativeForm = formFromPost(post, channels);
+        const authoritativeForm = { ...formFromPost(post, channels, sessionEditor), content_html: contentHtml.current };
         setData(authoritativeForm);
         setDefaults(authoritativeForm);
         setScheduleAt(post?.scheduled_for ?? '');
-    }, [channels, post, setData, setDefaults]);
+    }, [channels, post, sessionEditor, setData, setDefaults]);
 
     const saveExisting = useCallback(
         (submittedData: PostForm) => {
@@ -239,13 +259,16 @@ export default function PostEdit({
                         return;
                     }
 
-                    const authoritativeForm = formFromPost(savedPost, channels);
+                    const authoritativeForm = {
+                        ...formFromPost(savedPost, channels, sessionEditor),
+                        content_html: submittedData.content_html,
+                    };
                     setDefaults(authoritativeForm);
                     setData((current) => reconcileSavedForm(current, submittedData, authoritativeForm));
                 },
             });
         },
-        [channels, patch, post, setData, setDefaults],
+        [channels, patch, post, sessionEditor, setData, setDefaults],
     );
 
     useEffect(() => {
@@ -447,28 +470,23 @@ export default function PostEdit({
                         </div>
                         <div>
                             <label htmlFor="body">Body</label>
+                            <EditorSessionNotice sessionEditor={sessionEditor} siteEditor={siteEditor} />
                             <div className="rounded-control border border-border/70 bg-white/80 p-3">
                                 <EditorField
-                                    driver={editorDriver}
+                                    ref={editorField}
+                                    driver={sessionEditor}
                                     initialData={data.content}
+                                    initialHtml={data.content_html}
                                     onChange={(content) => setData('content', content)}
+                                    onHtmlChange={(html) => setData('content_html', html)}
                                 />
                             </div>
-                            <FieldError message={errors.content} />
+                            <FieldError message={errors.content ?? errors.content_html ?? errors.editor} />
                             <div className="mt-3">
                                 <AiAssistPanel
                                     title={data.title}
                                     excerpt={data.excerpt}
-                                    onInsert={(text) => {
-                                        setData('content', {
-                                            ...data.content,
-                                            time: Date.now(),
-                                            blocks: [
-                                                ...(data.content.blocks ?? []),
-                                                { type: 'paragraph', data: { text } },
-                                            ],
-                                        });
-                                    }}
+                                    onInsert={(text) => editorField.current?.appendParagraphs([text])}
                                 />
                             </div>
                         </div>
@@ -531,7 +549,11 @@ export default function PostEdit({
                                                 type="button"
                                                 className="underline"
                                                 onClick={() =>
-                                                    router.post(`/staff/posts/${post.id}/revisions/${revision.id}/restore`)
+                                                    router.post(
+                                                        `/staff/posts/${post.id}/revisions/${revision.id}/restore`,
+                                                        {},
+                                                        { preserveState: false },
+                                                    )
                                                 }
                                             >
                                                 Restore

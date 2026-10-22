@@ -1,9 +1,11 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { FormEventHandler, useEffect, useRef } from 'react';
+import { FormEventHandler, useEffect, useRef, useState } from 'react';
 import type { OutputData } from '@editorjs/editorjs';
 import EditorField from '../../../Components/editor/EditorField';
+import EditorSessionNotice from '../../../Components/editor/EditorSessionNotice';
 import UnsplashPicker from '../../../Components/Staff/UnsplashPicker';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
+import type { EditorDriver } from '../../../types/editor';
 import type { SharedPageProps } from '../../../types/page';
 
 type PageData = {
@@ -12,6 +14,7 @@ type PageData = {
     slug: string;
     excerpt: string | null;
     content: OutputData;
+    content_html?: string | null;
     status: string;
     visibility?: string;
     hero_image: string | null;
@@ -34,7 +37,9 @@ type PageForm = {
     title: string;
     slug: string;
     excerpt: string;
+    editor: EditorDriver;
     content: OutputData;
+    content_html: string;
     visibility: string;
     hero_image: string;
     hero_image_alt: string;
@@ -48,12 +53,14 @@ type PageForm = {
 
 type FormErrors = Record<string, string>;
 
-function formFromPage(page: PageData | null): PageForm {
+function formFromPage(page: PageData | null, editor: EditorDriver): PageForm {
     return {
         title: page?.title ?? '',
         slug: page?.slug ?? '',
         excerpt: page?.excerpt ?? '',
+        editor,
         content: page?.content ?? emptyContent,
+        content_html: page?.content_html ?? '',
         visibility: page?.visibility ?? 'public',
         hero_image: page?.hero_image ?? '',
         hero_image_alt: page?.hero_image_alt ?? '',
@@ -69,8 +76,11 @@ function formFromPage(page: PageData | null): PageForm {
 export default function PagesEdit({ page }: { page: PageData | null }) {
     const inertiaPage = usePage<SharedPageProps>();
     const pageErrors = (inertiaPage.props as { errors?: FormErrors }).errors ?? {};
-    const editorDriver = inertiaPage.props.editorDriver ?? 'editorjs';
-    const { data, setData, post, patch, processing, errors: formErrors, transform } = useForm<PageForm>(formFromPage(page));
+    const siteEditor = inertiaPage.props.editorDriver ?? 'editorjs';
+    const [sessionEditor] = useState<EditorDriver>(siteEditor);
+    const { data, setData, post, patch, processing, errors: formErrors, transform } = useForm<PageForm>(
+        formFromPage(page, sessionEditor),
+    );
     const errors: FormErrors = { ...pageErrors, ...(formErrors as FormErrors) };
     const titleTouchedSlug = useRef(false);
 
@@ -88,7 +98,10 @@ export default function PagesEdit({ page }: { page: PageData | null }) {
 
     const submit: FormEventHandler = (event) => {
         event.preventDefault();
-        transform((form) => form);
+        transform(({ content, content_html: html, ...form }) => ({
+            ...form,
+            ...(form.editor === 'tinymce' ? { content_html: html } : { content }),
+        }));
         if (page) {
             patch(`/staff/pages/${page.id}`, { preserveScroll: true });
         } else {
@@ -184,12 +197,17 @@ export default function PagesEdit({ page }: { page: PageData | null }) {
 
                 <div>
                     <p className="mb-2 text-sm font-semibold">Body</p>
+                    <EditorSessionNotice sessionEditor={sessionEditor} siteEditor={siteEditor} />
                     <EditorField
-                        driver={editorDriver}
+                        driver={sessionEditor}
                         initialData={data.content}
+                        initialHtml={data.content_html}
                         onChange={(next) => setData('content', next)}
+                        onHtmlChange={(html) => setData('content_html', html)}
                     />
-                    {errors.content && <span className="text-xs text-danger">{errors.content}</span>}
+                    {(errors.content ?? errors.content_html ?? errors.editor) && (
+                        <span className="text-xs text-danger">{errors.content ?? errors.content_html ?? errors.editor}</span>
+                    )}
                 </div>
 
                 <fieldset className="grid gap-3 md:grid-cols-2">

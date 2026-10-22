@@ -9,10 +9,12 @@ import EditorjsList from '@editorjs/list';
 import Paragraph from '@editorjs/paragraph';
 import Quote from '@editorjs/quote';
 import Table from '@editorjs/table';
-import { useEffect, useRef } from 'react';
+import { useEffect, useImperativeHandle, useRef, type Ref } from 'react';
 import AudioTool from './AudioTool';
 import BookmarkTool from './BookmarkTool';
 import CalloutTool from './CalloutTool';
+import type { EditorFieldHandle } from './EditorField';
+import { escapeHtml } from './escapeHtml';
 import FileTool from './FileTool';
 import GalleryTool from './GalleryTool';
 import MarkupTool from './MarkupTool';
@@ -44,13 +46,32 @@ async function postJson(url: string, body: Record<string, string>) {
 type Props = {
     initialData: OutputData;
     onChange: (data: OutputData) => void;
+    ref?: Ref<EditorFieldHandle>;
 };
 
-export default function EditorJsField({ initialData, onChange }: Props) {
+export default function EditorJsField({ initialData, onChange, ref }: Props) {
     const holderRef = useRef<HTMLDivElement | null>(null);
     const editorRef = useRef<EditorJS | null>(null);
     const onChangeRef = useRef(onChange);
     onChangeRef.current = onChange;
+
+    useImperativeHandle(
+        ref,
+        () => ({
+            appendParagraphs(texts: string[]) {
+                const editor = editorRef.current;
+
+                if (!editor) {
+                    return;
+                }
+
+                texts.forEach((text) => {
+                    editor.blocks.insert('paragraph', { text: escapeHtml(text) }, undefined, editor.blocks.getBlocksCount(), false);
+                });
+            },
+        }),
+        [],
+    );
 
     useEffect(() => {
         if (!holderRef.current || editorRef.current) {

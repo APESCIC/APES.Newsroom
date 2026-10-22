@@ -35,6 +35,15 @@ class EditorHtmlPresenter
         'legacy' => 'Imported content',
     ];
 
+    /** @var array<string, string> */
+    private const EMBED_LABELS = [
+        'youtube' => 'YouTube',
+        'vimeo' => 'Vimeo',
+        'twitter' => 'X (Twitter)',
+        'instagram' => 'Instagram',
+        'codepen' => 'CodePen',
+    ];
+
     public function __construct(
         private readonly InlineHtmlSanitizer $inline = new InlineHtmlSanitizer,
     ) {}
@@ -202,7 +211,7 @@ class EditorHtmlPresenter
             'file' => $data['title'] ?? $data['url'] ?? '',
             'bookmark' => $data['title'] ?? $data['url'] ?? '',
             'product' => $data['title'] ?? '',
-            'embed' => trim(ucfirst((string) ($data['service'] ?? '')).' '.($data['source'] ?? '')),
+            'embed' => trim((self::EMBED_LABELS[$data['service'] ?? ''] ?? '').' '.($data['source'] ?? '')),
             'linkTool' => $data['meta']['title'] ?? $data['link'] ?? '',
             'markup' => ($data['format'] ?? '') === 'html' ? 'HTML' : 'Markdown',
             'legacy' => $data['note'] ?? '',
