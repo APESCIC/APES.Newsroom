@@ -15,6 +15,8 @@ use Inertia\Response;
 
 class WebhookController extends Controller
 {
+    public const SECRET_FLASH = 'webhook_secret_revealed';
+
     public function __construct(private readonly AuditLogger $audit) {}
 
     public function index(): Response
@@ -31,9 +33,10 @@ class WebhookController extends Controller
                     'url' => $endpoint->url,
                     'events' => $endpoint->events,
                     'is_active' => $endpoint->is_active,
-                    'secret_hint' => 'whsec_…'.substr($endpoint->secret, -4),
+                    'secret_hint' => $endpoint->secretHint(),
                 ]),
             'availableEvents' => OutboundWebhookDispatcher::supportedEvents(),
+            'revealedSecret' => session(self::SECRET_FLASH),
         ]);
     }
 
@@ -59,7 +62,7 @@ class WebhookController extends Controller
 
         $this->record($request, 'webhook.created', $webhook);
 
-        return redirect()->route('admin.webhooks.index');
+        return redirect()->route('admin.webhooks.index')->with(self::SECRET_FLASH, $this->reveal($webhook));
     }
 
     public function update(Request $request, WebhookEndpoint $webhook): RedirectResponse
@@ -94,6 +97,8 @@ class WebhookController extends Controller
 
         if ($rotated) {
             $this->record($request, 'webhook.secret_rotated', $webhook);
+
+            return redirect()->route('admin.webhooks.index')->with(self::SECRET_FLASH, $this->reveal($webhook));
         }
 
         return redirect()->route('admin.webhooks.index');
@@ -108,6 +113,16 @@ class WebhookController extends Controller
         $webhook->delete();
 
         return redirect()->route('admin.webhooks.index');
+    }
+
+    /**
+     * The full secret is shown once, on the page load right after it is set.
+     *
+     * @return array{id: int, name: string, secret: string}
+     */
+    private function reveal(WebhookEndpoint $webhook): array
+    {
+        return ['id' => $webhook->id, 'name' => $webhook->name, 'secret' => (string) $webhook->secret];
     }
 
     /**

@@ -1,0 +1,25 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Encrypted secrets are much longer than the 128-character plaintext.
+     */
+    public function up(): void
+    {
+        Schema::table('webhook_endpoints', function (Blueprint $table) {
+            $table->text('secret')->change();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('webhook_endpoints', function (Blueprint $table) {
+            $table->string('secret', 128)->change();
+        });
+    }
+};
