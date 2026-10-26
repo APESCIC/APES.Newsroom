@@ -21,7 +21,7 @@
     "The post and page editors have a new Hero image section: drag and drop, choose a file or paste an image, with a preview, upload progress, Replace and Remove, alongside the image URL field and Unsplash search. It works with a keyboard and screen readers, and autosave picks up the new image (#535).",
     "Hero images need alt text before a post or page can be published or scheduled, with a clear message if it is missing. Caption and credit are optional, and a focal point picker keeps the subject in view on home page cards, channel pages and social previews (#536).",
     "A new Media library in the staff panel lists uploaded images with search and pages. Staff can reuse an image from the hero image section with Choose from library, and see which posts and pages use an image. Deleting an image that is in use asks for confirmation and lists them first (#537).",
-    "Imported Ghost images that still pointed at __GHOST_URL__ or /content/images are copied into Newsroom storage by a new media:fix-ghost-images command, with a dry run that lists every affected post, page and image. Images that cannot be found are reported and left unchanged, and public pages hide them instead of showing a broken image (#538).",
+    "Imported Ghost images that still pointed at Ghost's placeholder address are copied into Newsroom storage by a new media:fix-ghost-images command, with a dry run that lists every affected post, page and image. Images that cannot be found are reported and left unchanged, and public pages hide them instead of showing a broken image (#538).",
     "Future Ghost content imports copy hero images from the media archive in the same way as body images (#538)."
   ],
   "affected_areas": [

@@ -53,9 +53,16 @@ class PublicPagePresenter
             'hero_image_alt' => $this->nullableString($page->hero_image_alt),
             'hero_image_caption' => $this->nullableString($page->hero_image_caption),
             'hero_image_credit' => $this->nullableString($page->hero_image_credit),
-            'canonical_url' => $this->nullableString($page->canonical_url),
+            'canonical_url' => $this->canonicalUrl($page->canonical_url),
             'url' => $url,
         ];
+    }
+
+    private function canonicalUrl(mixed $value): ?string
+    {
+        $url = $this->nullableString($value);
+
+        return $url !== null && str_contains($url, '__GHOST_URL__') ? null : $url;
     }
 
     private function nullableString(mixed $value): ?string
