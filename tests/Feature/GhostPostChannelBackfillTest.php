@@ -69,6 +69,52 @@ class GhostPostChannelBackfillTest extends TestCase
         }
     }
 
+    public function test_it_reads_the_meta_and_data_export_shape(): void
+    {
+        $posts = $this->importedPosts();
+        $export = json_decode((string) file_get_contents($this->fixture()), true);
+        $path = tempnam(sys_get_temp_dir(), 'ghost-export');
+        file_put_contents($path, json_encode(['meta' => $export['db'][0]['meta'], 'data' => $export['db'][0]['data']]));
+
+        try {
+            Artisan::call('ghost:backfill-post-channels', ['json' => $path, '--force' => true]);
+        } finally {
+            unlink($path);
+        }
+
+        $this->assertSame(Channel::ApesTimes, $posts['ghost-times-1']->fresh()->channel);
+        $this->assertSame(Channel::MyapesPortal, $posts['ghost-portal-1']->fresh()->channel);
+    }
+
+    public function test_it_rejects_files_without_posts(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'ghost-export');
+        file_put_contents($path, json_encode(['meta' => [], 'data' => ['tags' => []]]));
+
+        try {
+            $this->expectExceptionMessage('File is not a Ghost content JSON export.');
+            Artisan::call('ghost:backfill-post-channels', ['json' => $path]);
+        } finally {
+            unlink($path);
+        }
+    }
+
+    public function test_newsletter_only_skips_title_and_slug_matches(): void
+    {
+        $posts = $this->importedPosts();
+
+        Artisan::call('ghost:backfill-post-channels', ['json' => $this->fixture(), '--dry-run' => true]);
+        $output = Artisan::output();
+        $this->assertStringContainsString('ghost newsletter', $output);
+        $this->assertStringContainsString('title or slug', $output);
+
+        Artisan::call('ghost:backfill-post-channels', ['json' => $this->fixture(), '--force' => true, '--newsletter-only' => true]);
+
+        $this->assertSame(Channel::ApesTimes, $posts['ghost-times-1']->fresh()->channel);
+        $this->assertSame(Channel::MyapesPortal, $posts['ghost-portal-1']->fresh()->channel);
+        $this->assertSame(Channel::ApesCic, $posts['ghost-stream-1']->fresh()->channel, 'title-only match is skipped');
+    }
+
     public function test_without_force_it_refuses_to_write(): void
     {
         $posts = $this->importedPosts();

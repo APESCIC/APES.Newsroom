@@ -10,7 +10,8 @@ class BackfillGhostPostChannelsCommand extends Command
     protected $signature = 'ghost:backfill-post-channels
         {json : Path to Ghost content JSON export}
         {--dry-run : List changes without writing}
-        {--force : Persist changes (required when not using --dry-run)}';
+        {--force : Persist changes (required when not using --dry-run)}
+        {--newsletter-only : Skip posts matched only by title or slug}';
 
     protected $description = 'Refile imported Ghost posts under APES Times, MyAPES Portal and Stream 4 APES (#527)';
 
@@ -22,17 +23,22 @@ class BackfillGhostPostChannelsCommand extends Command
             $this->warn('Refusing to write without --force. Running as dry-run. Pass --force to persist.');
         }
 
-        $report = $importer->backfillPostChannelsFromExport((string) $this->argument('json'), $dryRun);
+        $report = $importer->backfillPostChannelsFromExport(
+            (string) $this->argument('json'),
+            $dryRun,
+            (bool) $this->option('newsletter-only'),
+        );
 
         if ($report['changes'] !== []) {
             $this->table(
-                ['Ghost id', 'Slug', 'Title', 'From', 'To'],
+                ['Ghost id', 'Slug', 'Title', 'From', 'To', 'Matched by'],
                 array_map(fn (array $change) => [
                     $change['ghost_id'],
                     $change['slug'],
                     $change['title'],
                     $change['from'],
                     $change['to'],
+                    $change['matched_by'],
                 ], $report['changes']),
             );
         }

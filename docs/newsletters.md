@@ -56,7 +56,7 @@ php artisan ghost:backfill-post-channels path/to/ghost-content.json --dry-run
 php artisan ghost:backfill-post-channels path/to/ghost-content.json --force
 ```
 
-It only moves posts that belonged to APES Times, MyAPES Portal or Stream 4 APES, lists every change, and never sends email.
+It reads the same export shapes as `ghost:import-content`. It only moves posts that belong to APES Times, MyAPES Portal or Stream 4 APES, lists every change with whether it matched by Ghost newsletter or by title or slug, and never sends email. Add `--newsletter-only` to skip title and slug matches. The cutover export on live is `/app/data/shared/imports/cutover/content.json`; run artisan there through `deploy/cloudron-www-data.sh` (see [`docs/deployment.md`](deployment.md)).
 
 ## Signup default
 

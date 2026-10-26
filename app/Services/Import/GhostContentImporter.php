@@ -818,20 +818,22 @@ class GhostContentImporter
      * or Stream 4 APES newsletters in Ghost (#527). Other posts are left alone
      * so staff refiling is never undone. Never sends email.
      *
-     * @return array{dry_run: bool, seen: int, missing: int, unchanged: int, reassigned: int, changes: list<array{ghost_id: string, slug: string, title: string, from: string, to: string}>}
+     * With $newsletterOnly, posts matched only by title or slug are skipped.
+     *
+     * @return array{dry_run: bool, seen: int, missing: int, unchanged: int, reassigned: int, changes: list<array{ghost_id: string, slug: string, title: string, from: string, to: string, matched_by: string}>}
      */
-    public function backfillPostChannelsFromExport(string $jsonPath, bool $dryRun = true): array
+    public function backfillPostChannelsFromExport(string $jsonPath, bool $dryRun = true, bool $newsletterOnly = false): array
     {
         if (! is_file($jsonPath)) {
             throw new RuntimeException("Ghost content export not found: {$jsonPath}");
         }
 
         $payload = json_decode(File::get($jsonPath), true);
-        if (! is_array($payload) || ! $this->isGhostContentExport($payload)) {
+        $data = is_array($payload) ? $this->extractData($payload) : [];
+        if (! is_array($data['posts'] ?? null)) {
             throw new RuntimeException('File is not a Ghost content JSON export.');
         }
 
-        $data = $this->extractData($payload);
         $newsletterIdsByPost = $this->newsletterIdsByPost($data);
         $report = ['dry_run' => $dryRun, 'seen' => 0, 'missing' => 0, 'unchanged' => 0, 'reassigned' => 0, 'changes' => []];
 
@@ -841,8 +843,14 @@ class GhostContentImporter
                 continue;
             }
 
-            $target = $this->detectChannel($ghostPost, $newsletterIdsByPost[$ghostId] ?? null);
+            $ghostNewsletterId = $newsletterIdsByPost[$ghostId] ?? null;
+            $target = $this->detectChannel($ghostPost, $ghostNewsletterId);
             if (! in_array($target, self::NEWSLETTER_ONLY_CHANNELS, true)) {
+                continue;
+            }
+
+            $matchedBy = $this->channelForGhostNewsletter($ghostNewsletterId) === $target ? 'ghost newsletter' : 'title or slug';
+            if ($newsletterOnly && $matchedBy !== 'ghost newsletter') {
                 continue;
             }
 
@@ -866,6 +874,7 @@ class GhostContentImporter
                 'title' => $post->title,
                 'from' => $post->channel->value,
                 'to' => $target->value,
+                'matched_by' => $matchedBy,
             ];
             $report['reassigned']++;
 
