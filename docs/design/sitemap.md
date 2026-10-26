@@ -10,6 +10,10 @@
 | `/apes-cic` | APES CIC channel | Mission-led landing, channel stories |
 | `/apes-shelter-rescue` | Shelter & Rescue channel | Distinct accent, same layout system |
 | `/apes-pet-care-clinic` | Pet Care Clinic channel | Distinct accent, same layout system |
+| `/apes-times` | APES Times channel | Distinct accent, same layout system |
+| `/myapes-portal` | MyAPES Portal channel | Distinct accent, same layout system |
+| `/stream-4-apes` | Stream 4 APES channel | Distinct accent, same layout system |
+| `/{channel}/rss.xml` | Channel RSS feed | One per public channel |
 | `/articles/{slug}` | Article | Long-form reading, SEO, comments/reactions counts |
 | `/authors/{slug}` | Author | Staff/public author profiles where approved |
 | `/search` | Search | Full-text across published content |
@@ -71,9 +75,13 @@
 
 ```
 Home
-├── APES CIC
-├── Shelter & Rescue
-├── Pet Care Clinic
+├── Channels (disclosure menu on desktop, grouped list on mobile)
+│   ├── APES CIC
+│   ├── Shelter & Rescue
+│   ├── Pet Care Clinic
+│   ├── APES Times
+│   ├── MyAPES Portal
+│   └── Stream 4 APES
 ├── Search
 ├── About APES (static, optional v1)
 └── Account / Login
@@ -83,3 +91,5 @@ Home
 ```
 
 Staff users see an additional **Workspace** entry in the header after authentication.
+
+Which channels appear in the Channels menu and on the home page, and in what order, is set per newsletter under **Public channel** at `/staff/newsletters` (see [`docs/newsletters.md`](../newsletters.md)).

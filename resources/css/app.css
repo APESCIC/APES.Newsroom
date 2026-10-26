@@ -28,6 +28,15 @@
     --color-apes-mist: #E5F6F4;
     --color-shelter-mist: #F4EBE3;
     --color-clinic-mist: #E3EDF4;
+    --color-times-accent: #6D5BA8;
+    --color-times-text: #4E3F86;
+    --color-times-mist: #ECE9F6;
+    --color-portal-accent: #B5487A;
+    --color-portal-text: #8C2F5A;
+    --color-portal-mist: #F6E6EE;
+    --color-stream-accent: #B8860B;
+    --color-stream-text: #7A5A08;
+    --color-stream-mist: #F7F0DC;
     --color-warning-mist: #FFF0D8;
     --color-success-mist: #E4F3EB;
 
@@ -343,6 +352,22 @@
 
     .glass-channel-clinic {
         border-left: 4px solid var(--color-clinic-accent);
+    }
+
+    .glass-channel-times {
+        border-left: 4px solid var(--color-times-accent);
+    }
+
+    .glass-channel-portal {
+        border-left: 4px solid var(--color-portal-accent);
+    }
+
+    .glass-channel-stream {
+        border-left: 4px solid var(--color-stream-accent);
+    }
+
+    .glass-channel-neutral {
+        border-left: 4px solid var(--color-brand-teal);
     }
 
     .glass-story-card {

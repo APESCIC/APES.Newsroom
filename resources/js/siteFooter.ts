@@ -1,7 +1,7 @@
 import { ORG_PHONE_DISPLAY, ORG_PHONE_TEL, ORG_POSTAL_ADDRESS } from './organisationContact';
 
 export const SITE_FOOTER_BRAND_BLURB =
-    'News and updates from Association of Protecting Exotic Species CIC — covering APES, Shelter & Rescue, and Pet Care Clinic.';
+    'News and updates from Association of Protecting Exotic Species CIC — covering APES, Shelter & Rescue, Pet Care Clinic, APES Times, MyAPES Portal and Stream 4 APES.';
 
 export type FooterNavItem = {
     label: string;

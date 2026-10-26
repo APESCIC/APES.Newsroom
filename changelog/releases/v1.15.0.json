@@ -12,15 +12,20 @@
   ],
   "summary": "APES Times, MyAPES Portal and Stream 4 APES join APES CIC, Shelter & Rescue and Pet Care Clinic as channels, and staff choose which channels appear on the home page and in the menu from Newsletters settings.",
   "detailed_changes": [
+    "New channel pages at /apes-times, /myapes-portal and /stream-4-apes list their stories, with a Subscribe button for that newsletter and a short description when a channel has no stories yet (#526).",
+    "The home page shows a section for each visible channel with its three latest stories and a Subscribe link, in the order staff set. The layout fits six channels on desktop and mobile (#528).",
+    "The menu groups all channels under a keyboard-accessible Channels button on desktop and a Channels list on mobile, and highlights the channel you are reading (#529).",
+    "Every channel has its own RSS feed and sitemap entry, and channel pages include description, canonical and social preview tags that link previews can read (#530).",
     "Posts can be filed under APES Times, MyAPES Portal and Stream 4 APES. The post editor's Channel field lists every channel whose newsletter is active (#527).",
     "Each newsletter has Public channel settings: the linked channel, show on the home page, show in the menu, display order, and a public label and description. Archived newsletters never appear publicly, and the slug is locked while a channel is linked so signup links keep working (#525).",
     "Imported Ghost posts are filed by the Ghost newsletter they were sent with. A new ghost:backfill-post-channels command lists and, with --force, refiles earlier imports that belonged to the three new newsletters, without sending email (#527)."
   ],
   "affected_areas": [
     "Website: APES Newsroom",
-    "Page or route: /staff/newsletters, /staff/posts",
-    "User groups affected: staff and admins",
+    "Page or route: /, /apes-times, /myapes-portal, /stream-4-apes, /{channel}/rss.xml, /sitemap.xml, /staff/newsletters, /staff/posts",
+    "User groups affected: all readers (home page, menu, channel pages); staff and admins (newsletter and post settings)",
+    "Public impact: three new channel pages, a Channels menu and channel sections on the home page",
     "Internal impact: new channel settings columns on newsletters; ghost:backfill-post-channels command"
   ],
-  "pr": 0
+  "pr": 541
 }

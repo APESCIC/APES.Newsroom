@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Http\Controllers\AnalyticsConsentController;
 use App\Models\Release;
+use App\Services\Channels\PublicChannels;
 use App\Services\Settings\SettingsRepository;
 use App\Support\AnalyticsConfig;
 use App\Support\Settings\SettingDefinitions;
@@ -50,6 +51,7 @@ class HandleInertiaRequests extends Middleware
                 ],
             ],
             'currentRelease' => fn () => $this->currentReleasePayload(),
+            'publicChannels' => fn () => $this->publicChannelsPayload(),
             'devTools' => app()->environment('local'),
             'analytics' => fn () => [
                 ...AnalyticsConfig::publicPayload(),
@@ -65,6 +67,20 @@ class HandleInertiaRequests extends Middleware
         }
 
         return $shared;
+    }
+
+    /**
+     * Channels shown in the public navigation menu.
+     *
+     * @return list<array{value: string, slug: string, label: string, description: string|null, signup_slug: string}>
+     */
+    private function publicChannelsPayload(): array
+    {
+        try {
+            return app(PublicChannels::class)->forNav();
+        } catch (Throwable) {
+            return [];
+        }
     }
 
     /**

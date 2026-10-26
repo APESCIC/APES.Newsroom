@@ -4,7 +4,7 @@
         <loc>{{ url('/') }}</loc>
         <changefreq>daily</changefreq>
     </url>
-    @foreach (['apes-cic', 'apes-shelter-rescue', 'apes-pet-care-clinic'] as $channel)
+    @foreach ($channels as $channel)
     <url>
         <loc>{{ url('/'.$channel) }}</loc>
         <changefreq>daily</changefreq>

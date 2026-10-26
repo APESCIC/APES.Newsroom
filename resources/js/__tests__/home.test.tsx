@@ -6,6 +6,33 @@ import Home from '../Pages/home';
 import { setMockPage } from '../test/inertia';
 import protectedEmailSource from '../Components/Layout/ProtectedEmail.tsx?raw';
 
+const publicChannels = [
+    { value: 'apes_cic', slug: 'apes-cic', label: 'APES CIC', description: 'Mission stories.', signup_slug: 'apes-cic' },
+    {
+        value: 'apes_shelter_rescue',
+        slug: 'apes-shelter-rescue',
+        label: 'APES Shelter & Rescue',
+        description: 'Rescue news.',
+        signup_slug: 'apes-shelter-rescue',
+    },
+    {
+        value: 'apes_pet_care_clinic',
+        slug: 'apes-pet-care-clinic',
+        label: 'APES Pet Care Clinic',
+        description: 'Clinic notes.',
+        signup_slug: 'apes-pet-care-clinic',
+    },
+    {
+        value: 'apes_times',
+        slug: 'apes-times',
+        label: 'APES Times',
+        description: 'News and features from APES Times.',
+        signup_slug: 'apes-times',
+    },
+    { value: 'myapes_portal', slug: 'myapes-portal', label: 'MyAPES Portal', description: null, signup_slug: 'myapes-portal' },
+    { value: 'stream_4_apes', slug: 'stream-4-apes', label: 'Stream 4 APES', description: null, signup_slug: 'stream-4-apes' },
+];
+
 describe('Direction C public homepage', () => {
     let desktopMatches: boolean;
     let desktopChangeListeners: Set<(event: MediaQueryListEvent) => void>;
@@ -44,6 +71,7 @@ describe('Direction C public homepage', () => {
                 user: { id: 1, name: 'Alex Editor', email: 'alex@example.test', role: 'admin' },
                 can: { accessStaff: true, accessAdmin: true },
             },
+            publicChannels,
         });
     });
 
@@ -78,11 +106,13 @@ describe('Direction C public homepage', () => {
                         published_at: '2026-08-04T09:00:00Z',
                     },
                 ]}
-                channels={[
-                    { slug: 'apes-cic', label: 'APES' },
-                    { slug: 'apes-shelter-rescue', label: 'APES Shelter & Rescue' },
-                    { slug: 'apes-pet-care-clinic', label: 'APES Pet Care Clinic' },
-                ]}
+                channels={publicChannels.map((channel) => ({
+                    ...channel,
+                    latest:
+                        channel.slug === 'apes-cic'
+                            ? [{ title: 'Wildlife corridor project reaches a new milestone', slug: 'wildlife-corridor-milestone', published_at: '2026-08-05T09:00:00Z' }]
+                            : [],
+                }))}
             />,
         );
 
@@ -95,26 +125,49 @@ describe('Direction C public homepage', () => {
         );
         const primaryNavigation = screen.getByRole('navigation', { name: 'Primary navigation' });
         expect(within(primaryNavigation).getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
-        expect(within(primaryNavigation).getByRole('link', { name: 'APES Shelter & Rescue' })).toHaveAttribute(
-            'href',
-            '/apes-shelter-rescue',
-        );
+
+        const channelsButton = within(primaryNavigation).getByRole('button', { name: 'Channels' });
+        expect(channelsButton).toHaveAttribute('aria-expanded', 'false');
+        expect(within(primaryNavigation).queryByRole('link', { name: 'APES Shelter & Rescue' })).not.toBeInTheDocument();
+        await user.click(channelsButton);
+        expect(channelsButton).toHaveAttribute('aria-expanded', 'true');
+        const channelsPanel = document.getElementById(channelsButton.getAttribute('aria-controls') ?? '')!;
+        expect(within(channelsPanel).getAllByRole('link')).toHaveLength(6);
+        expect(within(channelsPanel).getByRole('link', { name: 'APES Shelter & Rescue' })).toHaveAttribute('href', '/apes-shelter-rescue');
+        expect(within(channelsPanel).getByRole('link', { name: 'Stream 4 APES' })).toHaveAttribute('href', '/stream-4-apes');
+        await user.keyboard('{Escape}');
+        expect(channelsButton).toHaveAttribute('aria-expanded', 'false');
+        expect(channelsButton).toHaveFocus();
+
         expect(screen.getByRole('heading', { name: 'Wildlife corridor project reaches a new milestone' })).toHaveClass('display-headline-on-glass');
         expect(document.querySelector('.editorial-rule')).not.toBeInTheDocument();
         const channelsRegion = screen.getByRole('region', { name: 'APES newsroom channels' });
-        expect(within(channelsRegion).getByRole('link', { name: /^APES CIC/ })).toHaveClass('glass-channel');
+        expect(within(channelsRegion).getAllByRole('article')).toHaveLength(6);
+        expect(within(channelsRegion).getByRole('article', { name: 'APES CIC' })).toHaveClass('glass-channel', 'glass-channel-apes');
+        expect(within(channelsRegion).getByRole('article', { name: 'APES Times' })).toHaveClass('glass-channel-times');
+        expect(
+            within(within(channelsRegion).getByRole('article', { name: 'APES CIC' })).getByRole('link', {
+                name: 'Wildlife corridor project reaches a new milestone',
+            }),
+        ).toHaveAttribute('href', '/articles/wildlife-corridor-milestone');
+        const timesSection = within(channelsRegion).getByRole('article', { name: 'APES Times' });
+        expect(timesSection).toHaveTextContent('News and features from APES Times.');
+        expect(within(timesSection).getByRole('link', { name: 'Subscribe to APES Times' })).toHaveAttribute(
+            'href',
+            '/newsletters/apes-times/signup',
+        );
+        expect(within(timesSection).queryByRole('link', { name: 'All stories from APES Times' })).not.toBeInTheDocument();
+        expect(within(channelsRegion).getByRole('article', { name: 'Stream 4 APES' })).toHaveTextContent(
+            'Stories from Stream 4 APES are coming soon.',
+        );
         expect(
             screen.getByRole('link', {
                 name: 'Read the story: Wildlife corridor project reaches a new milestone',
             }),
         ).toHaveTextContent('Read the story');
         expect(screen.getByRole('heading', { name: 'Our mission' })).toBeInTheDocument();
-        expect(channelsRegion).toBeInTheDocument();
-        const apesChannel = within(channelsRegion).getByRole('link', { name: /^APES CIC/ });
-        expect(apesChannel).not.toHaveAttribute('aria-label');
-        expect(apesChannel).toHaveTextContent('APES CIC');
-        expect(within(channelsRegion).getByRole('link', { name: /^Shelter & Rescue/ })).toHaveTextContent('Shelter & Rescue');
-        expect(within(channelsRegion).getByRole('link', { name: /^Pet Care Clinic/ })).toHaveTextContent('Pet Care Clinic');
+        expect(within(channelsRegion).getByRole('link', { name: 'APES CIC' })).toHaveAttribute('href', '/apes-cic');
+        expect(within(channelsRegion).getByRole('link', { name: 'APES Pet Care Clinic' })).toHaveAttribute('href', '/apes-pet-care-clinic');
         expect(screen.getByRole('heading', { name: 'Recent stories' })).toBeInTheDocument();
         expect(screen.getByText('The latest from the rescue centre.')).toBeInTheDocument();
         expect(screen.getByText('4 August 2026', { selector: 'time' })).toHaveAttribute(
@@ -157,7 +210,10 @@ describe('Direction C public homepage', () => {
         expect(mobileMenu).toHaveClass('max-h-[calc(100dvh-4rem)]', 'overflow-y-auto');
         expect(screen.getAllByRole('navigation', { name: 'Primary navigation' })).toHaveLength(2);
         const mobileNavigation = screen.getAllByRole('navigation', { name: 'Primary navigation' })[1];
-        within(mobileNavigation).getByRole('link', { name: 'APES' }).focus();
+        const mobileChannels = within(mobileNavigation).getByRole('list', { name: 'Channels' });
+        expect(within(mobileChannels).getAllByRole('link')).toHaveLength(6);
+        expect(within(mobileChannels).getByRole('link', { name: 'MyAPES Portal' })).toHaveAttribute('href', '/myapes-portal');
+        within(mobileNavigation).getByRole('link', { name: 'APES CIC' }).focus();
         await user.keyboard('{Escape}');
         expect(menuButton).toHaveAttribute('aria-expanded', 'false');
         expect(menuButton).toHaveFocus();
@@ -180,7 +236,7 @@ describe('Direction C public homepage', () => {
 
         await user.click(menuButton);
         const reopenedMobileNavigation = screen.getAllByRole('navigation', { name: 'Primary navigation' })[1];
-        within(reopenedMobileNavigation).getByRole('link', { name: 'APES' }).focus();
+        within(reopenedMobileNavigation).getByRole('link', { name: 'APES CIC' }).focus();
         act(() => dispatchDesktopChange(true));
         expect(menuButton).toHaveAttribute('aria-expanded', 'false');
         expect(within(primaryNavigation).getByRole('link', { name: 'Home' })).toHaveFocus();

@@ -5,11 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Page;
 use App\Models\Post;
 use App\Models\Tag;
+use App\Services\Channels\PublicChannels;
 use Illuminate\Http\Response;
 
 class SitemapController extends Controller
 {
-    public function index(): Response
+    public function index(PublicChannels $channels): Response
     {
         $posts = Post::published()->orderByDesc('published_at')->get(['slug', 'updated_at', 'published_at']);
         $pages = Page::published()->orderByDesc('published_at')->get(['slug', 'updated_at', 'published_at']);
@@ -20,6 +21,7 @@ class SitemapController extends Controller
             ->get(['slug', 'updated_at']);
 
         $xml = view('sitemap', [
+            'channels' => array_column($channels->forListing(), 'slug'),
             'posts' => $posts,
             'pages' => $pages,
             'tags' => $tags,

@@ -1,11 +1,9 @@
 import { Head } from '@inertiajs/react';
 import ApesLogo from '../Components/Brand/ApesLogo';
-import ChannelTrailTile from '../Components/Home/ChannelTrailTile';
+import ChannelSection, { type HomeChannel } from '../Components/Home/ChannelSection';
 import DeskPanel, { type PostCard } from '../Components/Home/DeskPanel';
 import RecentStoryCard from '../Components/Home/RecentStoryCard';
 import PublicLayout from '../Components/Layout/PublicLayout';
-
-type Channel = { slug: string; label: string };
 
 function FeaturedHeroImage({ featured }: { featured: PostCard }) {
     if (!featured.hero_image) {
@@ -64,7 +62,7 @@ export default function Home({
 }: {
     featured?: PostCard;
     recent: PostCard[];
-    channels: Channel[];
+    channels: HomeChannel[];
 }) {
     return (
         <PublicLayout>
@@ -79,16 +77,18 @@ export default function Home({
                     </div>
                 </section>
 
-                <section className="px-5 py-12 sm:px-6 sm:py-16" aria-label="APES newsroom channels">
-                    <div className="mx-auto max-w-public">
-                        <h2 className="sr-only">Newsroom channels</h2>
-                        <div className="grid gap-6 md:grid-cols-3">
-                            {channels.map((channel) => (
-                                <ChannelTrailTile key={channel.slug} slug={channel.slug} />
-                            ))}
+                {channels.length > 0 && (
+                    <section className="px-5 py-12 sm:px-6 sm:py-16" aria-label="APES newsroom channels">
+                        <div className="mx-auto max-w-public">
+                            <h2 className="sr-only">Newsroom channels</h2>
+                            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                                {channels.map((channel) => (
+                                    <ChannelSection key={channel.slug} channel={channel} />
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
+                )}
 
                 <section className="px-5 py-12 sm:px-6" aria-labelledby="recent-heading">
                     <div className="mx-auto max-w-public">
