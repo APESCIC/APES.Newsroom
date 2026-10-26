@@ -1,0 +1,26 @@
+{
+  "version": "v1.16.1",
+  "slug": "release-v1-16-1",
+  "released_at": "2026-10-26",
+  "previous_version": "v1.16.0",
+  "theme": "Imported canonical links fix",
+  "change_types": [
+    "fixed"
+  ],
+  "topic_tags": [
+    "public-facing"
+  ],
+  "summary": "Imported Ghost posts no longer point search engines at broken Ghost preview links as their canonical address.",
+  "detailed_changes": [
+    "Canonical links that still contained Ghost's placeholder address are removed, so those articles use their own Newsroom address instead (#556).",
+    "Staff can save those posts again without a canonical URL error, and future Ghost imports skip such links (#556)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /articles/{slug}, /pages/{slug}, /staff/posts",
+    "User groups affected: readers and search engines; staff editing imported posts",
+    "Public impact: correct canonical links on imported articles",
+    "Internal impact: one-off migration clears placeholder canonical URLs on posts and pages"
+  ],
+  "pr": 0
+}

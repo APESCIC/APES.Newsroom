@@ -403,7 +403,7 @@ class GhostContentImporter
             'hero_image' => $this->importHeroImage($post['feature_image'] ?? null, $mediaPath, $dryRun, $report),
             'meta_title' => $post['meta_title'] ?? null,
             'meta_description' => $post['meta_description'] ?? null,
-            'canonical_url' => $post['canonical_url'] ?? null,
+            'canonical_url' => str_contains((string) ($post['canonical_url'] ?? ''), '__GHOST_URL__') ? null : ($post['canonical_url'] ?? null),
             'published_at' => ! empty($post['published_at']) ? $post['published_at'] : null,
         ];
 
@@ -573,7 +573,7 @@ class GhostContentImporter
                 'hero_image' => $this->importHeroImage($post['feature_image'] ?? null, $mediaPath, $dryRun, $report),
                 'meta_title' => $post['meta_title'] ?? null,
                 'meta_description' => $post['meta_description'] ?? null,
-                'canonical_url' => $post['canonical_url'] ?? null,
+                'canonical_url' => str_contains((string) ($post['canonical_url'] ?? ''), '__GHOST_URL__') ? null : ($post['canonical_url'] ?? null),
                 'published_at' => ! empty($post['published_at']) ? $post['published_at'] : null,
                 'email_on_publish' => false,
                 'mailing_lists' => [],
