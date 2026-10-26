@@ -5,12 +5,14 @@
   "previous_version": "v1.15.1",
   "theme": "Hero image uploads",
   "change_types": [
-    "added"
+    "added",
+    "fixed"
   ],
   "topic_tags": [
-    "public-facing"
+    "public-facing",
+    "accessibility"
   ],
-  "summary": "Staff can upload hero images from their device straight into the post and page editors, add alt text and choose a focal point. Uploads are checked, stripped of location and camera data, and served in responsive sizes so stories load quickly.",
+  "summary": "Staff can upload hero images from their device straight into the post and page editors, add alt text and choose a focal point, and imported Ghost posts no longer show broken hero images. Uploads are checked, stripped of location and camera data, and served in responsive sizes so stories load quickly.",
   "detailed_changes": [
     "A staff-only hero image upload accepts JPEG, PNG, WebP and AVIF up to 10 MB. The file type is checked from its contents, SVG is rejected, uploads are rate limited, and each file gets a random name (#533).",
     "Location, camera and other EXIF data is removed from every uploaded image, and phone photos are turned the right way up first (#533).",
@@ -19,14 +21,15 @@
     "The post and page editors have a new Hero image section: drag and drop, choose a file or paste an image, with a preview, upload progress, Replace and Remove, alongside the image URL field and Unsplash search. It works with a keyboard and screen readers, and autosave picks up the new image (#535).",
     "Hero images need alt text before a post or page can be published or scheduled, with a clear message if it is missing. Caption and credit are optional, and a focal point picker keeps the subject in view on home page cards, channel pages and social previews (#536).",
     "A new Media library in the staff panel lists uploaded images with search and pages. Staff can reuse an image from the hero image section with Choose from library, and see which posts and pages use an image. Deleting an image that is in use asks for confirmation and lists them first (#537).",
-    "Hero images still pointing at Ghost's __GHOST_URL__ placeholder are no longer shown as broken images."
+    "Imported Ghost images that still pointed at __GHOST_URL__ or /content/images are copied into Newsroom storage by a new media:fix-ghost-images command, with a dry run that lists every affected post, page and image. Images that cannot be found are reported and left unchanged, and public pages hide them instead of showing a broken image (#538).",
+    "Future Ghost content imports copy hero images from the media archive in the same way as body images (#538)."
   ],
   "affected_areas": [
     "Website: APES Newsroom",
     "Page or route: /, /{channel}, /articles/{slug}, /pages/{slug}, /staff/posts, /staff/pages, /staff/media",
-    "User groups affected: all readers (faster hero images); staff (hero image uploads)",
-    "Public impact: responsive hero images and social previews; broken Ghost hero images hidden",
-    "Internal impact: new media_assets table, hero media and focal point columns on posts and pages, queued image processing; deploy:preflight checks GD JPEG and WebP support"
+    "User groups affected: all readers (faster hero images, no broken Ghost images); staff (hero image uploads, media library)",
+    "Public impact: responsive hero images and social previews; imported Ghost images restored or hidden",
+    "Internal impact: new media_assets table, hero media and focal point columns on posts and pages, queued image processing, media:fix-ghost-images command; deploy:preflight checks GD JPEG and WebP support"
   ],
   "pr": 546
 }

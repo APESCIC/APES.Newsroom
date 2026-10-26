@@ -1,0 +1,93 @@
+name: Repair imported Ghost images (live app)
+
+# Manually triggered (#538). Runs only `php artisan media:fix-ghost-images`
+# on the live Cloudron Newsroom, or read-only diagnostics for hero uploads
+# (PHP upload limits, GD formats via deploy:preflight, queue worker). It
+# never deploys, migrates, sends email, or touches the Ghost app. "apply"
+# changes post and page data, so it takes a backup first and needs the
+# confirmation input. Runs in the same "beta" environment and concurrency
+# group as deploy.yml, so it waits for any deploy in progress.
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'diagnostics (read-only), dry-run (lists changes) or apply (changes data)'
+        type: choice
+        options:
+          - dry-run
+          - diagnostics
+          - apply
+        default: dry-run
+      fetch_from_legacy:
+        description: 'Fetch images not found locally from the legacy Ghost site'
+        type: boolean
+        default: true
+      confirm:
+        description: 'Type "apply" to confirm when mode is apply'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-beta
+  cancel-in-progress: false
+
+jobs:
+  ghost-images:
+    name: media:fix-ghost-images (${{ inputs.mode }})
+    runs-on: ubuntu-latest
+    environment: beta
+    env:
+      MODE: ${{ inputs.mode }}
+      FETCH: ${{ inputs.fetch_from_legacy }}
+      CONFIRM: ${{ inputs.confirm }}
+    steps:
+      - name: Verify branch and confirmation
+        run: |
+          if [ "${{ github.ref_name }}" != "main" ]; then
+            echo "::error::Run this workflow against main (got ${{ github.ref_name }})"
+            exit 1
+          fi
+          if [ "$MODE" = "apply" ] && [ "$CONFIRM" != "apply" ]; then
+            echo "::error::mode=apply needs confirm=apply"
+            exit 1
+          fi
+
+      - name: Install Cloudron CLI
+        run: npm install -g cloudron
+
+      - name: Create blocking app backup before applying
+        if: inputs.mode == 'apply'
+        run: >
+          cloudron --server "${{ secrets.CLOUDRON_FQDN }}" --token "${{ secrets.CLOUDRON_TOKEN }}"
+          backup create --app "${{ secrets.CLOUDRON_APP_ID }}"
+
+      - name: Run on the live app
+        env:
+          CLOUDRON_SERVER: ${{ secrets.CLOUDRON_FQDN }}
+          CLOUDRON_API_TOKEN: ${{ secrets.CLOUDRON_TOKEN }}
+          CLOUDRON_APP: ${{ secrets.CLOUDRON_APP_ID }}
+        run: |
+          artisan=(bash /app/data/current/deploy/cloudron-www-data.sh /usr/bin/php /app/data/current/artisan)
+          remote() {
+            cloudron --server "$CLOUDRON_SERVER" --token "$CLOUDRON_API_TOKEN" exec --app "$CLOUDRON_APP" -- "$@"
+          }
+
+          case "$MODE" in
+            diagnostics)
+              remote bash -c 'echo "== PHP CLI limits"; /usr/bin/php -r "foreach ([\"upload_max_filesize\",\"post_max_size\",\"memory_limit\"] as \$k) echo \$k, \"=\", ini_get(\$k), PHP_EOL;"; echo "== /app/data/php.ini overrides"; grep -Ei "upload_max_filesize|post_max_size|memory_limit" /app/data/php.ini 2>/dev/null || echo "(none)"; echo "== Apache PHP ini"; grep -hEi "^(upload_max_filesize|post_max_size|memory_limit)" /etc/php/*/apache2/php.ini 2>/dev/null || echo "(not found)"; echo "== Queue worker"; pgrep -af "artisan queue:work" || echo "queue worker NOT running"'
+              remote "${artisan[@]}" deploy:preflight --target=production --no-interaction
+              ;;
+            dry-run|apply)
+              args=(media:fix-ghost-images --no-interaction)
+              [ "$MODE" = "dry-run" ] && args+=(--dry-run)
+              [ "$FETCH" = "true" ] || args+=(--no-fetch)
+              remote "${artisan[@]}" "${args[@]}"
+              ;;
+            *)
+              echo "::error::Unknown mode $MODE"
+              exit 1
+              ;;
+          esac

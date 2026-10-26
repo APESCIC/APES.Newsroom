@@ -9,11 +9,14 @@ use App\Models\Post;
 /**
  * Public hero image fields for posts and pages (#534, #536).
  *
- * Hero URLs that still carry Ghost's `__GHOST_URL__` placeholder never
- * resolve, so they are presented as "no hero" rather than a broken image.
+ * Hero URLs still pointing at Ghost images (`__GHOST_URL__` or
+ * `/content/images/`) never resolve, so they are presented as "no hero"
+ * rather than a broken image until media:fix-ghost-images repairs them.
  */
 class HeroImagePresenter
 {
+    public function __construct(private readonly GhostImageUrls $ghostUrls) {}
+
     /**
      * @return array{
      *     hero_image: ?string,
@@ -76,7 +79,7 @@ class HeroImagePresenter
         }
 
         $trimmed = trim($value);
-        if ($trimmed === '' || str_contains($trimmed, '__GHOST_URL__')) {
+        if ($trimmed === '' || str_contains($trimmed, '__GHOST_URL__') || $this->ghostUrls->isGhostImage($trimmed)) {
             return null;
         }
 
