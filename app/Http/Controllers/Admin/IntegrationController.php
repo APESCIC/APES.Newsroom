@@ -9,6 +9,7 @@ use App\Models\IntegrationCheckResult;
 use App\Models\IntegrationSecret;
 use App\Services\Audit\AuditLogger;
 use App\Services\Health\HealthCheckRunner;
+use App\Services\Health\IntegrationAlerts;
 use App\Services\Integrations\IntegrationSecrets;
 use App\Support\Integrations\IntegrationDefinitions;
 use Illuminate\Http\RedirectResponse;
@@ -36,6 +37,7 @@ class IntegrationController extends Controller
     public function __construct(
         private readonly IntegrationSecrets $secrets,
         private readonly HealthCheckRunner $runner,
+        private readonly IntegrationAlerts $alerts,
         private readonly AuditLogger $audit,
     ) {}
 
@@ -149,7 +151,9 @@ class IntegrationController extends Controller
         Gate::authorize('access-admin-area');
         abort_unless(in_array($provider, IntegrationDefinitions::providerNames(), true), 404);
 
+        $previous = IntegrationCheckResult::latestFor($provider);
         $result = $this->runner->run($provider, IntegrationCheckResult::TRIGGER_MANUAL, $request->user());
+        $this->alerts->afterRun($previous, $result);
 
         $this->audit->record($request->user(), 'integration_key.tested', null, [
             'provider' => $provider,
