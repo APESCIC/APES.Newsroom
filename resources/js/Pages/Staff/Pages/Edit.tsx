@@ -4,6 +4,7 @@ import type { OutputData } from '@editorjs/editorjs';
 import EditorField from '../../../Components/editor/EditorField';
 import EditorSessionNotice from '../../../Components/editor/EditorSessionNotice';
 import HeroImageField from '../../../Components/Staff/HeroImageField';
+import MediaLibraryPicker from '../../../Components/Staff/MediaLibraryPicker';
 import type { HeroMediaAsset, HeroUploadLimits } from '../../../Components/Staff/heroImageUpload';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
 import type { EditorDriver } from '../../../types/editor';
@@ -228,6 +229,7 @@ export default function PagesEdit({ page, heroUpload }: { page: PageData | null;
                     limits={heroUpload}
                     errors={errors}
                     onChange={(patch) => setData((current) => ({ ...current, ...patch }))}
+                    libraryPicker={(onPick) => <MediaLibraryPicker onPick={onPick} />}
                 />
 
                 <fieldset className="grid gap-3 md:grid-cols-2">

@@ -5,6 +5,7 @@ import EditorField, { type EditorFieldHandle } from '../../../Components/editor/
 import EditorSessionNotice from '../../../Components/editor/EditorSessionNotice';
 import AiAssistPanel from '../../../Components/Staff/AiAssistPanel';
 import HeroImageField from '../../../Components/Staff/HeroImageField';
+import MediaLibraryPicker from '../../../Components/Staff/MediaLibraryPicker';
 import type { HeroMediaAsset, HeroUploadLimits } from '../../../Components/Staff/heroImageUpload';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
 import type { EditorDriver } from '../../../types/editor';
@@ -547,6 +548,7 @@ export default function PostEdit({
                             limits={heroUpload}
                             errors={errors}
                             onChange={(patch) => setData((current) => ({ ...current, ...patch }))}
+                            libraryPicker={(onPick) => <MediaLibraryPicker onPick={onPick} />}
                         />
 
                         {!isNew && revisions.length > 0 && (
