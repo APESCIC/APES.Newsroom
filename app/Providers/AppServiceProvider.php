@@ -92,6 +92,12 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute($perMinute)->by($request->user()?->id ?: ($request->ip() ?? 'admin-api'));
         });
 
+        RateLimiter::for('media-upload', function (Request $request) {
+            $perMinute = max(1, (int) config('newsroom.hero_uploads.rate_per_minute', 30));
+
+            return Limit::perMinute($perMinute)->by('media-upload:'.($request->user()?->id ?: $request->ip()));
+        });
+
         $this->configureAuthRateLimits();
     }
 

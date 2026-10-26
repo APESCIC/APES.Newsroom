@@ -1,7 +1,8 @@
 import { Head } from '@inertiajs/react';
 import PublicLayout from '../../Components/Layout/PublicLayout';
+import ResponsiveHeroImage, { type HeroImageFields } from '../../Components/Media/ResponsiveHeroImage';
 
-export type PublicPage = {
+export type PublicPage = HeroImageFields & {
     title: string;
     slug: string;
     excerpt: string | null;
@@ -29,12 +30,15 @@ export default function PageShow({
     preview?: boolean;
 }) {
     const canonical = page.canonical_url || page.url;
+    const socialImage = page.hero_image ? (page.hero_image_social ?? page.hero_image) : null;
 
     return (
         <PublicLayout>
             <Head title={page.meta_title}>
                 {page.meta_description && <meta name="description" content={page.meta_description} />}
                 <link rel="canonical" href={canonical} />
+                {socialImage && <meta property="og:image" content={socialImage} />}
+                {socialImage && <meta name="twitter:image" content={socialImage} />}
             </Head>
             <article className="mx-auto max-w-3xl px-4 py-10">
                 {preview && (
@@ -46,11 +50,11 @@ export default function PageShow({
                 {page.excerpt && <p className="mt-3 text-lg text-muted">{page.excerpt}</p>}
                 {page.hero_image && (
                     <figure className="article-hero mt-6 overflow-hidden">
-                        <img
-                            src={page.hero_image}
-                            alt={page.hero_image_alt ?? ''}
+                        <ResponsiveHeroImage
+                            image={page}
+                            sizes="(min-width: 48rem) 48rem, 100vw"
                             className="h-auto w-full max-w-full object-cover"
-                            decoding="async"
+                            priority
                         />
                         {(page.hero_image_caption || page.hero_image_credit) && (
                             <figcaption className="mt-2 text-sm text-muted">

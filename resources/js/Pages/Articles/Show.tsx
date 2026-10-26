@@ -2,6 +2,7 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import { channelMeta } from '../../channelMeta';
 import PublicLayout from '../../Components/Layout/PublicLayout';
+import ResponsiveHeroImage, { type HeroImageFields } from '../../Components/Media/ResponsiveHeroImage';
 
 type Comment = {
     id: number;
@@ -19,7 +20,7 @@ type Reactions = {
 
 type ArticleTag = string | { name: string; slug: string };
 
-export type Article = {
+export type Article = HeroImageFields & {
     title: string;
     slug: string;
     excerpt: string | null;
@@ -58,7 +59,7 @@ function articleStructuredData(article: Article, canonicalUrl: string): Record<s
     };
 
     if (article.hero_image) {
-        data.image = article.hero_image;
+        data.image = article.hero_image_social ?? article.hero_image;
     }
 
     return data;
@@ -74,12 +75,11 @@ function ArticleHero({ article }: { article: Article }) {
 
     return (
         <figure className="article-hero mt-6 overflow-hidden">
-            <img
-                src={article.hero_image}
-                alt={article.hero_image_alt ?? ''}
-                className="h-auto w-full max-w-full object-cover"
+            <ResponsiveHeroImage
+                image={article}
                 sizes="(min-width: 48rem) 48rem, 100vw"
-                decoding="async"
+                className="h-auto w-full max-w-full object-cover"
+                priority
             />
             {(caption || credit) && (
                 <figcaption className="mt-2 text-sm text-muted">
@@ -126,6 +126,7 @@ export default function ArticleShow({
     };
 
     const canonicalUrl = articleCanonicalUrl(article);
+    const socialImage = article.hero_image ? (article.hero_image_social ?? article.hero_image) : null;
 
     return (
         <PublicLayout>
@@ -137,12 +138,12 @@ export default function ArticleShow({
                 <meta property="og:description" content={article.meta_description ?? ''} />
                 <meta property="og:type" content="article" />
                 <meta property="og:url" content={canonicalUrl} />
-                {article.hero_image && <meta property="og:image" content={article.hero_image} />}
-                <meta name="twitter:card" content={article.hero_image ? 'summary_large_image' : 'summary'} />
+                {socialImage && <meta property="og:image" content={socialImage} />}
+                <meta name="twitter:card" content={socialImage ? 'summary_large_image' : 'summary'} />
                 <meta name="twitter:title" content={article.meta_title} />
                 <meta name="twitter:description" content={article.meta_description ?? ''} />
                 <meta name="twitter:url" content={canonicalUrl} />
-                {article.hero_image && <meta name="twitter:image" content={article.hero_image} />}
+                {socialImage && <meta name="twitter:image" content={socialImage} />}
                 <script type="application/ld+json">{JSON.stringify(articleStructuredData(article, canonicalUrl))}</script>
             </Head>
             {preview && (

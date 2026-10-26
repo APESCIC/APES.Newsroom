@@ -53,6 +53,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Hero image uploads (#532)
+    |--------------------------------------------------------------------------
+    |
+    | Staff-only hero image uploads. Originals are re-encoded to drop EXIF and
+    | camera metadata, then a queued job writes responsive WebP and JPEG
+    | widths plus a 1200x630 social crop. max_kb is Laravel KB; max_pixels
+    | caps decoded image size so a small file cannot exhaust memory.
+    |
+    */
+
+    'hero_uploads' => [
+        'disk' => 'public',
+        'path_prefix' => 'media',
+        'max_kb' => (int) env('NEWSROOM_HERO_UPLOAD_MAX_KB', 10240),
+        'max_pixels' => (int) env('NEWSROOM_HERO_UPLOAD_MAX_PIXELS', 40_000_000),
+        'widths' => [640, 1200, 2000],
+        'social' => ['width' => 1200, 'height' => 630],
+        'quality' => ['jpeg' => 82, 'webp' => 80, 'original' => 90],
+        'rate_per_minute' => (int) env('NEWSROOM_HERO_UPLOAD_RATE_PER_MINUTE', 30),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Content API (headless reads)
     |--------------------------------------------------------------------------
     */

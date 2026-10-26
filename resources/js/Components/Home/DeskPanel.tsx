@@ -1,8 +1,9 @@
 import { Link } from '@inertiajs/react';
 import { channelMeta } from '../../channelMeta';
 import LineIcon from '../Icons/LineIcon';
+import type { HeroImageFields } from '../Media/ResponsiveHeroImage';
 
-export type PostCard = {
+export type PostCard = HeroImageFields & {
     title: string;
     slug: string;
     excerpt: string | null;
@@ -10,8 +11,6 @@ export type PostCard = {
     channel_slug: string;
     author: string;
     published_at: string | null;
-    hero_image?: string | null;
-    hero_image_alt?: string | null;
 };
 
 export function formatStoryDate(value: string | null) {
