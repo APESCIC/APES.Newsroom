@@ -39,6 +39,6 @@ class ConfirmNewsletterNotification extends Notification implements ShouldQueue
             $message->line($purpose);
         }
 
-        return $message;
+        return NewsletterSenderMessage::apply($message, $this->newsletter);
     }
 }

@@ -23,7 +23,7 @@ if [ -L /app/data/current ]; then
     # Preserve CLOUDRON_* so the worker uses MySQL/Redis/SMTP, not .env sqlite.
     bash /app/data/current/deploy/cloudron-www-data.sh \
         /usr/bin/php /app/data/current/artisan queue:work \
-        --queue=default --sleep=3 --tries=3 --max-time=3600 &
+        --queue=default,mail-test --sleep=3 --tries=3 --max-time=3600 &
 else
     echo "No /app/data/current release yet - skipping queue worker start."
 fi

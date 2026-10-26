@@ -17,6 +17,7 @@ use App\Models\Post;
 use App\Models\Suppression;
 use App\Models\User;
 use App\Notifications\ConfirmMailingListNotification;
+use App\Services\Mailing\CampaignSender;
 use App\Services\Mailing\CampaignService;
 use App\Services\Mailing\ConsentService;
 use Illuminate\Database\QueryException;
@@ -24,11 +25,19 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
+use Tests\Support\VerifiesNewsletterSenders;
 use Tests\TestCase;
 
 class MailingConsentTest extends TestCase
 {
     use RefreshDatabase;
+    use VerifiesNewsletterSenders;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->verifyNewsletterSenders();
+    }
 
     public function test_signup_requires_at_least_one_list_and_none_preselected(): void
     {
@@ -228,7 +237,7 @@ class MailingConsentTest extends TestCase
         $this->assertStringNotContainsString('Edited after send', (string) $again->snapshot['html']);
 
         $recipient = $campaign->recipients()->first();
-        (new SendCampaignRecipientJob($recipient->id))->handle(app(ConsentService::class));
+        (new SendCampaignRecipientJob($recipient->id))->handle(app(ConsentService::class), app(CampaignSender::class));
 
         Mail::assertSent(CampaignPostSummaryMail::class, function (CampaignPostSummaryMail $mail) {
             return str_contains($mail->render(), 'FullPostBodyPhrase');
@@ -406,7 +415,7 @@ class MailingConsentTest extends TestCase
             'idempotency_key' => hash('sha256', $campaign->id.'|headers@example.com'),
         ]);
 
-        (new SendCampaignRecipientJob($recipient->id))->handle(app(ConsentService::class));
+        (new SendCampaignRecipientJob($recipient->id))->handle(app(ConsentService::class), app(CampaignSender::class));
 
         Mail::assertSent(CampaignPostSummaryMail::class, function (CampaignPostSummaryMail $mail) {
             $headers = $mail->headers();
@@ -442,8 +451,8 @@ class MailingConsentTest extends TestCase
         ]);
 
         $job = new SendCampaignRecipientJob($recipient->id);
-        $job->handle(app(ConsentService::class));
-        $job->handle(app(ConsentService::class));
+        $job->handle(app(ConsentService::class), app(CampaignSender::class));
+        $job->handle(app(ConsentService::class), app(CampaignSender::class));
 
         Mail::assertSent(CampaignPostSummaryMail::class, 1);
         $this->assertSame(CampaignRecipientStatus::Accepted, $recipient->fresh()->status);

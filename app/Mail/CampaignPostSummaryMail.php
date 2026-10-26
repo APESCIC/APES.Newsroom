@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Mail\Mailables\Headers;
@@ -33,7 +34,16 @@ class CampaignPostSummaryMail extends Mailable
             ? '[TEST] '.$title
             : $title;
 
-        return new Envelope(subject: $subject);
+        $sender = is_array($this->snapshot['sender'] ?? null) ? $this->snapshot['sender'] : null;
+        if (! $sender || blank($sender['address'] ?? null)) {
+            return new Envelope(subject: $subject);
+        }
+
+        return new Envelope(
+            from: new Address((string) $sender['address'], filled($sender['name'] ?? null) ? (string) $sender['name'] : null),
+            replyTo: filled($sender['reply_to'] ?? null) ? [new Address((string) $sender['reply_to'])] : [],
+            subject: $subject,
+        );
     }
 
     public function content(): Content

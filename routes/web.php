@@ -260,6 +260,9 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
         Route::post('/newsletters/{newsletter}/archive', [StaffNewsletterController::class, 'archive'])->name('newsletters.archive');
         Route::post('/newsletters/{newsletter}/segments', [StaffNewsletterController::class, 'storeSegment'])->name('newsletters.segments.store');
         Route::post('/newsletters/{newsletter}/restore', [StaffNewsletterController::class, 'restore'])->name('newsletters.restore');
+        Route::post('/newsletters/{newsletter}/verify-sender', [StaffNewsletterController::class, 'verifySender'])
+            ->middleware('throttle:10,1')
+            ->name('newsletters.verify-sender');
 
         Route::get('/membership-plans', [StaffMembershipPlanController::class, 'index'])->name('membership-plans.index');
         Route::patch('/membership-plans/{plan}', [StaffMembershipPlanController::class, 'update'])->name('membership-plans.update');

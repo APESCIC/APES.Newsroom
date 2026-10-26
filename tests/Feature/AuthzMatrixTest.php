@@ -104,6 +104,7 @@ class AuthzMatrixTest extends TestCase
         'staff.newsletters.edit' => Role::Staff,
         'staff.newsletters.restore' => Role::Staff,
         'staff.newsletters.segments.store' => Role::Staff,
+        'staff.newsletters.verify-sender' => Role::Staff,
         'staff.offers.index' => Role::Staff,
         'staff.offers.store' => Role::Staff,
         'staff.offers.update' => Role::Staff,

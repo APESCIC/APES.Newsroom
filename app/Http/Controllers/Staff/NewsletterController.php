@@ -6,6 +6,8 @@ use App\Enums\SubscriptionStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Newsletter;
 use App\Models\NewsletterSegment;
+use App\Services\Mail\MailgunSenderCheck;
+use App\Services\Mailing\CampaignSender;
 use App\Services\Mailing\SenderDomains;
 use Closure;
 use Illuminate\Http\RedirectResponse;
@@ -16,6 +18,8 @@ use Inertia\Response;
 
 class NewsletterController extends Controller
 {
+    public function __construct(private readonly CampaignSender $sender) {}
+
     public function index(Request $request): Response
     {
         $status = (string) $request->query('status', 'all');
@@ -42,6 +46,7 @@ class NewsletterController extends Controller
                 'status' => $newsletter->status(),
                 'sender_name' => $newsletter->sender_name,
                 'sender_email' => $newsletter->sender_email,
+                'sender_verified' => $this->sender->isVerified($newsletter),
                 'confirmed_count' => (int) $newsletter->confirmed_count,
                 'pending_count' => (int) $newsletter->pending_count,
                 'unsubscribed_count' => (int) $newsletter->unsubscribed_count,
@@ -88,6 +93,7 @@ class NewsletterController extends Controller
                 'sender_email' => $newsletter->sender_email,
                 'reply_to' => $newsletter->reply_to,
                 'subscribe_on_signup' => $newsletter->subscribe_on_signup,
+                'sender_verification' => $this->verificationPayload($newsletter),
             ],
             'segments' => $newsletter->segments()->with('alsoNewsletter')->get()->map(fn (NewsletterSegment $segment) => [
                 'id' => $segment->id,
@@ -102,13 +108,25 @@ class NewsletterController extends Controller
     {
         $validated = $this->validated($request, $newsletter);
 
+        $attributes = $this->editableAttributes($validated);
+        if ($attributes['sender_email'] !== $newsletter->sender_email) {
+            $attributes['sender_verification'] = null;
+        }
+
         $newsletter->update([
             'name' => $validated['name'],
             'slug' => $validated['slug'] !== '' ? $validated['slug'] : $newsletter->slug,
-            ...$this->editableAttributes($validated),
+            ...$attributes,
         ]);
 
         return back();
+    }
+
+    public function verifySender(Newsletter $newsletter, MailgunSenderCheck $check): RedirectResponse
+    {
+        $check->verify($newsletter);
+
+        return back()->with('status', 'sender-checked');
     }
 
     public function storeSegment(Request $request, Newsletter $newsletter): RedirectResponse
@@ -188,6 +206,21 @@ class NewsletterController extends Controller
             'sender_email' => trim((string) ($validated['sender_email'] ?? '')),
             'reply_to' => trim((string) ($validated['reply_to'] ?? '')),
             'subscribe_on_signup' => (bool) ($validated['subscribe_on_signup'] ?? false),
+        ];
+    }
+
+    /**
+     * @return array{verified: bool, status: string|null, message: string|null, checked_at: string|null}
+     */
+    private function verificationPayload(Newsletter $newsletter): array
+    {
+        $verification = $newsletter->sender_verification ?? [];
+
+        return [
+            'verified' => $this->sender->isVerified($newsletter),
+            'status' => $verification['status'] ?? null,
+            'message' => $verification['message'] ?? null,
+            'checked_at' => $verification['checked_at'] ?? null,
         ];
     }
 

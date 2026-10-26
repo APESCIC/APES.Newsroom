@@ -8,16 +8,47 @@ use App\Enums\MailingList;
 use App\Jobs\SendCampaignRecipientJob;
 use App\Models\Campaign;
 use App\Models\CampaignRecipient;
+use App\Models\Newsletter;
 use App\Models\NewsletterSegment;
 use App\Models\Post;
 use App\Models\User;
 use App\Services\EditorJs\BlockRenderer;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class CampaignService
 {
-    public function __construct(private readonly ConsentService $consent) {}
+    public const FAILURE_SENDER_UNVERIFIED = 'sender_unverified';
+
+    public function __construct(
+        private readonly ConsentService $consent,
+        private readonly CampaignSender $sender,
+    ) {}
+
+    /**
+     * Reject publishing with email when the campaign sender is not verified,
+     * so staff see the problem before the post goes live.
+     *
+     * @throws ValidationException
+     */
+    public function assertSenderVerified(Post $post): void
+    {
+        if (! $post->email_on_publish) {
+            return;
+        }
+
+        if ($this->normalizeListValues($post->mailing_lists ?? []) === [] && ! $post->newsletter_segment_id) {
+            return;
+        }
+
+        $newsletter = $this->sender->newsletterForPost($post);
+        if (! $this->sender->isVerified($newsletter)) {
+            throw ValidationException::withMessages([
+                'email_on_publish' => $this->sender->blockedMessage($newsletter),
+            ]);
+        }
+    }
 
     /**
      * Create an immutable live campaign from a published post when email_on_publish is set.
@@ -61,19 +92,25 @@ class CampaignService
                 return $legacyCampaign->load('recipients');
             }
 
+            $senderNewsletter = $segment ? $segment->newsletter : $this->sender->newsletterForLists($lists);
+            $senderVerified = $this->sender->isVerified($senderNewsletter);
+
             $campaign = Campaign::query()->firstOrCreate([
                 'idempotency_key' => $idempotencyKey,
             ], [
                 'post_id' => $lockedPost->id,
+                'newsletter_id' => $senderNewsletter?->id,
                 'created_by' => $actor->id,
                 'lists' => $lists,
-                'snapshot' => $this->buildSnapshot($lockedPost),
-                'status' => CampaignStatus::Queued,
+                'snapshot' => $this->buildSnapshot($lockedPost, $senderNewsletter),
+                'status' => $senderVerified ? CampaignStatus::Queued : CampaignStatus::Failed,
+                'failure_reason' => $senderVerified ? null : self::FAILURE_SENDER_UNVERIFIED,
                 'is_test' => false,
                 'queued_at' => now(),
+                'completed_at' => $senderVerified ? null : now(),
             ]);
 
-            if (! $campaign->wasRecentlyCreated) {
+            if (! $campaign->wasRecentlyCreated || ! $senderVerified) {
                 return $campaign->load('recipients');
             }
 
@@ -99,13 +136,23 @@ class CampaignService
         }
 
         $email = Str::lower(trim($recipientEmail));
+        $senderNewsletter = $post->newsletter_segment_id
+            ? $this->sender->newsletterForPost($post)
+            : $this->sender->newsletterForLists($lists);
 
-        return DB::transaction(function () use ($post, $actor, $lists, $email) {
+        if (! $this->sender->isVerified($senderNewsletter)) {
+            throw ValidationException::withMessages([
+                'email' => $this->sender->blockedMessage($senderNewsletter),
+            ]);
+        }
+
+        return DB::transaction(function () use ($post, $actor, $lists, $email, $senderNewsletter) {
             $campaign = Campaign::create([
                 'post_id' => $post->id,
+                'newsletter_id' => $senderNewsletter?->id,
                 'created_by' => $actor->id,
                 'lists' => $lists,
-                'snapshot' => $this->buildSnapshot($post),
+                'snapshot' => $this->buildSnapshot($post, $senderNewsletter),
                 'status' => CampaignStatus::Queued,
                 'is_test' => true,
                 'test_recipient' => $email,
@@ -122,7 +169,7 @@ class CampaignService
     /**
      * @return array<string, mixed>
      */
-    public function buildSnapshot(Post $post): array
+    public function buildSnapshot(Post $post, ?Newsletter $senderNewsletter = null): array
     {
         $post->loadMissing('author');
 
@@ -154,12 +201,19 @@ class CampaignService
             'published_at' => $post->published_at?->toIso8601String(),
             'read_more_url' => url('/articles/'.$post->slug),
             'slug' => $post->slug,
+            'sender' => $this->sender->identity($senderNewsletter),
         ];
     }
 
     public function previewPayload(Post $post): array
     {
-        return $this->buildSnapshot($post);
+        $senderNewsletter = $this->sender->newsletterForPost($post)
+            ?? $this->sender->newsletterForLists([MailingList::ApesCic->value]);
+
+        return [
+            ...$this->buildSnapshot($post, $senderNewsletter),
+            'sender_verified' => $this->sender->isVerified($senderNewsletter),
+        ];
     }
 
     private function createRecipient(Campaign $campaign, string $email): CampaignRecipient
