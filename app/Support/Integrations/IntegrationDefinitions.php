@@ -1,0 +1,181 @@
+<?php
+
+namespace App\Support\Integrations;
+
+use InvalidArgumentException;
+
+/**
+ * Single registry of integration providers, the keys admins may manage for
+ * each, and the config path each key falls back to. Keep docs/integrations.md
+ * in sync when adding a provider or key.
+ */
+final class IntegrationDefinitions
+{
+    public const MAILGUN = 'mailgun';
+
+    public const STRIPE = 'stripe';
+
+    public const UNSPLASH = 'unsplash';
+
+    public const OPENAI = 'openai';
+
+    public const SLACK = 'slack';
+
+    public const CLOUDRON_OIDC = 'cloudron_oidc';
+
+    /**
+     * @return array<string, array{
+     *     label: string,
+     *     description: string,
+     *     managed: bool,
+     *     keys: array<string, array{label: string, help: string, config: string, sensitive: bool, rules: list<string>}>
+     * }>
+     */
+    public static function providers(): array
+    {
+        return [
+            self::MAILGUN => [
+                'label' => 'Mailgun',
+                'description' => 'Read-only checks that newsletter sender domains can send. Mail itself goes through Cloudron SMTP.',
+                'managed' => true,
+                'keys' => [
+                    'api_key' => [
+                        'label' => 'API key',
+                        'help' => 'A Mailgun private API key with read access to domains.',
+                        'config' => 'services.mailgun.secret',
+                        'sensitive' => true,
+                        'rules' => ['string', 'min:8', 'max:255'],
+                    ],
+                    'domain' => [
+                        'label' => 'Sending domain',
+                        'help' => 'The domain registered in Mailgun, for example mg.apesnews.org.uk.',
+                        'config' => 'services.mailgun.domain',
+                        'sensitive' => false,
+                        'rules' => ['string', 'max:253', 'regex:/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i'],
+                    ],
+                    'endpoint' => [
+                        'label' => 'API endpoint',
+                        'help' => 'api.eu.mailgun.net for EU accounts, api.mailgun.net for US accounts.',
+                        'config' => 'services.mailgun.endpoint',
+                        'sensitive' => false,
+                        'rules' => ['string', 'in:api.eu.mailgun.net,api.mailgun.net'],
+                    ],
+                ],
+            ],
+            self::STRIPE => [
+                'label' => 'Stripe',
+                'description' => 'Membership billing: checkout, billing portal, offers and webhooks.',
+                'managed' => true,
+                'keys' => [
+                    'secret' => [
+                        'label' => 'Secret key',
+                        'help' => 'Starts with sk_test_ or sk_live_ (restricted keys: rk_). Live keys need operational sign-off.',
+                        'config' => 'services.stripe.secret',
+                        'sensitive' => true,
+                        'rules' => ['string', 'max:255', 'regex:/^(sk|rk)_(test|live)_[A-Za-z0-9]+$/'],
+                    ],
+                    'publishable' => [
+                        'label' => 'Publishable key',
+                        'help' => 'Starts with pk_test_ or pk_live_.',
+                        'config' => 'services.stripe.publishable',
+                        'sensitive' => false,
+                        'rules' => ['string', 'max:255', 'regex:/^pk_(test|live)_[A-Za-z0-9]+$/'],
+                    ],
+                    'webhook_secret' => [
+                        'label' => 'Webhook signing secret',
+                        'help' => 'Starts with whsec_. Shown in Stripe on the webhook endpoint for /stripe/webhook.',
+                        'config' => 'services.stripe.webhook_secret',
+                        'sensitive' => true,
+                        'rules' => ['string', 'max:255', 'regex:/^whsec_[A-Za-z0-9]+$/'],
+                    ],
+                ],
+            ],
+            self::UNSPLASH => [
+                'label' => 'Unsplash',
+                'description' => 'Stock photo search in the staff media picker.',
+                'managed' => true,
+                'keys' => [
+                    'access_key' => [
+                        'label' => 'Access key',
+                        'help' => 'The Unsplash application access key (not the secret key).',
+                        'config' => 'newsroom.unsplash.access_key',
+                        'sensitive' => true,
+                        'rules' => ['string', 'min:8', 'max:255'],
+                    ],
+                ],
+            ],
+            self::OPENAI => [
+                'label' => 'OpenAI',
+                'description' => 'Editorial AI assist suggestions. Also needs NEWSROOM_AI_ASSIST_ENABLED in the environment.',
+                'managed' => true,
+                'keys' => [
+                    'api_key' => [
+                        'label' => 'API key',
+                        'help' => 'Starts with sk-.',
+                        'config' => 'newsroom.ai_assist.api_key',
+                        'sensitive' => true,
+                        'rules' => ['string', 'max:255', 'regex:/^sk-[A-Za-z0-9_-]+$/'],
+                    ],
+                ],
+            ],
+            self::SLACK => [
+                'label' => 'Slack',
+                'description' => 'Editorial notifications when posts are published or submitted for review.',
+                'managed' => true,
+                'keys' => [
+                    'bot_token' => [
+                        'label' => 'Bot token',
+                        'help' => 'Starts with xoxb-. Needs the chat:write scope.',
+                        'config' => 'services.slack.notifications.bot_user_oauth_token',
+                        'sensitive' => true,
+                        'rules' => ['string', 'max:255', 'regex:/^xoxb-[A-Za-z0-9-]+$/'],
+                    ],
+                    'default_channel' => [
+                        'label' => 'Channel',
+                        'help' => 'Channel id or name, for example C0123456789 or #newsroom.',
+                        'config' => 'services.slack.notifications.channel',
+                        'sensitive' => false,
+                        'rules' => ['string', 'max:80', 'regex:/^#?[A-Za-z0-9._-]+$/'],
+                    ],
+                ],
+            ],
+            self::CLOUDRON_OIDC => [
+                'label' => 'Cloudron SSO',
+                'description' => 'Staff sign-in. Credentials are injected by Cloudron and stay in the server environment.',
+                'managed' => false,
+                'keys' => [],
+            ],
+        ];
+    }
+
+    /**
+     * @return array{label: string, description: string, managed: bool, keys: array<string, array{label: string, help: string, config: string, sensitive: bool, rules: list<string>}>}
+     */
+    public static function provider(string $provider): array
+    {
+        return self::providers()[$provider]
+            ?? throw new InvalidArgumentException("Unknown integration provider [{$provider}].");
+    }
+
+    /**
+     * @return array{label: string, help: string, config: string, sensitive: bool, rules: list<string>}
+     */
+    public static function key(string $provider, string $key): array
+    {
+        return self::provider($provider)['keys'][$key]
+            ?? throw new InvalidArgumentException("Unknown integration key [{$provider}.{$key}].");
+    }
+
+    public static function hasKey(string $provider, string $key): bool
+    {
+        return isset(self::providers()[$provider]['keys'][$key]);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function providerNames(): array
+    {
+        return array_keys(self::providers());
+    }
+}
