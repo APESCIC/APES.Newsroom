@@ -11,10 +11,10 @@
 | full "Export all members" file (members.csv). See
 | docs/migration/ghost-newsletters.md.
 |
-| ghost_id / ghost_slug come from the Ghost Content API for active
-| newsletters; archived Ghost newsletters are not exposed there and are
-| matched by name. `expected` is the Ghost subscriber count used for
-| reconciliation sign-off.
+| ghost_id / ghost_slug come from the Ghost Content API. `expected` is the
+| Ghost subscriber count used for reconciliation sign-off. Ghost's archived
+| newsletters (Pet Shop Newsroom, Mailing List, Animal Therapy Waiting List)
+| are deliberately not imported.
 |
 */
 
@@ -75,33 +75,6 @@ return [
             'newsroom_slug' => 'stream-4-apes',
             'status' => 'active',
             'expected' => 6,
-        ],
-        [
-            'key' => 'pet-shop-newsroom',
-            'ghost_id' => null,
-            'ghost_slug' => null,
-            'ghost_name' => 'Pet Shop Newsroom',
-            'newsroom_slug' => 'pet-shop-newsroom',
-            'status' => 'archived',
-            'expected' => 1,
-        ],
-        [
-            'key' => 'mailing-list',
-            'ghost_id' => null,
-            'ghost_slug' => null,
-            'ghost_name' => 'Mailing List',
-            'newsroom_slug' => 'mailing-list',
-            'status' => 'archived',
-            'expected' => 107,
-        ],
-        [
-            'key' => 'animal-therapy-waiting-list',
-            'ghost_id' => null,
-            'ghost_slug' => null,
-            'ghost_name' => 'Animal Therapy Waiting List',
-            'newsroom_slug' => 'animal-therapy-waiting-list',
-            'status' => 'archived',
-            'expected' => 2,
         ],
     ],
 ];

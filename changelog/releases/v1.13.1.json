@@ -1,0 +1,25 @@
+{
+  "version": "v1.13.1",
+  "slug": "release-v1-13-1",
+  "released_at": "2026-10-26",
+  "previous_version": "v1.13.0",
+  "theme": "Archived Ghost newsletters removed",
+  "change_types": [
+    "removed"
+  ],
+  "topic_tags": [
+    "internal-only"
+  ],
+  "summary": "Ghost's three archived newsletters (Pet Shop Newsroom, Mailing List and Animal Therapy Waiting List) are no longer kept in the Newsroom and are left out of the Ghost members import.",
+  "detailed_changes": [
+    "The archived Pet Shop Newsroom, Mailing List and Animal Therapy Waiting List newsletters have been deleted from /staff/newsletters. They had no subscribers, segments or campaigns in the Newsroom (#499).",
+    "The Ghost newsletter import now maps only the six active newsletters. Members who were only on an archived Ghost list get no Newsroom subscription (#499)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff/newsletters",
+    "User groups affected: staff",
+    "Public impact: none",
+    "Internal impact: migration deletes the three unused archived newsletters; config/ghost_newsletters.php maps six newsletters"
+  ]
+}

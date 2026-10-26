@@ -21,22 +21,15 @@ active newsletters come from the Ghost Content API
 | `pet-care-clinic.csv` | APES Pet Care Clinic | `apes-pet-care-clinic` | `apes-pet-care-clinic` | active | 15 |
 | `myapes-portal.csv` | MyAPES Portal | `myapes-portal-newsroom` | `myapes-portal` | active | 8 |
 | `stream-4-apes.csv` | Stream 4 APES | `stream-4-apes` | `stream-4-apes` | active | 6 |
-| `pet-shop-newsroom.csv` | Pet Shop Newsroom | (archived) | `pet-shop-newsroom` | archived | 1 |
-| `mailing-list.csv` | Mailing List | (archived) | `mailing-list` | archived | 107 |
-| `animal-therapy-waiting-list.csv` | Animal Therapy Waiting List | (archived) | `animal-therapy-waiting-list` | archived | 2 |
 
 ### Decision on archived newsletters
 
-All three archived Ghost newsletters are **imported as archived** Newsroom
-newsletters. Their subscribers are recorded for the record, but an archived
-newsletter has three restrictions:
-
-- it is not shown on signup or registration forms;
-- it cannot be chosen for a segment;
-- it returns no recipients, so it can never be emailed.
-
-Staff can restore an archived newsletter later if it is ever revived, and
-must verify its sender before anything is sent.
+Ghost's three archived newsletters (Pet Shop Newsroom, 1 member; Mailing
+List, 107; Animal Therapy Waiting List, 2) are **not imported**, and the
+Newsroom newsletters that were created for them have been deleted (26 Oct
+2026, #499). Members who are only on those lists get no Newsroom
+subscription. If an archived export is placed in the folder anyway, the
+reconciler reports it as an unmapped file.
 
 ### Senders
 
@@ -94,9 +87,9 @@ newsletter" count (#467).
 In Ghost admin (`ghost-legacy.apesnews.org.uk/ghost/#/members`):
 
 1. Clear all filters, then use **Export all members**. Save it as `members.csv`.
-2. For each newsletter, filter **Newsletters → is subscribed to → \<name\>**
-   (archived newsletters are listed under the archived section of the
-   filter). Export, then rename the file using the "Export file" column above.
+2. For each of the six active newsletters, filter **Newsletters → is
+   subscribed to → \<name\>**. Export, then rename the file using the "Export
+   file" column above. Do not export the archived newsletters.
 3. Keep the files outside the repository. They contain personal data and
    must never be committed.
 
@@ -124,8 +117,8 @@ W="bash /app/data/current/deploy/cloudron-www-data.sh /usr/bin/php /app/data/cur
    `/app/data/imports/ghost-newsletters/<date>/` with `scripts/cloudron.sh push`.
 5. **Pre-checks.**
    - Take a backup: `cloudron backup create --app <id>`.
-   - Confirm no campaign jobs are queued (`$W queue:monitor default`, or
-     check the `jobs` table is empty).
+   - Confirm no campaign jobs are queued. The live queue runs on Redis, so
+     check `Queue::size('default')` and `Queue::size('mail-test')` are 0.
    - Note the per-status counts on `/staff/newsletters`.
 6. **Dry run.** Run
    `$W ghost:reconcile-newsletters /app/data/imports/ghost-newsletters/<date>`.

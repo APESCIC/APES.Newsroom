@@ -30,15 +30,26 @@ class NewsletterSignupDefaultTest extends TestCase
         return (int) Newsletter::query()->where('slug', $slug)->value('id');
     }
 
+    private function archivedSignupNewsletter(): Newsletter
+    {
+        return Newsletter::query()->create([
+            'name' => 'Old list',
+            'slug' => 'old-list',
+            'subscribe_on_signup' => true,
+            'archived_at' => now(),
+        ]);
+    }
+
     public function test_register_page_offers_only_active_newsletters_flagged_for_signup(): void
     {
         Newsletter::query()->where('slug', 'stream-4-apes')->update(['subscribe_on_signup' => false]);
+        $this->archivedSignupNewsletter();
 
         $this->get('/register')->assertInertia(fn (Assert $page) => $page
             ->component('Auth/Register')
             ->has('newsletters', 5)
             ->where('newsletters', fn ($rows) => collect($rows)->pluck('name')->doesntContain('Stream 4 APES')
-                && collect($rows)->pluck('name')->doesntContain('Mailing List')));
+                && collect($rows)->pluck('name')->doesntContain('Old list')));
     }
 
     public function test_ticked_newsletters_are_pending_until_email_is_verified_with_no_extra_emails(): void
@@ -50,7 +61,7 @@ class NewsletterSignupDefaultTest extends TestCase
             'email' => 'new@example.com',
             'password' => 'correct-horse-battery-staple',
             'password_confirmation' => 'correct-horse-battery-staple',
-            'newsletter_ids' => [$this->id('apes-times'), $this->id('apes-cic'), $this->id('mailing-list')],
+            'newsletter_ids' => [$this->id('apes-times'), $this->id('apes-cic'), $this->archivedSignupNewsletter()->id],
         ])->assertRedirect(route('verification.notice'));
 
         $contact = MailingContact::query()->where('email', 'new@example.com')->firstOrFail();
