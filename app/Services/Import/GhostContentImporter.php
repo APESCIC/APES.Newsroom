@@ -22,6 +22,8 @@ class GhostContentImporter
 {
     use SuppressesOutboundMail;
 
+    private const NEWSLETTER_ONLY_CHANNELS = [Channel::ApesTimes, Channel::MyapesPortal, Channel::Stream4Apes];
+
     public function __construct(
         private readonly GhostHtmlConverter $converter,
         private readonly BlockValidator $validator,
@@ -104,6 +106,7 @@ class GhostContentImporter
                     $data['posts_authors'] ?? [],
                     $authorMap,
                     $tagMap,
+                    $this->newsletterIdsByPost($data),
                     $mediaPath,
                     $dryRun,
                     $report,
@@ -456,6 +459,7 @@ class GhostContentImporter
      * @param  list<array<string, mixed>>  $postsAuthors
      * @param  array<string, int>  $authorMap
      * @param  array<string, int>  $tagMap
+     * @param  array<string, string>  $newsletterIdsByPost  ghost post id => ghost newsletter id
      * @param  array<string, mixed>  $report
      */
     private function importPosts(
@@ -464,6 +468,7 @@ class GhostContentImporter
         array $postsAuthors,
         array $authorMap,
         array $tagMap,
+        array $newsletterIdsByPost,
         ?string $mediaPath,
         bool $dryRun,
         array &$report,
@@ -554,7 +559,7 @@ class GhostContentImporter
                 default => PostStatus::Draft,
             };
 
-            $channel = $this->detectChannel($post);
+            $channel = $this->detectChannel($post, $newsletterIdsByPost[$ghostId] ?? null);
             $attrs = [
                 'ghost_id' => $ghostId,
                 'author_id' => $authorId,
@@ -809,11 +814,140 @@ class GhostContentImporter
     }
 
     /**
+     * Reassign imported posts that belonged to the APES Times, MyAPES Portal
+     * or Stream 4 APES newsletters in Ghost (#527). Other posts are left alone
+     * so staff refiling is never undone. Never sends email.
+     *
+     * @return array{dry_run: bool, seen: int, missing: int, unchanged: int, reassigned: int, changes: list<array{ghost_id: string, slug: string, title: string, from: string, to: string}>}
+     */
+    public function backfillPostChannelsFromExport(string $jsonPath, bool $dryRun = true): array
+    {
+        if (! is_file($jsonPath)) {
+            throw new RuntimeException("Ghost content export not found: {$jsonPath}");
+        }
+
+        $payload = json_decode(File::get($jsonPath), true);
+        if (! is_array($payload) || ! $this->isGhostContentExport($payload)) {
+            throw new RuntimeException('File is not a Ghost content JSON export.');
+        }
+
+        $data = $this->extractData($payload);
+        $newsletterIdsByPost = $this->newsletterIdsByPost($data);
+        $report = ['dry_run' => $dryRun, 'seen' => 0, 'missing' => 0, 'unchanged' => 0, 'reassigned' => 0, 'changes' => []];
+
+        foreach ($data['posts'] ?? [] as $ghostPost) {
+            $ghostId = (string) ($ghostPost['id'] ?? '');
+            if ($ghostId === '' || ($ghostPost['type'] ?? 'post') === 'page') {
+                continue;
+            }
+
+            $target = $this->detectChannel($ghostPost, $newsletterIdsByPost[$ghostId] ?? null);
+            if (! in_array($target, self::NEWSLETTER_ONLY_CHANNELS, true)) {
+                continue;
+            }
+
+            $report['seen']++;
+            $post = Post::withTrashed()->where('ghost_id', $ghostId)->first();
+            if (! $post) {
+                $report['missing']++;
+
+                continue;
+            }
+
+            if ($post->channel === $target) {
+                $report['unchanged']++;
+
+                continue;
+            }
+
+            $report['changes'][] = [
+                'ghost_id' => $ghostId,
+                'slug' => $post->slug,
+                'title' => $post->title,
+                'from' => $post->channel->value,
+                'to' => $target->value,
+            ];
+            $report['reassigned']++;
+
+            if (! $dryRun) {
+                $post->forceFill(['channel' => $target])->saveQuietly();
+            }
+        }
+
+        return $report;
+    }
+
+    /**
+     * Ghost post id => Ghost newsletter id, from the post itself or, for posts
+     * sent before Ghost stored it there, from the emails table.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, string>
+     */
+    private function newsletterIdsByPost(array $data): array
+    {
+        $map = [];
+
+        foreach ($data['emails'] ?? [] as $email) {
+            $postId = (string) ($email['post_id'] ?? '');
+            $newsletterId = (string) ($email['newsletter_id'] ?? '');
+            if ($postId !== '' && $newsletterId !== '') {
+                $map[$postId] = $newsletterId;
+            }
+        }
+
+        foreach ($data['posts'] ?? [] as $post) {
+            $postId = (string) ($post['id'] ?? '');
+            $newsletterId = (string) ($post['newsletter_id'] ?? '');
+            if ($postId !== '' && $newsletterId !== '') {
+                $map[$postId] = $newsletterId;
+            }
+        }
+
+        return $map;
+    }
+
+    private function channelForGhostNewsletter(?string $ghostNewsletterId): ?Channel
+    {
+        if ($ghostNewsletterId === null || $ghostNewsletterId === '') {
+            return null;
+        }
+
+        foreach ((array) config('ghost_newsletters.newsletters', []) as $definition) {
+            if (($definition['ghost_id'] ?? null) === $ghostNewsletterId) {
+                return Channel::fromSlug((string) ($definition['newsroom_slug'] ?? ''));
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * A non-default Ghost newsletter decides the channel. Posts sent with the
+     * default newsletter (APES CIC) keep the tag, slug and title heuristic.
+     *
      * @param  array<string, mixed>  $post
      */
-    private function detectChannel(array $post): Channel
+    private function detectChannel(array $post, ?string $ghostNewsletterId = null): Channel
     {
+        $fromNewsletter = $this->channelForGhostNewsletter($ghostNewsletterId);
+        if ($fromNewsletter !== null && $fromNewsletter !== Channel::ApesCic) {
+            return $fromNewsletter;
+        }
+
         $haystack = strtolower(($post['primary_tag']['slug'] ?? '').' '.($post['slug'] ?? '').' '.($post['title'] ?? ''));
+
+        if (str_contains($haystack, 'apes-times') || str_contains($haystack, 'apes times')) {
+            return Channel::ApesTimes;
+        }
+
+        if (str_contains($haystack, 'myapes')) {
+            return Channel::MyapesPortal;
+        }
+
+        if (preg_match('/stream[\s-]?4[\s-]?apes/', $haystack) === 1) {
+            return Channel::Stream4Apes;
+        }
 
         if (str_contains($haystack, 'shelter') || str_contains($haystack, 'rescue')) {
             return Channel::ApesShelterRescue;

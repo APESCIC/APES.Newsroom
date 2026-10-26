@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Staff;
 
+use App\Enums\Channel;
 use App\Enums\SubscriptionStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Newsletter;
@@ -13,6 +14,7 @@ use Closure;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -47,6 +49,10 @@ class NewsletterController extends Controller
                 'sender_name' => $newsletter->sender_name,
                 'sender_email' => $newsletter->sender_email,
                 'sender_verified' => $this->sender->isVerified($newsletter),
+                'channel' => $newsletter->channel?->value,
+                'show_on_home' => $newsletter->show_on_home,
+                'show_in_nav' => $newsletter->show_in_nav,
+                'display_order' => $newsletter->display_order,
                 'confirmed_count' => (int) $newsletter->confirmed_count,
                 'pending_count' => (int) $newsletter->pending_count,
                 'unsubscribed_count' => (int) $newsletter->unsubscribed_count,
@@ -62,6 +68,7 @@ class NewsletterController extends Controller
     {
         return Inertia::render('Staff/Newsletters/Edit', [
             'newsletter' => null,
+            'channelOptions' => $this->channelOptions(null),
         ]);
     }
 
@@ -73,6 +80,7 @@ class NewsletterController extends Controller
             'name' => $validated['name'],
             'slug' => $validated['slug'] !== '' ? $validated['slug'] : Str::slug($validated['name']),
             ...$this->editableAttributes($validated),
+            ...$this->channelAttributes($request),
         ]);
 
         return redirect()->route('staff.newsletters.edit', $newsletter);
@@ -94,7 +102,14 @@ class NewsletterController extends Controller
                 'reply_to' => $newsletter->reply_to,
                 'subscribe_on_signup' => $newsletter->subscribe_on_signup,
                 'sender_verification' => $this->verificationPayload($newsletter),
+                'channel' => $newsletter->channel?->value,
+                'show_on_home' => $newsletter->show_on_home,
+                'show_in_nav' => $newsletter->show_in_nav,
+                'display_order' => $newsletter->display_order,
+                'public_label' => $newsletter->public_label,
+                'public_description' => $newsletter->public_description,
             ],
+            'channelOptions' => $this->channelOptions($newsletter),
             'segments' => $newsletter->segments()->with('alsoNewsletter')->get()->map(fn (NewsletterSegment $segment) => [
                 'id' => $segment->id,
                 'name' => $segment->name,
@@ -113,10 +128,23 @@ class NewsletterController extends Controller
             $attributes['sender_verification'] = null;
         }
 
+        $slug = $validated['slug'] !== '' ? $validated['slug'] : $newsletter->slug;
+        $channelAttributes = $this->channelAttributes($request);
+        $staysLinked = array_key_exists('channel', $channelAttributes)
+            ? $channelAttributes['channel'] !== null
+            : $newsletter->channel !== null;
+
+        if ($staysLinked && $newsletter->channel !== null && $slug !== $newsletter->slug) {
+            return back()->withErrors([
+                'slug' => 'This newsletter is a public channel, so its slug is used in signup links. Unlink the channel before changing the slug.',
+            ]);
+        }
+
         $newsletter->update([
             'name' => $validated['name'],
-            'slug' => $validated['slug'] !== '' ? $validated['slug'] : $newsletter->slug,
+            'slug' => $slug,
             ...$attributes,
+            ...$channelAttributes,
         ]);
 
         return back();
@@ -178,6 +206,56 @@ class NewsletterController extends Controller
     }
 
     /**
+     * Only fields present in the request are returned, so partial updates keep
+     * the stored channel settings.
+     *
+     * @return array<string, mixed>
+     */
+    private function channelAttributes(Request $request): array
+    {
+        $attributes = [];
+
+        if ($request->exists('channel')) {
+            $attributes['channel'] = $request->filled('channel') ? Channel::from((string) $request->input('channel')) : null;
+        }
+        foreach (['show_on_home', 'show_in_nav'] as $flag) {
+            if ($request->exists($flag)) {
+                $attributes[$flag] = $request->boolean($flag);
+            }
+        }
+        if ($request->exists('display_order')) {
+            $attributes['display_order'] = (int) $request->input('display_order', 0);
+        }
+        foreach (['public_label', 'public_description'] as $text) {
+            if ($request->exists($text)) {
+                $value = trim((string) $request->input($text, ''));
+                $attributes[$text] = $value !== '' ? $value : null;
+            }
+        }
+
+        return $attributes;
+    }
+
+    /**
+     * @return list<array{value: string, label: string, slug: string, taken_by: string|null}>
+     */
+    private function channelOptions(?Newsletter $newsletter): array
+    {
+        $linked = Newsletter::query()
+            ->whereNotNull('channel')
+            ->when($newsletter, fn ($query) => $query->where('id', '!=', $newsletter->id))
+            ->get(['name', 'channel'])
+            ->mapWithKeys(fn (Newsletter $other) => [$other->channel->value => $other->name]);
+
+        return collect(Channel::cases())->map(fn (Channel $channel) => [
+            'value' => $channel->value,
+            'label' => $channel->label(),
+            'slug' => $channel->slug(),
+            'taken_by' => $linked->get($channel->value),
+        ])->values()->all();
+    }
+
+    /**
      * @return array{name: string, slug: string, description: string, sender_name: string, sender_email: string, reply_to: string, subscribe_on_signup: bool}
      */
     private function validated(Request $request, ?Newsletter $newsletter = null): array
@@ -185,6 +263,11 @@ class NewsletterController extends Controller
         $slugRule = 'unique:newsletters,slug';
         if ($newsletter) {
             $slugRule .= ','.$newsletter->id;
+        }
+
+        $channelUnique = Rule::unique('newsletters', 'channel');
+        if ($newsletter) {
+            $channelUnique = $channelUnique->ignore($newsletter->id);
         }
 
         /** @var array{name: string, slug: string|null, description: string|null, sender_name: string|null, sender_email: string|null, reply_to: string|null, subscribe_on_signup?: bool|string|null} $validated */
@@ -196,6 +279,14 @@ class NewsletterController extends Controller
             'sender_email' => ['nullable', 'string', 'email', 'max:255', $this->senderDomainRule()],
             'reply_to' => ['nullable', 'string', 'email', 'max:255'],
             'subscribe_on_signup' => ['sometimes', 'boolean'],
+            'channel' => ['nullable', Rule::enum(Channel::class), $channelUnique],
+            'show_on_home' => ['sometimes', 'boolean'],
+            'show_in_nav' => ['sometimes', 'boolean'],
+            'display_order' => ['sometimes', 'integer', 'min:0', 'max:999'],
+            'public_label' => ['nullable', 'string', 'max:120'],
+            'public_description' => ['nullable', 'string', 'max:500'],
+        ], [
+            'channel.unique' => 'Another newsletter is already linked to this channel.',
         ]);
 
         return [

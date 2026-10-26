@@ -1,0 +1,66 @@
+{
+  "db": [
+    {
+      "meta": { "version": "5.0.0" },
+      "data": {
+        "posts": [
+          {
+            "id": "ghost-times-1",
+            "title": "Our autumn issue",
+            "slug": "our-autumn-issue",
+            "html": "<p>Times news.</p>",
+            "status": "published",
+            "published_at": "2024-03-01T10:00:00.000Z",
+            "newsletter_id": "6731d970bd626800014bd254",
+            "type": "post"
+          },
+          {
+            "id": "ghost-portal-1",
+            "title": "Portal maintenance window",
+            "slug": "portal-maintenance-window",
+            "html": "<p>Portal news.</p>",
+            "status": "published",
+            "published_at": "2024-03-02T10:00:00.000Z",
+            "type": "post"
+          },
+          {
+            "id": "ghost-stream-1",
+            "title": "Stream 4 APES charity marathon",
+            "slug": "charity-marathon",
+            "html": "<p>Stream news.</p>",
+            "status": "published",
+            "published_at": "2024-03-03T10:00:00.000Z",
+            "type": "post"
+          },
+          {
+            "id": "ghost-default-1",
+            "title": "Rescue roundup",
+            "slug": "rescue-roundup",
+            "html": "<p>Default newsletter, shelter story.</p>",
+            "status": "published",
+            "published_at": "2024-03-04T10:00:00.000Z",
+            "newsletter_id": "672c97a8e94cc6004bbdbd58",
+            "type": "post"
+          },
+          {
+            "id": "ghost-missing-1",
+            "title": "Never imported",
+            "slug": "never-imported",
+            "html": "<p>Gone.</p>",
+            "status": "published",
+            "published_at": "2024-03-05T10:00:00.000Z",
+            "newsletter_id": "6731d970bd626800014bd254",
+            "type": "post"
+          }
+        ],
+        "emails": [
+          { "id": "ghost-email-1", "post_id": "ghost-portal-1", "newsletter_id": "673205debd626800014bd314" }
+        ],
+        "users": [],
+        "tags": [],
+        "posts_tags": [],
+        "posts_authors": []
+      }
+    }
+  ]
+}

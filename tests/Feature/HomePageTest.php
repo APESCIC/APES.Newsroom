@@ -18,7 +18,7 @@ class HomePageTest extends TestCase
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
             ->component('home')
-            ->has('channels', 3)
+            ->has('channels', 6)
             ->has('channels.0', fn (Assert $c) => $c
                 ->has('slug')
                 ->has('label')

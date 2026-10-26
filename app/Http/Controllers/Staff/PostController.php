@@ -17,6 +17,7 @@ use App\Models\Redirect;
 use App\Models\Tag;
 use App\Models\User;
 use App\Services\Audit\AuditLogger;
+use App\Services\Channels\PublicChannels;
 use App\Services\EditorJs\EditorContent;
 use App\Services\Integrations\SlackEditorialNotifier;
 use App\Services\Mailing\CampaignSender;
@@ -41,6 +42,7 @@ class PostController extends Controller
         private readonly OutboundWebhookDispatcher $webhooks,
         private readonly SlackEditorialNotifier $slack,
         private readonly CampaignSender $sender,
+        private readonly PublicChannels $publicChannels,
     ) {}
 
     public function index(Request $request): Response
@@ -87,7 +89,7 @@ class PostController extends Controller
             'filters' => [
                 'q' => $q,
             ],
-            'channels' => $this->channelOptions(),
+            'channels' => $this->channelFilterOptions(),
             'canReview' => $request->user()->can('review', Post::class),
         ]);
     }
@@ -168,7 +170,7 @@ class PostController extends Controller
 
         return Inertia::render('Staff/Posts/Edit', [
             'post' => $this->editPayload($post),
-            'channels' => $this->channelOptions(),
+            'channels' => $this->channelOptions($post->channel),
             'mailingLists' => $this->mailingListOptions(),
             'segments' => $this->segmentOptions(),
             'staffUsers' => User::query()
@@ -529,7 +531,30 @@ class PostController extends Controller
         ];
     }
 
-    private function channelOptions(): array
+    /**
+     * Channels whose newsletter is active, in public display order. A post's
+     * current channel stays selectable even after its newsletter is archived.
+     *
+     * @return list<array{value: string, label: string}>
+     */
+    private function channelOptions(?Channel $current = null): array
+    {
+        $channels = $this->publicChannels->all()->map(fn (Newsletter $newsletter) => $newsletter->channel);
+
+        if ($current && ! $channels->contains($current)) {
+            $channels->push($current);
+        }
+
+        return $channels->map(fn (Channel $c) => [
+            'value' => $c->value,
+            'label' => $c->label(),
+        ])->values()->all();
+    }
+
+    /**
+     * @return list<array{value: string, label: string}>
+     */
+    private function channelFilterOptions(): array
     {
         return collect(Channel::cases())->map(fn (Channel $c) => [
             'value' => $c->value,

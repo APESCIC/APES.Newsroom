@@ -15,6 +15,10 @@ Newsletters are audiences stored in `newsletters`, separate from the three fixed
 | `subscribe_on_signup` | Offer this newsletter as an opt-in checkbox on `/register` |
 | `sender_verification` | Last result of `mailing:verify-senders` (status, checks, message) |
 | `archived_at` | Set when staff archive an audience. Archived newsletters are hidden from signup and segments and return no recipients. Ghost's archived newsletters are not imported (#499) |
+| `channel` | Optional unique link to a `Channel` value. A linked, active newsletter is a public channel at `/{channel-slug}` |
+| `show_on_home`, `show_in_nav` | Where the public channel appears: a home page section and the Channels menu |
+| `display_order` | Order of public channels on the home page and in the menu (lowest first) |
+| `public_label`, `public_description` | Public wording for the channel. Blank falls back to `name` and `description` |
 
 The migration seeds one active newsletter per channel list and copies `legacy_list` onto existing `mailing_list_subscriptions.newsletter_id`.
 
@@ -36,6 +40,23 @@ Unverified senders are blocked:
 - **The send job:** skips the recipient.
 
 Confirmation emails use the newsletter sender once it is verified, and the global From until then.
+
+## Public channels
+
+The six channels are APES CIC, APES Shelter & Rescue, APES Pet Care Clinic, APES Times, MyAPES Portal and Stream 4 APES. Channel slugs are fixed in `App\Enums\Channel`; adding a seventh channel needs a code change. Which channels show, where, in what order and with what wording comes from each newsletter's **Public channel** settings at `/staff/newsletters/{id}/edit`.
+
+- A channel is public only while its linked newsletter is active. Archiving the newsletter removes its channel page, menu entry, home section, feed and sitemap entry.
+- The newsletter slug is locked while a channel is linked, because the channel's subscribe button links to `/newsletters/{slug}/signup`. Unlink the channel to change it.
+- The post editor's Channel field lists channels whose newsletter is active. A post keeps its channel if the newsletter is later archived.
+
+Imported Ghost posts are filed by the Ghost newsletter they were sent with (see [`config/ghost_newsletters.php`](../config/ghost_newsletters.php)). Posts sent with the default newsletter keep the tag and title heuristic. To refile posts imported before this mapping existed:
+
+```bash
+php artisan ghost:backfill-post-channels path/to/ghost-content.json --dry-run
+php artisan ghost:backfill-post-channels path/to/ghost-content.json --force
+```
+
+It only moves posts that belonged to APES Times, MyAPES Portal or Stream 4 APES, lists every change, and never sends email.
 
 ## Signup default
 
