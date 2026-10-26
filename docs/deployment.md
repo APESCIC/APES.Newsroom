@@ -228,7 +228,10 @@ On the live app, run it from Actions with **Repair imported Ghost images (live
 app)** (`.github/workflows/ghost-image-fix.yml`, `beta` environment, `main`
 only). `dry-run` prints the report; `apply` takes a Cloudron backup first and
 needs `confirm` set to `apply`; `diagnostics` is read-only and prints PHP upload
-limits, the queue worker process and `deploy:preflight --target=production`.
+limits, whether the queue worker is running and `deploy:preflight
+--target=production`. Never print process command lines or environment from
+the app container in Actions logs: the queue worker is started with
+`CLOUDRON_*` credentials on its command line, and this repository is public.
 It shares the deploy concurrency group, so it never runs during a deploy.
 
 ## Operational boundary
