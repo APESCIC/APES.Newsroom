@@ -6,6 +6,22 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <title inertia>{{ config('app.name', 'APES Newsroom') }}</title>
+        @isset($meta)
+        <meta inertia name="description" content="{{ $meta['description'] }}">
+        <link inertia rel="canonical" href="{{ $meta['url'] }}">
+        <meta inertia property="og:title" content="{{ $meta['title'] }}">
+        <meta inertia property="og:description" content="{{ $meta['description'] }}">
+        <meta inertia property="og:type" content="website">
+        <meta inertia property="og:url" content="{{ $meta['url'] }}">
+        <meta inertia property="og:image" content="{{ $meta['image'] }}">
+        <meta inertia name="twitter:card" content="summary">
+        <meta inertia name="twitter:title" content="{{ $meta['title'] }}">
+        <meta inertia name="twitter:description" content="{{ $meta['description'] }}">
+        <meta inertia name="twitter:image" content="{{ $meta['image'] }}">
+        @isset($meta['rss'])
+        <link inertia rel="alternate" type="application/rss+xml" title="{{ $meta['title'] }}" href="{{ $meta['rss'] }}">
+        @endisset
+        @endisset
 
         <link rel="icon" type="image/png" sizes="32x32" href="/brand/apes-favicon-32.png">
 

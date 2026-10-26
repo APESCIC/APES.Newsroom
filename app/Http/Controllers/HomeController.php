@@ -4,12 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Enums\Channel;
 use App\Models\Post;
+use App\Services\Channels\PublicChannels;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class HomeController extends Controller
 {
+    private const CHANNEL_SECTION_POSTS = 3;
+
+    public function __construct(private readonly PublicChannels $channels) {}
+
     public function __invoke(Request $request): Response
     {
         $featuredPost = Post::published()
@@ -33,10 +38,20 @@ class HomeController extends Controller
         return Inertia::render('home', [
             'featured' => $featuredPost ? $this->cardPayload($featuredPost) : null,
             'recent' => $recent->map(fn (Post $post) => $this->cardPayload($post))->values(),
-            'channels' => collect(Channel::cases())->map(fn (Channel $c) => [
-                'slug' => $c->slug(),
-                'label' => $c->label(),
-            ]),
+            'channels' => collect($this->channels->forHome())->map(fn (array $channel) => [
+                ...$channel,
+                'latest' => Post::published()
+                    ->where('channel', Channel::from($channel['value']))
+                    ->latest('published_at')
+                    ->limit(self::CHANNEL_SECTION_POSTS)
+                    ->get(['title', 'slug', 'published_at'])
+                    ->map(fn (Post $post) => [
+                        'title' => $post->title,
+                        'slug' => $post->slug,
+                        'published_at' => $post->published_at?->toIso8601String(),
+                    ])
+                    ->values(),
+            ])->values(),
         ]);
     }
 
@@ -49,7 +64,7 @@ class HomeController extends Controller
             'title' => $post->title,
             'slug' => $post->slug,
             'excerpt' => $post->excerpt,
-            'channel' => $post->channel->label(),
+            'channel' => $this->channels->label($post->channel),
             'channel_slug' => $post->channel->slug(),
             'author' => $post->author->name,
             'published_at' => $post->published_at?->toIso8601String(),

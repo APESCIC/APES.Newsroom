@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Channel;
 use App\Enums\Role;
 use App\Http\Controllers\Account\EmailChangeController as AccountEmailChangeController;
 use App\Http\Controllers\Account\MembershipCheckoutController;
@@ -101,10 +102,10 @@ Route::post('/mailing/unsubscribe', [UnsubscribeController::class, 'store'])->na
 Route::post('/mailing/unsubscribe/one-click', [UnsubscribeController::class, 'oneClick'])->name('mailing.unsubscribe.one-click');
 
 Route::get('/{channel}/rss.xml', [ChannelRssController::class, 'show'])
-    ->where('channel', 'apes-cic|apes-shelter-rescue|apes-pet-care-clinic')
+    ->where('channel', Channel::routePattern())
     ->name('channels.rss');
 Route::get('/{channel}', [ChannelController::class, 'show'])
-    ->where('channel', 'apes-cic|apes-shelter-rescue|apes-pet-care-clinic')
+    ->where('channel', Channel::routePattern())
     ->name('channels.show');
 
 Route::middleware(['auth', 'verified'])->prefix('account')->name('account.')->group(function () {

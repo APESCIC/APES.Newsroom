@@ -16,9 +16,18 @@ export type SharedAuth = {
     };
 };
 
+export type PublicChannel = {
+    value: string;
+    slug: string;
+    label: string;
+    description: string | null;
+    signup_slug: string;
+};
+
 export type SharedPageProps = {
     appName: string;
     auth: SharedAuth;
+    publicChannels?: PublicChannel[];
     currentRelease?: {
         version: string;
         slug: string;

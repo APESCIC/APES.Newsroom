@@ -3,11 +3,15 @@ import type { SVGProps } from 'react';
 export type IconName =
     | 'arrow-right'
     | 'building'
+    | 'chevron-down'
     | 'clinic'
     | 'document'
     | 'home'
     | 'menu'
+    | 'newspaper'
+    | 'play'
     | 'plus'
+    | 'portal'
     | 'review'
     | 'search'
     | 'settings'
@@ -26,6 +30,7 @@ export default function LineIcon({ name, ...props }: { name: IconName } & SVGPro
                 <path d="M8 21v-5h8v5M8 10h.01M12 10h.01M16 10h.01" />
             </>
         ),
+        'chevron-down': <path d="m6 9 6 6 6-6" />,
         clinic: (
             <>
                 <path d="M9 3h6v5h5v8h-5v5H9v-5H4V8h5z" />
@@ -45,7 +50,25 @@ export default function LineIcon({ name, ...props }: { name: IconName } & SVGPro
             </>
         ),
         menu: <path d="M4 7h16M4 12h16M4 17h16" />,
+        newspaper: (
+            <>
+                <path d="M4 5h13v14a2 2 0 0 0 2 2H6a2 2 0 0 1-2-2z" />
+                <path d="M17 9h3v10a2 2 0 0 1-2 2M8 9h5M8 13h5M8 17h3" />
+            </>
+        ),
+        play: (
+            <>
+                <circle cx="12" cy="12" r="9" />
+                <path d="m10 8.5 5.5 3.5-5.5 3.5z" />
+            </>
+        ),
         plus: <path d="M12 5v14M5 12h14" />,
+        portal: (
+            <>
+                <rect x="3" y="4" width="18" height="13" rx="2" />
+                <path d="M8 21h8M12 17v4M8 10.5h8" />
+            </>
+        ),
         review: (
             <>
                 <path d="M4 4h16v14H7l-3 3z" />

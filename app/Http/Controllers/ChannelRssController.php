@@ -2,35 +2,40 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\Channel;
 use App\Models\Post;
+use App\Services\Channels\PublicChannels;
 use App\Services\Feeds\RssFeedBuilder;
 use Illuminate\Http\Response;
 
 class ChannelRssController extends Controller
 {
-    public function __construct(private readonly RssFeedBuilder $feeds) {}
+    public function __construct(
+        private readonly RssFeedBuilder $feeds,
+        private readonly PublicChannels $channels,
+    ) {}
 
     public function show(string $channel): Response
     {
-        $channelEnum = Channel::fromSlug($channel);
+        $newsletter = $this->channels->findBySlug($channel);
 
-        if (! $channelEnum) {
+        if (! $newsletter) {
             abort(404);
         }
 
+        $payload = $this->channels->present($newsletter);
+
         $posts = Post::published()
-            ->where('channel', $channelEnum)
+            ->where('channel', $newsletter->channel)
             ->with('author')
             ->latest('published_at')
             ->limit(50)
             ->get();
 
         $xml = view('rss', $this->feeds->payload(
-            config('app.name').' — '.$channelEnum->label(),
-            url('/'.$channelEnum->slug()),
-            'Published posts from '.$channelEnum->label(),
-            url('/'.$channelEnum->slug().'/rss.xml'),
+            config('app.name').' — '.$payload['label'],
+            url('/'.$payload['slug']),
+            $payload['description'] ?? 'Published posts from '.$payload['label'],
+            url('/'.$payload['slug'].'/rss.xml'),
             $posts,
         ))->render();
 

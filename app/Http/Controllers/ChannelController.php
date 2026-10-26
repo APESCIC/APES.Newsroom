@@ -2,23 +2,27 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\Channel;
 use App\Models\Post;
+use App\Services\Channels\PublicChannels;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ChannelController extends Controller
 {
+    public function __construct(private readonly PublicChannels $channels) {}
+
     public function show(string $channel): Response
     {
-        $channelEnum = Channel::fromSlug($channel);
+        $newsletter = $this->channels->findBySlug($channel);
 
-        if (! $channelEnum) {
+        if (! $newsletter) {
             abort(404);
         }
 
+        $payload = $this->channels->present($newsletter);
+
         $posts = Post::published()
-            ->where('channel', $channelEnum)
+            ->where('channel', $newsletter->channel)
             ->with('author')
             ->orderByDesc('featured')
             ->latest('published_at')
@@ -32,12 +36,18 @@ class ChannelController extends Controller
                 'featured' => (bool) $post->featured,
             ]);
 
+        $seo = [
+            'title' => $payload['label'].' - '.config('app.name'),
+            'description' => $payload['description'] ?? 'Stories from '.$payload['label'].' on '.config('app.name').'.',
+            'url' => url('/'.$payload['slug']),
+            'image' => url('/brand/apes-logo-compact.png'),
+            'rss' => url('/'.$payload['slug'].'/rss.xml'),
+        ];
+
         return Inertia::render('Channels/Show', [
-            'channel' => [
-                'slug' => $channelEnum->slug(),
-                'label' => $channelEnum->label(),
-            ],
+            'channel' => $payload,
             'posts' => $posts,
-        ]);
+            'seo' => $seo,
+        ])->withViewData(['meta' => $seo]);
     }
 }
