@@ -166,6 +166,16 @@ final class IntegrationDefinitions
             ?? throw new InvalidArgumentException("Unknown integration key [{$provider}.{$key}].");
     }
 
+    /**
+     * "Stripe secret key", "Mailgun API key": for use mid-sentence.
+     */
+    public static function phrase(string $provider, string $key): string
+    {
+        $label = self::key($provider, $key)['label'];
+
+        return self::provider($provider)['label'].' '.(preg_match('/^[A-Z]{2}/', $label) ? $label : lcfirst($label));
+    }
+
     public static function hasKey(string $provider, string $key): bool
     {
         return isset(self::providers()[$provider]['keys'][$key]);

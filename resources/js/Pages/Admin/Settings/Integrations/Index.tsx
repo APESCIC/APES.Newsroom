@@ -144,10 +144,15 @@ function StatusBadge({ result }: { result: CheckResult | null }) {
     return <span className={`rounded px-2 py-1 text-xs font-semibold ${statusClass(result.status)}`}>{statusLabel(result.status)}</span>;
 }
 
-function currentValue(key: IntegrationKey): string {
-    if (key.source === null) return 'Not set';
+function currentValue(key: IntegrationKey): string | null {
+    if (key.source === null) return null;
     if (!key.sensitive) return key.value ?? '';
     return key.last_four ? `••••${key.last_four}` : 'Set';
+}
+
+/** Lower-cases a label for use mid-sentence, keeping acronyms such as "API key". */
+function phrase(label: string): string {
+    return /^[A-Z]{2}/.test(label) ? label : label.charAt(0).toLowerCase() + label.slice(1);
 }
 
 function KeyRow({
@@ -165,6 +170,8 @@ function KeyRow({
     const inputId = `integration-${provider.provider}-${item.key}`;
     const errorId = `${inputId}-error`;
     const showForce = Boolean(form.errors.secret_value) && failedCheck?.provider === provider.provider && failedCheck.key === item.key;
+    const value = currentValue(item);
+    const name = phrase(item.label);
 
     const submit = (event: FormEvent) => {
         event.preventDefault();
@@ -175,7 +182,7 @@ function KeyRow({
     };
 
     const remove = () => {
-        if (confirm(`Remove the stored ${provider.label} ${item.label.toLowerCase()}? The server environment value, if any, will be used instead.`)) {
+        if (confirm(`Remove the stored ${provider.label} ${name}? The server environment value, if any, will be used instead.`)) {
             form.delete(`/admin/settings/integrations/${provider.provider}/${item.key}`, { preserveScroll: true });
         }
     };
@@ -185,7 +192,12 @@ function KeyRow({
             <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <p className="text-sm font-semibold text-body">{item.label}</p>
                 <p className="text-xs text-muted">
-                    <span className="font-mono">{currentValue(item)}</span> · {sourceLabel(item.source)}
+                    {value !== null && (
+                        <>
+                            <span className="font-mono">{value}</span> ·{' '}
+                        </>
+                    )}
+                    {sourceLabel(item.source)}
                     {item.set_at && (
                         <>
                             {' '}
@@ -198,7 +210,7 @@ function KeyRow({
             {canManage && (
                 <form onSubmit={submit} className="flex flex-col gap-2">
                     <label htmlFor={inputId} className="sr-only">
-                        New {provider.label} {item.label.toLowerCase()}
+                        New {provider.label} {name}
                     </label>
                     <div className="flex flex-wrap gap-2">
                         <input
@@ -207,7 +219,7 @@ function KeyRow({
                             autoComplete="off"
                             spellCheck={false}
                             className="form-input min-w-0 flex-1"
-                            placeholder={item.source === null ? `Enter ${item.label.toLowerCase()}` : `Replace ${item.label.toLowerCase()}`}
+                            placeholder={item.source === null ? `Enter ${name}` : `Replace ${name}`}
                             value={form.data.secret_value}
                             aria-describedby={form.errors.secret_value ? `${inputId}-help ${errorId}` : `${inputId}-help`}
                             aria-invalid={form.errors.secret_value ? true : undefined}

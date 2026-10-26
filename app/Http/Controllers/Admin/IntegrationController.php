@@ -88,14 +88,13 @@ class IntegrationController extends Controller
         Gate::authorize('access-super-admin-area');
         abort_unless(IntegrationDefinitions::hasKey($provider, $key), 404);
 
-        $definition = IntegrationDefinitions::key($provider, $key);
+        $label = IntegrationDefinitions::phrase($provider, $key);
         $validated = $request->validate([
-            'secret_value' => ['required', ...$definition['rules']],
+            'secret_value' => ['required', ...IntegrationDefinitions::key($provider, $key)['rules']],
             'force' => ['sometimes', 'boolean'],
-        ], [], ['secret_value' => strtolower($definition['label'])]);
+        ], [], ['secret_value' => $label]);
 
         $value = trim((string) $validated['secret_value']);
-        $label = IntegrationDefinitions::provider($provider)['label'].' '.strtolower($definition['label']);
         $check = $this->runner->check($provider);
         $result = null;
 
@@ -124,7 +123,7 @@ class IntegrationController extends Controller
 
         return redirect()
             ->route('admin.settings.integrations.index')
-            ->with('status', ucfirst($label).($saved['replaced'] ? ' replaced.' : ' saved.'));
+            ->with('status', $label.($saved['replaced'] ? ' replaced.' : ' saved.'));
     }
 
     public function destroy(Request $request, string $provider, string $key): RedirectResponse
@@ -133,17 +132,17 @@ class IntegrationController extends Controller
         abort_unless(IntegrationDefinitions::hasKey($provider, $key), 404);
 
         $removed = $this->secrets->remove($provider, $key);
-        $label = IntegrationDefinitions::provider($provider)['label'].' '.strtolower(IntegrationDefinitions::key($provider, $key)['label']);
+        $label = IntegrationDefinitions::phrase($provider, $key);
 
         if ($removed === null) {
-            return redirect()->route('admin.settings.integrations.index')->with('status', ucfirst($label).' has no stored value to remove.');
+            return redirect()->route('admin.settings.integrations.index')->with('status', $label.' has no stored value to remove.');
         }
 
         $this->record($request, 'integration_key.removed', $provider, $key, $removed->last_four);
 
         return redirect()
             ->route('admin.settings.integrations.index')
-            ->with('status', ucfirst($label).' removed. The environment value, if any, is used instead.');
+            ->with('status', $label.' removed. The environment value, if any, is used instead.');
     }
 
     public function test(Request $request, string $provider): RedirectResponse
