@@ -1,0 +1,37 @@
+{
+  "version": "v1.13.0",
+  "slug": "release-v1-13-0",
+  "released_at": "2026-10-26",
+  "previous_version": "v1.12.0",
+  "theme": "Newsletters ready for the Ghost members import",
+  "change_types": [
+    "added",
+    "changed",
+    "fixed"
+  ],
+  "topic_tags": [
+    "public-facing",
+    "internal-only",
+    "compliance"
+  ],
+  "summary": "All six Ghost newsletters now exist in the Newsroom with their own sender and reply-to details, and campaigns are only sent from senders verified in Mailgun. New members can opt in to newsletters when they register, and member subscriptions can be rebuilt from Ghost without anyone being emailed.",
+  "detailed_changes": [
+    "APES Times, MyAPES Portal and Stream 4 APES join APES CIC, Shelter & Rescue and Pet Care Clinic as newsletters. Pet Shop Newsroom, Mailing List and Animal Therapy Waiting List are kept as archived newsletters, which cannot be emailed or chosen at signup (#470).",
+    "Each newsletter has a sender name, sender email and reply-to address, set to match Ghost. Campaign emails and subscription confirmations now come from the newsletter's own sender (#465).",
+    "The staff newsletters page shows confirmed, pending and unsubscribed subscribers separately, with an Active / Archived filter. Previously every subscription row was counted, which is why each newsletter showed 597 (#467, #470).",
+    "Newsletter senders are checked against Mailgun (domain, SPF, DKIM and DMARC) from the newsletter page or with mailing:verify-senders. Publishing with email, scheduled sends and test sends are blocked until the sender passes (#469).",
+    "The post editor and campaign preview show which address an email will be sent from (#465).",
+    "Staff test sends are now processed by the live queue worker (#465).",
+    "New members can tick the newsletters they want when they register. Their choices are confirmed when they verify their email address, and nothing is pre-ticked (#466).",
+    "Member newsletter subscriptions can be rebuilt from Ghost's per-newsletter exports with ghost:reconcile-newsletters. A dry run shows the counts against Ghost first. Opt-outs are always kept, choices made in the Newsroom are never overwritten, and no email is sent (#464, #468, #467).",
+    "The Ghost members importer no longer puts every member on all three channel lists, and the admin upload is now dry-run only (#467)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff/newsletters, /staff/posts editor, campaign preview, /register, /admin/imports/ghost-members",
+    "User groups affected: staff (newsletter senders, verification, counts); new members (newsletter opt-in at registration); subscribers (emails come from the newsletter's own sender)",
+    "Public impact: registration offers optional newsletter checkboxes; campaign emails use per-newsletter From and Reply-To",
+    "Internal impact: new newsletter and campaign columns; mailing:verify-senders and ghost:reconcile-newsletters commands; MAILGUN_* environment names; the worker also listens on mail-test"
+  ],
+  "pr": 487
+}
