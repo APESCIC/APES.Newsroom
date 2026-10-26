@@ -4,6 +4,8 @@ namespace App\Jobs;
 
 use App\Enums\MediaAssetStatus;
 use App\Models\MediaAsset;
+use App\Models\Page;
+use App\Models\Post;
 use App\Services\Media\MediaVariantGenerator;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -43,6 +45,8 @@ class ProcessMediaAssetJob implements ShouldQueue
                 'status' => MediaAssetStatus::Ready,
                 'failure_reason' => null,
             ]);
+
+            $this->queueFocalCrops($asset);
         } catch (Throwable $e) {
             Log::warning('Media asset processing failed', [
                 'asset_id' => $asset->id,
@@ -53,6 +57,25 @@ class ProcessMediaAssetJob implements ShouldQueue
                 'status' => MediaAssetStatus::Failed,
                 'failure_reason' => Str::limit('Processing failed: '.$e->getMessage(), 480),
             ]);
+        }
+    }
+
+    /**
+     * Editors may choose a focal point before processing finishes.
+     */
+    private function queueFocalCrops(MediaAsset $asset): void
+    {
+        foreach ([Post::class, Page::class] as $model) {
+            $model::query()
+                ->where('hero_media_id', $asset->id)
+                ->whereNotNull('hero_focal_x')
+                ->whereNotNull('hero_focal_y')
+                ->get(['id', 'hero_focal_x', 'hero_focal_y'])
+                ->each(function (Post|Page $item) use ($asset) {
+                    if (! $asset->hasSocialCrop($item->hero_focal_x, $item->hero_focal_y)) {
+                        GenerateSocialCropJob::dispatch($asset->id, (float) $item->hero_focal_x, (float) $item->hero_focal_y);
+                    }
+                });
         }
     }
 }

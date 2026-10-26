@@ -7,6 +7,7 @@ use App\Enums\Role;
 use App\Models\Post;
 use App\Models\User;
 use App\Services\Mailing\CampaignService;
+use App\Services\Publishing\HeroImageRequirements;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -16,8 +17,10 @@ class PublishScheduledPostsCommand extends Command
 
     protected $description = 'Publish posts whose scheduled_for time has passed (Europe/London)';
 
-    public function __construct(private readonly CampaignService $campaigns)
-    {
+    public function __construct(
+        private readonly CampaignService $campaigns,
+        private readonly HeroImageRequirements $heroRequirements,
+    ) {
         parent::__construct();
     }
 
@@ -36,9 +39,10 @@ class PublishScheduledPostsCommand extends Command
             ?? User::query()->where('role', Role::Admin)->orderBy('id')->first();
 
         $publishedCount = 0;
+        $skippedCount = 0;
 
         foreach ($postIds as $postId) {
-            $title = DB::transaction(function () use ($postId, $systemActor) {
+            $result = DB::transaction(function () use ($postId, $systemActor) {
                 $post = Post::query()
                     ->whereKey($postId)
                     ->where('status', PostStatus::Scheduled)
@@ -49,6 +53,10 @@ class PublishScheduledPostsCommand extends Command
 
                 if (! $post) {
                     return null;
+                }
+
+                if ($this->heroRequirements->missingAlt($post)) {
+                    return ['skipped' => true, 'title' => $post->title];
                 }
 
                 $actor = $systemActor ?? $post->author()->firstOrFail();
@@ -62,16 +70,28 @@ class PublishScheduledPostsCommand extends Command
 
                 $this->campaigns->createFromPublishedPost($post->fresh(), $actor);
 
-                return $post->title;
+                return ['skipped' => false, 'title' => $post->title];
             });
 
-            if ($title !== null) {
-                $publishedCount++;
-                $this->line("Published: {$title}");
+            if ($result === null) {
+                continue;
             }
+
+            if ($result['skipped']) {
+                $skippedCount++;
+                $this->warn("Skipped (hero image has no alt text): {$result['title']}");
+
+                continue;
+            }
+
+            $publishedCount++;
+            $this->line("Published: {$result['title']}");
         }
 
         $this->info("Published {$publishedCount} scheduled post(s).");
+        if ($skippedCount > 0) {
+            $this->warn("{$skippedCount} scheduled post(s) were left scheduled until alt text is added.");
+        }
 
         return self::SUCCESS;
     }

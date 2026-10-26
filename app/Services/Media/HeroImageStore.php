@@ -93,12 +93,16 @@ class HeroImageStore
         return $asset->refresh();
     }
 
-    public static function tooLargeMessage(): string
+    public static function maxSizeLabel(): string
     {
         $maxKb = (int) config('newsroom.hero_uploads.max_kb', 10240);
-        $label = $maxKb >= 1024 ? round($maxKb / 1024, 1).' MB' : $maxKb.' KB';
 
-        return "The image must be {$label} or smaller.";
+        return $maxKb >= 1024 ? round($maxKb / 1024, 1).' MB' : $maxKb.' KB';
+    }
+
+    public static function tooLargeMessage(): string
+    {
+        return 'The image must be '.self::maxSizeLabel().' or smaller.';
     }
 
     private function assertSize(string $bytes): void

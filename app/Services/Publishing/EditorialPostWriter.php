@@ -12,6 +12,7 @@ use App\Services\Audit\AuditLogger;
 use App\Services\EditorJs\BlockValidator;
 use App\Services\Integrations\SlackEditorialNotifier;
 use App\Services\Mailing\CampaignService;
+use App\Services\Media\HeroImageInput;
 use App\Services\Webhooks\OutboundWebhookDispatcher;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -25,6 +26,8 @@ class EditorialPostWriter
         private readonly AuditLogger $audit,
         private readonly OutboundWebhookDispatcher $webhooks,
         private readonly SlackEditorialNotifier $slack,
+        private readonly HeroImageInput $heroInput,
+        private readonly HeroImageRequirements $heroRequirements,
     ) {}
 
     /**
@@ -32,6 +35,7 @@ class EditorialPostWriter
      */
     public function create(User $actor, array $validated): Post
     {
+        $validated = $this->heroInput->normalize($validated);
         $content = $this->validator->validate($validated['content']);
         $tags = $validated['tags'] ?? [];
         $coAuthorIds = $validated['co_author_ids'] ?? [];
@@ -49,6 +53,7 @@ class EditorialPostWriter
         $this->syncTags($post, $tags);
         $this->syncAuthors($post, $coAuthorIds);
         $this->saveRevision($post, $actor->id);
+        $this->heroInput->afterSave($post);
 
         return $post->fresh(['author', 'tags', 'authors']) ?? $post;
     }
@@ -60,6 +65,7 @@ class EditorialPostWriter
     {
         abort_if($actor->cannot('update', $post), 403);
 
+        $validated = $this->heroInput->normalize($validated);
         $post->loadMissing(['tags', 'authors']);
 
         if (isset($validated['expected_updated_at'])) {
@@ -99,6 +105,7 @@ class EditorialPostWriter
         $this->syncTags($post, $tags);
         $this->syncAuthors($post, $coAuthorIds);
         $this->saveRevision($post, $actor->id);
+        $this->heroInput->afterSave($post);
 
         if ($wasPublished && $oldSlug !== $post->slug) {
             Redirect::query()->updateOrCreate(
@@ -128,6 +135,7 @@ class EditorialPostWriter
                 ]);
             }
 
+            $this->heroRequirements->assertPublishable($lockedPost);
             $this->campaigns->assertSenderVerified($lockedPost);
 
             $lockedPost->update([

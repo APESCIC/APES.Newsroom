@@ -4,7 +4,8 @@ import type { OutputData } from '@editorjs/editorjs';
 import EditorField, { type EditorFieldHandle } from '../../../Components/editor/EditorField';
 import EditorSessionNotice from '../../../Components/editor/EditorSessionNotice';
 import AiAssistPanel from '../../../Components/Staff/AiAssistPanel';
-import UnsplashPicker from '../../../Components/Staff/UnsplashPicker';
+import HeroImageField from '../../../Components/Staff/HeroImageField';
+import type { HeroMediaAsset, HeroUploadLimits } from '../../../Components/Staff/heroImageUpload';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
 import type { EditorDriver } from '../../../types/editor';
 import type { SharedPageProps } from '../../../types/page';
@@ -29,6 +30,10 @@ type PostData = {
     hero_image_alt: string | null;
     hero_image_caption: string | null;
     hero_image_credit: string | null;
+    hero_media_id?: number | null;
+    hero_focal_x?: number | null;
+    hero_focal_y?: number | null;
+    hero_media?: HeroMediaAsset | null;
     meta_title: string | null;
     meta_description: string | null;
     canonical_url: string | null;
@@ -62,6 +67,9 @@ type PostForm = {
     hero_image_alt: string;
     hero_image_caption: string;
     hero_image_credit: string;
+    hero_media_id: number | null;
+    hero_focal_x: number | null;
+    hero_focal_y: number | null;
     meta_title: string;
     meta_description: string;
     canonical_url: string;
@@ -91,6 +99,9 @@ const INLINE_ERROR_FIELDS = [
     'hero_image_alt',
     'hero_image_caption',
     'hero_image_credit',
+    'hero_media_id',
+    'hero_focal_x',
+    'hero_focal_y',
     'meta_title',
     'meta_description',
     'canonical_url',
@@ -116,6 +127,9 @@ function formFromPost(post: PostData | null, channels: Channel[], editor: Editor
         hero_image_alt: post?.hero_image_alt ?? '',
         hero_image_caption: post?.hero_image_caption ?? '',
         hero_image_credit: post?.hero_image_credit ?? '',
+        hero_media_id: post?.hero_media_id ?? null,
+        hero_focal_x: post?.hero_focal_x ?? null,
+        hero_focal_y: post?.hero_focal_y ?? null,
         meta_title: post?.meta_title ?? '',
         meta_description: post?.meta_description ?? '',
         canonical_url: post?.canonical_url ?? '',
@@ -218,6 +232,7 @@ export default function PostEdit({
     staffUsers = [],
     canPublish,
     revisions,
+    heroUpload,
 }: {
     post: PostData | null;
     channels: Channel[];
@@ -226,6 +241,7 @@ export default function PostEdit({
     staffUsers?: Array<{ id: number; name: string; email: string }>;
     canPublish: boolean;
     revisions: Revision[];
+    heroUpload?: HeroUploadLimits;
 }) {
     const isNew = post === null;
     const page = usePage<SharedPageProps>();
@@ -524,47 +540,14 @@ export default function PostEdit({
                             </div>
                         </div>
 
-                        <fieldset className="flex flex-col gap-3 border-t border-border/60 pt-4">
-                            <legend className="font-medium">Hero image</legend>
-                            <input
-                                placeholder="Image URL"
-                                value={data.hero_image}
-                                onChange={(e) => setData('hero_image', e.target.value)}
-                                className="form-input w-full"
-                            />
-                            <FieldError message={errors.hero_image} />
-                            <input
-                                placeholder="Alt text"
-                                value={data.hero_image_alt}
-                                onChange={(e) => setData('hero_image_alt', e.target.value)}
-                                className="form-input w-full"
-                            />
-                            <FieldError message={errors.hero_image_alt} />
-                            <input
-                                placeholder="Caption"
-                                value={data.hero_image_caption}
-                                onChange={(e) => setData('hero_image_caption', e.target.value)}
-                                className="form-input w-full"
-                            />
-                            <FieldError message={errors.hero_image_caption} />
-                            <input
-                                placeholder="Credit"
-                                value={data.hero_image_credit}
-                                onChange={(e) => setData('hero_image_credit', e.target.value)}
-                                className="form-input w-full"
-                            />
-                            <FieldError message={errors.hero_image_credit} />
-                            <UnsplashPicker
-                                onSelect={({ url, credit, alt }) => {
-                                    setData((current) => ({
-                                        ...current,
-                                        hero_image: url,
-                                        hero_image_credit: credit,
-                                        hero_image_alt: alt || current.hero_image_alt,
-                                    }));
-                                }}
-                            />
-                        </fieldset>
+                        <HeroImageField
+                            idPrefix="post-hero"
+                            value={data}
+                            asset={post?.hero_media ?? null}
+                            limits={heroUpload}
+                            errors={errors}
+                            onChange={(patch) => setData((current) => ({ ...current, ...patch }))}
+                        />
 
                         {!isNew && revisions.length > 0 && (
                             <section className="border-t border-border/60 pt-4">
