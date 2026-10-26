@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Jobs\ProcessGhostMembersImportJob;
 use App\Models\ImportRun;
 use App\Services\Audit\AuditLogger;
+use App\Services\Import\GhostNewsletterReconciler;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -16,6 +17,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class GhostMembersImportController extends Controller
 {
+    private const RUN_TYPES = ['ghost_members_csv', GhostNewsletterReconciler::RUN_TYPE];
+
     public function __construct(private readonly AuditLogger $audit) {}
 
     public function index(Request $request): Response
@@ -23,12 +26,13 @@ class GhostMembersImportController extends Controller
         $this->authorizeAdmin();
 
         $runs = ImportRun::query()
-            ->where('type', 'ghost_members_csv')
+            ->whereIn('type', self::RUN_TYPES)
             ->latest()
             ->limit(20)
             ->get()
             ->map(fn (ImportRun $run) => [
                 'id' => $run->id,
+                'type' => $run->type,
                 'status' => $run->status,
                 'dry_run' => $run->dry_run,
                 'source_checksum' => $run->source_checksum,
@@ -48,12 +52,14 @@ class GhostMembersImportController extends Controller
 
         $validated = $request->validate([
             'csv' => ['required', 'file', 'mimes:csv,txt', 'max:10240'],
-            'mode' => ['required', 'in:dry-run,import'],
+            'mode' => ['required', 'in:dry-run'],
+        ], [
+            'mode.in' => 'Uploads are dry-run only. Newsletter subscriptions are applied with ghost:reconcile-newsletters.',
         ]);
 
         $path = $validated['csv']->store('imports/ghost-members');
         $absolute = Storage::path($path);
-        $dryRun = $validated['mode'] === 'dry-run';
+        $dryRun = true;
 
         $run = ImportRun::create([
             'type' => 'ghost_members_csv',
@@ -65,26 +71,27 @@ class GhostMembersImportController extends Controller
             'started_at' => null,
         ]);
 
-        $this->audit->record($request->user(), $dryRun ? 'import.ghost_members.dry_run' : 'import.ghost_members.import', $run, [
+        $this->audit->record($request->user(), 'import.ghost_members.dry_run', $run, [
             'checksum' => $run->source_checksum,
             'path' => $path,
         ], $request);
 
         ProcessGhostMembersImportJob::dispatch($run->id, $dryRun);
 
-        return back()->with('status', $dryRun ? 'Dry-run queued.' : 'Import queued.');
+        return back()->with('status', 'Dry-run queued.');
     }
 
     public function report(Request $request, ImportRun $run): StreamedResponse|RedirectResponse
     {
         $this->authorizeAdmin();
-        abort_unless($run->type === 'ghost_members_csv', 404);
+        abort_unless(in_array($run->type, self::RUN_TYPES, true), 404);
 
         $payload = json_encode($run->report ?? [], JSON_PRETTY_PRINT);
+        $prefix = $run->type === GhostNewsletterReconciler::RUN_TYPE ? 'ghost-newsletters-reconcile' : 'ghost-members-import';
 
         return response()->streamDownload(function () use ($payload) {
             echo $payload;
-        }, "ghost-members-import-{$run->id}.json", [
+        }, "{$prefix}-{$run->id}.json", [
             'Content-Type' => 'application/json',
         ]);
     }

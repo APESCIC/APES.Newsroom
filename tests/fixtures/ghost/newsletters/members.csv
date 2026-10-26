@@ -1,0 +1,7 @@
+id,email,name,note,subscribed_to_emails,complimentary_plan,stripe_customer_id,created_at,deleted_at,labels,tiers
+g-a,Alice@Example.com,Alice,,true,false,,2024-01-01T00:00:00.000Z,,"",""
+g-b,bob@example.com,Bob,,true,false,,2024-01-02T00:00:00.000Z,,"",""
+g-c,carol@example.com,"Carol, Jr",,false,false,,2024-01-03T00:00:00.000Z,,"",""
+g-d,dan@example.com,Dan,,true,false,,2024-01-04T00:00:00.000Z,2024-06-01T00:00:00.000Z,"",""
+g-e,erin@example.com,Erin,,true,false,,2024-01-05T00:00:00.000Z,,"apes-all",""
+g-f,frank@example.com,Frank,,true,false,,2024-01-06T00:00:00.000Z,,"",""
