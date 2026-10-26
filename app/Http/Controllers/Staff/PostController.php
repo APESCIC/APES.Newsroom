@@ -496,6 +496,8 @@ class PostController extends Controller
     {
         return NewsletterSegment::query()
             ->with('newsletter', 'alsoNewsletter')
+            ->whereHas('newsletter', fn ($query) => $query->active())
+            ->whereHas('alsoNewsletter', fn ($query) => $query->active())
             ->orderBy('name')
             ->get()
             ->map(fn (NewsletterSegment $segment) => [

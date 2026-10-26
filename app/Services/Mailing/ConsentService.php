@@ -490,6 +490,10 @@ class ConsentService
      */
     public function confirmedEmailsForNewsletter(Newsletter $newsletter): array
     {
+        if ($newsletter->isArchived()) {
+            return [];
+        }
+
         if ($newsletter->legacy_list instanceof MailingList) {
             return $this->confirmedEmailsForLists([$newsletter->legacy_list->value]);
         }
