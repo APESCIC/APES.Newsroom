@@ -14,7 +14,7 @@ Newsletters are audiences stored in `newsletters`, separate from the three fixed
 | `sender_name`, `sender_email`, `reply_to` | From and Reply-To for campaigns and confirmation emails. Sender email must use an approved domain (`MAILING_SENDER_DOMAINS`) |
 | `subscribe_on_signup` | Offer this newsletter as an opt-in checkbox on `/register` |
 | `sender_verification` | Last result of `mailing:verify-senders` (status, checks, message) |
-| `archived_at` | Set when staff archive an audience. Archived newsletters are hidden from signup and segments and return no recipients |
+| `archived_at` | Set when staff archive an audience. Archived newsletters are hidden from signup and segments and return no recipients. Ghost's archived newsletters are not imported (#499) |
 
 The migration seeds one active newsletter per channel list and copies `legacy_list` onto existing `mailing_list_subscriptions.newsletter_id`.
 

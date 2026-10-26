@@ -74,36 +74,6 @@ return new class extends Migration
             'sender_email' => 'stream4apes@apesnews.org.uk',
             'archived' => false,
         ],
-        [
-            'legacy_list' => null,
-            'slug' => 'pet-shop-newsroom',
-            'name' => 'Pet Shop Newsroom',
-            'description' => 'Archived Ghost newsletter, kept for the record.',
-            'ghost_slug' => null,
-            'sender_name' => null,
-            'sender_email' => null,
-            'archived' => true,
-        ],
-        [
-            'legacy_list' => null,
-            'slug' => 'mailing-list',
-            'name' => 'Mailing List',
-            'description' => 'Archived Ghost newsletter, kept for the record.',
-            'ghost_slug' => null,
-            'sender_name' => null,
-            'sender_email' => null,
-            'archived' => true,
-        ],
-        [
-            'legacy_list' => null,
-            'slug' => 'animal-therapy-waiting-list',
-            'name' => 'Animal Therapy Waiting List',
-            'description' => 'Archived Ghost newsletter, kept for the record.',
-            'ghost_slug' => null,
-            'sender_name' => null,
-            'sender_email' => null,
-            'archived' => true,
-        ],
     ];
 
     public function up(): void

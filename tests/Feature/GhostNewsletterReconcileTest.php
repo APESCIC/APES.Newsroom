@@ -36,9 +36,6 @@ class GhostNewsletterReconcileTest extends TestCase
         'pet-care-clinic' => 0,
         'myapes-portal' => 1,
         'stream-4-apes' => 0,
-        'pet-shop-newsroom' => 0,
-        'mailing-list' => 1,
-        'animal-therapy-waiting-list' => 0,
     ];
 
     protected function setUp(): void
@@ -133,7 +130,6 @@ class GhostNewsletterReconcileTest extends TestCase
         $this->assertSame(3, $report['newsletters']['newsroom']['in_export']);
         $this->assertSame(2, $report['newsletters']['newsroom']['to_confirm']);
         $this->assertSame(1, $report['newsletters']['newsroom']['blocked']['ghost_opt_out']);
-        $this->assertSame(1, $report['newsletters']['mailing-list']['to_confirm']);
         $this->assertSame(2, $report['members']['opted_out']);
 
         $json = json_encode(ImportRun::query()->firstOrFail()->report);
@@ -159,7 +155,7 @@ class GhostNewsletterReconcileTest extends TestCase
         $this->assertSame([], $this->confirmedEmails('apes-pet-care-clinic'));
         $this->assertSame(['alice@example.com'], $this->confirmedEmails('myapes-portal'));
         $this->assertSame([], $this->confirmedEmails('stream-4-apes'));
-        $this->assertSame(['frank@example.com'], $this->confirmedEmails('mailing-list'));
+        $this->assertNull(MailingContact::query()->where('email', 'frank@example.com')->first(), 'subscribed member on no mapped newsletter gets nothing');
 
         $cic = MailingListSubscription::query()->where('newsletter_id', $this->newsletter('apes-cic')->id)->firstOrFail();
         $this->assertSame(MailingList::ApesCic, $cic->list);
@@ -171,7 +167,6 @@ class GhostNewsletterReconcileTest extends TestCase
         $this->assertNull(MailingContact::query()->where('email', 'erin@example.com')->first(), 'all-lists label is no longer consent evidence');
 
         $consent = app(ConsentService::class);
-        $this->assertSame([], $consent->confirmedEmailsForNewsletter($this->newsletter('mailing-list')), 'archived stays unsendable');
         $this->assertSame(['alice@example.com', 'bob@example.com'], collect($consent->confirmedEmailsForLists([MailingList::ApesCic]))->sort()->values()->all());
 
         $this->assertTrue(ConsentEvent::query()
