@@ -187,6 +187,117 @@ class ConsentService
         }
     }
 
+    /**
+     * Newsletters ticked on the registration form are held pending and
+     * confirmed by the account email verification link, so the member gets
+     * one email rather than one confirmation per newsletter.
+     *
+     * @param  list<int>  $newsletterIds
+     * @return list<int>
+     */
+    public function requestAtRegistration(User $user, array $newsletterIds, ?string $ip = null, ?string $userAgent = null): array
+    {
+        $newsletters = Newsletter::query()
+            ->active()
+            ->where('subscribe_on_signup', true)
+            ->whereIn('id', array_map('intval', $newsletterIds))
+            ->get();
+
+        if ($newsletters->isEmpty()) {
+            return [];
+        }
+
+        $email = Str::lower(trim($user->email));
+
+        return DB::transaction(function () use ($newsletters, $user, $email, $ip, $userAgent) {
+            $contact = MailingContact::query()->firstOrCreate(['email' => $email], ['user_id' => $user->id]);
+            $requested = [];
+
+            foreach ($newsletters as $newsletter) {
+                $legacy = $newsletter->legacy_list;
+                $subscription = MailingListSubscription::query()->firstOrNew(
+                    $legacy instanceof MailingList
+                        ? ['mailing_contact_id' => $contact->id, 'list' => $legacy->value]
+                        : ['mailing_contact_id' => $contact->id, 'newsletter_id' => $newsletter->id],
+                );
+
+                if ($subscription->status === SubscriptionStatus::Confirmed) {
+                    continue;
+                }
+
+                $subscription->fill([
+                    'newsletter_id' => $newsletter->id,
+                    'list' => $legacy?->value,
+                    'status' => SubscriptionStatus::Pending,
+                    'confirm_token' => Str::random(64),
+                    'confirmed_at' => null,
+                    'unsubscribed_at' => null,
+                ])->save();
+
+                $this->recordEvent(
+                    $contact,
+                    $legacy,
+                    ConsentAction::SignupRequested,
+                    'registration',
+                    ['newsletter_id' => $newsletter->id, 'confirm_via' => 'email_verification'],
+                    $ip,
+                    $userAgent,
+                );
+                $requested[] = $newsletter->id;
+            }
+
+            return $requested;
+        });
+    }
+
+    /**
+     * Confirm the registration requests once the account email is verified.
+     */
+    public function confirmRegistrationRequests(User $user): int
+    {
+        $contact = MailingContact::query()->where('email', Str::lower(trim($user->email)))->first();
+        if (! $contact) {
+            return 0;
+        }
+
+        $requested = ConsentEvent::query()
+            ->where('mailing_contact_id', $contact->id)
+            ->where('source', 'registration')
+            ->where('action', ConsentAction::SignupRequested)
+            ->get()
+            ->map(fn (ConsentEvent $event) => (int) ($event->evidence['newsletter_id'] ?? 0))
+            ->filter()
+            ->unique()
+            ->all();
+
+        if ($requested === []) {
+            return 0;
+        }
+
+        $pending = $contact->subscriptions()
+            ->whereIn('newsletter_id', $requested)
+            ->where('status', SubscriptionStatus::Pending)
+            ->get();
+
+        foreach ($pending as $subscription) {
+            $subscription->update([
+                'status' => SubscriptionStatus::Confirmed,
+                'confirm_token' => null,
+                'confirmed_at' => now(),
+            ]);
+
+            $this->recordEvent(
+                $contact,
+                $subscription->list,
+                ConsentAction::Confirmed,
+                'registration_email_verified',
+                ['newsletter_id' => $subscription->newsletter_id, 'verified' => true],
+            );
+        }
+
+        return $pending->count();
+    }
+
     public function subscribeToNewsletter(
         string $email,
         Newsletter $newsletter,

@@ -21,6 +21,8 @@ class StoreRegisteredUserRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Password::defaults()],
+            'newsletter_ids' => ['sometimes', 'array', 'max:20'],
+            'newsletter_ids.*' => ['integer'],
         ];
     }
 }
