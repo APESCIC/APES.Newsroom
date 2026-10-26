@@ -12,6 +12,7 @@ use App\Models\Redirect;
 use App\Models\Tag;
 use App\Models\User;
 use App\Services\EditorJs\BlockValidator;
+use App\Services\Media\GhostImageUrls;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -399,7 +400,7 @@ class GhostContentImporter
             'excerpt' => (string) ($post['custom_excerpt'] ?? $post['excerpt'] ?? ''),
             'content' => $document,
             'status' => $status,
-            'hero_image' => $post['feature_image'] ?? null,
+            'hero_image' => $this->importHeroImage($post['feature_image'] ?? null, $mediaPath, $dryRun, $report),
             'meta_title' => $post['meta_title'] ?? null,
             'meta_description' => $post['meta_description'] ?? null,
             'canonical_url' => $post['canonical_url'] ?? null,
@@ -569,7 +570,7 @@ class GhostContentImporter
                 'content' => $document,
                 'status' => $status,
                 'channel' => $channel,
-                'hero_image' => $post['feature_image'] ?? null,
+                'hero_image' => $this->importHeroImage($post['feature_image'] ?? null, $mediaPath, $dryRun, $report),
                 'meta_title' => $post['meta_title'] ?? null,
                 'meta_description' => $post['meta_description'] ?? null,
                 'canonical_url' => $post['canonical_url'] ?? null,
@@ -740,6 +741,48 @@ class GhostContentImporter
         }
 
         return $blocks;
+    }
+
+    /**
+     * Hero images get the same treatment as body images: copied from the
+     * media archive when it has the file. Otherwise the Ghost URL is kept so
+     * media:fix-ghost-images can find and repair it later (#538).
+     *
+     * @param  array<string, mixed>  $report
+     */
+    private function importHeroImage(?string $url, ?string $mediaPath, bool $dryRun, array &$report): ?string
+    {
+        $url = trim((string) $url);
+        if ($url === '') {
+            return null;
+        }
+
+        $ghostUrls = app(GhostImageUrls::class);
+        if ($mediaPath === null || ! $ghostUrls->isGhostImage($url)) {
+            return $url;
+        }
+
+        $relative = $ghostUrls->originalPath($ghostUrls->relativePath($url));
+        $basename = basename(parse_url($relative, PHP_URL_PATH) ?: $relative);
+        $source = $this->findMediaFile(rtrim($mediaPath, DIRECTORY_SEPARATOR), $basename);
+        if ($source === null) {
+            $report['media']['missing']++;
+            $report['warnings'][] = "Missing hero image: {$basename} (run media:fix-ghost-images after import)";
+
+            return $url;
+        }
+
+        if (! $dryRun) {
+            $destDir = storage_path('app/public/imports');
+            File::ensureDirectoryExists($destDir);
+            $dest = $destDir.DIRECTORY_SEPARATOR.$basename;
+            if (! is_file($dest)) {
+                File::copy($source, $dest);
+            }
+        }
+        $report['media']['copied']++;
+
+        return rtrim((string) config('app.url'), '/').'/storage/imports/'.$basename;
     }
 
     private function resolveGhostMediaUrl(string $url): string

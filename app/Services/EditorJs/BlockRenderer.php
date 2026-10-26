@@ -2,6 +2,8 @@
 
 namespace App\Services\EditorJs;
 
+use App\Services\Media\GhostImageUrls;
+
 /**
  * Renders validated Editor.js blocks to safe HTML for public display.
  */
@@ -9,6 +11,7 @@ class BlockRenderer
 {
     public function __construct(
         private readonly InlineHtmlSanitizer $inline = new InlineHtmlSanitizer,
+        private readonly GhostImageUrls $ghostUrls = new GhostImageUrls,
     ) {}
 
     /**
@@ -171,7 +174,7 @@ class BlockRenderer
 
             $url = e($item['url'] ?? '');
 
-            if ($url === '') {
+            if ($url === '' || $this->ghostUrls->isGhostImage((string) $item['url'])) {
                 continue;
             }
 
@@ -257,7 +260,12 @@ class BlockRenderer
      */
     private function renderImage(array $data): string
     {
-        $url = e($data['file']['url'] ?? $data['url'] ?? '');
+        $rawUrl = (string) ($data['file']['url'] ?? $data['url'] ?? '');
+        if ($this->ghostUrls->isGhostImage($rawUrl)) {
+            return '';
+        }
+
+        $url = e($rawUrl);
         $alt = e($data['alt'] ?? '');
         $caption = ($data['caption'] ?? '') ? '<figcaption>'.e($data['caption']).'</figcaption>' : '';
         $credit = ($data['credit'] ?? '') ? '<p class="image-credit">'.e($data['credit']).'</p>' : '';

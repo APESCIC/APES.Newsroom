@@ -39,8 +39,9 @@ class HeroImageStore
         ?int $uploaderId,
         string $source = MediaAsset::SOURCE_UPLOAD,
         ?string $sourceUrl = null,
+        ?int $maxKb = null,
     ): MediaAsset {
-        $this->assertSize($bytes);
+        $this->assertSize($bytes, $maxKb ?? (int) config('newsroom.hero_uploads.max_kb', 10240));
 
         $sha256 = hash('sha256', $bytes);
         $existing = MediaAsset::query()->where('sha256', $sha256)->first();
@@ -105,14 +106,18 @@ class HeroImageStore
         return 'The image must be '.self::maxSizeLabel().' or smaller.';
     }
 
-    private function assertSize(string $bytes): void
+    private function assertSize(string $bytes, int $maxKb): void
     {
         if ($bytes === '') {
             throw new InvalidImageException('The file is empty.');
         }
 
-        if (strlen($bytes) > (int) config('newsroom.hero_uploads.max_kb', 10240) * 1024) {
-            throw new InvalidImageException(self::tooLargeMessage());
+        if (strlen($bytes) > $maxKb * 1024) {
+            throw new InvalidImageException(
+                $maxKb === (int) config('newsroom.hero_uploads.max_kb', 10240)
+                    ? self::tooLargeMessage()
+                    : "The image is larger than {$maxKb} KB.",
+            );
         }
     }
 

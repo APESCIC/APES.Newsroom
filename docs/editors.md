@@ -41,6 +41,27 @@ same. Switching editors needs no content migration.
 - Drafts autosave about eight seconds after you stop typing, and every save adds
   a revision you can restore from the **Revisions** list.
 
+## For staff: hero images
+
+The **Hero image** section is the same in the post and page editors, whichever
+body editor the site uses.
+
+- **Add an image:** drag it onto the dashed area, press **Upload image** to pick
+  a file, or click the area and paste an image. JPEG, PNG and WebP are accepted
+  (AVIF too when the server supports it), up to 10 MB. SVG is not accepted.
+  You can still paste an image URL or use **Unsplash search**.
+- **Reuse an image:** press **Choose from library** to pick something already
+  uploaded. The **Media** page in the staff menu lists every upload, shows where
+  each is used, and asks for confirmation (listing the posts and pages) before
+  deleting one that is in use.
+- **Alt text is required to publish or schedule** when a hero image is set.
+  Caption and credit are optional.
+- **Focal point:** click the part of the image that must stay in view, or use the
+  Horizontal and Vertical sliders. The previews show how home page cards, the
+  featured slot and social previews will be cropped.
+- Uploads lose their location and camera data, and the site makes web-sized
+  copies in the background. "Image ready." appears when they are done.
+
 ## Technical notes
 
 - TinyMCE 8 is self-hosted from npm under GPLv2+ (`license_key: 'gpl'`,
@@ -52,5 +73,12 @@ same. Switching editors needs no content migration.
   `content_html`, which `App\Services\EditorJs\HtmlToBlocksConverter` turns back
   into blocks before `BlockValidator` runs. Read-only boxes carry the original
   block in a `data-block` attribute and are restored unchanged.
+- Hero uploads go to `POST /staff/media/hero` (`HeroImageStore`): type sniffed
+  from the bytes, re-encoded through GD to strip metadata, stored under
+  `storage/app/public/media/Y/m/{uuid}/` as a `media_assets` row.
+  `ProcessMediaAssetJob` writes 640/1200/2000 px WebP and JPEG widths and a
+  1200x630 social crop on the queue; `GenerateSocialCropJob` adds crops for
+  chosen focal points. `HeroImagePresenter` turns them into srcsets for public
+  pages, and `HeroImageRequirements` enforces alt text on every publish path.
 - Text fields keep a small allowlist of inline formatting in both editors:
   `strong`, `em`, `code`, `br` and `a` links (http, https and mailto only).

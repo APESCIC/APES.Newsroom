@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\Import\GhostContentImporter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
@@ -18,6 +19,39 @@ class GhostContentImportTest extends TestCase
     private function fixture(): string
     {
         return base_path('tests/fixtures/ghost/content.json');
+    }
+
+    public function test_hero_images_come_from_the_media_archive_or_keep_their_ghost_url_for_repair(): void
+    {
+        Mail::fake();
+        User::factory()->admin()->create();
+        $work = storage_path('framework/testing/ghost-hero-'.uniqid());
+        File::ensureDirectoryExists($work.'/media/2024/01');
+        file_put_contents($work.'/media/2024/01/archive-hero.jpg', 'jpeg-bytes');
+
+        $export = json_decode((string) file_get_contents($this->fixture()), true);
+        $export['db'][0]['data']['posts'][0]['feature_image'] = '__GHOST_URL__/content/images/size/w1200/2024/01/archive-hero.jpg';
+        $export['db'][0]['data']['posts'][1]['feature_image'] = '__GHOST_URL__/content/images/2024/01/not-in-archive.jpg';
+        file_put_contents($work.'/content.json', json_encode($export));
+        $copied = storage_path('app/public/imports/archive-hero.jpg');
+
+        try {
+            app(GhostContentImporter::class)->import($work.'/content.json', $work.'/media', false);
+
+            $slugs = collect($export['db'][0]['data']['posts'])->pluck('slug');
+            $this->assertSame(
+                rtrim((string) config('app.url'), '/').'/storage/imports/archive-hero.jpg',
+                Post::query()->where('slug', $slugs[0])->value('hero_image'),
+            );
+            $this->assertFileExists($copied);
+            $this->assertSame(
+                '__GHOST_URL__/content/images/2024/01/not-in-archive.jpg',
+                Post::query()->where('slug', $slugs[1])->value('hero_image'),
+            );
+        } finally {
+            File::deleteDirectory($work);
+            File::delete($copied);
+        }
     }
 
     public function test_dry_run_reconciles_counts_without_writing(): void

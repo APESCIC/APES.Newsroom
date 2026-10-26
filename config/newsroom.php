@@ -67,6 +67,8 @@ return [
         'disk' => 'public',
         'path_prefix' => 'media',
         'max_kb' => (int) env('NEWSROOM_HERO_UPLOAD_MAX_KB', 10240),
+        'import_max_kb' => (int) env('NEWSROOM_GHOST_IMAGE_MAX_KB', 25600),
+        'ghost_source' => env('NEWSROOM_GHOST_IMAGE_SOURCE', 'https://ghost-legacy.apesnews.org.uk'),
         'max_pixels' => (int) env('NEWSROOM_HERO_UPLOAD_MAX_PIXELS', 40_000_000),
         'widths' => [640, 1200, 2000],
         'social' => ['width' => 1200, 'height' => 630],
