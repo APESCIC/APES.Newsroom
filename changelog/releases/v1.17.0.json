@@ -21,5 +21,5 @@
     "Public impact: safer signup matching and clearer erasure choices for newsletters",
     "Internal impact: LinkMailingContactService, newsroom:link-mailing-contacts artisan command, mailing_contacts.email_normalized"
   ],
-  "pr": 0
+  "pr": 558
 }
