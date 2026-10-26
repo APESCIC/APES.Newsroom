@@ -25,5 +25,5 @@
     "Public impact: responsive hero images and social previews; broken Ghost hero images hidden",
     "Internal impact: new media_assets table, hero media and focal point columns on posts and pages, queued image processing; deploy:preflight checks GD JPEG and WebP support"
   ],
-  "pr": 0
+  "pr": 546
 }
