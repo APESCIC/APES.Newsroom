@@ -32,5 +32,6 @@
     "User groups affected: staff (newsletter senders, verification, counts); new members (newsletter opt-in at registration); subscribers (emails come from the newsletter's own sender)",
     "Public impact: registration offers optional newsletter checkboxes; campaign emails use per-newsletter From and Reply-To",
     "Internal impact: new newsletter and campaign columns; mailing:verify-senders and ghost:reconcile-newsletters commands; MAILGUN_* environment names; the worker also listens on mail-test"
-  ]
+  ],
+  "pr": 487
 }
