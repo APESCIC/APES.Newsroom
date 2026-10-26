@@ -9,6 +9,7 @@ use App\Models\MailingListSubscription;
 use App\Models\Membership;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\URL;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -22,7 +23,7 @@ class MembershipPortalTest extends TestCase
         $this->withoutVite();
     }
 
-    public function test_registration_creates_free_membership_and_links_mailing_contact_without_subscribe(): void
+    public function test_registration_creates_free_membership_and_unlinked_mailing_contact_without_subscribe(): void
     {
         $this->post('/register', [
             'name' => 'Jamie Fox',
@@ -40,11 +41,11 @@ class MembershipPortalTest extends TestCase
 
         $contact = MailingContact::query()->where('email', 'jamie@example.com')->first();
         $this->assertNotNull($contact);
-        $this->assertSame($user->id, $contact->user_id);
+        $this->assertNull($contact->user_id);
         $this->assertSame(0, MailingListSubscription::query()->where('mailing_contact_id', $contact->id)->count());
     }
 
-    public function test_registration_links_existing_mailing_contact_without_changing_subscriptions(): void
+    public function test_registration_does_not_claim_existing_mailing_contact_until_verified(): void
     {
         $contact = MailingContact::query()->create(['email' => 'reader@example.com']);
         MailingListSubscription::query()->create([
@@ -64,9 +65,19 @@ class MembershipPortalTest extends TestCase
         $user = User::query()->where('email', 'reader@example.com')->firstOrFail();
         $contact->refresh();
 
-        $this->assertSame($user->id, $contact->user_id);
+        $this->assertNull($contact->user_id);
         $this->assertSame(1, $contact->subscriptions()->count());
         $this->assertSame(SubscriptionStatus::Confirmed, $contact->subscriptions()->first()->status);
+
+        $this->actingAs($user)->get(URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(60),
+            ['id' => $user->id, 'hash' => sha1($user->email)],
+        ))->assertRedirect();
+
+        $contact->refresh();
+        $this->assertSame($user->id, $contact->user_id);
+        $this->assertTrue($user->fresh()->matched_mailing_notice_pending);
     }
 
     public function test_account_portal_shows_free_membership_and_newsletter_link(): void

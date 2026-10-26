@@ -107,6 +107,8 @@ class AuthzMatrixTest extends TestCase
         'staff.membership-plans.index' => Role::Staff,
         'staff.membership-plans.update' => Role::Staff,
         'staff.metrics.index' => Role::Staff,
+        'staff.subscribers.index' => Role::Staff,
+        'staff.subscribers.export' => Role::Staff,
         'staff.newsletters.index' => Role::Staff,
         'staff.newsletters.store' => Role::Staff,
         'staff.newsletters.create' => Role::Staff,

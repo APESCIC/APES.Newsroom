@@ -56,6 +56,7 @@ use App\Http\Controllers\Staff\NewsletterController as StaffNewsletterController
 use App\Http\Controllers\Staff\OfferController as StaffOfferController;
 use App\Http\Controllers\Staff\PageController as StaffPageController;
 use App\Http\Controllers\Staff\PostController as StaffPostController;
+use App\Http\Controllers\Staff\SubscriberController as StaffSubscriberController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\TagRssController;
 use App\Support\Integrations\IntegrationDefinitions;
@@ -155,6 +156,7 @@ Route::middleware(['auth', 'verified'])->prefix('account')->name('account.')->gr
         ->name('passkeys.destroy');
     Route::get('/mailing', [PreferenceController::class, 'showAccount'])->name('mailing');
     Route::post('/mailing', [PreferenceController::class, 'updateAccount'])->name('mailing.update');
+    Route::post('/mailing/matched-notice/dismiss', [AccountController::class, 'dismissMatchedMailingNotice'])->name('mailing.matched-notice.dismiss');
     Route::get('/public-profile', [ProfileController::class, 'edit'])->name('public-profile');
     Route::post('/public-profile', [ProfileController::class, 'update'])->name('public-profile.update');
     Route::post('/membership/checkout', [MembershipCheckoutController::class, 'checkout'])->name('membership.checkout');
@@ -274,6 +276,9 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
         Route::get('/metrics', StaffMetricsController::class)->name('metrics.index');
         Route::permanentRedirect('/members', '/admin/members')->name('members.legacy');
         Route::permanentRedirect('/webhooks', '/admin/webhooks')->name('webhooks.legacy');
+
+        Route::get('/subscribers', [StaffSubscriberController::class, 'index'])->name('subscribers.index');
+        Route::get('/subscribers/export', [StaffSubscriberController::class, 'export'])->name('subscribers.export');
 
         Route::get('/newsletters', [StaffNewsletterController::class, 'index'])->name('newsletters.index');
         Route::get('/newsletters/new', [StaffNewsletterController::class, 'create'])->name('newsletters.create');

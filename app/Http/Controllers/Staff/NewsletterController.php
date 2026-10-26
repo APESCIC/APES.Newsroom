@@ -36,6 +36,12 @@ class NewsletterController extends Controller
                 'subscriptions as confirmed_count' => fn ($query) => $query->where('status', SubscriptionStatus::Confirmed),
                 'subscriptions as pending_count' => fn ($query) => $query->where('status', SubscriptionStatus::Pending),
                 'subscriptions as unsubscribed_count' => fn ($query) => $query->where('status', SubscriptionStatus::Unsubscribed),
+                'subscriptions as account_confirmed_count' => fn ($query) => $query
+                    ->where('status', SubscriptionStatus::Confirmed)
+                    ->whereHas('contact', fn ($contact) => $contact->whereNotNull('user_id')),
+                'subscriptions as mailing_only_confirmed_count' => fn ($query) => $query
+                    ->where('status', SubscriptionStatus::Confirmed)
+                    ->whereHas('contact', fn ($contact) => $contact->whereNull('user_id')),
             ])
             ->orderBy('name')
             ->get()
@@ -56,6 +62,8 @@ class NewsletterController extends Controller
                 'confirmed_count' => (int) $newsletter->confirmed_count,
                 'pending_count' => (int) $newsletter->pending_count,
                 'unsubscribed_count' => (int) $newsletter->unsubscribed_count,
+                'account_confirmed_count' => (int) $newsletter->account_confirmed_count,
+                'mailing_only_confirmed_count' => (int) $newsletter->mailing_only_confirmed_count,
             ]);
 
         return Inertia::render('Staff/Newsletters/Index', [

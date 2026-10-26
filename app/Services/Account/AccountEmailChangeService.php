@@ -164,7 +164,7 @@ class AccountEmailChangeService
     private function transferMailingConsent(User $user, string $oldEmail, string $newEmail, ?string $ip, ?string $userAgent): array
     {
         $oldContact = MailingContact::query()
-            ->where('email', $oldEmail)
+            ->forNormalizedEmail($oldEmail)
             ->lockForUpdate()
             ->first();
 
@@ -218,7 +218,7 @@ class AccountEmailChangeService
         $oldContact->update(['user_id' => null]);
 
         $newContact = MailingContact::query()
-            ->where('email', $newEmail)
+            ->forNormalizedEmail($newEmail)
             ->lockForUpdate()
             ->first();
 
@@ -227,6 +227,10 @@ class AccountEmailChangeService
                 'email' => $newEmail,
                 'user_id' => $user->id,
             ]);
+        } elseif ($newContact->user_id !== null && (int) $newContact->user_id !== (int) $user->id) {
+            // New address already claimed — clear the other link so unique user_id holds.
+            $newContact->update(['user_id' => null]);
+            $newContact->update(['user_id' => $user->id]);
         } elseif ($newContact->user_id !== $user->id) {
             $newContact->update(['user_id' => $user->id]);
         }

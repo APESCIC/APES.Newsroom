@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Mailing;
 
 use App\Enums\MailingList;
+use App\Enums\SubscriptionStatus;
 use App\Http\Controllers\Controller;
+use App\Models\MailingContact;
+use App\Models\MailingListSubscription;
 use App\Services\Mailing\ConsentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -31,14 +34,42 @@ class PreferenceController extends Controller
 
     public function showAccount(Request $request): Response
     {
-        $email = strtolower($request->user()->email);
+        $user = $request->user();
+        $email = strtolower($user->email);
 
         return Inertia::render('Mailing/Preferences', [
             'email' => $email,
             'lists' => array_values($this->consent->preferenceStateForEmail($email)),
             'newsletters' => $this->consent->extraNewsletterStateForEmail($email),
             'signed' => false,
+            'matched_mailing_notice' => $this->matchedMailingNotice($user),
         ]);
+    }
+
+    /**
+     * @return array{newsletters: list<string>}|null
+     */
+    private function matchedMailingNotice($user): ?array
+    {
+        if (! $user->matched_mailing_notice_pending) {
+            return null;
+        }
+
+        $contact = MailingContact::query()->forNormalizedEmail((string) $user->email)->first();
+        if (! $contact) {
+            return null;
+        }
+
+        $names = $contact->subscriptions()
+            ->with('newsletter')
+            ->whereIn('status', [SubscriptionStatus::Confirmed, SubscriptionStatus::Pending])
+            ->get()
+            ->map(fn (MailingListSubscription $sub) => $sub->newsletter?->name ?? $sub->list?->label() ?? 'Newsletter')
+            ->unique()
+            ->values()
+            ->all();
+
+        return $names === [] ? null : ['newsletters' => $names];
     }
 
     public function updateSigned(Request $request): RedirectResponse

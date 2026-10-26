@@ -18,7 +18,9 @@ export default function Rights() {
                         <Link href="/account">Account</Link>.
                     </li>
                     <li>
-                        <strong>Erasure:</strong> delete your account from the account settings page.
+                        <strong>Erasure:</strong> delete your account from the account settings page. By default we keep your
+                        newsletter subscriptions as a mailing-list-only contact (no account). Uncheck{' '}
+                        <em>Keep my newsletter subscriptions</em> on the account page if you want those removed too.
                     </li>
                     <li>
                         <strong>Mailing consent:</strong> manage lists at <Link href="/account/mailing">Account → Mailing</Link>,

@@ -1,0 +1,25 @@
+{
+  "version": "v1.17.0",
+  "slug": "release-v1-17-0",
+  "released_at": "2026-10-26",
+  "previous_version": "v1.16.1",
+  "theme": "Mailing-only subscribers",
+  "change_types": ["added"],
+  "topic_tags": ["public-facing", "internal-only"],
+  "summary": "Staff can review mailing-list-only subscribers, and registering an account links matching list signups after email verification without undoing opt-outs.",
+  "detailed_changes": [
+    "Staff get a mailing-list-only subscribers page at /staff/subscribers with search, filters, pagination and audited CSV export (#504).",
+    "Newsletter index shows account-holder versus mailing-only confirmed counts (#505).",
+    "Signup matching links an existing mailing contact only after email verification or Cloudron SSO, without duplicating contacts or resetting opt-outs (#506, #508).",
+    "Members see a one-shot notice when existing subscriptions are matched, with a link to manage preferences (#507).",
+    "Account deletion offers Keep my newsletter subscriptions (default on); privacy and rights pages describe the choice (#509)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff/subscribers, /staff/newsletters, /register, /account, /account/mailing, /legal/rights, /legal/privacy",
+    "User groups affected: staff reviewing mailing lists; readers registering or deleting accounts",
+    "Public impact: safer signup matching and clearer erasure choices for newsletters",
+    "Internal impact: LinkMailingContactService, newsroom:link-mailing-contacts artisan command, mailing_contacts.email_normalized"
+  ],
+  "pr": 0
+}

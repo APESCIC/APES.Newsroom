@@ -24,7 +24,7 @@ The migration seeds one active newsletter per channel list and copies `legacy_li
 
 Channel signup still writes `mailing_list_subscriptions.list`. New signups also set `newsletter_id` when a seeded newsletter matches that list. Unique `(mailing_contact_id, list)` remains for channel rows. Unique `(mailing_contact_id, newsletter_id)` covers newsletter membership, stored as `mailing_subs_contact_newsletter_uq` so the name stays within MySQL's 64-character identifier limit. The migration skips steps that already exist, so a deploy that failed on that index can be retried.
 
-Staff manage newsletters at `/staff/newsletters`. The index shows confirmed, pending and unsubscribed counts separately.
+Staff manage newsletters at `/staff/newsletters`. The index shows confirmed, pending and unsubscribed counts separately, plus **account-holder** vs **mailing-only** confirmed counts. Mailing-list-only contacts (no account) are listed at `/staff/subscribers` — see [`docs/staff-subscribers.md`](staff-subscribers.md).
 
 ## Senders and verification
 
@@ -60,4 +60,4 @@ It reads the same export shapes as `ghost:import-content`. It only moves posts t
 
 ## Signup default
 
-Newsletters with `subscribe_on_signup` appear as unticked checkboxes on `/register`. Ticked ones start as pending and are confirmed when the member verifies their account email. That is one email, and it is still double opt-in. Imports never apply this default.
+Newsletters with `subscribe_on_signup` appear as unticked checkboxes on `/register`. Ticked ones start as pending and are confirmed when the member verifies their account email. That is one email, and it is still double opt-in. Imports never apply this default. Opt-outs and suppressions on an existing mailing contact are never reset by registration ticks. Linking a pre-existing contact to the new account waits until the email is verified (see [`docs/staff-subscribers.md`](staff-subscribers.md)).
