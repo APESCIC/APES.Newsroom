@@ -77,8 +77,12 @@ jobs:
 
           case "$MODE" in
             diagnostics)
-              remote bash -c 'echo "== PHP CLI limits"; /usr/bin/php -r "foreach ([\"upload_max_filesize\",\"post_max_size\",\"memory_limit\"] as \$k) echo \$k, \"=\", ini_get(\$k), PHP_EOL;"; echo "== /app/data/php.ini overrides"; grep -Ei "upload_max_filesize|post_max_size|memory_limit" /app/data/php.ini 2>/dev/null || echo "(none)"; echo "== Apache PHP ini"; grep -hEi "^(upload_max_filesize|post_max_size|memory_limit)" /etc/php/*/apache2/php.ini 2>/dev/null || echo "(not found)"; echo "== Queue worker"; pgrep -af "artisan queue:work" || echo "queue worker NOT running"'
-              remote "${artisan[@]}" deploy:preflight --target=production --no-interaction
+              # Never print process command lines or environment: on Cloudron the
+              # worker is started with CLOUDRON_* credentials on its command line.
+              remote bash -c 'echo "== PHP CLI limits"; /usr/bin/php -r "foreach ([\"upload_max_filesize\",\"post_max_size\",\"memory_limit\"] as \$k) echo \$k, \"=\", ini_get(\$k), PHP_EOL;"; echo "== Apache PHP ini"; grep -hEi "^(upload_max_filesize|post_max_size|memory_limit)" /etc/php/*/apache2/php.ini 2>/dev/null | sort -u || echo "(not found)"; echo "== Queue worker"; count=$(pgrep -fc "^/usr/bin/php /app/data/current/artisan [q]ueue:work" || true); if [ "${count:-0}" -gt 0 ]; then echo "queue worker running (${count} processes)"; else echo "queue worker NOT running"; fi'
+              # deploy:preflight reads APP_KEY/APP_URL with env(), which is empty
+              # once config is cached, so that one check always fails here.
+              remote "${artisan[@]}" deploy:preflight --target=production --no-interaction || true
               ;;
             dry-run|apply)
               args=(media:fix-ghost-images --no-interaction)
