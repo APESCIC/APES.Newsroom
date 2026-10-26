@@ -31,5 +31,5 @@
     "Public impact: none",
     "Internal impact: new integration_secrets and integration_check_results tables; integrations:check scheduled hourly; auth.recent accepts a stricter window; integration-keys rate limiter"
   ],
-  "pr": 0
+  "pr": 512
 }
