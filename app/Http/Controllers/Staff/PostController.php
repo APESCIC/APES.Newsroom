@@ -22,6 +22,8 @@ use App\Services\EditorJs\EditorContent;
 use App\Services\Integrations\SlackEditorialNotifier;
 use App\Services\Mailing\CampaignSender;
 use App\Services\Mailing\CampaignService;
+use App\Services\Media\HeroImageInput;
+use App\Services\Publishing\HeroImageRequirements;
 use App\Services\Publishing\PublicArticlePresenter;
 use App\Services\Webhooks\OutboundWebhookDispatcher;
 use Illuminate\Http\RedirectResponse;
@@ -43,6 +45,8 @@ class PostController extends Controller
         private readonly SlackEditorialNotifier $slack,
         private readonly CampaignSender $sender,
         private readonly PublicChannels $publicChannels,
+        private readonly HeroImageInput $heroInput,
+        private readonly HeroImageRequirements $heroRequirements,
     ) {}
 
     public function index(Request $request): Response
@@ -135,12 +139,13 @@ class PostController extends Controller
                 ]),
             'canPublish' => $request->user()->can('publish', Post::class),
             'revisions' => [],
+            'heroUpload' => HeroImageInput::uploadLimits(),
         ]);
     }
 
     public function store(StorePostRequest $request): RedirectResponse
     {
-        $validated = $request->validated();
+        $validated = $this->heroInput->normalize($request->validated());
         $content = $this->editorContent->fromPayload($validated);
         $validated = EditorContent::withoutEditorFields($validated);
         $tags = $validated['tags'] ?? [];
@@ -159,6 +164,7 @@ class PostController extends Controller
         $this->syncTags($post, $tags);
         $this->syncAuthors($post, $coAuthorIds);
         $this->saveRevision($post, $request->user()->id);
+        $this->heroInput->afterSave($post);
 
         return redirect()->route('staff.posts.edit', $post);
     }
@@ -189,6 +195,7 @@ class PostController extends Controller
                 'editor' => $revision->editor?->name,
                 'created_at' => $revision->created_at?->toIso8601String(),
             ]),
+            'heroUpload' => HeroImageInput::uploadLimits(),
         ]);
     }
 
@@ -196,7 +203,7 @@ class PostController extends Controller
     {
         $this->authorizeEdit($post);
 
-        $validated = $request->validated();
+        $validated = $this->heroInput->normalize($request->validated());
 
         if (isset($validated['expected_updated_at'])) {
             $expected = $validated['expected_updated_at'];
@@ -227,6 +234,7 @@ class PostController extends Controller
         $this->syncTags($post, $tags);
         $this->syncAuthors($post, $coAuthorIds);
         $this->saveRevision($post, $request->user()->id);
+        $this->heroInput->afterSave($post);
 
         if ($wasPublished && $oldSlug !== $post->slug) {
             Redirect::query()->updateOrCreate(
@@ -273,6 +281,7 @@ class PostController extends Controller
         $this->authorizePublish();
 
         $request->validate(['scheduled_for' => ['required', 'date', 'after:now']]);
+        $this->heroRequirements->assertPublishable($post);
 
         $post->update([
             'status' => PostStatus::Scheduled,
@@ -300,6 +309,7 @@ class PostController extends Controller
                 ]);
             }
 
+            $this->heroRequirements->assertPublishable($lockedPost);
             $this->campaigns->assertSenderVerified($lockedPost);
 
             $lockedPost->update([
@@ -474,6 +484,10 @@ class PostController extends Controller
             'hero_image_alt' => $post->hero_image_alt,
             'hero_image_caption' => $post->hero_image_caption,
             'hero_image_credit' => $post->hero_image_credit,
+            'hero_media_id' => $post->hero_media_id,
+            'hero_focal_x' => $post->hero_focal_x,
+            'hero_focal_y' => $post->hero_focal_y,
+            'hero_media' => $post->heroMedia?->editorPayload(),
             'meta_title' => $post->meta_title,
             'meta_description' => $post->meta_description,
             'canonical_url' => $post->canonical_url,

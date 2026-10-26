@@ -3,7 +3,8 @@ import { FormEventHandler, useEffect, useRef, useState } from 'react';
 import type { OutputData } from '@editorjs/editorjs';
 import EditorField from '../../../Components/editor/EditorField';
 import EditorSessionNotice from '../../../Components/editor/EditorSessionNotice';
-import UnsplashPicker from '../../../Components/Staff/UnsplashPicker';
+import HeroImageField from '../../../Components/Staff/HeroImageField';
+import type { HeroMediaAsset, HeroUploadLimits } from '../../../Components/Staff/heroImageUpload';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
 import type { EditorDriver } from '../../../types/editor';
 import type { SharedPageProps } from '../../../types/page';
@@ -21,6 +22,10 @@ type PageData = {
     hero_image_alt: string | null;
     hero_image_caption: string | null;
     hero_image_credit: string | null;
+    hero_media_id?: number | null;
+    hero_focal_x?: number | null;
+    hero_focal_y?: number | null;
+    hero_media?: HeroMediaAsset | null;
     meta_title: string | null;
     meta_description: string | null;
     canonical_url: string | null;
@@ -45,6 +50,9 @@ type PageForm = {
     hero_image_alt: string;
     hero_image_caption: string;
     hero_image_credit: string;
+    hero_media_id: number | null;
+    hero_focal_x: number | null;
+    hero_focal_y: number | null;
     meta_title: string;
     meta_description: string;
     canonical_url: string;
@@ -66,6 +74,9 @@ function formFromPage(page: PageData | null, editor: EditorDriver): PageForm {
         hero_image_alt: page?.hero_image_alt ?? '',
         hero_image_caption: page?.hero_image_caption ?? '',
         hero_image_credit: page?.hero_image_credit ?? '',
+        hero_media_id: page?.hero_media_id ?? null,
+        hero_focal_x: page?.hero_focal_x ?? null,
+        hero_focal_y: page?.hero_focal_y ?? null,
         meta_title: page?.meta_title ?? '',
         meta_description: page?.meta_description ?? '',
         canonical_url: page?.canonical_url ?? '',
@@ -73,7 +84,7 @@ function formFromPage(page: PageData | null, editor: EditorDriver): PageForm {
     };
 }
 
-export default function PagesEdit({ page }: { page: PageData | null }) {
+export default function PagesEdit({ page, heroUpload }: { page: PageData | null; heroUpload?: HeroUploadLimits }) {
     const inertiaPage = usePage<SharedPageProps>();
     const pageErrors = (inertiaPage.props as { errors?: FormErrors }).errors ?? {};
     const siteEditor = inertiaPage.props.editorDriver ?? 'editorjs';
@@ -210,12 +221,19 @@ export default function PagesEdit({ page }: { page: PageData | null }) {
                     )}
                 </div>
 
+                <HeroImageField
+                    idPrefix="page-hero"
+                    value={data}
+                    asset={page?.hero_media ?? null}
+                    limits={heroUpload}
+                    errors={errors}
+                    onChange={(patch) => setData((current) => ({ ...current, ...patch }))}
+                />
+
                 <fieldset className="grid gap-3 md:grid-cols-2">
-                    <legend className="mb-1 text-sm font-semibold">Hero & SEO</legend>
+                    <legend className="mb-1 text-sm font-semibold">SEO</legend>
                     {(
                         [
-                            ['hero_image', 'Hero image URL'],
-                            ['hero_image_alt', 'Hero alt'],
                             ['meta_title', 'Meta title'],
                             ['canonical_url', 'Canonical URL'],
                         ] as const
@@ -238,26 +256,6 @@ export default function PagesEdit({ page }: { page: PageData | null }) {
                             onChange={(e) => setData('meta_description', e.target.value)}
                         />
                     </label>
-                    <label className="block text-sm md:col-span-2">
-                        <span>Hero credit</span>
-                        <input
-                            className="mt-1 w-full rounded-control border border-border px-3 py-2"
-                            value={data.hero_image_credit}
-                            onChange={(e) => setData('hero_image_credit', e.target.value)}
-                        />
-                    </label>
-                    <div className="md:col-span-2">
-                        <UnsplashPicker
-                            onSelect={({ url, credit, alt }) => {
-                                setData((current) => ({
-                                    ...current,
-                                    hero_image: url,
-                                    hero_image_credit: credit,
-                                    hero_image_alt: alt || current.hero_image_alt,
-                                }));
-                            }}
-                        />
-                    </div>
                 </fieldset>
 
                 <div className="flex flex-wrap gap-3">

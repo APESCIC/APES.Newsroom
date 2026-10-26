@@ -7,6 +7,7 @@ use App\Enums\ContentVisibility;
 use App\Enums\MailingList;
 use App\Http\Controllers\Controller;
 use App\Models\Post;
+use App\Services\Media\HeroImageInput;
 use App\Services\Publishing\EditorialPostWriter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -98,6 +99,7 @@ class AdminPostController extends Controller
             'hero_image_alt' => ['nullable', 'string', 'max:255'],
             'hero_image_caption' => ['nullable', 'string', 'max:500'],
             'hero_image_credit' => ['nullable', 'string', 'max:255'],
+            ...HeroImageInput::rules(),
             'meta_title' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:500'],
             'canonical_url' => ['nullable', 'url', 'max:2048'],
@@ -140,7 +142,9 @@ class AdminPostController extends Controller
         if ($full) {
             $payload['content'] = $post->content;
             $payload['hero_image'] = $post->hero_image;
+            $payload['hero_image_alt'] = $post->hero_image_alt;
             $payload['hero_image_credit'] = $post->hero_image_credit;
+            $payload['hero_media_id'] = $post->hero_media_id;
             $payload['meta_title'] = $post->meta_title;
             $payload['meta_description'] = $post->meta_description;
         }

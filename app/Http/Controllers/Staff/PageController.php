@@ -9,6 +9,8 @@ use App\Http\Requests\Staff\UpdatePageRequest;
 use App\Models\Page;
 use App\Models\Redirect;
 use App\Services\EditorJs\EditorContent;
+use App\Services\Media\HeroImageInput;
+use App\Services\Publishing\HeroImageRequirements;
 use App\Services\Publishing\PublicPagePresenter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,6 +24,8 @@ class PageController extends Controller
 {
     public function __construct(
         private readonly EditorContent $editorContent,
+        private readonly HeroImageInput $heroInput,
+        private readonly HeroImageRequirements $heroRequirements,
     ) {}
 
     public function index(Request $request): Response
@@ -55,12 +59,13 @@ class PageController extends Controller
     {
         return Inertia::render('Staff/Pages/Edit', [
             'page' => null,
+            'heroUpload' => HeroImageInput::uploadLimits(),
         ]);
     }
 
     public function store(StorePageRequest $request): RedirectResponse
     {
-        $validated = $request->validated();
+        $validated = $this->heroInput->normalize($request->validated());
         $content = $this->editorContent->fromPayload($validated);
         $validated = EditorContent::withoutEditorFields($validated);
         unset($validated['expected_updated_at']);
@@ -72,6 +77,7 @@ class PageController extends Controller
             'author_id' => $request->user()->id,
             'status' => PostStatus::Draft,
         ]);
+        $this->heroInput->afterSave($page);
 
         return redirect()->route('staff.pages.edit', $page);
     }
@@ -82,6 +88,7 @@ class PageController extends Controller
 
         return Inertia::render('Staff/Pages/Edit', [
             'page' => $this->editPayload($page),
+            'heroUpload' => HeroImageInput::uploadLimits(),
         ]);
     }
 
@@ -89,7 +96,7 @@ class PageController extends Controller
     {
         $this->authorizeEdit($request, $page);
 
-        $validated = $request->validated();
+        $validated = $this->heroInput->normalize($request->validated());
         $this->assertNoConflict($page, $validated['expected_updated_at'] ?? null);
         unset($validated['expected_updated_at']);
 
@@ -103,6 +110,7 @@ class PageController extends Controller
             'content' => $content,
         ]);
         $page->save();
+        $this->heroInput->afterSave($page);
 
         if ($wasPublished && $oldSlug !== $page->slug) {
             Redirect::query()->updateOrCreate(
@@ -117,6 +125,7 @@ class PageController extends Controller
     public function publish(Request $request, Page $page): RedirectResponse
     {
         $this->authorizeEdit($request, $page);
+        $this->heroRequirements->assertPublishable($page);
 
         $page->status = PostStatus::Published;
         $page->published_at = $page->published_at ?? now();
@@ -194,6 +203,10 @@ class PageController extends Controller
             'hero_image_alt' => $page->hero_image_alt,
             'hero_image_caption' => $page->hero_image_caption,
             'hero_image_credit' => $page->hero_image_credit,
+            'hero_media_id' => $page->hero_media_id,
+            'hero_focal_x' => $page->hero_focal_x,
+            'hero_focal_y' => $page->hero_focal_y,
+            'hero_media' => $page->heroMedia?->editorPayload(),
             'meta_title' => $page->meta_title,
             'meta_description' => $page->meta_description,
             'canonical_url' => $page->canonical_url,

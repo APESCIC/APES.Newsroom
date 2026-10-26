@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import type { OutputData } from '@editorjs/editorjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type * as HeroUploadModule from '../Components/Staff/heroImageUpload';
 import PostEdit from '../Pages/Staff/Posts/Edit';
 import { getInertiaMock, setMockPage } from '../test/inertia';
 import type { SharedPageProps } from '../types/page';
@@ -25,6 +26,13 @@ vi.mock('../Components/editor/TinyMceField', () => ({
             </button>
         </>
     ),
+}));
+
+const { uploadHeroImage } = vi.hoisted(() => ({ uploadHeroImage: vi.fn() }));
+
+vi.mock('../Components/Staff/heroImageUpload', async (importOriginal) => ({
+    ...(await importOriginal<typeof HeroUploadModule>()),
+    uploadHeroImage,
 }));
 
 const content: OutputData = { blocks: [{ type: 'paragraph', data: { text: 'Original' } }] };
@@ -199,10 +207,10 @@ describe('post editor autosave', () => {
         expect(screen.getByLabelText('Excerpt')).toHaveValue('Server-normalized excerpt');
         expect(screen.getByTestId('editor-content')).toHaveTextContent(JSON.stringify(normalizedContent));
         expect(screen.getByLabelText('Channel')).toHaveValue('wildlife');
-        expect(screen.getByPlaceholderText('Image URL')).toHaveValue('https://cdn.example.test/normalized.jpg');
-        expect(screen.getByPlaceholderText('Alt text')).toHaveValue('Server-normalized alt text');
-        expect(screen.getByPlaceholderText('Caption')).toHaveValue('Server-normalized caption');
-        expect(screen.getByPlaceholderText('Credit')).toHaveValue('Server-normalized credit');
+        expect(screen.getByLabelText('Image URL')).toHaveValue('https://cdn.example.test/normalized.jpg');
+        expect(screen.getByLabelText('Alt text (required to publish)')).toHaveValue('Server-normalized alt text');
+        expect(screen.getByLabelText('Caption (optional)')).toHaveValue('Server-normalized caption');
+        expect(screen.getByLabelText('Credit (optional)')).toHaveValue('Server-normalized credit');
         expect(screen.getByPlaceholderText('Meta title')).toHaveValue('Server-normalized meta title');
         expect(screen.getByPlaceholderText('Meta description')).toHaveValue('Server-normalized meta description');
         expect(screen.getByPlaceholderText('Canonical URL')).toHaveValue('https://www.apesnews.org.uk/articles/server-normalized');
@@ -288,6 +296,38 @@ describe('post editor autosave', () => {
         act(() => vi.advanceTimersByTime(16_000));
 
         expect(getInertiaMock().patch).not.toHaveBeenCalled();
+    });
+
+    it('autosaves a newly uploaded hero image with its media id and focal point', async () => {
+        uploadHeroImage.mockResolvedValueOnce({
+            id: 41,
+            url: 'http://localhost/storage/media/2026/10/abc/original.jpg',
+            status: 'ready',
+            failure_reason: null,
+            width: 1600,
+            height: 900,
+            mime: 'image/jpeg',
+            original_name: 'otters',
+            alt: null,
+            thumbnail_url: 'http://localhost/storage/media/2026/10/abc/w640.jpg',
+        });
+        render(<PostEdit post={persistedPost} {...props} />);
+
+        const file = new File(['jpeg-bytes'], 'otters.jpg', { type: 'image/jpeg' });
+        fireEvent.change(screen.getByLabelText('Hero image file'), { target: { files: [file] } });
+        await act(async () => {});
+        fireEvent.change(screen.getByLabelText(/^Horizontal/), { target: { value: '30' } });
+        fireEvent.change(screen.getByLabelText('Alt text (required to publish)'), { target: { value: 'Two otters' } });
+        act(() => vi.advanceTimersByTime(8_000));
+
+        expect(getInertiaMock().patch).toHaveBeenCalledTimes(1);
+        expect(getInertiaMock().patch.mock.calls[0][2]).toMatchObject({
+            hero_image: 'http://localhost/storage/media/2026/10/abc/original.jpg',
+            hero_media_id: 41,
+            hero_focal_x: 0.3,
+            hero_focal_y: 0.5,
+            hero_image_alt: 'Two otters',
+        });
     });
 
     it('sends Editor.js blocks with the editor it was opened in', () => {
