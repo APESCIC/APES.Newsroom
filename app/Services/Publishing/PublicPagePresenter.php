@@ -6,6 +6,7 @@ use App\Enums\ContentVisibility;
 use App\Models\Page;
 use App\Models\User;
 use App\Services\EditorJs\BlockRenderer;
+use App\Services\Media\HeroImagePresenter;
 use App\Services\Membership\ContentAccessService;
 
 class PublicPagePresenter
@@ -13,6 +14,7 @@ class PublicPagePresenter
     public function __construct(
         private readonly BlockRenderer $renderer,
         private readonly ContentAccessService $access,
+        private readonly HeroImagePresenter $heroImages,
     ) {}
 
     /**
@@ -20,7 +22,7 @@ class PublicPagePresenter
      */
     public function payload(Page $page, ?User $viewer = null): array
     {
-        $page->loadMissing(['author']);
+        $page->loadMissing(['author', 'heroMedia']);
 
         $url = route('pages.show', $page->slug, absolute: true);
         $visibility = $page->visibility instanceof ContentVisibility
@@ -47,7 +49,7 @@ class PublicPagePresenter
             'published_at' => $page->published_at?->toIso8601String(),
             'meta_title' => $page->meta_title ?? $page->title,
             'meta_description' => $page->meta_description ?? $page->excerpt,
-            'hero_image' => $this->nullableString($page->hero_image),
+            ...$this->heroImages->present($page),
             'hero_image_alt' => $this->nullableString($page->hero_image_alt),
             'hero_image_caption' => $this->nullableString($page->hero_image_caption),
             'hero_image_credit' => $this->nullableString($page->hero_image_credit),

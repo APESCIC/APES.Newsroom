@@ -4,6 +4,7 @@ import ChannelSection, { type HomeChannel } from '../Components/Home/ChannelSect
 import DeskPanel, { type PostCard } from '../Components/Home/DeskPanel';
 import RecentStoryCard from '../Components/Home/RecentStoryCard';
 import PublicLayout from '../Components/Layout/PublicLayout';
+import ResponsiveHeroImage from '../Components/Media/ResponsiveHeroImage';
 
 function FeaturedHeroImage({ featured }: { featured: PostCard }) {
     if (!featured.hero_image) {
@@ -26,12 +27,12 @@ function FeaturedHeroImage({ featured }: { featured: PostCard }) {
 
     return (
         <figure className="overflow-hidden rounded-feature border border-white/15">
-            <img
-                src={featured.hero_image}
+            <ResponsiveHeroImage
+                image={featured}
                 alt={featured.hero_image_alt ?? featured.title}
+                sizes="(min-width: 48rem) 36rem, 100vw"
                 className="aspect-[4/5] w-full object-cover sm:aspect-[3/4]"
-                loading="eager"
-                decoding="async"
+                priority
             />
         </figure>
     );

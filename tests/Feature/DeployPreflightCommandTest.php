@@ -28,6 +28,7 @@ class DeployPreflightCommandTest extends TestCase
 
         $this->assertSame(Command::SUCCESS, $tester->execute([]));
         $this->assertStringContainsString('up to date', $tester->getDisplay());
+        $this->assertStringContainsString('GD supports JPEG and WebP', $tester->getDisplay());
     }
 
     public function test_preflight_reports_when_migrations_are_pending(): void

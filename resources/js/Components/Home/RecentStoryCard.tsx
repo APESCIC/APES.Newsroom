@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { channelMeta } from '../../channelMeta';
 import LineIcon from '../Icons/LineIcon';
+import ResponsiveHeroImage from '../Media/ResponsiveHeroImage';
 import { formatStoryDate, type PostCard } from './DeskPanel';
 
 type RecentStoryCardProps = {
@@ -20,12 +21,10 @@ export default function RecentStoryCard({ post }: RecentStoryCardProps) {
                 }`}
             >
                 {post.hero_image ? (
-                    <img
-                        src={post.hero_image}
-                        alt={post.hero_image_alt ?? ''}
+                    <ResponsiveHeroImage
+                        image={post}
+                        sizes="(min-width: 64rem) 22rem, (min-width: 48rem) 45vw, 100vw"
                         className="h-full w-full object-cover"
-                        loading="lazy"
-                        decoding="async"
                     />
                 ) : (
                     <LineIcon name={meta?.icon ?? 'document'} className="h-16 w-16" />

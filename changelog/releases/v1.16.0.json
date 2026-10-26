@@ -1,0 +1,29 @@
+{
+  "version": "v1.16.0",
+  "slug": "release-v1-16-0",
+  "released_at": "2026-10-26",
+  "previous_version": "v1.15.1",
+  "theme": "Hero image uploads",
+  "change_types": [
+    "added"
+  ],
+  "topic_tags": [
+    "public-facing"
+  ],
+  "summary": "Staff can upload hero images from their device. Uploads are checked, stripped of location and camera data, and served in responsive sizes so stories load quickly.",
+  "detailed_changes": [
+    "A staff-only hero image upload accepts JPEG, PNG, WebP and AVIF up to 10 MB. The file type is checked from its contents, SVG is rejected, uploads are rate limited, and each file gets a random name (#533).",
+    "Location, camera and other EXIF data is removed from every uploaded image, and phone photos are turned the right way up first (#533).",
+    "Uploaded images are resized in the background into 640, 1200 and 2000 pixel wide WebP and JPEG versions (never enlarged), plus a 1200 x 630 crop for social sharing. The original is kept, and failures are reported back to staff (#534).",
+    "Home page cards, channel pages, articles and pages use responsive images with lazy loading below the fold, and link previews use the social crop (#534).",
+    "Hero images still pointing at Ghost's __GHOST_URL__ placeholder are no longer shown as broken images."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /, /{channel}, /articles/{slug}, /pages/{slug}, /staff/media/hero",
+    "User groups affected: all readers (faster hero images); staff (hero image uploads)",
+    "Public impact: responsive hero images and social previews; broken Ghost hero images hidden",
+    "Internal impact: new media_assets table, hero media and focal point columns on posts and pages, queued image processing; deploy:preflight checks GD JPEG and WebP support"
+  ],
+  "pr": 0
+}

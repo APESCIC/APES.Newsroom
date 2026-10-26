@@ -4,12 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use App\Services\Channels\PublicChannels;
+use App\Services\Media\HeroImagePresenter;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ChannelController extends Controller
 {
-    public function __construct(private readonly PublicChannels $channels) {}
+    public function __construct(
+        private readonly PublicChannels $channels,
+        private readonly HeroImagePresenter $heroImages,
+    ) {}
 
     public function show(string $channel): Response
     {
@@ -23,7 +27,7 @@ class ChannelController extends Controller
 
         $posts = Post::published()
             ->where('channel', $newsletter->channel)
-            ->with('author')
+            ->with(['author', 'heroMedia'])
             ->orderByDesc('featured')
             ->latest('published_at')
             ->paginate(12)
@@ -34,6 +38,8 @@ class ChannelController extends Controller
                 'author' => $post->author->name,
                 'published_at' => $post->published_at?->toIso8601String(),
                 'featured' => (bool) $post->featured,
+                ...$this->heroImages->present($post),
+                'hero_image_alt' => $post->hero_image_alt,
             ]);
 
         $seo = [

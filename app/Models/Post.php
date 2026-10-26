@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[Fillable([
     'ghost_id', 'author_id', 'title', 'slug', 'excerpt', 'content', 'body_text', 'status', 'visibility', 'channel',
     'hero_image', 'hero_image_alt', 'hero_image_caption', 'hero_image_credit',
+    'hero_media_id', 'hero_focal_x', 'hero_focal_y',
     'meta_title', 'meta_description', 'canonical_url', 'published_at',
     'scheduled_for', 'email_on_publish', 'mailing_lists', 'newsletter_segment_id', 'review_notes', 'needs_import_review',
     'featured',
@@ -51,6 +52,8 @@ class Post extends Model
             'mailing_lists' => 'array',
             'needs_import_review' => 'boolean',
             'featured' => 'boolean',
+            'hero_focal_x' => 'float',
+            'hero_focal_y' => 'float',
         ];
     }
 
@@ -60,6 +63,14 @@ class Post extends Model
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'author_id');
+    }
+
+    /**
+     * @return BelongsTo<MediaAsset, $this>
+     */
+    public function heroMedia(): BelongsTo
+    {
+        return $this->belongsTo(MediaAsset::class, 'hero_media_id');
     }
 
     /**

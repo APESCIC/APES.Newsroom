@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\Channel;
 use App\Models\Post;
 use App\Services\Channels\PublicChannels;
+use App\Services\Media\HeroImagePresenter;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -13,17 +14,20 @@ class HomeController extends Controller
 {
     private const CHANNEL_SECTION_POSTS = 3;
 
-    public function __construct(private readonly PublicChannels $channels) {}
+    public function __construct(
+        private readonly PublicChannels $channels,
+        private readonly HeroImagePresenter $heroImages,
+    ) {}
 
     public function __invoke(Request $request): Response
     {
         $featuredPost = Post::published()
             ->where('featured', true)
-            ->with('author')
+            ->with(['author', 'heroMedia'])
             ->latest('published_at')
             ->first();
 
-        $recentQuery = Post::published()->with('author')->latest('published_at');
+        $recentQuery = Post::published()->with(['author', 'heroMedia'])->latest('published_at');
         if ($featuredPost) {
             $recentQuery->where('id', '!=', $featuredPost->id);
         }
@@ -68,7 +72,7 @@ class HomeController extends Controller
             'channel_slug' => $post->channel->slug(),
             'author' => $post->author->name,
             'published_at' => $post->published_at?->toIso8601String(),
-            'hero_image' => $post->hero_image,
+            ...$this->heroImages->present($post),
             'hero_image_alt' => $post->hero_image_alt,
             'featured' => (bool) $post->featured,
         ];

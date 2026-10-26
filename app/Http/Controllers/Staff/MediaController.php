@@ -3,9 +3,13 @@
 namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
+use App\Models\MediaAsset;
 use App\Services\Integrations\UnsplashService;
+use App\Services\Media\HeroImageStore;
+use App\Services\Media\InvalidImageException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -103,6 +107,38 @@ class MediaController extends Controller
                 'size' => $sizeLabel,
             ],
         ]);
+    }
+
+    /**
+     * Hero image upload (#533): content-sniffed, metadata stripped, processed on the queue.
+     */
+    public function heroUpload(Request $request, HeroImageStore $store): JsonResponse
+    {
+        Gate::authorize('create', MediaAsset::class);
+
+        $maxKb = (int) config('newsroom.hero_uploads.max_kb', 10240);
+        $validated = $request->validate([
+            'file' => ['required', 'file', 'max:'.$maxKb],
+        ], [
+            'file.required' => 'Choose an image to upload.',
+            'file.uploaded' => 'The image could not be uploaded. It may be larger than the server allows.',
+            'file.max' => HeroImageStore::tooLargeMessage(),
+        ]);
+
+        try {
+            $asset = $store->storeUpload($validated['file'], $request->user());
+        } catch (InvalidImageException $e) {
+            throw ValidationException::withMessages(['file' => $e->getMessage()]);
+        }
+
+        return response()->json(['asset' => $asset->editorPayload()], $asset->wasRecentlyCreated ? 201 : 200);
+    }
+
+    public function show(MediaAsset $asset): JsonResponse
+    {
+        Gate::authorize('view', $asset);
+
+        return response()->json(['asset' => $asset->editorPayload()]);
     }
 
     public function unsplashSearch(Request $request, UnsplashService $unsplash): JsonResponse

@@ -2,9 +2,10 @@ import { Head, Link } from '@inertiajs/react';
 import { channelMeta, channelTintClass } from '../../channelMeta';
 import LineIcon from '../../Components/Icons/LineIcon';
 import PublicLayout from '../../Components/Layout/PublicLayout';
+import ResponsiveHeroImage, { type HeroImageFields } from '../../Components/Media/ResponsiveHeroImage';
 import type { PublicChannel } from '../../types/page';
 
-type Post = {
+type Post = HeroImageFields & {
     title: string;
     slug: string;
     excerpt: string | null;
@@ -76,6 +77,15 @@ export default function ChannelShow({
                         <ul className="grid gap-8 md:grid-cols-2">
                             {posts.data.map((post) => (
                                 <li key={post.slug} className="glass-story-card">
+                                    {post.hero_image && (
+                                        <div className="mb-4 aspect-video overflow-hidden rounded-control border border-white/15">
+                                            <ResponsiveHeroImage
+                                                image={post}
+                                                sizes="(min-width: 48rem) 34rem, 100vw"
+                                                className="h-full w-full object-cover"
+                                            />
+                                        </div>
+                                    )}
                                     <h2 className="text-lg font-bold text-on-glass">
                                         <Link href={`/articles/${post.slug}`} className="hover:text-brand-teal hover:underline">
                                             {post.title}

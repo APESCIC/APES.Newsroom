@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[Fillable([
     'ghost_id', 'author_id', 'title', 'slug', 'excerpt', 'content', 'status', 'visibility',
     'hero_image', 'hero_image_alt', 'hero_image_caption', 'hero_image_credit',
+    'hero_media_id', 'hero_focal_x', 'hero_focal_y',
     'meta_title', 'meta_description', 'canonical_url', 'published_at',
 ])]
 class Page extends Model
@@ -29,6 +30,8 @@ class Page extends Model
             'status' => PostStatus::class,
             'visibility' => ContentVisibility::class,
             'published_at' => 'datetime',
+            'hero_focal_x' => 'float',
+            'hero_focal_y' => 'float',
         ];
     }
 
@@ -38,6 +41,14 @@ class Page extends Model
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'author_id');
+    }
+
+    /**
+     * @return BelongsTo<MediaAsset, $this>
+     */
+    public function heroMedia(): BelongsTo
+    {
+        return $this->belongsTo(MediaAsset::class, 'hero_media_id');
     }
 
     /**

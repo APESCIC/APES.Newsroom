@@ -6,6 +6,7 @@ use App\Enums\ContentVisibility;
 use App\Models\Post;
 use App\Models\User;
 use App\Services\EditorJs\BlockRenderer;
+use App\Services\Media\HeroImagePresenter;
 use App\Services\Membership\ContentAccessService;
 
 class PublicArticlePresenter
@@ -13,6 +14,7 @@ class PublicArticlePresenter
     public function __construct(
         private readonly BlockRenderer $renderer,
         private readonly ContentAccessService $access,
+        private readonly HeroImagePresenter $heroImages,
     ) {}
 
     /**
@@ -20,7 +22,7 @@ class PublicArticlePresenter
      */
     public function payload(Post $post, ?User $viewer = null): array
     {
-        $post->loadMissing(['author', 'authors', 'tags']);
+        $post->loadMissing(['author', 'authors', 'tags', 'heroMedia']);
 
         $url = route('articles.show', $post->slug, absolute: true);
         $visibility = $post->visibility instanceof ContentVisibility
@@ -63,7 +65,7 @@ class PublicArticlePresenter
                     'name' => $tag->name,
                     'slug' => $tag->slug,
                 ])->values()->all(),
-            'hero_image' => $this->nullableString($post->hero_image),
+            ...$this->heroImages->present($post),
             'hero_image_alt' => $this->nullableString($post->hero_image_alt),
             'hero_image_caption' => $this->nullableString($post->hero_image_caption),
             'hero_image_credit' => $this->nullableString($post->hero_image_credit),

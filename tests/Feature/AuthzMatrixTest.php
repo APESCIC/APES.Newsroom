@@ -9,6 +9,7 @@ use App\Models\AuditLog;
 use App\Models\Comment;
 use App\Models\ContentApiKey;
 use App\Models\ImportRun;
+use App\Models\MediaAsset;
 use App\Models\MembershipPlan;
 use App\Models\ModerationReport;
 use App\Models\Newsletter;
@@ -91,7 +92,9 @@ class AuthzMatrixTest extends TestCase
         'staff.ai.status' => Role::Staff,
         'staff.ai.suggest' => Role::Staff,
         'staff.media.by-url' => Role::Staff,
+        'staff.media.hero.upload' => Role::Staff,
         'staff.media.link-meta' => Role::Staff,
+        'staff.media.show' => Role::Staff,
         'staff.media.unsplash.search' => Role::Staff,
         'staff.media.unsplash.select' => Role::Staff,
         'staff.media.upload' => Role::Staff,
@@ -380,6 +383,16 @@ class AuthzMatrixTest extends TestCase
                     'reason' => 'Report',
                 ]),
                 'plan' => MembershipPlan::query()->firstOrFail(),
+                'asset' => MediaAsset::query()->create([
+                    'uuid' => (string) Str::uuid(),
+                    'disk' => 'public',
+                    'path' => 'media/matrix/original.jpg',
+                    'mime' => 'image/jpeg',
+                    'width' => 10,
+                    'height' => 10,
+                    'bytes' => 100,
+                    'sha256' => hash('sha256', Str::random(16)),
+                ]),
                 'provider' => 'unsplash',
                 'key' => 'access_key',
                 'newsletter' => Newsletter::query()->create([

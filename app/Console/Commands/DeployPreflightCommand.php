@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Services\Media\ImageCodec;
 use App\Support\DemoAccounts;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
@@ -49,6 +50,7 @@ class DeployPreflightCommand extends Command
         $this->checkDatabase();
         $this->checkRedis();
         $this->checkPendingMigrations();
+        $this->checkImageProcessing();
         $this->checkDemoAccounts();
 
         $this->newLine();
@@ -184,6 +186,25 @@ class DeployPreflightCommand extends Command
         } catch (Throwable $e) {
             $this->record('database.migrations_pending', false, 'could not determine migration status');
         }
+    }
+
+    /**
+     * Hero image uploads (#532) need GD with JPEG and WebP; AVIF is optional.
+     */
+    private function checkImageProcessing(): void
+    {
+        $codec = app(ImageCodec::class);
+        $missing = collect(['image/jpeg' => 'JPEG', 'image/webp' => 'WebP'])
+            ->reject(fn (string $label, string $mime) => $codec->supports($mime))
+            ->values();
+
+        $this->record(
+            'media.gd_formats',
+            $missing->isEmpty(),
+            $missing->isEmpty()
+                ? 'GD supports JPEG and WebP'.($codec->supports('image/avif') ? ' (AVIF uploads enabled)' : ' (AVIF uploads disabled)')
+                : 'GD is missing: '.$missing->join(', ')
+        );
     }
 
     /**

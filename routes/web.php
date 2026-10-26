@@ -306,6 +306,10 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
         Route::post('/media/by-url', [StaffMediaController::class, 'byUrl'])->name('media.by-url');
         Route::post('/media/link-meta', [StaffMediaController::class, 'linkMeta'])->name('media.link-meta');
         Route::post('/media/upload', [StaffMediaController::class, 'upload'])->name('media.upload');
+        Route::post('/media/hero', [StaffMediaController::class, 'heroUpload'])
+            ->middleware('throttle:media-upload')
+            ->name('media.hero.upload');
+        Route::get('/media/{asset}', [StaffMediaController::class, 'show'])->whereNumber('asset')->name('media.show');
         Route::get('/media/unsplash', [StaffMediaController::class, 'unsplashSearch'])->name('media.unsplash.search');
         Route::post('/media/unsplash/select', [StaffMediaController::class, 'unsplashSelect'])->name('media.unsplash.select');
         Route::get('/ai/status', [StaffAiAssistController::class, 'status'])->name('ai.status');
