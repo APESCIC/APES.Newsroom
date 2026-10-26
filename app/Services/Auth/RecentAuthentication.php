@@ -45,15 +45,23 @@ class RecentAuthentication
         }
     }
 
-    public function isRecent(Request $request): bool
+    /**
+     * @param  int|null  $withinSeconds  A stricter window for especially sensitive actions; never looser than the configured timeout.
+     */
+    public function isRecent(Request $request, ?int $withinSeconds = null): bool
     {
         if (! $request->hasSession()) {
             return false;
         }
 
+        $window = max(60, (int) config('security.reauth_timeout', 900));
+        if ($withinSeconds !== null) {
+            $window = min($window, max(60, $withinSeconds));
+        }
+
         $at = (int) $request->session()->get(self::SESSION_KEY, 0);
 
-        return $at > 0 && now()->getTimestamp() - $at <= max(60, (int) config('security.reauth_timeout', 900));
+        return $at > 0 && now()->getTimestamp() - $at <= $window;
     }
 
     /**

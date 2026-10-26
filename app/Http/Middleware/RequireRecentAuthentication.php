@@ -11,9 +11,12 @@ class RequireRecentAuthentication
 {
     public function __construct(private readonly RecentAuthentication $recent) {}
 
-    public function handle(Request $request, Closure $next): Response
+    /**
+     * Use as `auth.recent` or `auth.recent:300` for a stricter window in seconds.
+     */
+    public function handle(Request $request, Closure $next, ?string $withinSeconds = null): Response
     {
-        if ($this->recent->isRecent($request)) {
+        if ($this->recent->isRecent($request, $withinSeconds === null ? null : (int) $withinSeconds)) {
             return $next($request);
         }
 

@@ -70,6 +70,8 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->dontFlash(['secret_value']);
+
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
@@ -84,7 +86,7 @@ return Application::configure(basePath: dirname(__DIR__))
             $seconds = (int) ($e->getHeaders()['Retry-After'] ?? 60);
 
             return back()
-                ->withInput($request->except('password', 'password_confirmation'))
+                ->withInput($request->except('password', 'password_confirmation', 'secret_value'))
                 ->withErrors(['email' => "Too many attempts. Please try again in {$seconds} seconds."]);
         });
 
