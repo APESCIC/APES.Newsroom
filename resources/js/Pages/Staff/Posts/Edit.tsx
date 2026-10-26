@@ -10,7 +10,9 @@ import type { EditorDriver } from '../../../types/editor';
 import type { SharedPageProps } from '../../../types/page';
 
 type Channel = { value: string; label: string };
-type MailingListOption = { value: string; label: string };
+type SenderOption = { name: string | null; address: string; verified: boolean } | null;
+type MailingListOption = { value: string; label: string; sender: SenderOption };
+type SegmentOption = { id: number; name: string; newsletter: string; also: string; sender: SenderOption };
 type Revision = { id: number; title: string; editor: string | null; created_at: string | null };
 
 type PostData = {
@@ -177,6 +179,37 @@ function FieldError({ message }: { message?: string }) {
     );
 }
 
+function CampaignSenderNote({
+    mailingLists,
+    selectedLists,
+    segments,
+    segmentId,
+}: {
+    mailingLists: MailingListOption[];
+    selectedLists: string[];
+    segments: SegmentOption[];
+    segmentId: string;
+}) {
+    const segment = segments.find((option) => String(option.id) === segmentId);
+    const source = segment ?? mailingLists.find((list) => selectedLists.includes(list.value));
+    if (!source) {
+        return null;
+    }
+
+    if (!source.sender) {
+        return <p className="text-sm text-warning">No sender is set for this newsletter, so the email cannot be sent.</p>;
+    }
+
+    const from = source.sender.name ? `${source.sender.name} <${source.sender.address}>` : source.sender.address;
+
+    return (
+        <p className={`text-sm ${source.sender.verified ? 'text-muted' : 'text-warning'}`}>
+            Sends from: {from}
+            {source.sender.verified ? '' : ' (not verified in Mailgun yet; publishing with email is blocked)'}
+        </p>
+    );
+}
+
 export default function PostEdit({
     post,
     channels,
@@ -189,7 +222,7 @@ export default function PostEdit({
     post: PostData | null;
     channels: Channel[];
     mailingLists: MailingListOption[];
-    segments?: Array<{ id: number; name: string; newsletter: string; also: string }>;
+    segments?: SegmentOption[];
     staffUsers?: Array<{ id: number; name: string; email: string }>;
     canPublish: boolean;
     revisions: Revision[];
@@ -723,6 +756,12 @@ export default function PostEdit({
                                             ))}
                                         </select>
                                     </label>
+                                    <CampaignSenderNote
+                                        mailingLists={mailingLists}
+                                        selectedLists={data.mailing_lists}
+                                        segments={segments}
+                                        segmentId={data.newsletter_segment_id}
+                                    />
                                 </div>
                             )}
                             <FieldError message={fieldError(errors, 'mailing_lists')} />

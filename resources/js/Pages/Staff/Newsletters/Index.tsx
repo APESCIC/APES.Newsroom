@@ -14,6 +14,7 @@ type NewsletterRow = {
     status: NewsletterStatus;
     sender_name: string | null;
     sender_email: string | null;
+    sender_verified: boolean;
     confirmed_count: number;
     pending_count: number;
     unsubscribed_count: number;
@@ -79,6 +80,7 @@ export default function NewslettersIndex({ newsletters, status }: { newsletters:
                                 /{newsletter.slug}
                                 {newsletter.legacy_list ? ` · channel list ${newsletter.legacy_list}` : ''}
                                 {newsletter.sender_email ? ` · from ${newsletter.sender_name ?? newsletter.sender_email} <${newsletter.sender_email}>` : ' · no sender set'}
+                                {newsletter.sender_email ? (newsletter.sender_verified ? ' · sender verified' : ' · sender not verified') : ''}
                             </p>
                         </div>
                         <p className="text-sm text-neutral-700">

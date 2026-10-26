@@ -8,6 +8,8 @@ type Snapshot = {
     channel_label: string;
     published_at: string | null;
     read_more_url: string;
+    sender: { address: string; name: string | null; reply_to: string | null } | null;
+    sender_verified: boolean;
 };
 
 export default function CampaignPreview({
@@ -37,6 +39,13 @@ export default function CampaignPreview({
                 {status === 'test-send-queued' && (
                     <p className="mt-2 text-sm text-green-700">Test send queued. It cannot trigger a live campaign.</p>
                 )}
+
+                <p className={`mt-4 text-sm ${snapshot.sender_verified ? 'text-muted' : 'text-warning'}`}>
+                    {snapshot.sender
+                        ? `From: ${snapshot.sender.name ? `${snapshot.sender.name} <${snapshot.sender.address}>` : snapshot.sender.address}${snapshot.sender.reply_to ? ` · Reply-to: ${snapshot.sender.reply_to}` : ''}`
+                        : 'No newsletter sender is set.'}
+                    {snapshot.sender_verified ? '' : ' Sender not verified in Mailgun yet, so sending is blocked.'}
+                </p>
 
                 <article className="mt-8 rounded-card border border-border p-6">
                     <p className="text-sm text-muted">

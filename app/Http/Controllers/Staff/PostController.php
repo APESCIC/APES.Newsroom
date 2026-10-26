@@ -9,6 +9,7 @@ use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Staff\StorePostRequest;
 use App\Http\Requests\Staff\UpdatePostRequest;
+use App\Models\Newsletter;
 use App\Models\NewsletterSegment;
 use App\Models\Post;
 use App\Models\PostRevision;
@@ -18,6 +19,7 @@ use App\Models\User;
 use App\Services\Audit\AuditLogger;
 use App\Services\EditorJs\EditorContent;
 use App\Services\Integrations\SlackEditorialNotifier;
+use App\Services\Mailing\CampaignSender;
 use App\Services\Mailing\CampaignService;
 use App\Services\Publishing\PublicArticlePresenter;
 use App\Services\Webhooks\OutboundWebhookDispatcher;
@@ -38,6 +40,7 @@ class PostController extends Controller
         private readonly AuditLogger $audit,
         private readonly OutboundWebhookDispatcher $webhooks,
         private readonly SlackEditorialNotifier $slack,
+        private readonly CampaignSender $sender,
     ) {}
 
     public function index(Request $request): Response
@@ -295,6 +298,8 @@ class PostController extends Controller
                 ]);
             }
 
+            $this->campaigns->assertSenderVerified($lockedPost);
+
             $lockedPost->update([
                 'status' => PostStatus::Published,
                 'published_at' => now(),
@@ -487,10 +492,7 @@ class PostController extends Controller
     }
 
     /**
-     * @return array<int, array{value: string, label: string}>
-     */
-    /**
-     * @return list<array{id: int, name: string, newsletter: string, also: string}>
+     * @return list<array{id: int, name: string, newsletter: string, also: string, sender: array<string, mixed>|null}>
      */
     private function segmentOptions(): array
     {
@@ -505,8 +507,26 @@ class PostController extends Controller
                 'name' => $segment->name,
                 'newsletter' => $segment->newsletter->name,
                 'also' => $segment->alsoNewsletter->name,
+                'sender' => $this->senderOption($segment->newsletter),
             ])
             ->all();
+    }
+
+    /**
+     * @return array{name: string|null, address: string, verified: bool}|null
+     */
+    private function senderOption(?Newsletter $newsletter): ?array
+    {
+        $identity = $this->sender->identity($newsletter);
+        if (! $identity) {
+            return null;
+        }
+
+        return [
+            'name' => $identity['name'],
+            'address' => $identity['address'],
+            'verified' => $this->sender->isVerified($newsletter),
+        ];
     }
 
     private function channelOptions(): array
@@ -518,13 +538,14 @@ class PostController extends Controller
     }
 
     /**
-     * @return array<int, array{value: string, label: string}>
+     * @return array<int, array{value: string, label: string, sender: array<string, mixed>|null}>
      */
     private function mailingListOptions(): array
     {
         return collect(MailingList::cases())->map(fn (MailingList $list) => [
             'value' => $list->value,
             'label' => $list->label(),
+            'sender' => $this->senderOption($this->sender->newsletterForLists([$list])),
         ])->all();
     }
 }

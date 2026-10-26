@@ -14,11 +14,19 @@ use App\Services\Mailing\CampaignService;
 use App\Services\Mailing\ConsentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Tests\Support\VerifiesNewsletterSenders;
 use Tests\TestCase;
 
 class NewsletterSegmentTest extends TestCase
 {
     use RefreshDatabase;
+    use VerifiesNewsletterSenders;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->verifyNewsletterSenders();
+    }
 
     public function test_segment_send_intersects_confirmed_audiences_and_empty_completes(): void
     {

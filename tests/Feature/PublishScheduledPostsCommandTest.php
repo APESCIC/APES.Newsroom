@@ -9,11 +9,19 @@ use App\Models\Campaign;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Support\VerifiesNewsletterSenders;
 use Tests\TestCase;
 
 class PublishScheduledPostsCommandTest extends TestCase
 {
     use RefreshDatabase;
+    use VerifiesNewsletterSenders;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->verifyNewsletterSenders();
+    }
 
     public function test_scheduled_posts_are_published_when_due(): void
     {

@@ -159,7 +159,7 @@ describe('post editor autosave', () => {
                 ...props.channels,
                 { value: 'wildlife', label: 'Wildlife' },
             ]}
-            mailingLists={[{ value: 'daily', label: 'Daily briefing' }]}
+            mailingLists={[{ value: 'daily', label: 'Daily briefing', sender: null }]}
         />);
 
         fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Locally edited title' } });

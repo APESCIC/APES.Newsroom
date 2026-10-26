@@ -14,6 +14,12 @@ type NewsletterData = {
     sender_email: string | null;
     reply_to: string | null;
     subscribe_on_signup: boolean;
+    sender_verification: {
+        verified: boolean;
+        status: string | null;
+        message: string | null;
+        checked_at: string | null;
+    };
 };
 
 export default function NewsletterEdit({
@@ -85,6 +91,33 @@ export default function NewsletterEdit({
                         <input id="reply_to" type="email" className="mt-1 w-full rounded border px-3 py-2" value={form.data.reply_to} onChange={(e) => form.setData('reply_to', e.target.value)} />
                     </label>
                     {form.errors.reply_to && <p className="text-sm text-red-700">{form.errors.reply_to}</p>}
+                    {newsletter && (
+                        <div className="rounded border border-neutral-200 p-3 text-sm" aria-live="polite">
+                            <p className="flex flex-wrap items-center gap-2">
+                                <span
+                                    className={`inline-flex rounded-full px-2 py-0.5 text-xs font-bold ${newsletter.sender_verification.verified ? 'bg-success-mist text-success' : 'bg-warning-mist text-warning'}`}
+                                >
+                                    {newsletter.sender_verification.verified ? 'Sender verified' : 'Sender not verified'}
+                                </span>
+                                {newsletter.sender_verification.checked_at && (
+                                    <span className="text-neutral-600">
+                                        Checked {new Date(newsletter.sender_verification.checked_at).toLocaleString('en-GB')}
+                                    </span>
+                                )}
+                            </p>
+                            {newsletter.sender_verification.message && <p className="mt-1 text-neutral-700">{newsletter.sender_verification.message}</p>}
+                            {!newsletter.sender_verification.verified && (
+                                <p className="mt-1 text-neutral-600">Emails from this newsletter are blocked until the sender is verified in Mailgun.</p>
+                            )}
+                            <button
+                                type="button"
+                                className="mt-2 rounded border px-3 py-1 text-sm"
+                                onClick={() => router.post(`/staff/newsletters/${newsletter.id}/verify-sender`, {}, { preserveScroll: true })}
+                            >
+                                Re-check sender
+                            </button>
+                        </div>
+                    )}
                 </fieldset>
                 <label className="flex gap-2 text-sm" htmlFor="subscribe_on_signup">
                     <input

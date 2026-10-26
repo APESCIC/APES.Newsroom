@@ -128,6 +128,8 @@ class EditorialPostWriter
                 ]);
             }
 
+            $this->campaigns->assertSenderVerified($lockedPost);
+
             $lockedPost->update([
                 'status' => PostStatus::Published,
                 'published_at' => now(),

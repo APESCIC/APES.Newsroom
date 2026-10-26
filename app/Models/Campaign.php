@@ -9,8 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
-    'post_id', 'created_by', 'idempotency_key', 'lists', 'snapshot', 'status',
-    'is_test', 'test_recipient', 'queued_at', 'completed_at',
+    'post_id', 'newsletter_id', 'created_by', 'idempotency_key', 'lists', 'snapshot', 'status',
+    'failure_reason', 'is_test', 'test_recipient', 'queued_at', 'completed_at',
 ])]
 class Campaign extends Model
 {
@@ -32,6 +32,14 @@ class Campaign extends Model
     public function post(): BelongsTo
     {
         return $this->belongsTo(Post::class);
+    }
+
+    /**
+     * @return BelongsTo<Newsletter, $this>
+     */
+    public function newsletter(): BelongsTo
+    {
+        return $this->belongsTo(Newsletter::class);
     }
 
     /**

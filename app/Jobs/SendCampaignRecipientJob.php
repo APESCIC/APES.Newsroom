@@ -9,6 +9,8 @@ use App\Http\Controllers\Mailing\CampaignTrackingController;
 use App\Mail\CampaignPostSummaryMail;
 use App\Models\Campaign;
 use App\Models\CampaignRecipient;
+use App\Services\Mailing\CampaignSender;
+use App\Services\Mailing\CampaignService;
 use App\Services\Mailing\ConsentService;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -32,9 +34,9 @@ class SendCampaignRecipientJob implements ShouldBeUnique, ShouldQueue
         return 'campaign-recipient-'.$this->recipientId;
     }
 
-    public function handle(ConsentService $consent): void
+    public function handle(ConsentService $consent, CampaignSender $sender): void
     {
-        $recipient = CampaignRecipient::query()->with('campaign')->find($this->recipientId);
+        $recipient = CampaignRecipient::query()->with('campaign.newsletter')->find($this->recipientId);
 
         if (! $recipient || ! $recipient->campaign) {
             return;
@@ -46,6 +48,16 @@ class SendCampaignRecipientJob implements ShouldBeUnique, ShouldQueue
 
         $campaign = $recipient->campaign;
         $recipient->increment('attempts');
+
+        if ($campaign->newsletter_id !== null && ! $sender->isVerified($campaign->newsletter)) {
+            $recipient->update([
+                'status' => CampaignRecipientStatus::Skipped,
+                'last_error' => CampaignService::FAILURE_SENDER_UNVERIFIED,
+            ]);
+            $this->maybeComplete($campaign->id);
+
+            return;
+        }
 
         if (! $campaign->is_test) {
             if ($consent->isSuppressed($recipient->email)) {
