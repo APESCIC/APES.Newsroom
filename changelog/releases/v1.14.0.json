@@ -1,0 +1,35 @@
+{
+  "version": "v1.14.0",
+  "slug": "release-v1-14-0",
+  "released_at": "2026-10-26",
+  "previous_version": "v1.13.1",
+  "theme": "Integration keys and health checks",
+  "change_types": [
+    "added",
+    "security"
+  ],
+  "topic_tags": [
+    "internal-only",
+    "compliance"
+  ],
+  "summary": "Super admins can now manage the Mailgun, Stripe, Unsplash, OpenAI and Slack keys from the admin panel instead of the server environment, and every integration is checked hourly, with admins emailed when one starts failing.",
+  "detailed_changes": [
+    "A new Admin → Settings → Integrations page lists each provider with its keys, shows whether each key is set and where it comes from, and displays only the last four characters of sensitive keys (#491).",
+    "Keys are stored encrypted with the application key and are write-only: they are never sent back to the browser, logged, audited or flashed into forms. Keys still set in the server environment keep working as fallbacks (#489, #490).",
+    "Mail sender checks, Stripe billing and webhooks, Unsplash, AI assist and Slack notifications read keys at call time, so a replaced key takes effect on the next request or queued job without a redeploy (#496).",
+    "Each provider has a read-only connection check: Mailgun domain lookup, Stripe account and webhook endpoint (with test or live mode), Unsplash, OpenAI, Slack auth.test and the Cloudron SSO discovery document. Checks time out after 5 seconds and never send email or create charges (#493).",
+    "A new key is tested before it is saved, and a failing test blocks the save unless the super admin chooses Save anyway (#493).",
+    "Only super admins can change keys, after confirming their identity within the last five minutes; changes are rate limited. Admins can view status and run tests (#491, #492).",
+    "integrations:check runs hourly. The page shows a status overview and recent check history, and admins get one email when a check starts failing, not on every run (#494).",
+    "Every key set, replace, remove and test is recorded in the audit log with the last four characters only, and each provider shows its key change history (#495).",
+    "Admin guide and key inventory added in docs/integrations.md (#489, #497)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /admin/settings/integrations, /admin/settings",
+    "User groups affected: super admins (manage keys); admins (view status, test connections, failure alerts)",
+    "Public impact: none",
+    "Internal impact: new integration_secrets and integration_check_results tables; integrations:check scheduled hourly; auth.recent accepts a stricter window; integration-keys rate limiter"
+  ],
+  "pr": 512
+}

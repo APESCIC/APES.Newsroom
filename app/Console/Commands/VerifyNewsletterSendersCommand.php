@@ -16,7 +16,7 @@ class VerifyNewsletterSendersCommand extends Command
     public function handle(MailgunSenderCheck $check): int
     {
         if (! $check->isConfigured()) {
-            $this->warn('MAILGUN_API_KEY is not set; senders will be recorded as unknown and stay blocked.');
+            $this->warn('No Mailgun API key is set (Admin → Settings → Integrations or MAILGUN_API_KEY); senders will be recorded as unknown and stay blocked.');
         }
 
         $newsletters = Newsletter::query()

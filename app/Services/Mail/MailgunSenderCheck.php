@@ -3,8 +3,10 @@
 namespace App\Services\Mail;
 
 use App\Models\Newsletter;
+use App\Services\Integrations\IntegrationSecrets;
 use App\Services\Mailing\CampaignSender;
 use App\Services\Mailing\SenderDomains;
+use App\Support\Integrations\IntegrationDefinitions;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -22,11 +24,14 @@ class MailgunSenderCheck
     /** @var array<string, array<string, mixed>> */
     private array $domainCache = [];
 
-    public function __construct(private readonly DnsTxtResolver $dns) {}
+    public function __construct(
+        private readonly DnsTxtResolver $dns,
+        private readonly IntegrationSecrets $secrets,
+    ) {}
 
     public function isConfigured(): bool
     {
-        return filled(config('services.mailgun.secret'));
+        return $this->secrets->configured(IntegrationDefinitions::MAILGUN, 'api_key');
     }
 
     /**
@@ -66,7 +71,7 @@ class MailgunSenderCheck
             return [...$base, 'status' => self::UNKNOWN, 'domain' => $senderDomain, 'message' => 'The Mailgun API is not configured, so the sender cannot be checked.'];
         }
 
-        $mailgunDomain = Str::lower((string) (config('services.mailgun.domain') ?: $senderDomain));
+        $mailgunDomain = Str::lower($this->secrets->get(IntegrationDefinitions::MAILGUN, 'domain') ?? $senderDomain);
         if ($mailgunDomain !== $senderDomain && ! Str::endsWith($mailgunDomain, '.'.$senderDomain)) {
             return [...$base, 'status' => self::UNVERIFIED, 'domain' => $senderDomain, 'mailgun_domain' => $mailgunDomain, 'message' => 'The sender domain does not match the Mailgun sending domain.'];
         }
@@ -112,10 +117,10 @@ class MailgunSenderCheck
             return $this->domainCache[$domain];
         }
 
-        $endpoint = trim((string) config('services.mailgun.endpoint', 'api.eu.mailgun.net'), '/');
+        $endpoint = trim($this->secrets->get(IntegrationDefinitions::MAILGUN, 'endpoint') ?? 'api.eu.mailgun.net', '/');
 
         try {
-            $response = Http::withBasicAuth('api', (string) config('services.mailgun.secret'))
+            $response = Http::withBasicAuth('api', (string) $this->secrets->get(IntegrationDefinitions::MAILGUN, 'api_key'))
                 ->acceptJson()
                 ->timeout(10)
                 ->get('https://'.$endpoint.'/v4/domains/'.rawurlencode($domain));

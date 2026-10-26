@@ -3,16 +3,19 @@
 namespace App\Services\Integrations;
 
 use App\Models\Post;
+use App\Support\Integrations\IntegrationDefinitions;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class SlackEditorialNotifier
 {
+    public function __construct(private readonly IntegrationSecrets $secrets) {}
+
     public function enabled(): bool
     {
-        return filled(config('services.slack.notifications.bot_user_oauth_token'))
-            && filled(config('services.slack.notifications.channel'));
+        return $this->secrets->configured(IntegrationDefinitions::SLACK, 'bot_token')
+            && $this->secrets->configured(IntegrationDefinitions::SLACK, 'default_channel');
     }
 
     public function notifyPostPublished(Post $post): void
@@ -42,9 +45,9 @@ class SlackEditorialNotifier
 
         try {
             $response = Http::timeout(8)
-                ->withToken((string) config('services.slack.notifications.bot_user_oauth_token'))
+                ->withToken((string) $this->secrets->get(IntegrationDefinitions::SLACK, 'bot_token'))
                 ->post('https://slack.com/api/chat.postMessage', [
-                    'channel' => config('services.slack.notifications.channel'),
+                    'channel' => $this->secrets->get(IntegrationDefinitions::SLACK, 'default_channel'),
                     'text' => $text,
                 ]);
 

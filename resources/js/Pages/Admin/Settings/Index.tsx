@@ -1,4 +1,4 @@
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import type { FormEventHandler } from 'react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
 import type { SharedPageProps } from '../../../types/page';
@@ -197,6 +197,13 @@ export default function SettingsIndex({ settings }: { settings: SettingDefinitio
     return (
         <WorkspaceLayout area="Admin" active="settings" title="Settings" subtitle="Site-wide configuration for the Newsroom.">
             <Head title="Settings" />
+            <p className="mx-auto mb-4 max-w-3xl text-sm text-body">
+                Service keys and connection health for Mailgun, Stripe and other integrations live under{' '}
+                <Link href="/admin/settings/integrations" className="font-semibold underline">
+                    Integrations and keys
+                </Link>
+                .
+            </p>
             <form onSubmit={submit} className="mx-auto flex max-w-3xl flex-col gap-6 rounded-card border border-border bg-white p-6">
                 {flash?.status && (
                     <p role="status" className="text-sm text-green-800">

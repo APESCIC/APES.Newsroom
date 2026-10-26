@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\AuditLog;
 use App\Models\EmailChangeRequest;
+use App\Models\IntegrationCheckResult;
 use App\Models\MagicLinkToken;
 use App\Models\UserSession;
 use Illuminate\Console\Command;
@@ -16,7 +17,7 @@ class PurgeSecurityDataCommand extends Command
 {
     protected $signature = 'newsroom:purge-security-data';
 
-    protected $description = 'Delete audit logs, spent sign-in and email change tokens, and old session records past their retention period';
+    protected $description = 'Delete audit logs, spent sign-in and email change tokens, old session records and integration check results past their retention period';
 
     public function handle(): int
     {
@@ -43,7 +44,10 @@ class PurgeSecurityDataCommand extends Command
                     ->where('created_at', '<', $sessionCutoff)))
             ->delete();
 
-        $this->info("Purged {$auditLogs} audit log(s), {$magicLinks} magic link token(s), {$emailChanges} email change request(s) and {$sessions} session record(s).");
+        $checkCutoff = now()->subDays(max(1, (int) config('security.integration_check_retention_days', 30)));
+        $checkResults = IntegrationCheckResult::query()->where('checked_at', '<', $checkCutoff)->delete();
+
+        $this->info("Purged {$auditLogs} audit log(s), {$magicLinks} magic link token(s), {$emailChanges} email change request(s), {$sessions} session record(s) and {$checkResults} integration check result(s).");
 
         return self::SUCCESS;
     }

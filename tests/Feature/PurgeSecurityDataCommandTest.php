@@ -58,7 +58,7 @@ class PurgeSecurityDataCommandTest extends TestCase
         $live = $this->token($user, expiresAt: now()->addMinutes(10));
 
         $this->artisan('newsroom:purge-security-data')
-            ->expectsOutput('Purged 0 audit log(s), 2 magic link token(s), 0 email change request(s) and 0 session record(s).')
+            ->expectsOutput('Purged 0 audit log(s), 2 magic link token(s), 0 email change request(s), 0 session record(s) and 0 integration check result(s).')
             ->assertSuccessful();
 
         $this->assertModelMissing($longExpired);
@@ -77,7 +77,7 @@ class PurgeSecurityDataCommandTest extends TestCase
         $active = $this->sessionRecord($user, lastSeen: now()->subMinutes(5));
 
         $this->artisan('newsroom:purge-security-data')
-            ->expectsOutput('Purged 0 audit log(s), 0 magic link token(s), 0 email change request(s) and 2 session record(s).')
+            ->expectsOutput('Purged 0 audit log(s), 0 magic link token(s), 0 email change request(s), 2 session record(s) and 0 integration check result(s).')
             ->assertSuccessful();
 
         $this->assertModelMissing($stale);

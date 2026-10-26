@@ -7,11 +7,13 @@ use App\Http\Middleware\EnsureAuthEpoch;
 use App\Models\User;
 use App\Services\Auth\PendingTwoFactorLogin;
 use App\Services\Auth\RecentAuthentication;
+use App\Services\Integrations\IntegrationSecrets;
 use App\Services\Membership\FakeStripeBillingClient;
 use App\Services\Membership\StripeApiBillingClient;
 use App\Services\Membership\StripeBillingClient;
 use App\Services\Settings\SettingsRepository;
 use App\Support\Auth\PasswordPolicy;
+use App\Support\Integrations\IntegrationDefinitions;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Validation\UncompromisedVerifier;
@@ -36,15 +38,17 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(FakeStripeBillingClient::class);
         $this->app->singleton(SettingsRepository::class);
+        $this->app->singleton(IntegrationSecrets::class);
 
         $this->app->bind(StripeBillingClient::class, function ($app) {
-            if ($app->environment('testing') || blank(config('services.stripe.secret'))) {
+            $secrets = $app->make(IntegrationSecrets::class);
+            $secret = $secrets->get(IntegrationDefinitions::STRIPE, 'secret');
+
+            if ($app->environment('testing') || blank($secret)) {
                 return $app->make(FakeStripeBillingClient::class);
             }
 
-            return new StripeApiBillingClient(
-                new StripeClient((string) config('services.stripe.secret')),
-            );
+            return new StripeApiBillingClient(new StripeClient($secret), $secrets);
         });
 
         $this->app->extend(UncompromisedVerifier::class, fn ($verifier, $app) => new NotPwnedVerifier(
@@ -131,6 +135,8 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('passkey-login-options', fn (Request $request) => Limit::perMinute(30)->by('passkey-login-options:'.$request->ip()));
 
         RateLimiter::for('passkey-login', fn (Request $request) => Limit::perMinute(10)->by('passkey-login:'.$request->ip()));
+
+        RateLimiter::for('integration-keys', fn (Request $request) => Limit::perMinute(10)->by('integration-keys:'.$request->user()?->id));
 
         RateLimiter::for('reauth', fn (Request $request) => [
             Limit::perMinute(5)->by('reauth-user:'.$request->user()?->id),

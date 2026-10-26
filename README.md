@@ -120,6 +120,9 @@ changes are intended. CI runs the backend/frontend checks against `main`.
 `GET /health` reports database and cache connectivity as
 `{"status":"ok","checks":{...}}` without returning configuration or secrets.
 It is used by the guarded deployment workflow and external uptime checks.
+Third-party integrations (Mailgun, Stripe, Unsplash, OpenAI, Slack, Cloudron
+SSO) are checked hourly and shown under Admin → Settings → Integrations; see
+[integration keys and health checks](docs/integrations.md).
 
 Deployments are manual, backup-first, versioned, and rollback-capable. The
 GitHub Environment name is **`beta`** but targets the live LAMP app at
@@ -134,6 +137,7 @@ retirement. Merge does not auto-deploy.
 - [Delivery plan and dependency record](docs/epic-1-build-plan.md)
 - [Local Redis/OIDC/LDAP development](docs/local-dev.md)
 - [Deployment and rollback](docs/deployment.md)
+- [Integration keys and health checks](docs/integrations.md)
 - [Beta acceptance evidence](docs/deployment-beta-acceptance.md)
 - [Design records](docs/design/), including
   [accessibility evidence](docs/design/accessibility-notes.md)

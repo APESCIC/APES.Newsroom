@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\ContentApiKeyController as AdminContentApiKeyController;
 use App\Http\Controllers\Admin\GhostContentImportController;
 use App\Http\Controllers\Admin\GhostMembersImportController;
+use App\Http\Controllers\Admin\IntegrationController as AdminIntegrationController;
 use App\Http\Controllers\Admin\MemberController as AdminMemberController;
 use App\Http\Controllers\Admin\ModerationController;
 use App\Http\Controllers\Admin\ReleaseController as AdminReleaseController;
@@ -55,6 +56,7 @@ use App\Http\Controllers\Staff\PageController as StaffPageController;
 use App\Http\Controllers\Staff\PostController as StaffPostController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\TagRssController;
+use App\Support\Integrations\IntegrationDefinitions;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
@@ -185,6 +187,25 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Admin->value])
         Route::get('/imports/ghost-members/{run}/report', [GhostMembersImportController::class, 'report'])->name('imports.ghost-members.report');
         Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
         Route::put('/settings', [SettingsController::class, 'update'])->middleware('auth.recent')->name('settings.update');
+        Route::prefix('/settings/integrations')->name('settings.integrations.')->group(function () {
+            $providers = IntegrationDefinitions::providerNames();
+
+            Route::get('/', [AdminIntegrationController::class, 'index'])->name('index');
+            Route::post('/{provider}/test', [AdminIntegrationController::class, 'test'])
+                ->whereIn('provider', $providers)
+                ->middleware('throttle:integration-keys')
+                ->name('test');
+            Route::middleware(['role:'.Role::SuperAdmin->value, 'auth.recent:300', 'throttle:integration-keys'])->group(function () use ($providers) {
+                Route::put('/{provider}/{key}', [AdminIntegrationController::class, 'update'])
+                    ->whereIn('provider', $providers)
+                    ->where('key', '[a-z_]+')
+                    ->name('update');
+                Route::delete('/{provider}/{key}', [AdminIntegrationController::class, 'destroy'])
+                    ->whereIn('provider', $providers)
+                    ->where('key', '[a-z_]+')
+                    ->name('destroy');
+            });
+        });
         Route::get('/audit-log', [AuditLogController::class, 'index'])->name('audit-log.index');
         Route::get('/audit-log/export', [AuditLogController::class, 'export'])->middleware('auth.recent')->name('audit-log.export');
         Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');

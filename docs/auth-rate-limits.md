@@ -31,6 +31,12 @@ Multi-factor endpoints (v1.10.0):
 | `two-factor-setup` | `POST /account/two-factor/confirm` | 5 per minute per user |
 | `passkey-manage` | `POST /account/passkeys/options`, `POST /account/passkeys` | 10 per minute per user. Each account can hold at most 20 passkeys (`PasskeyController::MAX_PASSKEYS`) |
 
+Admin integration keys (v1.13.0 milestone, #488):
+
+| Limiter | Endpoint(s) | Limit |
+|---------|-------------|-------|
+| `integration-keys` | `PUT` and `DELETE /admin/settings/integrations/{provider}/{key}`, `POST /admin/settings/integrations/{provider}/test` | 10 per minute per user. Key changes also need `auth.recent:300` (identity confirmed in the last 5 minutes) |
+
 Limits that already existed before #279:
 
 | Endpoint | Limit |

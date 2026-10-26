@@ -339,6 +339,31 @@ OIDC credentials for LAMP apps are not auto-injected. Prefer
 (which reads `getenv`) sees them after `config:cache`. Also keep the same
 keys in `/app/data/shared/.env` if you maintain that file by hand.
 
+## Integration keys (Mailgun, Stripe, Unsplash, OpenAI, Slack)
+
+Super admins can set these keys under **Admin → Settings → Integrations**
+(`/admin/settings/integrations`); see [`integrations.md`](integrations.md).
+A stored key overrides the matching environment variable straight away,
+with no redeploy, `config:cache` or queue worker restart. Removing it
+falls back to the environment value again.
+
+- Environment values (`MAILGUN_*`, `STRIPE_*`, `UNSPLASH_ACCESS_KEY`,
+  `OPENAI_API_KEY`, `SLACK_BOT_USER_*`) keep working as fallbacks; nothing
+  needs to change on deploy.
+- Stored keys are encrypted with `APP_KEY`. Do not rotate `APP_KEY`
+  without adding the old value to `APP_PREVIOUS_KEYS`, or re-enter every
+  stored key afterwards.
+- `integrations:check` runs hourly through the scheduler cron entry above
+  and queues `RunIntegrationChecksJob` on the `default` queue. To run it
+  immediately on the server:
+
+  ```bash
+  bash /app/data/current/deploy/cloudron-www-data.sh \
+    /usr/bin/php /app/data/current/artisan integrations:check --now
+  ```
+
+- Cloudron OIDC, LDAP, SMTP, MySQL and Redis stay environment-only.
+
 ## Transport security (secure cookies, HSTS)
 
 - Session cookies are `Secure` whenever `CLOUDRON_APP_ORIGIN` is `https://`

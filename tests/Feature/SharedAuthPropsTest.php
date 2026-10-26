@@ -55,7 +55,8 @@ class SharedAuthPropsTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('auth.can.accessStaff', true)
-                ->where('auth.can.accessAdmin', true));
+                ->where('auth.can.accessAdmin', true)
+                ->where('auth.can.accessSuperAdmin', false));
     }
 
     public function test_super_admin_can_access_staff_and_admin(): void
@@ -67,6 +68,7 @@ class SharedAuthPropsTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('auth.can.accessStaff', true)
-                ->where('auth.can.accessAdmin', true));
+                ->where('auth.can.accessAdmin', true)
+                ->where('auth.can.accessSuperAdmin', true));
     }
 }

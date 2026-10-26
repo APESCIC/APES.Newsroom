@@ -18,6 +18,8 @@ return [
 
     'session_record_retention_days' => (int) env('SECURITY_SESSION_RECORD_RETENTION_DAYS', 90),
 
+    'integration_check_retention_days' => (int) env('SECURITY_INTEGRATION_CHECK_RETENTION_DAYS', 30),
+
     /*
     |--------------------------------------------------------------------------
     | Password policy
