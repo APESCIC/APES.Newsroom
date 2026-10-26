@@ -12,6 +12,7 @@ export type SharedAuth = {
     can: {
         accessStaff: boolean;
         accessAdmin: boolean;
+        accessSuperAdmin?: boolean;
     };
 };
 

@@ -18,6 +18,7 @@ export type WorkspaceActive =
     | 'webhooks'
     | 'releases'
     | 'settings'
+    | 'integrations'
     | 'audit-log'
     | 'users'
     | 'api-tokens'
@@ -53,6 +54,7 @@ function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: Wo
         links.push({ href: '/admin/audit-log', label: 'Audit log', icon: 'review', active: active === 'audit-log' });
         links.push({ href: '/admin/releases', label: 'Releases', icon: 'document', active: active === 'releases' });
         links.push({ href: '/admin/settings', label: 'Settings', icon: 'settings', active: active === 'settings' });
+        links.push({ href: '/admin/settings/integrations', label: 'Integrations', icon: 'shield', active: active === 'integrations' });
     }
 
     return (
