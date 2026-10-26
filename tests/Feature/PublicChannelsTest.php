@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\Channel;
 use App\Models\Newsletter;
 use App\Models\Post;
+use App\Models\Redirect;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -87,6 +88,21 @@ class PublicChannelsTest extends TestCase
         $this->get('/')->assertInertia(fn (Assert $page) => $page
             ->where('channels', fn ($channels) => ! collect($channels)->pluck('slug')->contains('myapes-portal'))
             ->where('publicChannels', fn ($channels) => ! collect($channels)->pluck('slug')->contains('myapes-portal')));
+    }
+
+    public function test_legacy_ghost_redirects_do_not_shadow_public_channels(): void
+    {
+        Redirect::query()->create(['from_path' => '/apes-times/', 'to_path' => '/articles/apes-times', 'status_code' => 301]);
+        Redirect::query()->create(['from_path' => '/articles/old-story', 'to_path' => '/articles/new-story', 'status_code' => 301]);
+
+        $this->get('/apes-times')->assertOk()->assertInertia(fn (Assert $page) => $page->component('Channels/Show'));
+        $this->get('/apes-times/')->assertOk()->assertInertia(fn (Assert $page) => $page->component('Channels/Show'));
+        $this->get('/apes-times/rss.xml')->assertOk();
+        $this->get('/articles/old-story')->assertRedirect('/articles/new-story');
+
+        $this->newsletter(Channel::ApesTimes)->update(['archived_at' => now()]);
+
+        $this->get('/apes-times')->assertRedirect('/articles/apes-times');
     }
 
     public function test_unknown_slugs_are_not_channel_routes(): void

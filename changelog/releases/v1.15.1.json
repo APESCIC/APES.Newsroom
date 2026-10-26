@@ -1,0 +1,25 @@
+{
+  "version": "v1.15.1",
+  "slug": "release-v1-15-1",
+  "released_at": "2026-10-26",
+  "previous_version": "v1.15.0",
+  "theme": "APES Times channel fix",
+  "change_types": [
+    "fixed"
+  ],
+  "topic_tags": [
+    "public-facing"
+  ],
+  "summary": "The APES Times channel page now opens at /apes-times instead of redirecting to an older imported story with the same name.",
+  "detailed_changes": [
+    "Redirects carried over from Ghost no longer take priority over a public channel page or its RSS feed, so /apes-times shows the APES Times channel (#542).",
+    "If a channel's newsletter is archived, its old Ghost redirect applies again."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /apes-times, /{channel}/rss.xml",
+    "User groups affected: all readers",
+    "Public impact: /apes-times opens the channel page"
+  ],
+  "pr": 543
+}
