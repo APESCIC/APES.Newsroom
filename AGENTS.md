@@ -148,6 +148,7 @@ gitignored.
 | Change Log Hub authoring | [`docs/change-log-hub.md`](docs/change-log-hub.md) |
 | Vulnerability reporting | [`SECURITY.md`](SECURITY.md) |
 | Admin API tokens | [`docs/api.md`](docs/api.md) |
+| Integration keys & health checks | [`docs/integrations.md`](docs/integrations.md) |
 | Staff editors (Editor.js / TinyMCE) | [`docs/editors.md`](docs/editors.md) |
 
 Quick checks before opening a PR: `composer test`, `composer lint`,

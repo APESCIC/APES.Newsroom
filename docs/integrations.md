@@ -43,3 +43,77 @@ Notes:
   Mailgun webhooks, and mail is sent through Cloudron SMTP.
 - `APP_KEY` encrypts the stored integration keys. Rotating it needs the old
   key in `APP_PREVIOUS_KEYS`, or every stored key must be re-entered.
+
+## Admin guide
+
+### Who can do what
+
+| Role | View status and history | Test connection | Add, replace or remove keys |
+|------|-------------------------|-----------------|-----------------------------|
+| Admin | Yes | Yes | No |
+| Super admin | Yes | Yes | Yes |
+
+Changing a key asks you to confirm your identity (Cloudron SSO for staff)
+if you have not done so in the last five minutes. Key changes and tests are
+limited to 10 per minute per person.
+
+### Add or replace a key
+
+1. Open **Admin → Settings → Integrations**.
+2. Find the provider card and paste the new value into the key's field.
+   Sensitive keys use a password field; the page never shows a saved value
+   again, only `••••` and its last four characters.
+3. Choose **Save** (or **Replace**). Before anything is stored, the
+   Newsroom runs that provider's connection test with the new value.
+   - If the test passes or only warns, the key is saved and takes effect
+     on the next request or queued job. No redeploy is needed.
+   - If the test fails, nothing is saved and the reason is shown. Fix the
+     value, or tick **Save anyway** and save again (for example when the
+     provider is having an outage). Forced saves are flagged in the audit
+     log.
+
+### Remove a key
+
+Choose **Remove** next to a key that was set in the admin panel. The
+Newsroom then uses the server environment value again, if there is one.
+Keys that come from the environment cannot be removed here; change them on
+the server instead (see [`deployment.md`](deployment.md)).
+
+### Test a connection
+
+**Test connection** runs a read-only check with the saved keys:
+
+| Provider | What the check does |
+|----------|---------------------|
+| Mailgun | Looks up the sending domain (or lists domains when none is set) and reports whether it is active |
+| Stripe | Retrieves the account, shows test or live mode, and confirms an enabled webhook endpoint points at `/stripe/webhook` and a signing secret is set |
+| Unsplash | Fetches one photo listing with the access key |
+| OpenAI | Lists models with the API key; warns if AI assist is turned off |
+| Slack | Calls `auth.test` with the bot token; warns if no channel is set |
+| Cloudron SSO | Fetches the OIDC discovery document (no key is sent) |
+
+Checks time out after 5 seconds and never send email, create charges or
+change anything at the provider. Results show pass, warning or fail with a
+plain message, the time and how long the check took.
+
+### Scheduled checks and alerts
+
+`integrations:check` runs every hour for each configured provider. The
+**Status overview** shows the latest result for each provider, and each
+card's **History** lists recent checks and key changes.
+
+When a provider's check moves from passing or warning to failing, every
+admin and super admin (except locked accounts) gets one email. No more
+emails are sent while it keeps failing; the next alert comes only after it
+has recovered and failed again. Checks run before saving a new key never
+count towards status or alerts.
+
+Check results are kept for 30 days
+(`SECURITY_INTEGRATION_CHECK_RETENTION_DAYS`).
+
+### What is recorded
+
+Every set, replace, remove and test is written to the audit log
+(`integration_key.*`) with the actor, provider, key name and last four
+characters only. Values never appear in the browser, logs, audit entries,
+error reports or Git.
