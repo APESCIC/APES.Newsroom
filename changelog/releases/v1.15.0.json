@@ -27,5 +27,5 @@
     "Public impact: three new channel pages, a Channels menu and channel sections on the home page",
     "Internal impact: new channel settings columns on newsletters; ghost:backfill-post-channels command"
   ],
-  "pr": 540
+  "pr": 541
 }
