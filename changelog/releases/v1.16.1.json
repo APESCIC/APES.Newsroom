@@ -22,5 +22,5 @@
     "Public impact: correct canonical links on imported articles",
     "Internal impact: one-off migration clears placeholder canonical URLs on posts and pages"
   ],
-  "pr": 0
+  "pr": 557
 }
