@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers\Staff;
 
+use App\Enums\SubscriptionStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Newsletter;
 use App\Models\NewsletterSegment;
+use App\Services\Mailing\SenderDomains;
+use Closure;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -13,10 +16,21 @@ use Inertia\Response;
 
 class NewsletterController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $status = (string) $request->query('status', 'all');
+        if (! in_array($status, ['all', Newsletter::STATUS_ACTIVE, Newsletter::STATUS_ARCHIVED], true)) {
+            $status = 'all';
+        }
+
         $newsletters = Newsletter::query()
-            ->withCount('subscriptions')
+            ->when($status === Newsletter::STATUS_ACTIVE, fn ($query) => $query->active())
+            ->when($status === Newsletter::STATUS_ARCHIVED, fn ($query) => $query->archived())
+            ->withCount([
+                'subscriptions as confirmed_count' => fn ($query) => $query->where('status', SubscriptionStatus::Confirmed),
+                'subscriptions as pending_count' => fn ($query) => $query->where('status', SubscriptionStatus::Pending),
+                'subscriptions as unsubscribed_count' => fn ($query) => $query->where('status', SubscriptionStatus::Unsubscribed),
+            ])
             ->orderBy('name')
             ->get()
             ->map(fn (Newsletter $newsletter) => [
@@ -25,12 +39,17 @@ class NewsletterController extends Controller
                 'slug' => $newsletter->slug,
                 'description' => $newsletter->description,
                 'legacy_list' => $newsletter->legacy_list?->value,
-                'archived_at' => $newsletter->archived_at?->toIso8601String(),
-                'subscriptions_count' => $newsletter->subscriptions_count,
+                'status' => $newsletter->status(),
+                'sender_name' => $newsletter->sender_name,
+                'sender_email' => $newsletter->sender_email,
+                'confirmed_count' => (int) $newsletter->confirmed_count,
+                'pending_count' => (int) $newsletter->pending_count,
+                'unsubscribed_count' => (int) $newsletter->unsubscribed_count,
             ]);
 
         return Inertia::render('Staff/Newsletters/Index', [
             'newsletters' => $newsletters,
+            'status' => $status,
         ]);
     }
 
@@ -48,7 +67,7 @@ class NewsletterController extends Controller
         $newsletter = Newsletter::query()->create([
             'name' => $validated['name'],
             'slug' => $validated['slug'] !== '' ? $validated['slug'] : Str::slug($validated['name']),
-            'description' => $validated['description'] !== '' ? $validated['description'] : null,
+            ...$this->editableAttributes($validated),
         ]);
 
         return redirect()->route('staff.newsletters.edit', $newsletter);
@@ -64,6 +83,11 @@ class NewsletterController extends Controller
                 'description' => $newsletter->description,
                 'legacy_list' => $newsletter->legacy_list?->value,
                 'archived_at' => $newsletter->archived_at?->toIso8601String(),
+                'status' => $newsletter->status(),
+                'sender_name' => $newsletter->sender_name,
+                'sender_email' => $newsletter->sender_email,
+                'reply_to' => $newsletter->reply_to,
+                'subscribe_on_signup' => $newsletter->subscribe_on_signup,
             ],
             'segments' => $newsletter->segments()->with('alsoNewsletter')->get()->map(fn (NewsletterSegment $segment) => [
                 'id' => $segment->id,
@@ -81,7 +105,7 @@ class NewsletterController extends Controller
         $newsletter->update([
             'name' => $validated['name'],
             'slug' => $validated['slug'] !== '' ? $validated['slug'] : $newsletter->slug,
-            'description' => $validated['description'] !== '' ? $validated['description'] : null,
+            ...$this->editableAttributes($validated),
         ]);
 
         return back();
@@ -121,7 +145,22 @@ class NewsletterController extends Controller
     }
 
     /**
-     * @return array{name: string, slug: string, description: string}
+     * @param  array{description: string, sender_name: string, sender_email: string, reply_to: string, subscribe_on_signup: bool}  $validated
+     * @return array{description: string|null, sender_name: string|null, sender_email: string|null, reply_to: string|null, subscribe_on_signup: bool}
+     */
+    private function editableAttributes(array $validated): array
+    {
+        return [
+            'description' => $validated['description'] !== '' ? $validated['description'] : null,
+            'sender_name' => $validated['sender_name'] !== '' ? $validated['sender_name'] : null,
+            'sender_email' => $validated['sender_email'] !== '' ? Str::lower($validated['sender_email']) : null,
+            'reply_to' => $validated['reply_to'] !== '' ? Str::lower($validated['reply_to']) : null,
+            'subscribe_on_signup' => $validated['subscribe_on_signup'],
+        ];
+    }
+
+    /**
+     * @return array{name: string, slug: string, description: string, sender_name: string, sender_email: string, reply_to: string, subscribe_on_signup: bool}
      */
     private function validated(Request $request, ?Newsletter $newsletter = null): array
     {
@@ -130,17 +169,37 @@ class NewsletterController extends Controller
             $slugRule .= ','.$newsletter->id;
         }
 
-        /** @var array{name: string, slug: string|null, description: string|null} $validated */
+        /** @var array{name: string, slug: string|null, description: string|null, sender_name: string|null, sender_email: string|null, reply_to: string|null, subscribe_on_signup?: bool|string|null} $validated */
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:120'],
             'slug' => ['nullable', 'string', 'max:120', $slugRule],
             'description' => ['nullable', 'string', 'max:1000'],
+            'sender_name' => ['nullable', 'string', 'max:120'],
+            'sender_email' => ['nullable', 'string', 'email', 'max:255', $this->senderDomainRule()],
+            'reply_to' => ['nullable', 'string', 'email', 'max:255'],
+            'subscribe_on_signup' => ['sometimes', 'boolean'],
         ]);
 
         return [
             'name' => $validated['name'],
             'slug' => (string) ($validated['slug'] ?? ''),
             'description' => (string) ($validated['description'] ?? ''),
+            'sender_name' => trim((string) ($validated['sender_name'] ?? '')),
+            'sender_email' => trim((string) ($validated['sender_email'] ?? '')),
+            'reply_to' => trim((string) ($validated['reply_to'] ?? '')),
+            'subscribe_on_signup' => (bool) ($validated['subscribe_on_signup'] ?? false),
         ];
+    }
+
+    private function senderDomainRule(): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail): void {
+            $domains = SenderDomains::allowed();
+            $domain = SenderDomains::domainOf((string) $value);
+
+            if (! in_array($domain, $domains, true)) {
+                $fail('The sender email must use an approved sending domain ('.implode(', ', $domains).').');
+            }
+        };
     }
 }

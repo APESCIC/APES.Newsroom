@@ -9,6 +9,11 @@ type NewsletterData = {
     description: string | null;
     legacy_list: string | null;
     archived_at: string | null;
+    status: 'active' | 'archived';
+    sender_name: string | null;
+    sender_email: string | null;
+    reply_to: string | null;
+    subscribe_on_signup: boolean;
 };
 
 export default function NewsletterEdit({
@@ -24,6 +29,10 @@ export default function NewsletterEdit({
         name: newsletter?.name ?? '',
         slug: newsletter?.slug ?? '',
         description: newsletter?.description ?? '',
+        sender_name: newsletter?.sender_name ?? '',
+        sender_email: newsletter?.sender_email ?? '',
+        reply_to: newsletter?.reply_to ?? '',
+        subscribe_on_signup: newsletter?.subscribe_on_signup ?? false,
     });
 
     const submit: FormEventHandler = (event) => {
@@ -58,6 +67,37 @@ export default function NewsletterEdit({
                     Description
                     <textarea id="description" className="mt-1 w-full rounded border px-3 py-2" rows={4} value={form.data.description} onChange={(e) => form.setData('description', e.target.value)} />
                 </label>
+                {form.errors.description && <p className="text-sm text-red-700">{form.errors.description}</p>}
+                <fieldset className="space-y-3 border-t border-neutral-200 pt-4">
+                    <legend className="text-sm font-semibold">Sender</legend>
+                    <label className="block text-sm font-semibold" htmlFor="sender_name">
+                        Sender name
+                        <input id="sender_name" className="mt-1 w-full rounded border px-3 py-2" value={form.data.sender_name} onChange={(e) => form.setData('sender_name', e.target.value)} />
+                    </label>
+                    {form.errors.sender_name && <p className="text-sm text-red-700">{form.errors.sender_name}</p>}
+                    <label className="block text-sm font-semibold" htmlFor="sender_email">
+                        Sender email
+                        <input id="sender_email" type="email" className="mt-1 w-full rounded border px-3 py-2" value={form.data.sender_email} onChange={(e) => form.setData('sender_email', e.target.value)} />
+                    </label>
+                    {form.errors.sender_email && <p className="text-sm text-red-700">{form.errors.sender_email}</p>}
+                    <label className="block text-sm font-semibold" htmlFor="reply_to">
+                        Reply-to email
+                        <input id="reply_to" type="email" className="mt-1 w-full rounded border px-3 py-2" value={form.data.reply_to} onChange={(e) => form.setData('reply_to', e.target.value)} />
+                    </label>
+                    {form.errors.reply_to && <p className="text-sm text-red-700">{form.errors.reply_to}</p>}
+                </fieldset>
+                <label className="flex gap-2 text-sm" htmlFor="subscribe_on_signup">
+                    <input
+                        id="subscribe_on_signup"
+                        type="checkbox"
+                        checked={form.data.subscribe_on_signup}
+                        onChange={(e) => form.setData('subscribe_on_signup', e.target.checked)}
+                    />
+                    Offer this newsletter when new members sign up (they tick to opt in)
+                </label>
+                {newsletter?.status === 'archived' && (
+                    <p className="text-sm text-neutral-600">Archived: hidden from signup and cannot be sent to.</p>
+                )}
                 {newsletter?.legacy_list && (
                     <p className="text-sm text-neutral-600">Linked channel list: {newsletter.legacy_list}. Channel signups keep using this list.</p>
                 )}
