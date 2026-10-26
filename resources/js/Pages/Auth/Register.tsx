@@ -2,13 +2,23 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import AuthCard from '../../Components/Auth/AuthCard';
 
-export default function Register() {
+type SignupNewsletter = { id: number; name: string; description: string | null };
+
+export default function Register({ newsletters = [] }: { newsletters?: SignupNewsletter[] }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         email: '',
         password: '',
         password_confirmation: '',
+        newsletter_ids: [] as number[],
     });
+
+    const toggleNewsletter = (id: number) => {
+        setData(
+            'newsletter_ids',
+            data.newsletter_ids.includes(id) ? data.newsletter_ids.filter((value) => value !== id) : [...data.newsletter_ids, id],
+        );
+    };
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -41,6 +51,25 @@ export default function Register() {
                         <label htmlFor="password_confirmation" className="text-sm font-bold text-body">Confirm password</label>
                         <input id="password_confirmation" type="password" value={data.password_confirmation} onChange={(e) => setData('password_confirmation', e.target.value)} required className="form-input mt-1" />
                     </div>
+                    {newsletters.length > 0 && (
+                        <fieldset className="flex flex-col gap-2">
+                            <legend className="text-sm font-bold text-body">Newsletters (optional)</legend>
+                            <p className="text-sm text-muted">Tick any you would like. We confirm them when you verify your email, and you can unsubscribe at any time.</p>
+                            {newsletters.map((newsletter) => (
+                                <label key={newsletter.id} className="flex gap-2 text-sm text-body">
+                                    <input
+                                        type="checkbox"
+                                        checked={data.newsletter_ids.includes(newsletter.id)}
+                                        onChange={() => toggleNewsletter(newsletter.id)}
+                                    />
+                                    <span>
+                                        {newsletter.name}
+                                        {newsletter.description && <span className="block text-muted">{newsletter.description}</span>}
+                                    </span>
+                                </label>
+                            ))}
+                        </fieldset>
+                    )}
                     <button type="submit" disabled={processing} className="button-primary">
                         Register
                     </button>
