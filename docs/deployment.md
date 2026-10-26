@@ -224,6 +224,13 @@ references are left unchanged. The command is safe to run again: fixed
 references no longer match, and identical files are stored once. It does not
 change `updated_at`, send email or touch Ghost itself.
 
+On the live app, run it from Actions with **Repair imported Ghost images (live
+app)** (`.github/workflows/ghost-image-fix.yml`, `beta` environment, `main`
+only). `dry-run` prints the report; `apply` takes a Cloudron backup first and
+needs `confirm` set to `apply`; `diagnostics` is read-only and prints PHP upload
+limits, the queue worker process and `deploy:preflight --target=production`.
+It shares the deploy concurrency group, so it never runs during a deploy.
+
 ## Operational boundary
 
 The live Newsroom runs at `https://www.apesnews.org.uk/` (Cloudron app id `74a2a784-a161-4787-84ff-2b8efc957bc8`). The  <!-- pragma: allowlist secret -->
