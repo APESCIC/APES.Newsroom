@@ -5,6 +5,8 @@ namespace App\Services\Membership;
 use App\Models\MembershipPlan;
 use App\Models\Offer;
 use App\Models\User;
+use App\Services\Integrations\IntegrationSecrets;
+use App\Support\Integrations\IntegrationDefinitions;
 use Stripe\Checkout\Session;
 use Stripe\Exception\SignatureVerificationException;
 use Stripe\StripeClient;
@@ -13,7 +15,10 @@ use UnexpectedValueException;
 
 class StripeApiBillingClient implements StripeBillingClient
 {
-    public function __construct(private readonly StripeClient $stripe) {}
+    public function __construct(
+        private readonly StripeClient $stripe,
+        private readonly IntegrationSecrets $secrets,
+    ) {}
 
     public function createCheckoutSession(
         User $user,
@@ -122,7 +127,7 @@ class StripeApiBillingClient implements StripeBillingClient
 
     public function constructWebhookEvent(string $payload, string $signatureHeader): array
     {
-        $secret = (string) config('services.stripe.webhook_secret');
+        $secret = (string) $this->secrets->get(IntegrationDefinitions::STRIPE, 'webhook_secret');
 
         try {
             $event = Webhook::constructEvent($payload, $signatureHeader, $secret);

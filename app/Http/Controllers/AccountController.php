@@ -9,8 +9,10 @@ use App\Services\Account\AccountDeletionPolicy;
 use App\Services\Account\AccountEmailChangeService;
 use App\Services\Audit\AuditLogger;
 use App\Services\Auth\RecentAuthentication;
+use App\Services\Integrations\IntegrationSecrets;
 use App\Services\Membership\MembershipService;
 use App\Support\EmailAddress;
+use App\Support\Integrations\IntegrationDefinitions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -25,6 +27,7 @@ class AccountController extends Controller
         private readonly AccountDeletionPolicy $deletionPolicy,
         private readonly AccountEmailChangeService $emailChanges,
         private readonly MembershipService $memberships,
+        private readonly IntegrationSecrets $secrets,
     ) {}
 
     public function show(Request $request): Response
@@ -59,7 +62,7 @@ class AccountController extends Controller
                     'amount_pence' => $plan->amount_pence,
                     'currency' => $plan->currency,
                 ]),
-            'stripe_enabled' => filled(config('services.stripe.secret')) || app()->environment('testing', 'local'),
+            'stripe_enabled' => $this->secrets->configured(IntegrationDefinitions::STRIPE, 'secret') || app()->environment('testing', 'local'),
             'status' => session('status'),
             'can_delete_account' => $deletionBlockReason === null,
             'deletion_block_reason' => $deletionBlockReason,

@@ -2,15 +2,23 @@
 
 namespace App\Services\Integrations;
 
+use App\Support\Integrations\IntegrationDefinitions;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class UnsplashService
 {
+    public function __construct(private readonly IntegrationSecrets $secrets) {}
+
     public function enabled(): bool
     {
-        return filled(config('newsroom.unsplash.access_key'));
+        return $this->secrets->configured(IntegrationDefinitions::UNSPLASH, 'access_key');
+    }
+
+    private function accessKey(): string
+    {
+        return (string) $this->secrets->get(IntegrationDefinitions::UNSPLASH, 'access_key');
     }
 
     /**
@@ -30,7 +38,7 @@ class UnsplashService
         try {
             $response = Http::timeout(10)
                 ->withHeaders([
-                    'Authorization' => 'Client-ID '.config('newsroom.unsplash.access_key'),
+                    'Authorization' => 'Client-ID '.$this->accessKey(),
                     'Accept-Version' => 'v1',
                 ])
                 ->get('https://api.unsplash.com/search/photos', [
@@ -87,7 +95,7 @@ class UnsplashService
         try {
             Http::timeout(5)
                 ->withHeaders([
-                    'Authorization' => 'Client-ID '.config('newsroom.unsplash.access_key'),
+                    'Authorization' => 'Client-ID '.$this->accessKey(),
                     'Accept-Version' => 'v1',
                 ])
                 ->get('https://api.unsplash.com/photos/'.$photoId.'/download');

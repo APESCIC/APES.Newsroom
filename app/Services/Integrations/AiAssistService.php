@@ -2,16 +2,19 @@
 
 namespace App\Services\Integrations;
 
+use App\Support\Integrations\IntegrationDefinitions;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class AiAssistService
 {
+    public function __construct(private readonly IntegrationSecrets $secrets) {}
+
     public function enabled(): bool
     {
         return (bool) config('newsroom.ai_assist.enabled')
-            && filled(config('newsroom.ai_assist.api_key'));
+            && $this->secrets->configured(IntegrationDefinitions::OPENAI, 'api_key');
     }
 
     /**
@@ -38,7 +41,7 @@ class AiAssistService
 
         try {
             $response = Http::timeout(30)
-                ->withToken((string) config('newsroom.ai_assist.api_key'))
+                ->withToken((string) $this->secrets->get(IntegrationDefinitions::OPENAI, 'api_key'))
                 ->post('https://api.openai.com/v1/chat/completions', [
                     'model' => (string) config('newsroom.ai_assist.model', 'gpt-4o-mini'),
                     'messages' => [

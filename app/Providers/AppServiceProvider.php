@@ -13,6 +13,7 @@ use App\Services\Membership\StripeApiBillingClient;
 use App\Services\Membership\StripeBillingClient;
 use App\Services\Settings\SettingsRepository;
 use App\Support\Auth\PasswordPolicy;
+use App\Support\Integrations\IntegrationDefinitions;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Validation\UncompromisedVerifier;
@@ -40,13 +41,14 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(IntegrationSecrets::class);
 
         $this->app->bind(StripeBillingClient::class, function ($app) {
-            if ($app->environment('testing') || blank(config('services.stripe.secret'))) {
+            $secrets = $app->make(IntegrationSecrets::class);
+            $secret = $secrets->get(IntegrationDefinitions::STRIPE, 'secret');
+
+            if ($app->environment('testing') || blank($secret)) {
                 return $app->make(FakeStripeBillingClient::class);
             }
 
-            return new StripeApiBillingClient(
-                new StripeClient((string) config('services.stripe.secret')),
-            );
+            return new StripeApiBillingClient(new StripeClient($secret), $secrets);
         });
 
         $this->app->extend(UncompromisedVerifier::class, fn ($verifier, $app) => new NotPwnedVerifier(
