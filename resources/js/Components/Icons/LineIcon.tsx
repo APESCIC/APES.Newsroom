@@ -7,6 +7,7 @@ export type IconName =
     | 'clinic'
     | 'document'
     | 'home'
+    | 'image'
     | 'menu'
     | 'newspaper'
     | 'play'
@@ -47,6 +48,12 @@ export default function LineIcon({ name, ...props }: { name: IconName } & SVGPro
             <>
                 <path d="m3 11 9-8 9 8" />
                 <path d="M5 10v11h14V10M9 21v-7h6v7" />
+            </>
+        ),
+        image: (
+            <>
+                <rect x="3" y="4" width="18" height="16" rx="2" />
+                <path d="m3 17 5-5 4 4 3-3 6 6M15.5 8.5h.01" />
             </>
         ),
         menu: <path d="M4 7h16M4 12h16M4 17h16" />,

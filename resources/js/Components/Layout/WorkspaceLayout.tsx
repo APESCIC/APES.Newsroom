@@ -10,6 +10,7 @@ export type WorkspaceActive =
     | 'moderation'
     | 'posts'
     | 'pages'
+    | 'media'
     | 'newsletters'
     | 'membership-plans'
     | 'offers'
@@ -38,6 +39,7 @@ function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: Wo
     if (area === 'Staff' && auth.can.accessStaff) {
         links.push({ href: '/staff/posts', label: 'Posts', icon: 'document', active: active === 'posts' });
         links.push({ href: '/staff/pages', label: 'Pages', icon: 'document', active: active === 'pages' });
+        links.push({ href: '/staff/media', label: 'Media', icon: 'image', active: active === 'media' });
         links.push({ href: '/staff/newsletters', label: 'Newsletters', icon: 'document', active: active === 'newsletters' });
         links.push({ href: '/staff/membership-plans', label: 'Plans', icon: 'document', active: active === 'membership-plans' });
         links.push({ href: '/staff/offers', label: 'Offers', icon: 'document', active: active === 'offers' });

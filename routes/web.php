@@ -49,6 +49,7 @@ use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\Staff\AiAssistController as StaffAiAssistController;
 use App\Http\Controllers\Staff\CampaignController as StaffCampaignController;
 use App\Http\Controllers\Staff\MediaController as StaffMediaController;
+use App\Http\Controllers\Staff\MediaLibraryController as StaffMediaLibraryController;
 use App\Http\Controllers\Staff\MembershipPlanController as StaffMembershipPlanController;
 use App\Http\Controllers\Staff\MetricsController as StaffMetricsController;
 use App\Http\Controllers\Staff\NewsletterController as StaffNewsletterController;
@@ -310,6 +311,10 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
             ->middleware('throttle:media-upload')
             ->name('media.hero.upload');
         Route::get('/media/{asset}', [StaffMediaController::class, 'show'])->whereNumber('asset')->name('media.show');
+        Route::get('/media', [StaffMediaLibraryController::class, 'index'])->name('media.index');
+        Route::get('/media/library', [StaffMediaLibraryController::class, 'picker'])->name('media.library');
+        Route::get('/media/{asset}/usage', [StaffMediaLibraryController::class, 'usage'])->whereNumber('asset')->name('media.usage');
+        Route::delete('/media/{asset}', [StaffMediaLibraryController::class, 'destroy'])->whereNumber('asset')->name('media.destroy');
         Route::get('/media/unsplash', [StaffMediaController::class, 'unsplashSearch'])->name('media.unsplash.search');
         Route::post('/media/unsplash/select', [StaffMediaController::class, 'unsplashSelect'])->name('media.unsplash.select');
         Route::get('/ai/status', [StaffAiAssistController::class, 'status'])->name('ai.status');
