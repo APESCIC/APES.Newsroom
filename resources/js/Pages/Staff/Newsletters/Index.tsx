@@ -15,6 +15,10 @@ type NewsletterRow = {
     sender_name: string | null;
     sender_email: string | null;
     sender_verified: boolean;
+    channel: string | null;
+    show_on_home: boolean;
+    show_in_nav: boolean;
+    display_order: number;
     confirmed_count: number;
     pending_count: number;
     unsubscribed_count: number;
@@ -75,6 +79,13 @@ export default function NewslettersIndex({ newsletters, status }: { newsletters:
                                     {newsletter.name}
                                 </Link>
                                 <StatusBadge status={newsletter.status} />
+                                {newsletter.channel && newsletter.status === 'active' && (
+                                    <span className="inline-flex rounded-full bg-page-tint px-2 py-0.5 text-xs font-bold text-teal-deep">
+                                        Public channel #{newsletter.display_order}
+                                        {newsletter.show_on_home ? ' · home' : ''}
+                                        {newsletter.show_in_nav ? ' · menu' : ''}
+                                    </span>
+                                )}
                             </div>
                             <p className="text-sm text-neutral-600">
                                 /{newsletter.slug}

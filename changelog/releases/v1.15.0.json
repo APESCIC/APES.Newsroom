@@ -1,0 +1,26 @@
+{
+  "version": "v1.15.0",
+  "slug": "release-v1-15-0",
+  "released_at": "2026-10-26",
+  "previous_version": "v1.14.0",
+  "theme": "All newsletters as channels",
+  "change_types": [
+    "added"
+  ],
+  "topic_tags": [
+    "public-facing"
+  ],
+  "summary": "APES Times, MyAPES Portal and Stream 4 APES join APES CIC, Shelter & Rescue and Pet Care Clinic as channels, and staff choose which channels appear on the home page and in the menu from Newsletters settings.",
+  "detailed_changes": [
+    "Posts can be filed under APES Times, MyAPES Portal and Stream 4 APES. The post editor's Channel field lists every channel whose newsletter is active (#527).",
+    "Each newsletter has Public channel settings: the linked channel, show on the home page, show in the menu, display order, and a public label and description. Archived newsletters never appear publicly, and the slug is locked while a channel is linked so signup links keep working (#525).",
+    "Imported Ghost posts are filed by the Ghost newsletter they were sent with. A new ghost:backfill-post-channels command lists and, with --force, refiles earlier imports that belonged to the three new newsletters, without sending email (#527)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff/newsletters, /staff/posts",
+    "User groups affected: staff and admins",
+    "Internal impact: new channel settings columns on newsletters; ghost:backfill-post-channels command"
+  ],
+  "pr": 0
+}

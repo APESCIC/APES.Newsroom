@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Channel;
 use App\Enums\MailingList;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -20,6 +21,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'subscribe_on_signup',
     'sender_verification',
     'archived_at',
+    'channel',
+    'show_on_home',
+    'show_in_nav',
+    'display_order',
+    'public_label',
+    'public_description',
 ])]
 class Newsletter extends Model
 {
@@ -34,7 +41,35 @@ class Newsletter extends Model
             'subscribe_on_signup' => 'boolean',
             'sender_verification' => 'array',
             'archived_at' => 'datetime',
+            'channel' => Channel::class,
+            'show_on_home' => 'boolean',
+            'show_in_nav' => 'boolean',
+            'display_order' => 'integer',
         ];
+    }
+
+    /**
+     * Active newsletters linked to a public channel, in display order.
+     *
+     * @param  Builder<Newsletter>  $query
+     * @return Builder<Newsletter>
+     */
+    public function scopePublicChannels(Builder $query): Builder
+    {
+        return $query->active()
+            ->whereNotNull('channel')
+            ->orderBy('display_order')
+            ->orderBy('id');
+    }
+
+    public function publicLabel(): string
+    {
+        return $this->public_label ?: $this->name;
+    }
+
+    public function publicDescription(): ?string
+    {
+        return $this->public_description ?: $this->description;
     }
 
     /**
