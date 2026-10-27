@@ -6,11 +6,9 @@ use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\User;
-use App\Services\Account\AccountEmailChangeService;
+use App\Services\Account\UserDetailsUpdater;
 use App\Services\Admin\AdminUserPresenter;
 use App\Services\Admin\UserErasureService;
-use App\Services\Audit\AuditLogger;
-use App\Support\Account\ContactDetails;
 use App\Support\EmailAddress;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -80,41 +78,11 @@ class UserController extends Controller
         ]);
     }
 
-    public function update(UpdateUserRequest $request, User $user, AccountEmailChangeService $emailChanges, AuditLogger $audit): RedirectResponse
+    public function update(UpdateUserRequest $request, User $user, UserDetailsUpdater $updater): RedirectResponse
     {
-        $validated = $request->validated();
-        $contact = ContactDetails::only($validated);
-        $contactChanged = ContactDetails::changedGroups($user, $contact);
-        $nameChanged = $validated['name'] !== $user->name;
-        $emailChanged = $validated['email'] !== EmailAddress::normalize((string) $user->email);
+        $result = $updater->update($request->user(), $user, $request->validated(), $request);
 
-        if (! $nameChanged && ! $emailChanged && $contactChanged === []) {
-            return to_route('admin.users.show', $user)->with('status', 'No changes to save.');
-        }
-
-        $payload = ['reason' => $validated['reason']];
-
-        if ($nameChanged) {
-            $payload['name'] = ['from' => $user->name, 'to' => $validated['name']];
-        }
-
-        if ($contactChanged !== []) {
-            $user->forceFill($contact)->save();
-            $payload['contact_details_changed'] = $contactChanged;
-        }
-
-        if ($emailChanged) {
-            $emailChanges->request($user, ['name' => $validated['name'], 'email' => $validated['email']]);
-            $payload['email_change_requested'] = true;
-        } elseif ($nameChanged) {
-            $user->forceFill(['name' => $validated['name']])->save();
-        }
-
-        $audit->record($request->user(), 'user.updated', $user, $payload, $request);
-
-        return to_route('admin.users.show', $user)->with('status', $emailChanged
-            ? 'Changes saved. The new email address applies once the user confirms it from their inbox.'
-            : 'Changes saved.');
+        return to_route('admin.users.show', $user)->with('status', UserDetailsUpdater::message($result));
     }
 
     public function destroy(Request $request, User $user, UserErasureService $erasure): RedirectResponse

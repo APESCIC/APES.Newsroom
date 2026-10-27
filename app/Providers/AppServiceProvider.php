@@ -18,6 +18,7 @@ use App\Support\Integrations\IntegrationDefinitions;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Validation\UncompromisedVerifier;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -107,6 +108,16 @@ class AppServiceProvider extends ServiceProvider
             return [
                 Limit::perMinute(10)->by('admin-user-actions:'.$request->user()?->id.':'.$targetId),
                 Limit::perMinute(30)->by('admin-user-actions:'.$request->user()?->id),
+            ];
+        });
+
+        RateLimiter::for('people-actions', function (Request $request) {
+            $target = $request->route('user') ?? $request->route('contact');
+            $targetId = $target instanceof Model ? class_basename($target).':'.$target->getKey() : (string) $target;
+
+            return [
+                Limit::perMinute(10)->by('people-actions:'.$request->user()?->id.':'.$targetId),
+                Limit::perMinute(30)->by('people-actions:'.$request->user()?->id),
             ];
         });
 

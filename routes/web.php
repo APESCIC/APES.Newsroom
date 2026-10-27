@@ -50,14 +50,18 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\Staff\AiAssistController as StaffAiAssistController;
 use App\Http\Controllers\Staff\CampaignController as StaffCampaignController;
+use App\Http\Controllers\Staff\MailingContactController as StaffMailingContactController;
 use App\Http\Controllers\Staff\MediaController as StaffMediaController;
 use App\Http\Controllers\Staff\MediaLibraryController as StaffMediaLibraryController;
+use App\Http\Controllers\Staff\MembershipAdminController as StaffMembershipAdminController;
 use App\Http\Controllers\Staff\MembershipPlanController as StaffMembershipPlanController;
 use App\Http\Controllers\Staff\MetricsController as StaffMetricsController;
 use App\Http\Controllers\Staff\NewsletterController as StaffNewsletterController;
 use App\Http\Controllers\Staff\OfferController as StaffOfferController;
 use App\Http\Controllers\Staff\PageController as StaffPageController;
+use App\Http\Controllers\Staff\PersonController as StaffPersonController;
 use App\Http\Controllers\Staff\PostController as StaffPostController;
+use App\Http\Controllers\Staff\ProfileFieldsController as StaffProfileFieldsController;
 use App\Http\Controllers\Staff\SubscriberController as StaffSubscriberController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\TagRssController;
@@ -295,8 +299,31 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
         Route::post('/posts/{post}/campaign/test-send', [StaffCampaignController::class, 'testSend'])->name('posts.campaign.test');
 
         Route::get('/metrics', StaffMetricsController::class)->name('metrics.index');
-        Route::permanentRedirect('/members', '/admin/members')->name('members.legacy');
+        Route::permanentRedirect('/members', '/staff/people')->name('members.legacy');
         Route::permanentRedirect('/webhooks', '/admin/webhooks')->name('webhooks.legacy');
+
+        Route::get('/people', [StaffPersonController::class, 'index'])->name('people.index');
+        Route::get('/people/users/{user}', [StaffPersonController::class, 'showUser'])->whereNumber('user')->name('people.users.show');
+        Route::get('/people/contacts/{contact}', [StaffPersonController::class, 'showContact'])->whereNumber('contact')->name('people.contacts.show');
+        Route::middleware(['auth.recent', 'throttle:people-actions'])->group(function () {
+            Route::patch('/people/users/{user}', [StaffPersonController::class, 'updateUser'])->whereNumber('user')->name('people.users.update');
+            Route::post('/people/users/{user}/comp', [StaffMembershipAdminController::class, 'grantComp'])->whereNumber('user')->name('people.users.comp.store');
+            Route::delete('/people/users/{user}/comp', [StaffMembershipAdminController::class, 'removeComp'])->whereNumber('user')->name('people.users.comp.destroy');
+            Route::patch('/people/users/{user}/note', [StaffMembershipAdminController::class, 'updateNote'])->whereNumber('user')->name('people.users.note.update');
+            Route::post('/people/users/{user}/profile', [StaffProfileFieldsController::class, 'update'])->whereNumber('user')->name('people.users.profile.update');
+            Route::post('/people/users/{user}/profile/reset', [StaffProfileFieldsController::class, 'reset'])->whereNumber('user')->name('people.users.profile.reset');
+            Route::patch('/people/contacts/{contact}', [StaffMailingContactController::class, 'update'])->whereNumber('contact')->name('people.contacts.update');
+            Route::delete('/people/contacts/{contact}', [StaffMailingContactController::class, 'destroy'])->whereNumber('contact')->name('people.contacts.destroy');
+            Route::post('/people/contacts/{contact}/suppression', [StaffMailingContactController::class, 'suppress'])->whereNumber('contact')->name('people.contacts.suppress');
+            Route::delete('/people/contacts/{contact}/suppression', [StaffMailingContactController::class, 'unsuppress'])->whereNumber('contact')->name('people.contacts.unsuppress');
+            Route::post('/people/contacts/{contact}/subscriptions/{subscription}/unsubscribe', [StaffMailingContactController::class, 'unsubscribe'])
+                ->whereNumber(['contact', 'subscription'])
+                ->scopeBindings()
+                ->name('people.contacts.subscriptions.unsubscribe');
+            Route::post('/people/contacts/{contact}/newsletters/{newsletter}/subscribe', [StaffMailingContactController::class, 'subscribe'])
+                ->whereNumber(['contact', 'newsletter'])
+                ->name('people.contacts.newsletters.subscribe');
+        });
 
         Route::get('/subscribers', [StaffSubscriberController::class, 'index'])->name('subscribers.index');
         Route::get('/subscribers/export', [StaffSubscriberController::class, 'export'])->name('subscribers.export');

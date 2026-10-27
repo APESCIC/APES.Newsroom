@@ -6,9 +6,10 @@ use App\Enums\Role;
 use App\Models\User;
 
 /**
- * Admin user management. Super admins can additionally change roles and act
- * on other admins; nobody can act on an account of equal or higher rank
- * except a super admin acting on an admin.
+ * User management. Staff can view and edit the details of public accounts
+ * (#567); security actions stay with admins. Super admins can additionally
+ * change roles and act on other admins; nobody can act on an account of equal
+ * or higher rank except a super admin acting on an admin.
  */
 class UserPolicy
 {
@@ -19,7 +20,8 @@ class UserPolicy
 
     public function view(User $actor, User $user): bool
     {
-        return $actor->role->atLeast(Role::Admin);
+        return $actor->role->atLeast(Role::Admin)
+            || ($actor->role === Role::Staff && $user->role === Role::Public);
     }
 
     /**
@@ -27,15 +29,7 @@ class UserPolicy
      */
     public function manageSecurity(User $actor, User $user): bool
     {
-        if (! $actor->role->atLeast(Role::Admin) || $actor->is($user)) {
-            return false;
-        }
-
-        if ($actor->role === Role::SuperAdmin) {
-            return $user->role !== Role::SuperAdmin;
-        }
-
-        return $actor->role->rank() > $user->role->rank();
+        return $actor->role->atLeast(Role::Admin) && $this->outranks($actor, $user);
     }
 
     /**
@@ -43,7 +37,7 @@ class UserPolicy
      */
     public function update(User $actor, User $user): bool
     {
-        return $this->manageSecurity($actor, $user);
+        return $actor->role->atLeast(Role::Staff) && $this->outranks($actor, $user);
     }
 
     public function resendVerification(User $actor, User $user): bool
@@ -71,5 +65,18 @@ class UserPolicy
         return $actor->role === Role::SuperAdmin
             && ! $actor->is($user)
             && $user->auth_provider !== 'cloudron_oidc';
+    }
+
+    private function outranks(User $actor, User $user): bool
+    {
+        if ($actor->is($user)) {
+            return false;
+        }
+
+        if ($actor->role === Role::SuperAdmin) {
+            return $user->role !== Role::SuperAdmin;
+        }
+
+        return $actor->role->rank() > $user->role->rank();
     }
 }

@@ -3,11 +3,18 @@
 namespace Database\Seeders;
 
 use App\Enums\Channel;
+use App\Enums\MailingList;
+use App\Enums\MembershipStatus;
 use App\Enums\ModerationStatus;
 use App\Enums\PostStatus;
 use App\Enums\Role;
+use App\Enums\SubscriptionStatus;
 use App\Models\AuditLog;
 use App\Models\Comment;
+use App\Models\MailingContact;
+use App\Models\MailingListSubscription;
+use App\Models\Membership;
+use App\Models\Newsletter;
 use App\Models\Offer;
 use App\Models\Page;
 use App\Models\Post;
@@ -45,6 +52,7 @@ class VisualRegressionSeeder extends Seeder
             $this->seedPosts($staff, $admin);
             $this->seedPages($staff);
             $this->seedModeration();
+            $this->seedPeople();
             $this->seedAdminRecords($admin);
         } finally {
             Carbon::setTestNow();
@@ -124,6 +132,30 @@ class VisualRegressionSeeder extends Seeder
             'moderation_status' => ModerationStatus::Pending,
             'body_hash' => hash('sha256', 'Lovely to see them doing so well.'),
         ]);
+    }
+
+    /**
+     * The reader's linked contact (id 1) and a subscriber without an
+     * account (id 2) for the person pages.
+     */
+    private function seedPeople(): void
+    {
+        $reader = User::query()->where('email', 'reader@apes.local')->firstOrFail();
+        Membership::query()->updateOrCreate(['user_id' => $reader->id], ['status' => MembershipStatus::Free]);
+
+        $contacts = [
+            ['reader@apes.local', 'Riley Reader', $reader->id, MailingList::ApesCic],
+            ['sam.subscriber@example.test', 'Sam Subscriber', null, MailingList::ApesShelterRescue],
+        ];
+
+        foreach ($contacts as [$email, $name, $userId, $list]) {
+            $contact = MailingContact::query()->updateOrCreate(['email' => $email], ['name' => $name, 'user_id' => $userId]);
+            MailingListSubscription::query()->updateOrCreate(['mailing_contact_id' => $contact->id, 'list' => $list->value], [
+                'newsletter_id' => Newsletter::query()->where('legacy_list', $list->value)->value('id'),
+                'status' => SubscriptionStatus::Confirmed,
+                'confirmed_at' => now()->subDays(7),
+            ]);
+        }
     }
 
     private function seedAdminRecords(User $admin): void

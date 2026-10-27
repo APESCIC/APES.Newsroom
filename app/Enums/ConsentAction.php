@@ -9,4 +9,6 @@ enum ConsentAction: string
     case Unsubscribed = 'unsubscribed';
     case PreferenceUpdated = 'preference_updated';
     case Suppressed = 'suppressed';
+    case Unsuppressed = 'unsuppressed';
+    case ContactUpdated = 'contact_updated';
 }

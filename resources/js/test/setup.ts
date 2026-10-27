@@ -149,6 +149,7 @@ vi.mock('@inertiajs/react', async () => {
             return {
                 data,
                 setData,
+                submit,
                 post,
                 put,
                 patch,

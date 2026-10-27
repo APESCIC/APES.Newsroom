@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { Eye, MailOpen, MousePointerClick, PoundSterling, Send, UserCheck, Users, Wallet } from 'lucide-react';
+import { Eye, Gift, MailOpen, MousePointerClick, PoundSterling, Send, UserCheck, Users, Wallet } from 'lucide-react';
 import type { ReactNode } from 'react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
 import StatTile, { StatGrid } from '../../../Components/Workspace/ui/StatTile';
@@ -7,7 +7,7 @@ import StatTile, { StatGrid } from '../../../Components/Workspace/ui/StatTile';
 type Metrics = {
     web: { views_7d: number; views_30d: number; signed_in_share_7d: number };
     newsletters: { sent: number; opened: number; clicked: number; open_rate: number; click_rate: number };
-    subscriptions: { free: number; active: number; past_due: number; canceled: number; mrr_pence: number };
+    subscriptions: { free: number; active: number; past_due: number; canceled: number; comped: number; mrr_pence: number };
 };
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -43,6 +43,7 @@ export default function Index({ metrics }: { metrics: Metrics }) {
             <Section title="Subscriptions">
                 <StatTile label="Free members" value={metrics.subscriptions.free} icon={Users} />
                 <StatTile label="Active paid" value={metrics.subscriptions.active} icon={Wallet} />
+                <StatTile label="Complimentary" value={metrics.subscriptions.comped} hint="Paid access granted by an admin" icon={Gift} />
                 <StatTile label="Test-mode MRR" value={mrr} hint="Sum of active plan amounts (yearly ÷ 12)" icon={PoundSterling} />
             </Section>
         </WorkspaceLayout>

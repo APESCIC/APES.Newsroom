@@ -15,7 +15,7 @@ class MetricsDashboard
      * @return array{
      *     web: array{views_7d: int, views_30d: int, signed_in_share_7d: float},
      *     newsletters: array{sent: int, opened: int, clicked: int, open_rate: float, click_rate: float},
-     *     subscriptions: array{free: int, active: int, past_due: int, canceled: int, mrr_pence: int}
+     *     subscriptions: array{free: int, active: int, past_due: int, canceled: int, comped: int, mrr_pence: int}
      * }
      */
     public function summary(): array
@@ -30,6 +30,7 @@ class MetricsDashboard
         $active = Membership::query()->where('status', MembershipStatus::Active)->count();
         $pastDue = Membership::query()->where('status', MembershipStatus::PastDue)->count();
         $canceled = Membership::query()->where('status', MembershipStatus::Canceled)->count();
+        $comped = Membership::query()->whereNotNull('comped_at')->count();
 
         $mrr = 0;
         $activeMemberships = Membership::query()
@@ -61,6 +62,7 @@ class MetricsDashboard
                 'active' => $active,
                 'past_due' => $pastDue,
                 'canceled' => $canceled,
+                'comped' => $comped,
                 'mrr_pence' => $mrr,
             ],
         ];

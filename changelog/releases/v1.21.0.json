@@ -1,0 +1,28 @@
+{
+  "version": "v1.21.0",
+  "slug": "release-v1-21-0",
+  "released_at": "2026-10-27",
+  "previous_version": "v1.20.0",
+  "theme": "Editable people profiles",
+  "change_types": ["added", "changed", "fixed"],
+  "topic_tags": ["internal-only", "compliance"],
+  "summary": "Staff and admins can now open one page per person to view and edit their account, membership, newsletters and public profile, with a reason and an audit entry for every change.",
+  "detailed_changes": [
+    "A new person page joins the account, contact details, membership, mailing contact, per-newsletter subscriptions and public profile, and is linked from Users, Members and Subscribers (#568).",
+    "Staff get a People section in the Audience menu and can view and edit the details of public accounts; security actions, roles and erasure stay with admins as before. The old /staff/members link now opens People (#571).",
+    "Staff can edit mailing-list subscribers: change their name or email, unsubscribe them from one newsletter, send a confirmation email to resubscribe them, and suppress or unsuppress the address. A new subscription always waits for the subscriber to confirm it, and only admins can delete a subscriber (#569).",
+    "Admins can grant or remove complimentary access, which unlocks paid content without changing Stripe billing, keep an encrypted internal note on a member, and toggle a member's newsletters (#570).",
+    "Staff and admins can edit or reset a member's display name, bio and avatar from the person page or the moderation queue (#572).",
+    "Staff-started email changes only send a confirmation to the new address; the change applies once the member confirms it, and Cloudron SSO accounts keep their name and email locked (#573).",
+    "Fixed: confirming an account email change no longer fails when the member is subscribed to a newsletter that has no legacy mailing list; those subscriptions now move to the new address and ask for confirmation (#573).",
+    "Every people change needs a reason, writes an audit entry without personal values, and newsletter changes record a consent event with the source \"staff\" (#574)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff/people, /staff/people/users/{user}, /staff/people/contacts/{contact}, /staff/subscribers, /admin/members, /admin/users, /admin/moderation",
+    "User groups affected: staff, admins and super admins; members whose details or subscriptions are changed by staff",
+    "Public impact: members with complimentary access can read paid content; no public page changes",
+    "Internal impact: UserPolicy, MembershipPolicy, new MailingContactPolicy and ProfilePolicy, UserDetailsUpdater, StaffContactService, memberships comp and staff note columns, ConsentAction unsuppressed and contact_updated, people-actions rate limit"
+  ],
+  "pr": 0
+}

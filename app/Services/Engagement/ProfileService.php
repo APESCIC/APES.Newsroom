@@ -92,6 +92,74 @@ class ProfileService
         return $profile->fresh();
     }
 
+    /**
+     * A staff or admin edit of the public fields. The moderation status is
+     * left as it is: staff edits are already reviewed (#572).
+     *
+     * @param  array{display_name: string|null, bio: string|null}  $data
+     * @return list<string> the fields that changed
+     */
+    public function staffUpdate(Profile $profile, User $actor, array $data, ?UploadedFile $avatar = null, bool $removeAvatar = false): array
+    {
+        $changed = [];
+
+        foreach (['display_name', 'bio'] as $field) {
+            if ($data[$field] !== $profile->{$field}) {
+                $profile->{$field} = $data[$field];
+                $changed[] = $field;
+            }
+        }
+
+        if ($avatar) {
+            $path = $this->storeAvatar($avatar, (int) $profile->user_id);
+            $this->deleteAvatar($profile);
+            $profile->avatar_path = $path;
+            $changed[] = 'avatar';
+        } elseif ($removeAvatar && $profile->avatar_path) {
+            $this->deleteAvatar($profile);
+            $profile->avatar_path = null;
+            $changed[] = 'avatar';
+        }
+
+        if ($changed !== []) {
+            $profile->save();
+            $this->audit($actor->id, $profile, 'profile_staff_edited', ['fields' => $changed]);
+        }
+
+        return $changed;
+    }
+
+    /**
+     * Clear the display name, bio and avatar back to defaults.
+     *
+     * @return list<string> the fields that were cleared
+     */
+    public function resetFields(Profile $profile, User $actor): array
+    {
+        $cleared = array_values(array_filter([
+            $profile->display_name !== null ? 'display_name' : null,
+            $profile->bio !== null ? 'bio' : null,
+            $profile->avatar_path !== null ? 'avatar' : null,
+        ]));
+
+        if ($cleared === []) {
+            return [];
+        }
+
+        $this->deleteAvatar($profile);
+        $profile->forceFill(['display_name' => null, 'bio' => null, 'avatar_path' => null])->save();
+        $this->audit($actor->id, $profile, 'profile_fields_reset', ['fields' => $cleared]);
+
+        return $cleared;
+    }
+
+    private function deleteAvatar(Profile $profile): void
+    {
+        if ($profile->avatar_path) {
+            Storage::disk('public')->delete($profile->avatar_path);
+        }
+    }
+
     private function storeAvatar(UploadedFile $avatar, int $userId): string
     {
         $relative = 'avatars/'.$userId.'/'.Str::uuid().'.jpg';

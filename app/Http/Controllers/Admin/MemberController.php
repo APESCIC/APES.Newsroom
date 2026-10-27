@@ -18,7 +18,7 @@ class MemberController extends Controller
 
         $validated = $request->validate([
             'q' => ['nullable', 'string', 'max:120'],
-            'status' => ['nullable', 'in:all,free,paying'],
+            'status' => ['nullable', 'in:all,free,paying,comped'],
         ]);
 
         $search = $validated['q'] ?? null;

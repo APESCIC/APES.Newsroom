@@ -10,10 +10,12 @@ use App\Models\ConsentEvent;
 use App\Models\EmailChangeRequest;
 use App\Models\MailingContact;
 use App\Models\MailingListSubscription;
+use App\Models\Newsletter;
 use App\Models\Suppression;
 use App\Models\User;
 use App\Notifications\ConfirmEmailChangeNotification;
 use App\Notifications\ConfirmMailingListNotification;
+use App\Notifications\ConfirmNewsletterNotification;
 use App\Notifications\Security\EmailChangeRequestedNotification;
 use App\Services\Mailing\ConsentService;
 use App\Support\EmailAddress;
@@ -135,11 +137,15 @@ class AccountEmailChangeService
             $lockedChange->update(['confirmed_at' => now()]);
 
             DB::afterCommit(function () use ($confirmations) {
-                foreach ($confirmations as [$contactId, $list, $confirmToken]) {
-                    MailingContact::query()->find($contactId)?->notify(new ConfirmMailingListNotification(
-                        $list,
-                        url('/mailing/confirm/'.$confirmToken),
-                    ));
+                foreach ($confirmations as [$contactId, $list, $newsletterId, $confirmToken]) {
+                    $contact = MailingContact::query()->find($contactId);
+                    $url = url('/mailing/confirm/'.$confirmToken);
+
+                    if ($list instanceof MailingList) {
+                        $contact?->notify(new ConfirmMailingListNotification($list, $url));
+                    } elseif ($newsletter = Newsletter::query()->find($newsletterId)) {
+                        $contact?->notify(new ConfirmNewsletterNotification($newsletter, $url));
+                    }
                 }
             });
 
@@ -159,7 +165,10 @@ class AccountEmailChangeService
     }
 
     /**
-     * @return list<array{0: int, 1: MailingList, 2: string}> confirmation emails to send after commit
+     * Subscriptions are keyed by legacy list when they have one, otherwise
+     * by newsletter, so newsletter-only subscriptions transfer too (#573).
+     *
+     * @return list<array{0: int, 1: MailingList|null, 2: int|null, 3: string}> confirmation emails to send after commit
      */
     private function transferMailingConsent(User $user, string $oldEmail, string $newEmail, ?string $ip, ?string $userAgent): array
     {
@@ -183,8 +192,9 @@ class AccountEmailChangeService
                 continue;
             }
 
-            if (! $oldSuppressed) {
-                $activeLists[$subscription->list->value] = $subscription->list;
+            if (! $oldSuppressed && ($subscription->list !== null || $subscription->newsletter_id !== null)) {
+                $key = $subscription->list !== null ? 'list:'.$subscription->list->value : 'newsletter:'.$subscription->newsletter_id;
+                $activeLists[$key] = ['list' => $subscription->list, 'newsletter_id' => $subscription->newsletter_id];
             }
 
             $subscription->update([
@@ -197,7 +207,7 @@ class AccountEmailChangeService
                 $oldContact,
                 $subscription->list,
                 ConsentAction::Unsubscribed,
-                ['account_email_changed_to' => $newEmail],
+                ['account_email_changed_to' => $newEmail, 'newsletter_id' => $subscription->newsletter_id],
                 $ip,
                 $userAgent,
             );
@@ -246,10 +256,14 @@ class AccountEmailChangeService
 
         $confirmations = [];
 
-        foreach ($activeLists as $list) {
+        foreach ($activeLists as ['list' => $list, 'newsletter_id' => $newsletterId]) {
             $subscription = MailingListSubscription::query()
                 ->where('mailing_contact_id', $newContact->id)
-                ->where('list', $list->value)
+                ->when(
+                    $list !== null,
+                    fn ($query) => $query->where('list', $list->value),
+                    fn ($query) => $query->where('newsletter_id', $newsletterId),
+                )
                 ->lockForUpdate()
                 ->first();
 
@@ -261,6 +275,7 @@ class AccountEmailChangeService
             $subscription ??= new MailingListSubscription([
                 'mailing_contact_id' => $newContact->id,
                 'list' => $list,
+                'newsletter_id' => $newsletterId,
             ]);
             $subscription->fill([
                 'status' => SubscriptionStatus::Pending,
@@ -273,11 +288,11 @@ class AccountEmailChangeService
                 $newContact,
                 $list,
                 ConsentAction::SignupRequested,
-                ['confirm_token_issued' => true, 'account_email_changed_from' => $oldEmail],
+                ['confirm_token_issued' => true, 'account_email_changed_from' => $oldEmail, 'newsletter_id' => $newsletterId],
                 $ip,
                 $userAgent,
             );
-            $confirmations[] = [$newContact->id, $list, $token];
+            $confirmations[] = [$newContact->id, $list, $newsletterId, $token];
         }
 
         return $confirmations;

@@ -27,6 +27,22 @@ Webhook endpoint: `POST /stripe/webhook` (CSRF exempt). Point a Stripe CLI or Da
 
 `/staff/membership-plans` edits plan names, amounts, Stripe price ids, and active flags.
 
+## Complimentary access and member notes (v1.21.0)
+
+On a member's person page (`/staff/people/users/{id}`) admins can:
+
+- **Grant or remove complimentary access** with a reason. It sets `comped_at`,
+  `comped_by` and `comp_reason` on the membership and unlocks paid content
+  (`Membership::hasPaidAccess()`). The Stripe-driven `status`, plan, interval
+  and period end are shown read-only and are never changed by it, so webhooks
+  and comp do not overwrite each other.
+- **Keep an internal note** (`staff_note`, encrypted, admin-only, never shown
+  to the member).
+
+Members show as "Complimentary" in Members, People and their account page,
+and the Members and People lists filter by it. Staff see the membership but
+not these controls or the note.
+
 ## Authorization boundary
 
 Live Stripe keys, real charges, production cutover, Ghost retirement, and new campaign live-sends are **not** authorized by shipping this feature. Ops sign-off is required before live mode.

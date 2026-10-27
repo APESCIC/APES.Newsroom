@@ -50,6 +50,6 @@ class ContentAccessService
 
         $membership = app(MembershipService::class)->ensureMembership($viewer);
 
-        return $membership->isPaying();
+        return $membership->hasPaidAccess();
     }
 }

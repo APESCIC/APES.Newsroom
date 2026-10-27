@@ -20,6 +20,7 @@ class MemberCrmService
      *     membership_status: string,
      *     membership_label: string,
      *     is_paying: bool,
+     *     is_comped: bool,
      *     plan_name: string|null,
      *     plan_interval: string|null,
      *     recent_reads: list<array{path: string, viewed_at: string, post_id: int|null, page_id: int|null}>
@@ -43,10 +44,14 @@ class MemberCrmService
         $statusFilter = $statusFilter ?: 'all';
         if ($statusFilter === 'paying') {
             $query->whereHas('membership', fn (Builder $builder) => $builder->where('status', MembershipStatus::Active));
+        } elseif ($statusFilter === 'comped') {
+            $query->whereHas('membership', fn (Builder $builder) => $builder->whereNotNull('comped_at'));
         } elseif ($statusFilter === 'free') {
             $query->where(function (Builder $builder): void {
                 $builder->whereDoesntHave('membership')
-                    ->orWhereHas('membership', fn (Builder $membership) => $membership->where('status', '!=', MembershipStatus::Active));
+                    ->orWhereHas('membership', fn (Builder $membership) => $membership
+                        ->where('status', '!=', MembershipStatus::Active)
+                        ->whereNull('comped_at'));
             });
         }
 
@@ -66,8 +71,9 @@ class MemberCrmService
                 'email' => $user->email,
                 'signed_up_at' => $user->created_at?->toIso8601String() ?? '',
                 'membership_status' => $status->value,
-                'membership_label' => $status->label(),
+                'membership_label' => $membership?->accessLabel() ?? $status->label(),
                 'is_paying' => $status->isPaying(),
+                'is_comped' => $membership?->isComped() ?? false,
                 'plan_name' => $membership?->plan?->name,
                 'plan_interval' => $membership?->plan?->interval ?? $membership?->interval,
                 'recent_reads' => $recentByUser[$user->id] ?? [],

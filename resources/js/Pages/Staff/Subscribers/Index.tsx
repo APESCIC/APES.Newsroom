@@ -1,4 +1,4 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { Download, Users } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
@@ -95,7 +95,7 @@ export default function SubscribersIndex({
             area="Staff"
             active="subscribers"
             title="Mailing-list subscribers"
-            subtitle="Contacts on newsletters who do not have a Newsroom account. Read-only — manage opt-outs via mailing tools, not here."
+            subtitle="Contacts on newsletters who do not have a Newsroom account. Open a subscriber to edit them or change their subscriptions."
             actions={
                 <a href={exportHref} className="sg-btn sg-btn-secondary">
                     <Download aria-hidden="true" className="h-4 w-4" />
@@ -148,7 +148,9 @@ export default function SubscribersIndex({
                         {subscribers.data.map((row) => (
                             <li key={row.id} className="grid gap-3 px-5 py-4 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1.2fr)]">
                                 <div className="min-w-0">
-                                    <p className="font-semibold break-words text-body">{row.email}</p>
+                                    <Link href={`/staff/people/contacts/${row.id}`} className="font-semibold break-words text-body underline-offset-2 hover:underline">
+                                        {row.email}
+                                    </Link>
                                     {row.name && <p className="text-sm text-muted">{row.name}</p>}
                                     <p className="mt-1 text-xs text-muted">Signed up {formatWhen(row.signed_up_at)}</p>
                                 </div>

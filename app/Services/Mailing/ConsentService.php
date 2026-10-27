@@ -25,6 +25,7 @@ class ConsentService
 
     /**
      * @param  list<string>  $lists
+     * @param  array<string, mixed>  $evidence  extra evidence recorded on each consent event
      */
     public function signup(
         string $email,
@@ -33,6 +34,7 @@ class ConsentService
         ?User $user = null,
         ?string $ip = null,
         ?string $userAgent = null,
+        array $evidence = [],
     ): MailingContact {
         $email = Str::lower(trim($email));
         $lists = $this->normalizeLists($lists);
@@ -41,7 +43,7 @@ class ConsentService
             throw new \InvalidArgumentException('At least one mailing list must be selected.');
         }
 
-        return DB::transaction(function () use ($email, $lists, $source, $user, $ip, $userAgent) {
+        return DB::transaction(function () use ($email, $lists, $source, $user, $ip, $userAgent, $evidence) {
             $contact = MailingContact::query()->firstOrCreate(
                 ['email' => $email],
                 ['user_id' => $user?->id],
@@ -79,7 +81,7 @@ class ConsentService
                     $list,
                     ConsentAction::SignupRequested,
                     $source,
-                    ['confirm_token_issued' => true],
+                    ['confirm_token_issued' => true, ...$evidence],
                     $ip,
                     $userAgent,
                 );
@@ -121,12 +123,16 @@ class ConsentService
         return $subscription->fresh(['contact']);
     }
 
+    /**
+     * @param  array<string, mixed>  $evidence  extra evidence recorded on each consent event
+     */
     public function unsubscribe(
         string $email,
         ?MailingList $list = null,
         string $source = 'unsubscribe_link',
         ?string $ip = null,
         ?string $userAgent = null,
+        array $evidence = [],
     ): void {
         $email = Str::lower(trim($email));
         $contact = MailingContact::query()->where('email', $email)->first();
@@ -164,7 +170,7 @@ class ConsentService
                 $subscription->list,
                 ConsentAction::Unsubscribed,
                 $source,
-                [],
+                $evidence,
                 $ip,
                 $userAgent,
             );
@@ -181,7 +187,7 @@ class ConsentService
                 null,
                 ConsentAction::Suppressed,
                 $source,
-                ['reason' => 'unsubscribe_all'],
+                ['reason' => 'unsubscribe_all', ...$evidence],
                 $ip,
                 $userAgent,
             );
@@ -319,6 +325,9 @@ class ConsentService
         return $pending->count();
     }
 
+    /**
+     * @param  array<string, mixed>  $evidence  extra evidence recorded on the consent event
+     */
     public function subscribeToNewsletter(
         string $email,
         Newsletter $newsletter,
@@ -326,20 +335,21 @@ class ConsentService
         ?User $user = null,
         ?string $ip = null,
         ?string $userAgent = null,
+        array $evidence = [],
     ): MailingListSubscription {
         if ($newsletter->isArchived()) {
             throw new \InvalidArgumentException('Archived newsletters cannot accept new subscriptions.');
         }
 
         if ($newsletter->legacy_list instanceof MailingList) {
-            $contact = $this->signup($email, [$newsletter->legacy_list->value], $source, $user, $ip, $userAgent);
+            $contact = $this->signup($email, [$newsletter->legacy_list->value], $source, $user, $ip, $userAgent, $evidence);
 
             return $contact->subscriptions()->where('newsletter_id', $newsletter->id)->firstOrFail();
         }
 
         $email = Str::lower(trim($email));
 
-        return DB::transaction(function () use ($email, $newsletter, $source, $user, $ip, $userAgent) {
+        return DB::transaction(function () use ($email, $newsletter, $source, $user, $ip, $userAgent, $evidence) {
             $contact = MailingContact::query()->firstOrCreate(
                 ['email' => $email],
                 ['user_id' => $user?->id],
@@ -369,7 +379,7 @@ class ConsentService
                 null,
                 ConsentAction::SignupRequested,
                 $source,
-                ['newsletter_id' => $newsletter->id, 'confirm_token_issued' => true],
+                ['newsletter_id' => $newsletter->id, 'confirm_token_issued' => true, ...$evidence],
                 $ip,
                 $userAgent,
             );
@@ -380,15 +390,19 @@ class ConsentService
         });
     }
 
+    /**
+     * @param  array<string, mixed>  $evidence  extra evidence recorded on the consent event
+     */
     public function unsubscribeFromNewsletter(
         string $email,
         Newsletter $newsletter,
         string $source = 'unsubscribe_link',
         ?string $ip = null,
         ?string $userAgent = null,
+        array $evidence = [],
     ): void {
         if ($newsletter->legacy_list instanceof MailingList) {
-            $this->unsubscribe($email, $newsletter->legacy_list, $source, $ip, $userAgent);
+            $this->unsubscribe($email, $newsletter->legacy_list, $source, $ip, $userAgent, $evidence);
 
             return;
         }
@@ -417,7 +431,7 @@ class ConsentService
             null,
             ConsentAction::Unsubscribed,
             $source,
-            ['newsletter_id' => $newsletter->id],
+            ['newsletter_id' => $newsletter->id, ...$evidence],
             $ip,
             $userAgent,
         );
@@ -730,7 +744,7 @@ class ConsentService
     /**
      * @param  array<string, mixed>  $evidence
      */
-    private function recordEvent(
+    public function recordEvent(
         ?MailingContact $contact,
         ?MailingList $list,
         ConsentAction $action,
