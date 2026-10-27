@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\Channel;
 use App\Enums\PostStatus;
+use App\Models\Page;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -81,5 +82,52 @@ class StaffPostsIndexFilterTest extends TestCase
             ->get('/staff/posts?status=draft&page=2')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page->has('posts.data', 3));
+    }
+
+    public function test_row_actions_only_offer_unpublish_to_publishers(): void
+    {
+        $this->actingAs(User::factory()->admin()->create())
+            ->get('/staff/posts')
+            ->assertInertia(fn (Assert $page) => $page->where('canPublish', true));
+
+        $this->actingAs(User::factory()->staff()->create())
+            ->get('/staff/posts')
+            ->assertInertia(fn (Assert $page) => $page->where('canPublish', false));
+    }
+
+    public function test_pages_index_is_paginated_searchable_and_scoped_to_own_pages_for_staff(): void
+    {
+        $staff = User::factory()->staff()->create();
+        $other = User::factory()->staff()->create();
+        Page::factory()->count(22)->create(['author_id' => $staff->id, 'status' => PostStatus::Draft]);
+        Page::factory()->published()->create(['author_id' => $staff->id, 'title' => 'Volunteer with us', 'slug' => 'volunteer']);
+        Page::factory()->create(['author_id' => $other->id, 'title' => 'Volunteer rota (private)']);
+
+        $this->actingAs($staff)
+            ->get('/staff/pages')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Staff/Pages/Index')
+                ->has('pages.data', 20)
+                ->where('pages.total', 23)
+                ->where('pages.last_page', 2));
+
+        $this->actingAs($staff)
+            ->get('/staff/pages?q=volunteer')
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('pages.data', 1)
+                ->where('pages.data.0.slug', 'volunteer')
+                ->where('filters.q', 'volunteer'));
+
+        $this->actingAs($staff)
+            ->get('/staff/pages?status=draft')
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('filterStatus', 'draft')
+                ->where('pages.total', 22)
+                ->where('pages.next_page_url', fn (string $url) => str_contains($url, 'status=draft') && str_contains($url, 'page=2')));
+
+        $this->actingAs($staff)
+            ->get('/staff/pages?status=not-a-status')
+            ->assertInertia(fn (Assert $page) => $page->where('filterStatus', null)->where('pages.total', 23));
     }
 }

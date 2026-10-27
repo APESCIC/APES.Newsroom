@@ -98,7 +98,8 @@ export default function ActionMenu({ label, actions, buttonLabel }: { label: str
                                 data-tone={action.tone}
                                 disabled={action.disabled}
                                 onClick={() => {
-                                    close(false);
+                                    // Refocus the trigger first so a dialog opened by the action returns focus to it.
+                                    close();
                                     action.onSelect?.();
                                 }}
                             >

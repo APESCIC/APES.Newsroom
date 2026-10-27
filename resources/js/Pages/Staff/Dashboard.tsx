@@ -72,7 +72,19 @@ function PostList({ posts, empty, meta }: { posts: DashboardPost[]; empty: strin
     );
 }
 
-function AttentionCard({ title, icon: Icon, href, linkLabel, children }: { title: string; icon: LucideIcon; href: string; linkLabel: string; children: ReactNode }) {
+function AttentionCard({
+    title,
+    icon: Icon,
+    href,
+    linkLabel,
+    children,
+}: {
+    title: string;
+    icon: LucideIcon;
+    href: string;
+    linkLabel: string;
+    children: ReactNode;
+}) {
     return (
         <GlassCard
             as="section"
