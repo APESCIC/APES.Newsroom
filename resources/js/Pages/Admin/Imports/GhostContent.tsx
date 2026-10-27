@@ -1,5 +1,10 @@
 import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { Download, Upload } from 'lucide-react';
 import { FormEventHandler } from 'react';
+import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
+import Badge from '../../../Components/Workspace/ui/Badge';
+import EmptyState from '../../../Components/Workspace/ui/EmptyState';
+import { FormSection } from '../../../Components/Workspace/ui/FormField';
 
 type Run = {
     id: number;
@@ -13,10 +18,7 @@ type Run = {
 };
 
 export default function GhostContentImport({ runs }: { runs: Run[] }) {
-    const { flash, errors } = usePage().props as {
-        flash?: { status?: string };
-        errors?: Record<string, string>;
-    };
+    const { errors } = usePage().props as { errors?: Record<string, string> };
     const form = useForm<{ json: File | null; media: File | null }>({
         json: null,
         media: null,
@@ -29,98 +31,99 @@ export default function GhostContentImport({ runs }: { runs: Run[] }) {
         });
     };
 
-    const confirm = (runId: number) => {
+    const confirmRun = (runId: number) => {
         router.post(`/admin/imports/ghost-content/${runId}/confirm`);
     };
 
     return (
-        <>
+        <WorkspaceLayout
+            area="Staff"
+            active="posts"
+            title="Ghost content import"
+            subtitle="Upload a Ghost Admin content export. A dry run comes first; confirm separately to persist. Re-running the same export does not duplicate posts, tags, authors or redirects. No email is sent."
+        >
             <Head title="Ghost content import" />
-            <main className="mx-auto max-w-3xl px-6 py-12">
-                <h1 className="text-2xl font-semibold">Ghost content JSON import</h1>
-                <p className="mt-2 text-sm text-muted">
-                    Upload a Ghost Admin content export. A dry-run runs first and shows the report. Confirm separately to
-                    persist. Re-running the same export does not duplicate posts, tags, authors, or redirects. No email is
-                    sent from import runs.
+            {errors?.confirm && (
+                <p role="alert" className="sg-card border-l-4 !border-l-[var(--color-sg-error)] px-4 py-3 text-sm text-danger">
+                    {errors.confirm}
                 </p>
-                {flash?.status && <p className="mt-4 text-sm text-green-700">{flash.status}</p>}
-                {errors?.confirm && <p className="mt-4 text-sm text-red-600">{errors.confirm}</p>}
+            )}
 
-                <form onSubmit={submit} className="mt-8 flex flex-col gap-4 rounded border p-4">
-                    <div>
-                        <label htmlFor="json" className="text-sm font-medium">
-                            Ghost content JSON
-                        </label>
-                        <input
-                            id="json"
-                            type="file"
-                            accept=".json,application/json"
-                            required
-                            onChange={(e) => form.setData('json', e.target.files?.[0] ?? null)}
-                            className="mt-1 block w-full text-sm"
-                        />
-                        {form.errors.json && <p className="text-sm text-red-600">{form.errors.json}</p>}
+            <FormSection title="Upload export">
+                <form onSubmit={submit} className="flex flex-col gap-4">
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <div>
+                            <label htmlFor="json" className="text-sm font-semibold text-body">
+                                Ghost content JSON
+                            </label>
+                            <input
+                                id="json"
+                                type="file"
+                                accept=".json,application/json"
+                                required
+                                onChange={(e) => form.setData('json', e.target.files?.[0] ?? null)}
+                                className="form-input mt-1.5"
+                            />
+                            {form.errors.json && <p className="mt-1 text-sm text-danger">{form.errors.json}</p>}
+                        </div>
+                        <div>
+                            <label htmlFor="media" className="text-sm font-semibold text-body">
+                                Optional media archive (.zip)
+                            </label>
+                            <input
+                                id="media"
+                                type="file"
+                                accept=".zip,application/zip"
+                                onChange={(e) => form.setData('media', e.target.files?.[0] ?? null)}
+                                className="form-input mt-1.5"
+                            />
+                            {form.errors.media && <p className="mt-1 text-sm text-danger">{form.errors.media}</p>}
+                        </div>
                     </div>
-                    <div>
-                        <label htmlFor="media" className="text-sm font-medium">
-                            Optional media archive (.zip)
-                        </label>
-                        <input
-                            id="media"
-                            type="file"
-                            accept=".zip,application/zip"
-                            onChange={(e) => form.setData('media', e.target.files?.[0] ?? null)}
-                            className="mt-1 block w-full text-sm"
-                        />
-                        {form.errors.media && <p className="text-sm text-red-600">{form.errors.media}</p>}
-                    </div>
-                    <button
-                        type="submit"
-                        disabled={form.processing}
-                        className="w-fit rounded bg-apes-primary px-4 py-2 text-white"
-                    >
+                    <button type="submit" disabled={form.processing} className="sg-btn sg-btn-primary self-start">
+                        <Upload aria-hidden="true" className="h-4 w-4" />
                         Upload and dry-run
                     </button>
                 </form>
+            </FormSection>
 
-                <section className="mt-10">
-                    <h2 className="text-lg font-medium">Recent runs</h2>
-                    <ul className="mt-4 space-y-3 text-sm">
+            <section aria-label="Recent runs" className="flex flex-col gap-3">
+                <h2 className="text-lg font-semibold text-body">Recent runs</h2>
+                {runs.length === 0 ? (
+                    <EmptyState title="No import runs yet." />
+                ) : (
+                    <ul className="flex flex-col gap-3 text-sm">
                         {runs.map((run) => (
-                            <li key={run.id} className="rounded border p-3">
-                                <p>
-                                    #{run.id} — {run.status} — {run.dry_run ? 'dry-run' : 'import'}
+                            <li key={run.id} className="sg-card p-4">
+                                <p className="flex flex-wrap items-center gap-2 font-semibold text-body">
+                                    #{run.id}
+                                    <Badge tone={run.status === 'completed' ? 'ok' : run.status === 'failed' ? 'error' : 'info'}>{run.status}</Badge>
+                                    <Badge tone="neutral">{run.dry_run ? 'dry-run' : 'import'}</Badge>
                                 </p>
-                                <p className="text-muted">Checksum: {run.source_checksum}</p>
+                                <p className="mt-1 break-all text-muted">Checksum: {run.source_checksum}</p>
                                 {run.report && (
-                                    <pre className="mt-2 overflow-auto rounded-control bg-page-tint p-2 text-xs">
-                                        {JSON.stringify(run.report, null, 2)}
-                                    </pre>
+                                    <pre className="mt-2 max-h-64 overflow-auto rounded-xl bg-white/70 p-3 text-xs">{JSON.stringify(run.report, null, 2)}</pre>
                                 )}
-                                <div className="mt-2 flex flex-wrap gap-3">
+                                <div className="mt-3 flex flex-wrap gap-2">
                                     {run.dry_run && run.status === 'completed' && run.source_available && (
-                                        <button
-                                            type="button"
-                                            className="rounded bg-apes-primary px-3 py-1 text-white"
-                                            onClick={() => confirm(run.id)}
-                                        >
+                                        <button type="button" className="sg-btn sg-btn-primary sg-btn-sm" onClick={() => confirmRun(run.id)}>
                                             Confirm import
                                         </button>
                                     )}
                                     <button
                                         type="button"
-                                        className="underline"
+                                        className="sg-btn sg-btn-secondary sg-btn-sm"
                                         onClick={() => router.visit(`/admin/imports/ghost-content/${run.id}/report`)}
                                     >
+                                        <Download aria-hidden="true" className="h-4 w-4" />
                                         Download report
                                     </button>
                                 </div>
                             </li>
                         ))}
-                        {runs.length === 0 && <li className="text-muted">No import runs yet.</li>}
                     </ul>
-                </section>
-            </main>
-        </>
+                )}
+            </section>
+        </WorkspaceLayout>
     );
 }

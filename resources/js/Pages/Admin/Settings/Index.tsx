@@ -1,7 +1,6 @@
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import type { FormEventHandler } from 'react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
-import type { SharedPageProps } from '../../../types/page';
 
 type Option = { value: string; label: string };
 
@@ -184,7 +183,6 @@ function SettingField({
 }
 
 export default function SettingsIndex({ settings }: { settings: SettingDefinition[] }) {
-    const { flash } = usePage<SharedPageProps>().props;
     const form = useForm<SettingValues>(Object.fromEntries(settings.map((setting) => [setting.key, setting.value])));
     const sections = [...new Set(settings.map((setting) => setting.section))];
 
@@ -197,7 +195,7 @@ export default function SettingsIndex({ settings }: { settings: SettingDefinitio
     return (
         <WorkspaceLayout area="Admin" active="settings" title="Settings" subtitle="Site-wide configuration for the Newsroom.">
             <Head title="Settings" />
-            <p className="mx-auto mb-4 max-w-3xl text-sm text-body">
+            <p className="text-sm text-body">
                 Service keys and connection health for Mailgun, Stripe and other integrations live under{' '}
                 <Link href="/admin/settings/integrations" className="font-semibold underline">
                     Integrations and keys
@@ -208,15 +206,10 @@ export default function SettingsIndex({ settings }: { settings: SettingDefinitio
                 </Link>
                 .
             </p>
-            <form onSubmit={submit} className="mx-auto flex max-w-3xl flex-col gap-6 rounded-card border border-border bg-white p-6">
-                {flash?.status && (
-                    <p role="status" className="text-sm text-green-800">
-                        {flash.status}
-                    </p>
-                )}
+            <form onSubmit={submit} className="flex flex-col gap-6">
                 {sections.map((section) => (
-                    <section key={section} aria-labelledby={inputId(section, 'heading')} className="flex flex-col gap-6">
-                        <h2 id={inputId(section, 'heading')} className="text-lg font-bold text-body">
+                    <section key={section} aria-labelledby={inputId(section, 'heading')} className="sg-card flex flex-col gap-6 p-5 sm:p-6">
+                        <h2 id={inputId(section, 'heading')} className="text-base font-semibold text-body">
                             {section}
                         </h2>
                         {settings
@@ -232,7 +225,7 @@ export default function SettingsIndex({ settings }: { settings: SettingDefinitio
                             ))}
                     </section>
                 ))}
-                <button type="submit" disabled={form.processing} className="button-primary w-fit min-h-11 px-5">
+                <button type="submit" disabled={form.processing} className="sg-btn sg-btn-primary self-start">
                     Save settings
                 </button>
             </form>

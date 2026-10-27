@@ -1,0 +1,28 @@
+{
+  "version": "v1.20.0",
+  "slug": "release-v1-20-0",
+  "released_at": "2026-10-27",
+  "previous_version": "v1.19.1",
+  "theme": "Soft glass staff and admin panels",
+  "change_types": ["changed", "added"],
+  "topic_tags": ["internal-only", "accessibility"],
+  "summary": "The staff and admin panels have a new Soft glass design with grouped navigation, a Staff/Admin switch, breadcrumbs and Ctrl K search, and every panel page now uses the same layout, width and components.",
+  "detailed_changes": [
+    "New Soft glass look for the staff and admin panels: a floating frosted sidebar over a soft teal gradient, frosted cards, pill buttons and Inter type, with solid panels when transparency is reduced or unsupported (#513, #514, #358).",
+    "The sidebar groups pages under Content, Audience, Commerce and Insights (staff) and People, Integrations and System (admin), with a meaningful icon for each, a Staff/Admin switch and breadcrumbs on every page (#353, #516).",
+    "Press Ctrl K (⌘K on a Mac) or use the search pill to jump to any page or start a new post, page or newsletter; admin pages never appear for staff (#517).",
+    "Shared components (cards, stat tiles, badges, tabs, tables, pagination, empty states, menus and confirm dialogs) replace one-off styles; destructive actions now sit in menus or behind a confirmation (#515).",
+    "Every staff and admin page uses the new shell at one 1120px content width; the post list is paginated, the post editor shows the status as a badge and moves Soft delete into a menu, and Members and the audit log are compact tables (#518, #519).",
+    "On phones the sidebar becomes a slide-over drawer and tables become stacked rows, with no sideways scrolling at 375px (#520).",
+    "A crisp APES badge and wordmark sit at the top of the sidebar, and higher-resolution icons are provided for browsers and home screens (#521).",
+    "Screenshot tests and automated accessibility checks for every staff and admin page now run on each pull request (#522)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff/*, /admin/*",
+    "User groups affected: staff, admins and super admins",
+    "Public impact: none; public pages are unchanged apart from higher-resolution browser icons",
+    "Internal impact: WorkspaceLayout, Components/Workspace (navigation, command palette, Soft glass UI kit), app.css panel tokens, paginated staff posts index, auth.can.reviewPosts shared prop, Playwright and axe CI job, VisualRegressionSeeder"
+  ],
+  "pr": 566
+}

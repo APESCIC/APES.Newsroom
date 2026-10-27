@@ -1,4 +1,10 @@
 import { Head, Link } from '@inertiajs/react';
+import { ClipboardCheck, FileText } from 'lucide-react';
+import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
+import { ChannelLabel } from '../../../Components/Staff/PostBadges';
+import DataTable from '../../../Components/Workspace/ui/DataTable';
+import EmptyState from '../../../Components/Workspace/ui/EmptyState';
+import PillButton from '../../../Components/Workspace/ui/PillButton';
 
 type Post = {
     id: number;
@@ -13,51 +19,51 @@ type Post = {
 
 export default function ReviewQueue({ posts }: { posts: Post[] }) {
     return (
-        <>
+        <WorkspaceLayout
+            area="Staff"
+            active="review"
+            title="Review queue"
+            subtitle="Posts submitted for review, oldest changes last"
+            actions={
+                <PillButton href="/staff/posts" variant="secondary" icon={FileText}>
+                    All posts
+                </PillButton>
+            }
+        >
             <Head title="Review queue" />
-            <main className="mx-auto max-w-4xl px-6 py-12">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-semibold">Review queue</h1>
-                    <Link href="/staff/posts" className="text-sm underline">
-                        All posts
-                    </Link>
-                </div>
-                {posts.length === 0 ? (
-                    <p className="mt-8 text-muted">No posts awaiting review.</p>
-                ) : (
-                    <table className="mt-8 w-full text-left text-sm">
-                        <thead>
-                            <tr className="border-b">
-                                <th className="py-2">Title</th>
-                                <th>Author</th>
-                                <th>Channel</th>
-                                <th>Updated</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {posts.map((post) => (
-                                <tr key={post.id} className="border-b">
-                                    <td className="py-3">
-                                        <Link
-                                            href={`/staff/posts/${post.id}/edit`}
-                                            className="font-medium hover:underline"
-                                        >
-                                            {post.title}
-                                        </Link>
-                                    </td>
-                                    <td>{post.author}</td>
-                                    <td>{post.channel}</td>
-                                    <td>
-                                        {post.updated_at
-                                            ? new Date(post.updated_at).toLocaleDateString('en-GB')
-                                            : '—'}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                )}
-            </main>
-        </>
+            {posts.length === 0 ? (
+                <EmptyState icon={ClipboardCheck} title="Nothing to review" description="No posts are awaiting review." />
+            ) : (
+                <DataTable
+                    label="Posts awaiting review"
+                    rows={posts}
+                    rowKey={(post) => post.id}
+                    columns={[
+                        {
+                            key: 'title',
+                            header: 'Title',
+                            primary: true,
+                            cell: (post) => (
+                                <>
+                                    <Link href={`/staff/posts/${post.id}/edit`} className="font-semibold text-body hover:text-teal-deep hover:underline">
+                                        {post.title}
+                                    </Link>
+                                    {post.review_notes && <p className="mt-0.5 text-xs text-muted">{post.review_notes}</p>}
+                                </>
+                            ),
+                        },
+                        { key: 'author', header: 'Author', cell: (post) => post.author },
+                        { key: 'channel', header: 'Channel', cell: (post) => <ChannelLabel value={post.channel} /> },
+                        {
+                            key: 'updated',
+                            header: 'Updated',
+                            cell: (post) => (
+                                <span className="text-muted">{post.updated_at ? new Date(post.updated_at).toLocaleDateString('en-GB') : '—'}</span>
+                            ),
+                        },
+                    ]}
+                />
+            )}
+        </WorkspaceLayout>
     );
 }

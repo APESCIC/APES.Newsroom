@@ -1,7 +1,11 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
+import { KeyRound } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import ReasonConfirmDialog from '../../../Components/Admin/ReasonConfirmDialog';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
+import Badge from '../../../Components/Workspace/ui/Badge';
+import DataTable from '../../../Components/Workspace/ui/DataTable';
+import EmptyState from '../../../Components/Workspace/ui/EmptyState';
 import type { SharedPageProps } from '../../../types/page';
 
 type Person = { id: number; name: string; email: string };
@@ -56,13 +60,14 @@ function CreateForm({ owners, abilities, expiryDays, defaultOwnerId }: { owners:
 
     return (
         <form
-            className="glass-form-panel flex flex-col gap-3"
+            aria-label="Create a token"
+            className="sg-card flex flex-col gap-3 p-5 sm:p-6"
             onSubmit={(event: FormEvent) => {
                 event.preventDefault();
                 post('/admin/api-tokens', { preserveScroll: true, onSuccess: () => reset('name') });
             }}
         >
-            <h2 className="text-lg font-bold text-body">Create a token</h2>
+            <h2 className="text-base font-semibold text-body">Create a token</h2>
             <label className="text-sm font-bold text-body">
                 Name
                 <input className="form-input mt-1" value={data.name} onChange={(event) => setData('name', event.target.value)} required maxLength={120} />
@@ -101,7 +106,7 @@ function CreateForm({ owners, abilities, expiryDays, defaultOwnerId }: { owners:
                     ))}
                 </select>
             </label>
-            <button type="submit" className="button-primary w-fit" disabled={processing || data.abilities.length === 0}>
+            <button type="submit" className="sg-btn sg-btn-primary self-start" disabled={processing || data.abilities.length === 0}>
                 Create token
             </button>
         </form>
@@ -121,71 +126,59 @@ export default function Index({
     expiryDays: number[];
     created: { id: number; name: string; token: string } | null;
 }) {
-    const { auth, flash } = usePage<SharedPageProps>().props;
+    const { auth } = usePage<SharedPageProps>().props;
     const [revoking, setRevoking] = useState<ApiTokenRow | null>(null);
     const revokeForm = useForm({});
 
     return (
         <WorkspaceLayout area="Admin" active="api-tokens" title="Admin API tokens" subtitle="Bearer tokens for the Admin API">
             <Head title="Admin API tokens" />
-            <div className="mx-auto flex max-w-4xl flex-col gap-6">
-                {flash?.status && (
-                    <p role="status" className="workspace-glass-card px-4 py-3 text-sm font-semibold text-body">
-                        {flash.status}
-                    </p>
-                )}
-                {created && (
-                    <section className="workspace-glass-card flex flex-col gap-2 p-4" aria-label="New token">
-                        <p className="font-semibold text-body">Token "{created.name}" created. Copy it now: it will not be shown again.</p>
-                        <code className="break-all rounded-control bg-white px-3 py-2 font-mono text-sm text-body">{created.token}</code>
-                    </section>
-                )}
+            {created && (
+                <section className="sg-card flex flex-col gap-2 border-l-4 !border-l-[var(--color-sg-accent)] p-4" aria-label="New token">
+                    <p className="font-semibold text-body">Token "{created.name}" created. Copy it now: it will not be shown again.</p>
+                    <code className="rounded-xl bg-white px-3 py-2 font-mono text-sm break-all text-body">{created.token}</code>
+                </section>
+            )}
 
-                <CreateForm owners={owners} abilities={abilities} expiryDays={expiryDays} defaultOwnerId={auth.user?.id ?? null} />
+            <CreateForm owners={owners} abilities={abilities} expiryDays={expiryDays} defaultOwnerId={auth.user?.id ?? null} />
 
-                {tokens.length === 0 ? (
-                    <p className="workspace-glass-card p-8 text-center text-muted">No Admin API tokens yet.</p>
-                ) : (
-                    <div className="workspace-glass-card overflow-x-auto">
-                        <table className="w-full text-left text-sm">
-                            <thead className="text-muted">
-                                <tr>
-                                    <th scope="col" className="px-4 py-3">Name</th>
-                                    <th scope="col" className="px-4 py-3">Owner</th>
-                                    <th scope="col" className="px-4 py-3">Abilities</th>
-                                    <th scope="col" className="px-4 py-3">Status</th>
-                                    <th scope="col" className="px-4 py-3">Created</th>
-                                    <th scope="col" className="px-4 py-3">Last used</th>
-                                    <th scope="col" className="px-4 py-3">Expires</th>
-                                    <th scope="col" className="px-4 py-3">
-                                        <span className="sr-only">Actions</span>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {tokens.map((token) => (
-                                    <tr key={token.id} className="border-t border-border">
-                                        <td className="px-4 py-3 font-semibold text-body">{token.name}</td>
-                                        <td className="px-4 py-3 text-body">{token.owner ? token.owner.name : 'Deleted user'}</td>
-                                        <td className="px-4 py-3 font-mono text-xs text-body">{token.abilities ? token.abilities.join(', ') : 'all'}</td>
-                                        <td className={`px-4 py-3 font-semibold ${token.status === 'active' ? 'text-body' : 'text-danger'}`}>{statusLabel(token.status)}</td>
-                                        <td className="px-4 py-3 text-body">{formatWhen(token.created_at)}</td>
-                                        <td className="px-4 py-3 text-body">{formatWhen(token.last_used_at, 'Never')}</td>
-                                        <td className="px-4 py-3 text-body">{formatWhen(token.expires_at, 'Never')}</td>
-                                        <td className="px-4 py-3">
-                                            {token.status !== 'revoked' && (
-                                                <button type="button" className="button-danger" onClick={() => setRevoking(token)}>
-                                                    Revoke
-                                                </button>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </div>
+            {tokens.length === 0 ? (
+                <EmptyState icon={KeyRound} title="No Admin API tokens yet." description="Create a token above to let a service call the Admin API." />
+            ) : (
+                <DataTable
+                    label="Admin API tokens"
+                    rows={tokens}
+                    rowKey={(token) => token.id}
+                    columns={[
+                        { key: 'name', header: 'Name', primary: true, cell: (token) => <span className="font-semibold text-body">{token.name}</span> },
+                        { key: 'owner', header: 'Owner', cell: (token) => (token.owner ? token.owner.name : 'Deleted user') },
+                        {
+                            key: 'abilities',
+                            header: 'Abilities',
+                            cell: (token) => <span className="font-mono text-xs">{token.abilities ? token.abilities.join(', ') : 'all'}</span>,
+                        },
+                        {
+                            key: 'status',
+                            header: 'Status',
+                            cell: (token) => <Badge tone={token.status === 'active' ? 'ok' : 'error'}>{statusLabel(token.status)}</Badge>,
+                        },
+                        { key: 'created', header: 'Created', cell: (token) => formatWhen(token.created_at) },
+                        { key: 'last-used', header: 'Last used', cell: (token) => formatWhen(token.last_used_at, 'Never') },
+                        { key: 'expires', header: 'Expires', cell: (token) => formatWhen(token.expires_at, 'Never') },
+                        {
+                            key: 'actions',
+                            header: <span className="sr-only">Actions</span>,
+                            label: 'Actions',
+                            cell: (token) =>
+                                token.status !== 'revoked' && (
+                                    <button type="button" className="sg-btn sg-btn-danger sg-btn-sm" onClick={() => setRevoking(token)}>
+                                        Revoke
+                                    </button>
+                                ),
+                        },
+                    ]}
+                />
+            )}
             <ReasonConfirmDialog
                 open={revoking !== null}
                 title={`Revoke "${revoking?.name ?? ''}"?`}

@@ -1,6 +1,8 @@
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
+import { Mail } from 'lucide-react';
 import { FormEventHandler } from 'react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
+import PillButton from '../../../Components/Workspace/ui/PillButton';
 
 type NewsletterData = {
     id: number;
@@ -84,7 +86,7 @@ function AddressPicker({
                 </label>
                 <input
                     id={`${id}_local`}
-                    className="min-w-0 flex-1 rounded border px-3 py-2"
+                    className="form-input min-w-0 flex-1"
                     value={local}
                     autoComplete="off"
                     spellCheck={false}
@@ -94,7 +96,7 @@ function AddressPicker({
                 <label className="sr-only" htmlFor={`${id}_domain`}>
                     {label}: domain
                 </label>
-                <select id={`${id}_domain`} className="rounded border px-3 py-2" value={domain} onChange={(e) => onDomainChange(e.target.value)}>
+                <select id={`${id}_domain`} className="form-input !w-auto" value={domain} onChange={(e) => onDomainChange(e.target.value)}>
                     <option value="">Choose a domain</option>
                     {options.map((option) => (
                         <option key={option} value={option}>
@@ -104,11 +106,11 @@ function AddressPicker({
                     ))}
                 </select>
             </div>
-            <p id={helpId} className="mt-1 text-xs text-neutral-600">
+            <p id={helpId} className="mt-1 text-xs text-muted">
                 {help}
             </p>
             {error && (
-                <p id={errorId} className="text-sm text-red-700">
+                <p id={errorId} className="text-sm text-danger">
                     {error}
                 </p>
             )}
@@ -171,24 +173,29 @@ export default function NewsletterEdit({
     };
 
     return (
-        <WorkspaceLayout area="Staff" active="newsletters" title={newsletter ? 'Edit newsletter' : 'New newsletter'}>
-            <Head title={newsletter ? newsletter.name : 'New newsletter'} />
-            <p className="mb-4 text-sm">
-                <Link href="/staff/newsletters" className="text-teal-deep hover:underline">
+        <WorkspaceLayout
+            area="Staff"
+            active="newsletters"
+            title={newsletter ? 'Edit newsletter' : 'New newsletter'}
+            subtitle={newsletter?.name}
+            actions={
+                <PillButton href="/staff/newsletters" variant="secondary" icon={Mail}>
                     All newsletters
-                </Link>
-            </p>
-            <form onSubmit={submit} className="max-w-xl space-y-4 rounded-lg border border-neutral-200 bg-white p-4">
+                </PillButton>
+            }
+        >
+            <Head title={newsletter ? newsletter.name : 'New newsletter'} />
+            <form onSubmit={submit} className="sg-card space-y-4 p-5 sm:p-6">
                 <label className="block text-sm font-semibold" htmlFor="name">
                     Name
-                    <input id="name" className="mt-1 w-full rounded border px-3 py-2" value={form.data.name} onChange={(e) => form.setData('name', e.target.value)} />
+                    <input id="name" className="form-input mt-1" value={form.data.name} onChange={(e) => form.setData('name', e.target.value)} />
                 </label>
-                {form.errors.name && <p className="text-sm text-red-700">{form.errors.name}</p>}
+                {form.errors.name && <p className="text-sm text-danger">{form.errors.name}</p>}
                 <label className="block text-sm font-semibold" htmlFor="slug">
                     Slug
                     <input
                         id="slug"
-                        className="mt-1 w-full rounded border px-3 py-2 read-only:bg-neutral-100"
+                        className="form-input mt-1 read-only:!bg-white/40"
                         value={form.data.slug}
                         readOnly={slugLocked}
                         aria-describedby={slugLocked ? 'slug-locked' : undefined}
@@ -196,23 +203,23 @@ export default function NewsletterEdit({
                     />
                 </label>
                 {slugLocked && (
-                    <p id="slug-locked" className="text-sm text-neutral-600">
+                    <p id="slug-locked" className="text-sm text-muted">
                         Locked while this newsletter is a public channel, because signup links use it.
                     </p>
                 )}
-                {form.errors.slug && <p className="text-sm text-red-700">{form.errors.slug}</p>}
+                {form.errors.slug && <p className="text-sm text-danger">{form.errors.slug}</p>}
                 <label className="block text-sm font-semibold" htmlFor="description">
                     Description
-                    <textarea id="description" className="mt-1 w-full rounded border px-3 py-2" rows={4} value={form.data.description} onChange={(e) => form.setData('description', e.target.value)} />
+                    <textarea id="description" className="form-input mt-1" rows={4} value={form.data.description} onChange={(e) => form.setData('description', e.target.value)} />
                 </label>
-                {form.errors.description && <p className="text-sm text-red-700">{form.errors.description}</p>}
-                <fieldset className="space-y-3 border-t border-neutral-200 pt-4">
+                {form.errors.description && <p className="text-sm text-danger">{form.errors.description}</p>}
+                <fieldset className="space-y-3 border-t border-border pt-4">
                     <legend className="text-sm font-semibold">Sender</legend>
                     <label className="block text-sm font-semibold" htmlFor="sender_name">
                         Sender name
-                        <input id="sender_name" className="mt-1 w-full rounded border px-3 py-2" value={form.data.sender_name} onChange={(e) => form.setData('sender_name', e.target.value)} />
+                        <input id="sender_name" className="form-input mt-1" value={form.data.sender_name} onChange={(e) => form.setData('sender_name', e.target.value)} />
                     </label>
-                    {form.errors.sender_name && <p className="text-sm text-red-700">{form.errors.sender_name}</p>}
+                    {form.errors.sender_name && <p className="text-sm text-danger">{form.errors.sender_name}</p>}
                     <AddressPicker
                         id="sender_email"
                         label="Sender email"
@@ -238,7 +245,7 @@ export default function NewsletterEdit({
                         onDomainChange={(value) => form.setData('reply_domain', value)}
                     />
                     {newsletter && newsletter.send_blocks.reasons.length > 0 && (
-                        <div role="alert" className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-900">
+                        <div role="alert" className="rounded-xl border-l-4 border-[var(--color-sg-error)] bg-[var(--color-sg-error-mist)] p-3 text-sm text-danger">
                             <p className="font-semibold">Sending is blocked for this newsletter</p>
                             <ul className="mt-1 list-disc pl-5">
                                 {newsletter.send_blocks.reasons.map((reason) => (
@@ -248,12 +255,12 @@ export default function NewsletterEdit({
                         </div>
                     )}
                     {newsletter?.send_blocks.last_blocked_at && (
-                        <p className="text-sm text-neutral-600">
+                        <p className="text-sm text-muted">
                             Last blocked send: {new Date(newsletter.send_blocks.last_blocked_at).toLocaleString('en-GB')}
                         </p>
                     )}
                     {newsletter && (
-                        <div className="rounded border border-neutral-200 p-3 text-sm" aria-live="polite">
+                        <div className="rounded-xl border border-border bg-white/50 p-3 text-sm" aria-live="polite">
                             <p className="flex flex-wrap items-center gap-2">
                                 <span
                                     className={`inline-flex rounded-full px-2 py-0.5 text-xs font-bold ${newsletter.sender_verification.verified ? 'bg-success-mist text-success' : 'bg-warning-mist text-warning'}`}
@@ -261,18 +268,18 @@ export default function NewsletterEdit({
                                     {newsletter.sender_verification.verified ? 'Sender verified' : 'Sender not verified'}
                                 </span>
                                 {newsletter.sender_verification.checked_at && (
-                                    <span className="text-neutral-600">
+                                    <span className="text-muted">
                                         Checked {new Date(newsletter.sender_verification.checked_at).toLocaleString('en-GB')}
                                     </span>
                                 )}
                             </p>
-                            {newsletter.sender_verification.message && <p className="mt-1 text-neutral-700">{newsletter.sender_verification.message}</p>}
+                            {newsletter.sender_verification.message && <p className="mt-1 text-body">{newsletter.sender_verification.message}</p>}
                             {!newsletter.sender_verification.verified && (
-                                <p className="mt-1 text-neutral-600">Emails from this newsletter are blocked until the sender is verified in Mailgun.</p>
+                                <p className="mt-1 text-muted">Emails from this newsletter are blocked until the sender is verified in Mailgun.</p>
                             )}
                             <button
                                 type="button"
-                                className="mt-2 rounded border px-3 py-1 text-sm"
+                                className="sg-btn sg-btn-secondary sg-btn-sm mt-2"
                                 onClick={() => router.post(`/staff/newsletters/${newsletter.id}/verify-sender`, {}, { preserveScroll: true })}
                             >
                                 Re-check sender
@@ -289,16 +296,16 @@ export default function NewsletterEdit({
                     />
                     Offer this newsletter when new members sign up (they tick to opt in)
                 </label>
-                <fieldset className="space-y-3 border-t border-neutral-200 pt-4">
+                <fieldset className="space-y-3 border-t border-border pt-4">
                     <legend className="text-sm font-semibold">Public channel</legend>
-                    <p className="text-sm text-neutral-600">
+                    <p className="text-sm text-muted">
                         Link this newsletter to a channel page on the public site. Archived newsletters are never shown publicly.
                     </p>
                     <label className="block text-sm font-semibold" htmlFor="channel">
                         Channel
                         <select
                             id="channel"
-                            className="mt-1 w-full rounded border px-3 py-2"
+                            className="form-input mt-1"
                             value={form.data.channel}
                             onChange={(e) => form.setData('channel', e.target.value)}
                         >
@@ -310,7 +317,7 @@ export default function NewsletterEdit({
                             ))}
                         </select>
                     </label>
-                    {form.errors.channel && <p className="text-sm text-red-700">{form.errors.channel}</p>}
+                    {form.errors.channel && <p className="text-sm text-danger">{form.errors.channel}</p>}
                     {linkedChannel && (
                         <>
                             <label className="flex gap-2 text-sm" htmlFor="show_on_home">
@@ -338,64 +345,64 @@ export default function NewsletterEdit({
                                     type="number"
                                     min={0}
                                     max={999}
-                                    className="mt-1 w-32 rounded border px-3 py-2"
+                                    className="form-input mt-1 !w-32"
                                     value={form.data.display_order}
                                     onChange={(e) => form.setData('display_order', Number(e.target.value))}
                                 />
                             </label>
-                            {form.errors.display_order && <p className="text-sm text-red-700">{form.errors.display_order}</p>}
+                            {form.errors.display_order && <p className="text-sm text-danger">{form.errors.display_order}</p>}
                             <label className="block text-sm font-semibold" htmlFor="public_label">
                                 Public label
                                 <input
                                     id="public_label"
-                                    className="mt-1 w-full rounded border px-3 py-2"
+                                    className="form-input mt-1"
                                     placeholder={form.data.name}
                                     value={form.data.public_label}
                                     onChange={(e) => form.setData('public_label', e.target.value)}
                                 />
                             </label>
-                            {form.errors.public_label && <p className="text-sm text-red-700">{form.errors.public_label}</p>}
+                            {form.errors.public_label && <p className="text-sm text-danger">{form.errors.public_label}</p>}
                             <label className="block text-sm font-semibold" htmlFor="public_description">
                                 Public description
                                 <textarea
                                     id="public_description"
-                                    className="mt-1 w-full rounded border px-3 py-2"
+                                    className="form-input mt-1"
                                     rows={3}
                                     placeholder={form.data.description}
                                     value={form.data.public_description}
                                     onChange={(e) => form.setData('public_description', e.target.value)}
                                 />
                             </label>
-                            {form.errors.public_description && <p className="text-sm text-red-700">{form.errors.public_description}</p>}
-                            <p className="text-sm text-neutral-600">Leave label or description blank to use the newsletter name and description.</p>
+                            {form.errors.public_description && <p className="text-sm text-danger">{form.errors.public_description}</p>}
+                            <p className="text-sm text-muted">Leave label or description blank to use the newsletter name and description.</p>
                         </>
                     )}
                 </fieldset>
                 {newsletter?.status === 'archived' && (
-                    <p className="text-sm text-neutral-600">Archived: hidden from signup and cannot be sent to.</p>
+                    <p className="text-sm text-muted">Archived: hidden from signup and cannot be sent to.</p>
                 )}
                 {newsletter?.legacy_list && (
-                    <p className="text-sm text-neutral-600">Linked channel list: {newsletter.legacy_list}. Channel signups keep using this list.</p>
+                    <p className="text-sm text-muted">Linked channel list: {newsletter.legacy_list}. Channel signups keep using this list.</p>
                 )}
                 <div className="flex flex-wrap gap-2">
                     <button type="submit" className="button-primary" disabled={form.processing}>
                         Save
                     </button>
                     {newsletter && !newsletter.archived_at && (
-                        <button type="button" className="rounded border px-3 py-2 text-sm" onClick={() => router.post(`/staff/newsletters/${newsletter.id}/archive`)}>
+                        <button type="button" className="sg-btn sg-btn-secondary" onClick={() => router.post(`/staff/newsletters/${newsletter.id}/archive`)}>
                             Archive
                         </button>
                     )}
                     {newsletter?.archived_at && (
-                        <button type="button" className="rounded border px-3 py-2 text-sm" onClick={() => router.post(`/staff/newsletters/${newsletter.id}/restore`)}>
+                        <button type="button" className="sg-btn sg-btn-secondary" onClick={() => router.post(`/staff/newsletters/${newsletter.id}/restore`)}>
                             Restore
                         </button>
                     )}
                 </div>
             </form>
             {newsletter && (
-                <section className="mt-6 max-w-xl space-y-3">
-                    <h2 className="font-semibold">Segments</h2>
+                <section aria-label="Segments" className="sg-card space-y-3 p-5 sm:p-6">
+                    <h2 className="text-base font-semibold text-body">Segments</h2>
                     <ul className="text-sm">
                         {segments.map((segment) => (
                             <li key={segment.id}>
@@ -415,8 +422,8 @@ export default function NewsletterEdit({
                                 });
                             }}
                         >
-                            <input name="name" placeholder="Segment name" className="w-full rounded border px-3 py-2" required />
-                            <select name="also_newsletter_id" className="w-full rounded border px-3 py-2" required defaultValue="">
+                            <input name="name" placeholder="Segment name" className="form-input" required />
+                            <select name="also_newsletter_id" className="form-input" required defaultValue="">
                                 <option value="" disabled>
                                     Also confirmed on
                                 </option>
@@ -426,7 +433,7 @@ export default function NewsletterEdit({
                                     </option>
                                 ))}
                             </select>
-                            <button type="submit" className="rounded border px-3 py-2 text-sm">
+                            <button type="submit" className="sg-btn sg-btn-secondary">
                                 Add segment
                             </button>
                         </form>

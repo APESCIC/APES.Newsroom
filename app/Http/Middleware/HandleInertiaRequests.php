@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Http\Controllers\AnalyticsConsentController;
+use App\Models\Post;
 use App\Models\Release;
 use App\Services\Channels\PublicChannels;
 use App\Services\Mailing\SendingDomainAlerts;
@@ -49,6 +50,7 @@ class HandleInertiaRequests extends Middleware
                     'accessStaff' => $request->user()?->can('access-staff-area') ?? false,
                     'accessAdmin' => $request->user()?->can('access-admin-area') ?? false,
                     'accessSuperAdmin' => $request->user()?->can('access-super-admin-area') ?? false,
+                    'reviewPosts' => $request->user()?->can('review', Post::class) ?? false,
                 ],
             ],
             'currentRelease' => fn () => $this->currentReleasePayload(),

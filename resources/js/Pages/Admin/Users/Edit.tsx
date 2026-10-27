@@ -1,7 +1,9 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
+import { ArrowLeft } from 'lucide-react';
 import type { FormEvent } from 'react';
 import ContactDetailsFields, { contactFormDefaults, type ContactDetailsValues } from '../../../Components/Account/ContactDetailsFields';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
+import PillButton from '../../../Components/Workspace/ui/PillButton';
 import type { EditableUser } from './types';
 
 type EditForm = ContactDetailsValues & { name: string; email: string; reason: string };
@@ -26,13 +28,13 @@ export default function Edit({ user }: { user: EditableUser }) {
             title={`Edit ${user.name}`}
             subtitle={user.email}
             actions={
-                <Link href={`/admin/users/${user.id}`} className="button-secondary">
+                <PillButton href={`/admin/users/${user.id}`} variant="secondary" icon={ArrowLeft}>
                     Back to user
-                </Link>
+                </PillButton>
             }
         >
             <Head title={`Edit ${user.name} · Users`} />
-            <form className="mx-auto flex max-w-3xl flex-col gap-6" onSubmit={submit}>
+            <form className="flex flex-col gap-6" onSubmit={submit}>
                 <section className="glass-form-panel flex flex-col gap-4" aria-label="Account">
                     <h2 className="text-lg font-bold text-body">Account</h2>
                     {user.sso_managed && (

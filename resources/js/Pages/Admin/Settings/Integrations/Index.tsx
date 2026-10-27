@@ -1,6 +1,10 @@
-import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { Settings } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import WorkspaceLayout from '../../../../Components/Layout/WorkspaceLayout';
+import Badge, { type BadgeTone } from '../../../../Components/Workspace/ui/Badge';
+import ConfirmDialog from '../../../../Components/Workspace/ui/ConfirmDialog';
+import PillButton from '../../../../Components/Workspace/ui/PillButton';
 import type { SharedPageProps } from '../../../../types/page';
 
 export type CheckStatus = 'pass' | 'warn' | 'fail';
@@ -76,14 +80,14 @@ function statusLabel(status: CheckStatus): string {
     }
 }
 
-function statusClass(status: CheckStatus): string {
+function statusTone(status: CheckStatus): BadgeTone {
     switch (status) {
         case 'pass':
-            return 'bg-green-100 text-green-900';
+            return 'ok';
         case 'warn':
-            return 'bg-amber-100 text-amber-900';
+            return 'warning';
         case 'fail':
-            return 'bg-red-100 text-red-900';
+            return 'error';
         default: {
             const exhaustive: never = status;
             return exhaustive;
@@ -138,10 +142,10 @@ function rotationLabel(action: Rotation['action']): string {
 
 function StatusBadge({ result }: { result: CheckResult | null }) {
     if (!result) {
-        return <span className="rounded px-2 py-1 text-xs font-semibold bg-slate-100 text-slate-800">Not checked</span>;
+        return <Badge tone="neutral">Not checked</Badge>;
     }
 
-    return <span className={`rounded px-2 py-1 text-xs font-semibold ${statusClass(result.status)}`}>{statusLabel(result.status)}</span>;
+    return <Badge tone={statusTone(result.status)}>{statusLabel(result.status)}</Badge>;
 }
 
 function currentValue(key: IntegrationKey): string | null {
@@ -167,6 +171,7 @@ function KeyRow({
     failedCheck: FailedCheck;
 }) {
     const form = useForm({ secret_value: '', force: false });
+    const [confirmRemove, setConfirmRemove] = useState(false);
     const inputId = `integration-${provider.provider}-${item.key}`;
     const errorId = `${inputId}-error`;
     const showForce = Boolean(form.errors.secret_value) && failedCheck?.provider === provider.provider && failedCheck.key === item.key;
@@ -182,9 +187,8 @@ function KeyRow({
     };
 
     const remove = () => {
-        if (confirm(`Remove the stored ${provider.label} ${name}? The server environment value, if any, will be used instead.`)) {
-            form.delete(`/admin/settings/integrations/${provider.provider}/${item.key}`, { preserveScroll: true });
-        }
+        setConfirmRemove(false);
+        form.delete(`/admin/settings/integrations/${provider.provider}/${item.key}`, { preserveScroll: true });
     };
 
     return (
@@ -225,11 +229,11 @@ function KeyRow({
                             aria-invalid={form.errors.secret_value ? true : undefined}
                             onChange={(event) => form.setData('secret_value', event.target.value)}
                         />
-                        <button type="submit" className="button-primary min-h-11 px-4" disabled={form.processing || form.data.secret_value === ''}>
+                        <button type="submit" className="sg-btn sg-btn-primary" disabled={form.processing || form.data.secret_value === ''}>
                             {item.source === 'database' ? 'Replace' : 'Save'}
                         </button>
                         {item.source === 'database' && (
-                            <button type="button" className="button-secondary min-h-11 px-4" disabled={form.processing} onClick={remove}>
+                            <button type="button" className="sg-btn sg-btn-ghost !text-danger" disabled={form.processing} onClick={() => setConfirmRemove(true)}>
                                 Remove
                             </button>
                         )}
@@ -250,6 +254,16 @@ function KeyRow({
                     )}
                 </form>
             )}
+            <ConfirmDialog
+                open={confirmRemove}
+                title={`Remove the stored ${provider.label} ${name}?`}
+                description="The server environment value, if any, will be used instead."
+                confirmLabel="Remove key"
+                destructive
+                processing={form.processing}
+                onCancel={() => setConfirmRemove(false)}
+                onConfirm={remove}
+            />
         </div>
     );
 }
@@ -264,17 +278,17 @@ function ProviderCard({ provider, canManage, failedCheck }: { provider: Integrat
     };
 
     return (
-        <section aria-labelledby={headingId} className="glass-form-panel flex flex-col gap-4">
+        <section aria-labelledby={headingId} className="sg-card flex flex-col gap-4 p-5 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <h2 id={headingId} className="text-lg font-bold text-body">
+                    <h2 id={headingId} className="text-base font-semibold text-body">
                         {provider.label}
                     </h2>
                     <p className="text-sm text-muted">{provider.description}</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <StatusBadge result={provider.latest} />
-                    <button type="button" className="button-secondary min-h-11 px-4" disabled={testing || !provider.configured} onClick={test}>
+                    <button type="button" className="sg-btn sg-btn-secondary sg-btn-sm" disabled={testing || !provider.configured} onClick={test}>
                         Test connection
                     </button>
                 </div>
@@ -333,61 +347,57 @@ export default function IntegrationsIndex({
     canManage: boolean;
     failedCheck?: FailedCheck;
 }) {
-    const { flash, errors } = usePage<SharedPageProps>().props;
+    const { errors } = usePage<SharedPageProps>().props;
     const otherErrors = Object.entries(errors ?? {}).filter(([field]) => field !== 'secret_value');
 
     return (
-        <WorkspaceLayout area="Admin" active="integrations" title="Integrations" subtitle="Service keys and connection health.">
+        <WorkspaceLayout
+            area="Admin"
+            active="integrations"
+            title="Integrations"
+            subtitle="Service keys and connection health."
+            actions={
+                <PillButton href="/admin/settings" variant="secondary" icon={Settings}>
+                    Back to Settings
+                </PillButton>
+            }
+        >
             <Head title="Integrations" />
-            <div className="mx-auto flex max-w-3xl flex-col gap-6">
-                <p className="text-sm">
-                    <Link href="/admin/settings" className="font-semibold text-body underline">
-                        Back to Settings
-                    </Link>
-                </p>
-                {flash?.status && (
-                    <p role="status" className="text-sm text-green-800">
-                        {flash.status}
-                    </p>
-                )}
+            <>
                 {otherErrors.length > 0 && (
-                    <div role="alert" className="text-sm text-danger">
+                    <div role="alert" className="sg-card border-l-4 !border-l-[var(--color-sg-error)] px-4 py-3 text-sm text-danger">
                         {otherErrors.map(([field, message]) => (
                             <p key={field}>{message}</p>
                         ))}
                     </div>
                 )}
-                <section aria-labelledby="integrations-overview-heading" className="workspace-glass-card flex flex-col gap-3 p-4">
-                    <h2 id="integrations-overview-heading" className="text-lg font-bold text-body">
+                <section aria-labelledby="integrations-overview-heading" className="sg-card flex flex-col gap-3 py-5">
+                    <h2 id="integrations-overview-heading" className="px-5 text-base font-semibold text-body">
                         Status overview
                     </h2>
-                    <table className="w-full text-left text-sm">
+                    <table className="sg-table text-sm">
                         <thead>
-                            <tr className="text-muted">
-                                <th scope="col" className="py-1 pr-3 font-semibold">
-                                    Integration
-                                </th>
-                                <th scope="col" className="py-1 pr-3 font-semibold">
-                                    Status
-                                </th>
-                                <th scope="col" className="py-1 font-semibold">
-                                    Last checked
-                                </th>
+                            <tr>
+                                <th scope="col">Integration</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Last checked</th>
                             </tr>
                         </thead>
                         <tbody>
                             {providers.map((provider) => (
-                                <tr key={provider.provider} className="border-t border-border">
-                                    <th scope="row" className="py-2 pr-3 font-semibold text-body">
+                                <tr key={provider.provider}>
+                                    <th scope="row" className="!normal-case !tracking-normal text-sm !text-body">
                                         {provider.label}
                                     </th>
-                                    <td className="py-2 pr-3">{provider.configured ? <StatusBadge result={provider.latest} /> : <span className="text-muted">Not configured</span>}</td>
-                                    <td className="py-2 text-muted">{formatTime(provider.latest?.checked_at ?? null)}</td>
+                                    <td data-label="Status">{provider.configured ? <StatusBadge result={provider.latest} /> : <span className="text-muted">Not configured</span>}</td>
+                                    <td data-label="Last checked" className="text-muted">
+                                        {formatTime(provider.latest?.checked_at ?? null)}
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
-                    <p className="text-xs text-muted">Configured integrations are checked every hour. Admins are emailed when a check starts failing.</p>
+                    <p className="px-5 text-xs text-muted">Configured integrations are checked every hour. Admins are emailed when a check starts failing.</p>
                 </section>
                 {!canManage && (
                     <p className="text-sm text-muted">You can view status and test connections. Only super admins can change keys.</p>
@@ -401,7 +411,7 @@ export default function IntegrationsIndex({
                 {providers.map((provider) => (
                     <ProviderCard key={provider.provider} provider={provider} canManage={canManage} failedCheck={failedCheck} />
                 ))}
-            </div>
+            </>
         </WorkspaceLayout>
     );
 }

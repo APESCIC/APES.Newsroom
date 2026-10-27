@@ -116,6 +116,6 @@ describe('Admin integrations page', () => {
         render(<IntegrationsIndex providers={[stripe]} canManage />);
 
         const nav = screen.getByRole('navigation', { name: 'Admin workspace' });
-        expect(within(nav).getByRole('link', { name: 'Integrations' })).toHaveAttribute('aria-current', 'page');
+        expect(within(nav).getByRole('link', { name: 'Integrations & keys' })).toHaveAttribute('aria-current', 'page');
     });
 });

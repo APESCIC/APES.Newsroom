@@ -1,6 +1,11 @@
-import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { Ban, Settings, Trash2 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import WorkspaceLayout from '../../../../Components/Layout/WorkspaceLayout';
+import ActionMenu, { type MenuAction } from '../../../../Components/Workspace/ui/ActionMenu';
+import Badge, { type BadgeTone } from '../../../../Components/Workspace/ui/Badge';
+import ConfirmDialog from '../../../../Components/Workspace/ui/ConfirmDialog';
+import PillButton from '../../../../Components/Workspace/ui/PillButton';
 import type { SharedPageProps } from '../../../../types/page';
 
 export type SendingDomainStatus = 'pending' | 'verified' | 'failed' | 'disabled';
@@ -62,16 +67,16 @@ function statusLabel(status: SendingDomainStatus): string {
     }
 }
 
-function statusClass(status: SendingDomainStatus): string {
+function statusTone(status: SendingDomainStatus): BadgeTone {
     switch (status) {
         case 'pending':
-            return 'bg-amber-100 text-amber-900';
+            return 'warning';
         case 'verified':
-            return 'bg-green-100 text-green-900';
+            return 'ok';
         case 'failed':
-            return 'bg-red-100 text-red-900';
+            return 'error';
         case 'disabled':
-            return 'bg-slate-100 text-slate-800';
+            return 'neutral';
         default: {
             const exhaustive: never = status;
             return exhaustive;
@@ -95,7 +100,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
     };
 
     return (
-        <button type="button" className="button-secondary min-h-11 px-3 text-xs" onClick={copy} aria-label={`Copy ${label}`}>
+        <button type="button" className="sg-btn sg-btn-secondary sg-btn-sm" onClick={copy} aria-label={`Copy ${label}`}>
             {copied ? 'Copied' : 'Copy'}
         </button>
     );
@@ -156,9 +161,7 @@ function RecordsTable({ check }: { check: LastCheck }) {
                                 )}
                             </td>
                             <td className="py-2">
-                                <span className={`rounded px-2 py-1 text-xs font-semibold ${record.valid ? 'bg-green-100 text-green-900' : 'bg-red-100 text-red-900'}`}>
-                                    {record.valid ? 'Pass' : 'Fail'}
-                                </span>
+                                <Badge tone={record.valid ? 'ok' : 'error'}>{record.valid ? 'Pass' : 'Fail'}</Badge>
                             </td>
                         </tr>
                     ))}
@@ -170,8 +173,10 @@ function RecordsTable({ check }: { check: LastCheck }) {
 
 function DomainCard({ domain }: { domain: SendingDomain }) {
     const [busy, setBusy] = useState(false);
+    const [confirming, setConfirming] = useState<'disable' | 'remove' | null>(null);
     const headingId = `email-domain-${domain.id}-heading`;
     const options = { preserveScroll: true, onFinish: () => setBusy(false) };
+    const inUse = domain.in_use.length > 0;
 
     const recheck = () => {
         setBusy(true);
@@ -179,14 +184,9 @@ function DomainCard({ domain }: { domain: SendingDomain }) {
     };
 
     const disable = () => {
-        const warning =
-            domain.in_use.length > 0
-                ? `Disable ${domain.domain}? ${domain.in_use.map((use) => use.name).join(', ')} will not be able to send until it is enabled again.`
-                : `Disable ${domain.domain}?`;
-        if (confirm(warning)) {
-            setBusy(true);
-            router.post(`/admin/settings/email-domains/${domain.id}/disable`, {}, options);
-        }
+        setConfirming(null);
+        setBusy(true);
+        router.post(`/admin/settings/email-domains/${domain.id}/disable`, {}, options);
     };
 
     const enable = () => {
@@ -195,17 +195,21 @@ function DomainCard({ domain }: { domain: SendingDomain }) {
     };
 
     const remove = () => {
-        if (confirm(`Remove ${domain.domain} from the approved sending domains? This cannot be undone.`)) {
-            setBusy(true);
-            router.delete(`/admin/settings/email-domains/${domain.id}`, options);
-        }
+        setConfirming(null);
+        setBusy(true);
+        router.delete(`/admin/settings/email-domains/${domain.id}`, options);
     };
 
+    const menuActions: MenuAction[] = [
+        ...(domain.status !== 'disabled' ? [{ label: 'Disable domain', icon: Ban, onSelect: () => setConfirming('disable') }] : []),
+        { label: 'Remove domain', icon: Trash2, tone: 'danger' as const, disabled: busy || inUse, onSelect: () => setConfirming('remove') },
+    ];
+
     return (
-        <section aria-labelledby={headingId} className="glass-form-panel flex flex-col gap-4">
+        <section aria-labelledby={headingId} className="sg-card flex flex-col gap-4 p-5 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <h2 id={headingId} className="text-lg font-bold text-body">
+                    <h2 id={headingId} className="text-base font-semibold text-body">
                         {domain.domain}
                     </h2>
                     {domain.label && <p className="text-sm text-muted">{domain.label}</p>}
@@ -215,7 +219,10 @@ function DomainCard({ domain }: { domain: SendingDomain }) {
                         {domain.created_by ? ` · Added by ${domain.created_by}` : ''}
                     </p>
                 </div>
-                <span className={`rounded px-2 py-1 text-xs font-semibold ${statusClass(domain.status)}`}>{statusLabel(domain.status)}</span>
+                <div className="flex items-center gap-2">
+                    <Badge tone={statusTone(domain.status)}>{statusLabel(domain.status)}</Badge>
+                    <ActionMenu label={`More actions for ${domain.domain}`} actions={menuActions} />
+                </div>
             </div>
 
             {domain.last_check && (
@@ -246,34 +253,41 @@ function DomainCard({ domain }: { domain: SendingDomain }) {
 
             <div className="flex flex-wrap gap-2">
                 {domain.status !== 'disabled' && (
-                    <button type="button" className="button-secondary min-h-11 px-4" disabled={busy} onClick={recheck}>
+                    <button type="button" className="sg-btn sg-btn-secondary sg-btn-sm" disabled={busy} onClick={recheck}>
                         Check DNS
                     </button>
                 )}
-                {domain.status === 'disabled' ? (
-                    <button type="button" className="button-secondary min-h-11 px-4" disabled={busy} onClick={enable}>
+                {domain.status === 'disabled' && (
+                    <button type="button" className="sg-btn sg-btn-secondary sg-btn-sm" disabled={busy} onClick={enable}>
                         Enable
                     </button>
-                ) : (
-                    <button type="button" className="button-secondary min-h-11 px-4" disabled={busy} onClick={disable}>
-                        Disable
-                    </button>
                 )}
-                <button
-                    type="button"
-                    className="button-danger min-h-11 px-4 disabled:cursor-not-allowed disabled:opacity-50"
-                    disabled={busy || domain.in_use.length > 0}
-                    aria-describedby={domain.in_use.length > 0 ? `${headingId}-remove-help` : undefined}
-                    onClick={remove}
-                >
-                    Remove
-                </button>
             </div>
-            {domain.in_use.length > 0 && (
-                <p id={`${headingId}-remove-help`} className="text-xs text-muted">
-                    A domain in use cannot be removed. Change those newsletters first, or disable the domain.
-                </p>
-            )}
+            {inUse && <p className="text-xs text-muted">A domain in use cannot be removed. Change those newsletters first, or disable the domain.</p>}
+            <ConfirmDialog
+                open={confirming === 'disable'}
+                title={`Disable ${domain.domain}?`}
+                description={
+                    inUse
+                        ? `${domain.in_use.map((use) => use.name).join(', ')} will not be able to send until it is enabled again.`
+                        : 'Newsletters cannot use it until it is enabled again.'
+                }
+                confirmLabel="Disable domain"
+                destructive
+                processing={busy}
+                onCancel={() => setConfirming(null)}
+                onConfirm={disable}
+            />
+            <ConfirmDialog
+                open={confirming === 'remove'}
+                title={`Remove ${domain.domain}?`}
+                description="It is removed from the approved sending domains. This cannot be undone."
+                confirmLabel="Remove domain"
+                destructive
+                processing={busy}
+                onCancel={() => setConfirming(null)}
+                onConfirm={remove}
+            />
         </section>
     );
 }
@@ -287,8 +301,8 @@ function AddDomainForm() {
     };
 
     return (
-        <form onSubmit={submit} className="glass-form-panel flex flex-col gap-3" aria-labelledby="add-email-domain-heading">
-            <h2 id="add-email-domain-heading" className="text-lg font-bold text-body">
+        <form onSubmit={submit} className="sg-card flex flex-col gap-3 p-5 sm:p-6" aria-labelledby="add-email-domain-heading">
+            <h2 id="add-email-domain-heading" className="text-base font-semibold text-body">
                 Add a domain
             </h2>
             <p className="text-sm text-muted">
@@ -335,7 +349,7 @@ function AddDomainForm() {
                 Only needed when Mailgun sends from a subdomain that is not the configured Mailgun domain.
             </p>
             {form.errors.mailgun_domain && <p className="text-sm text-danger">{form.errors.mailgun_domain}</p>}
-            <button type="submit" className="button-primary min-h-11 w-fit px-5" disabled={form.processing || form.data.domain.trim() === ''}>
+            <button type="submit" className="sg-btn sg-btn-primary self-start" disabled={form.processing || form.data.domain.trim() === ''}>
                 Add and check
             </button>
         </form>
@@ -351,30 +365,30 @@ export default function EmailDomainsIndex({
     mailgunConfigured: boolean;
     configuredMailgunDomain: string | null;
 }) {
-    const { flash, errors } = usePage<SharedPageProps>().props;
+    const { errors } = usePage<SharedPageProps>().props;
     const removeError = errors?.remove;
 
     return (
-        <WorkspaceLayout area="Admin" active="email-domains" title="Email sending domains" subtitle="Domains newsletters may send from or use for replies.">
+        <WorkspaceLayout
+            area="Admin"
+            active="email-domains"
+            title="Email sending domains"
+            subtitle="Domains newsletters may send from or use for replies."
+            actions={
+                <PillButton href="/admin/settings" variant="secondary" icon={Settings}>
+                    Back to Settings
+                </PillButton>
+            }
+        >
             <Head title="Email sending domains" />
-            <div className="mx-auto flex max-w-3xl flex-col gap-6">
-                <p className="text-sm">
-                    <Link href="/admin/settings" className="font-semibold text-body underline">
-                        Back to Settings
-                    </Link>
-                </p>
-                {flash?.status && (
-                    <p role="status" className="text-sm text-green-800">
-                        {flash.status}
-                    </p>
-                )}
+            <>
                 {removeError && (
-                    <p role="alert" className="text-sm text-danger">
+                    <p role="alert" className="sg-card border-l-4 !border-l-[var(--color-sg-error)] px-4 py-3 text-sm text-danger">
                         {removeError}
                     </p>
                 )}
-                <section className="workspace-glass-card flex flex-col gap-2 p-4 text-sm text-body" aria-labelledby="email-domains-rules-heading">
-                    <h2 id="email-domains-rules-heading" className="text-lg font-bold">
+                <section className="sg-card flex flex-col gap-2 p-5 text-sm text-body sm:p-6" aria-labelledby="email-domains-rules-heading">
+                    <h2 id="email-domains-rules-heading" className="text-base font-semibold">
                         How these are used
                     </h2>
                     <p>
@@ -391,7 +405,7 @@ export default function EmailDomainsIndex({
                     <DomainCard key={domain.id} domain={domain} />
                 ))}
                 <AddDomainForm />
-            </div>
+            </>
         </WorkspaceLayout>
     );
 }

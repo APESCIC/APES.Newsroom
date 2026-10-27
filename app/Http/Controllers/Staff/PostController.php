@@ -76,7 +76,7 @@ class PostController extends Controller
             });
         }
 
-        $posts = $query->latest('updated_at')->get()->map(fn (Post $post) => [
+        $posts = $query->latest('updated_at')->latest('id')->paginate(20)->withQueryString()->through(fn (Post $post) => [
             'id' => $post->id,
             'title' => $post->title,
             'slug' => $post->slug,

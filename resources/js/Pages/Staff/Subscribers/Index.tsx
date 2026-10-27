@@ -1,7 +1,10 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
+import { Download, Users } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
-import LineIcon from '../../../Components/Icons/LineIcon';
+import Badge from '../../../Components/Workspace/ui/Badge';
+import EmptyState from '../../../Components/Workspace/ui/EmptyState';
+import Pagination from '../../../Components/Workspace/ui/Pagination';
 
 type SubscriptionRow = {
     newsletter: string;
@@ -22,6 +25,8 @@ type SubscriberRow = {
 
 type Paginated<T> = {
     data: T[];
+    current_page: number;
+    last_page: number;
     prev_page_url: string | null;
     next_page_url: string | null;
     total: number;
@@ -92,32 +97,22 @@ export default function SubscribersIndex({
             title="Mailing-list subscribers"
             subtitle="Contacts on newsletters who do not have a Newsroom account. Read-only — manage opt-outs via mailing tools, not here."
             actions={
-                <a href={exportHref} className="button-secondary inline-flex items-center gap-2">
-                    <LineIcon name="document" className="h-4 w-4" />
+                <a href={exportHref} className="sg-btn sg-btn-secondary">
+                    <Download aria-hidden="true" className="h-4 w-4" />
                     Export CSV
                 </a>
             }
         >
             <Head title="Mailing-list subscribers" />
 
-            <form onSubmit={applyFilters} className="mb-4 flex flex-wrap items-end gap-3">
-                <label className="flex flex-col gap-1 text-sm">
-                    <span className="font-semibold text-body">Search</span>
-                    <input
-                        type="search"
-                        value={q}
-                        onChange={(e) => setQ(e.target.value)}
-                        className="rounded border border-neutral-200 px-3 py-2"
-                        placeholder="Email or name"
-                    />
+            <form onSubmit={applyFilters} role="search" aria-label="Filter subscribers" className="sg-card grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-[1fr_14rem_12rem_auto] lg:items-end">
+                <label className="flex flex-col gap-1.5 text-sm font-semibold text-body">
+                    Search
+                    <input type="search" value={q} onChange={(e) => setQ(e.target.value)} className="form-input font-normal" placeholder="Email or name" />
                 </label>
-                <label className="flex flex-col gap-1 text-sm">
-                    <span className="font-semibold text-body">Newsletter</span>
-                    <select
-                        value={newsletterId}
-                        onChange={(e) => setNewsletterId(e.target.value)}
-                        className="rounded border border-neutral-200 px-3 py-2"
-                    >
+                <label className="flex flex-col gap-1.5 text-sm font-semibold text-body">
+                    Newsletter
+                    <select value={newsletterId} onChange={(e) => setNewsletterId(e.target.value)} className="form-input font-normal">
                         <option value="">All</option>
                         {newsletters.map((n) => (
                             <option key={n.id} value={n.id}>
@@ -126,13 +121,9 @@ export default function SubscribersIndex({
                         ))}
                     </select>
                 </label>
-                <label className="flex flex-col gap-1 text-sm">
-                    <span className="font-semibold text-body">Source</span>
-                    <select
-                        value={source}
-                        onChange={(e) => setSource(e.target.value)}
-                        className="rounded border border-neutral-200 px-3 py-2"
-                    >
+                <label className="flex flex-col gap-1.5 text-sm font-semibold text-body">
+                    Source
+                    <select value={source} onChange={(e) => setSource(e.target.value)} className="form-input font-normal">
                         <option value="">All</option>
                         {sources.map((s) => (
                             <option key={s} value={s}>
@@ -141,80 +132,53 @@ export default function SubscribersIndex({
                         ))}
                     </select>
                 </label>
-                <button type="submit" className="button-primary">
+                <button type="submit" className="sg-btn sg-btn-primary">
                     Filter
                 </button>
             </form>
 
-            <p className="mb-3 text-sm text-muted">
-                {subscribers.total === 0
-                    ? 'No mailing-only subscribers match these filters.'
-                    : `Showing ${subscribers.from}–${subscribers.to} of ${subscribers.total}`}
-            </p>
-
-            <ul className="divide-y divide-neutral-200 rounded-lg border border-neutral-200 bg-white">
-                {subscribers.data.map((row) => (
-                    <li key={row.id} className="px-4 py-3">
-                        <div className="flex flex-wrap items-baseline justify-between gap-2">
-                            <div>
-                                <p className="font-semibold text-body">{row.email}</p>
-                                {row.name && <p className="text-sm text-muted">{row.name}</p>}
-                            </div>
-                            <p className="text-sm text-muted">Signed up {formatWhen(row.signed_up_at)}</p>
-                        </div>
-                        <dl className="mt-2 grid gap-2 text-sm sm:grid-cols-2">
-                            <div>
-                                <dt className="text-muted">Source / consent</dt>
-                                <dd className="text-body">
-                                    {row.source ?? '—'}
-                                    {row.consent_action ? ` · ${row.consent_action}` : ''}
-                                </dd>
-                            </div>
-                            <div>
-                                <dt className="text-muted">Suppression</dt>
-                                <dd className={row.suppressed ? 'font-semibold text-danger' : 'text-body'}>
-                                    {row.suppressed ? 'Suppressed / opted out globally' : 'Not suppressed'}
-                                </dd>
-                            </div>
-                        </dl>
-                        <div className="mt-2">
-                            <h3 className="text-sm font-bold text-body">Newsletters</h3>
-                            {row.subscriptions.length === 0 ? (
-                                <p className="text-sm text-muted">No list subscriptions recorded.</p>
-                            ) : (
-                                <ul className="mt-1 flex flex-col gap-1 text-sm">
-                                    {row.subscriptions.map((sub) => (
-                                        <li key={`${row.id}-${sub.newsletter}-${sub.status}`}>
-                                            <span className="text-body">{sub.newsletter}</span>
-                                            <span className="ml-2 text-muted">({sub.status})</span>
-                                            {sub.opted_out && (
-                                                <span className="ml-2 font-semibold text-danger">opted out</span>
-                                            )}
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </div>
-                    </li>
-                ))}
-            </ul>
-
-            {(subscribers.prev_page_url || subscribers.next_page_url) && (
-                <div className="mt-4 flex gap-3">
-                    {subscribers.prev_page_url && (
-                        <button type="button" className="button-secondary" onClick={() => router.get(subscribers.prev_page_url!)}>
-                            Previous
-                        </button>
-                    )}
-                    {subscribers.next_page_url && (
-                        <button type="button" className="button-secondary" onClick={() => router.get(subscribers.next_page_url!)}>
-                            Next
-                        </button>
-                    )}
-                    <Link href="/staff/newsletters" className="button-secondary">
-                        Newsletters
-                    </Link>
-                </div>
+            {subscribers.total === 0 ? (
+                <EmptyState icon={Users} title="No subscribers found" description="No mailing-only subscribers match these filters." />
+            ) : (
+                <>
+                    <p className="text-sm text-muted">
+                        Showing {subscribers.from}–{subscribers.to} of {subscribers.total}
+                    </p>
+                    <ul className="sg-card divide-y divide-border">
+                        {subscribers.data.map((row) => (
+                            <li key={row.id} className="grid gap-3 px-5 py-4 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1.2fr)]">
+                                <div className="min-w-0">
+                                    <p className="font-semibold break-words text-body">{row.email}</p>
+                                    {row.name && <p className="text-sm text-muted">{row.name}</p>}
+                                    <p className="mt-1 text-xs text-muted">Signed up {formatWhen(row.signed_up_at)}</p>
+                                </div>
+                                <div className="text-sm">
+                                    <p className="text-muted">
+                                        {row.source ?? '—'}
+                                        {row.consent_action ? ` · ${row.consent_action}` : ''}
+                                    </p>
+                                    <p className="mt-1">{row.suppressed ? <Badge tone="error">Suppressed globally</Badge> : <Badge tone="ok">Not suppressed</Badge>}</p>
+                                </div>
+                                <div className="text-sm">
+                                    {row.subscriptions.length === 0 ? (
+                                        <p className="text-muted">No list subscriptions recorded.</p>
+                                    ) : (
+                                        <ul aria-label={`Newsletters for ${row.email}`} className="flex flex-col gap-1">
+                                            {row.subscriptions.map((sub) => (
+                                                <li key={`${row.id}-${sub.newsletter}-${sub.status}`}>
+                                                    <span className="text-body">{sub.newsletter}</span>
+                                                    <span className="ml-2 text-muted">({sub.status})</span>
+                                                    {sub.opted_out && <span className="ml-2 font-semibold text-danger">opted out</span>}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                    <Pagination page={subscribers} label="Subscribers" />
+                </>
             )}
         </WorkspaceLayout>
     );

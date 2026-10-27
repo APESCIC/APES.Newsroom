@@ -1,11 +1,13 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
+import { Pencil, Users } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { ContactDetailsValues } from '../../../Components/Account/ContactDetailsFields';
 import UserEraseControl from '../../../Components/Admin/UserEraseControl';
 import UserRoleControl from '../../../Components/Admin/UserRoleControl';
 import UserSecurityActions from '../../../Components/Admin/UserSecurityActions';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
-import type { SharedPageProps } from '../../../types/page';
+import Badge from '../../../Components/Workspace/ui/Badge';
+import PillButton from '../../../Components/Workspace/ui/PillButton';
 import { eventLabel, formatWhen, methodLabel, resultLabel, roleLabel, type UserDetail } from './types';
 
 function whatsappSummary(details: ContactDetailsValues): string | null {
@@ -48,8 +50,8 @@ function ContactDetailsSummary({ details }: { details: ContactDetailsValues }) {
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
     return (
-        <section className="glass-form-panel flex flex-col gap-3" aria-label={title}>
-            <h2 className="text-lg font-bold text-body">{title}</h2>
+        <section className="sg-card flex flex-col gap-3 p-5 sm:p-6" aria-label={title}>
+            <h2 className="text-base font-semibold text-body">{title}</h2>
             {children}
         </section>
     );
@@ -60,8 +62,6 @@ function Empty({ children }: { children: string }) {
 }
 
 export default function Show({ user }: { user: UserDetail }) {
-    const { flash } = usePage<SharedPageProps>().props;
-
     return (
         <WorkspaceLayout
             area="Admin"
@@ -69,26 +69,20 @@ export default function Show({ user }: { user: UserDetail }) {
             title={user.name}
             subtitle={user.email}
             actions={
-                <div className="flex flex-wrap gap-3">
-                    {user.can.update && (
-                        <Link href={`/admin/users/${user.id}/edit`} className="button-primary">
-                            Edit details
-                        </Link>
-                    )}
-                    <Link href="/admin/users" className="button-secondary">
+                <>
+                    <PillButton href="/admin/users" variant="secondary" icon={Users}>
                         All users
-                    </Link>
-                </div>
+                    </PillButton>
+                    {user.can.update && (
+                        <PillButton href={`/admin/users/${user.id}/edit`} icon={Pencil}>
+                            Edit details
+                        </PillButton>
+                    )}
+                </>
             }
         >
             <Head title={`${user.name} · Users`} />
-            <div className="mx-auto flex max-w-4xl flex-col gap-6">
-                {flash?.status && (
-                    <p role="status" className="workspace-glass-card px-4 py-3 text-sm font-semibold text-body">
-                        {flash.status}
-                    </p>
-                )}
-
+            <>
                 <Section title="Account access">
                     {user.lock ? (
                         <p className="text-sm font-semibold text-danger">
@@ -196,27 +190,29 @@ export default function Show({ user }: { user: UserDetail }) {
                     {user.login_history.length === 0 ? (
                         <Empty>No sign-in activity recorded.</Empty>
                     ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left text-sm">
-                                <thead className="text-muted">
+                        <div className="-mx-5 sm:-mx-6">
+                            <table className="sg-table text-sm">
+                                <thead>
                                     <tr>
-                                        <th scope="col" className="py-2 pr-4">When</th>
-                                        <th scope="col" className="py-2 pr-4">Result</th>
-                                        <th scope="col" className="py-2 pr-4">Event</th>
-                                        <th scope="col" className="py-2 pr-4">Method</th>
-                                        <th scope="col" className="py-2 pr-4">IP address</th>
-                                        <th scope="col" className="py-2">Device</th>
+                                        <th scope="col">When</th>
+                                        <th scope="col">Result</th>
+                                        <th scope="col">Event</th>
+                                        <th scope="col">Method</th>
+                                        <th scope="col">IP address</th>
+                                        <th scope="col">Device</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {user.login_history.map((event) => (
-                                        <tr key={event.id} className="border-t border-border">
-                                            <td className="py-2 pr-4 text-body">{formatWhen(event.created_at)}</td>
-                                            <td className={`py-2 pr-4 font-semibold ${event.result === 'failure' ? 'text-danger' : 'text-body'}`}>{resultLabel(event.result)}</td>
-                                            <td className="py-2 pr-4 font-mono text-body">{event.action.replace(/^auth\./, '')}</td>
-                                            <td className="py-2 pr-4 text-body">{event.method ?? '—'}</td>
-                                            <td className="py-2 pr-4 text-body">{event.ip_address ?? '—'}</td>
-                                            <td className="py-2 text-body">{[event.browser, event.platform].filter(Boolean).join(' on ') || '—'}</td>
+                                        <tr key={event.id}>
+                                            <td data-label="When" className="text-body">{formatWhen(event.created_at)}</td>
+                                            <td data-label="Result">
+                                                <Badge tone={event.result === 'failure' ? 'error' : 'ok'}>{resultLabel(event.result)}</Badge>
+                                            </td>
+                                            <td data-label="Event" className="font-mono text-body">{event.action.replace(/^auth\./, '')}</td>
+                                            <td data-label="Method" className="text-body">{event.method ?? '—'}</td>
+                                            <td data-label="IP address" className="text-body">{event.ip_address ?? '—'}</td>
+                                            <td data-label="Device" className="text-body">{[event.browser, event.platform].filter(Boolean).join(' on ') || '—'}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -280,7 +276,7 @@ export default function Show({ user }: { user: UserDetail }) {
                 <Section title="Delete user">
                     <UserEraseControl user={user} />
                 </Section>
-            </div>
+            </>
         </WorkspaceLayout>
     );
 }

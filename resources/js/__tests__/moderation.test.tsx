@@ -36,18 +36,17 @@ describe('Glass Studio admin moderation workspace', () => {
             />,
         );
 
-        expect(screen.getByRole('img', { name: 'APES Newsroom' })).toHaveAttribute(
-            'src',
-            '/brand/apes-logo-compact.png',
-        );
+        const brand = screen.getAllByRole('link', { name: /APES Newsroom/ })[0];
+        expect(brand).toHaveAttribute('href', '/');
+        expect(brand.querySelector('img')).toHaveAttribute('src', '/brand/apes-logo-mark.png');
         expect(screen.getByRole('navigation', { name: 'Admin workspace' })).toBeInTheDocument();
-        const profileSummary = screen.getByRole('button', { name: 'Profiles awaiting review: 1' });
-        const commentSummary = screen.getByRole('button', { name: 'Comments awaiting review: 1' });
+        const profileSummary = screen.getByRole('button', { name: /^Profiles awaiting review:\s*1$/ });
+        const commentSummary = screen.getByRole('button', { name: /^Comments awaiting review:\s*1$/ });
         expect(profileSummary).toHaveClass('workspace-glass-card');
         expect(profileSummary).toHaveAttribute('aria-pressed', 'true');
         expect(commentSummary).toHaveAttribute('aria-pressed', 'false');
-        expect(screen.getByRole('button', { name: 'Open reports: 1' })).toHaveAttribute('aria-pressed', 'false');
-        expect(screen.getByRole('button', { name: 'Suspended profiles: 1' })).toHaveAttribute('aria-pressed', 'false');
+        expect(screen.getByRole('button', { name: /^Open reports:\s*1$/ })).toHaveAttribute('aria-pressed', 'false');
+        expect(screen.getByRole('button', { name: /^Suspended profiles:\s*1$/ })).toHaveAttribute('aria-pressed', 'false');
 
         expect(screen.getByLabelText('Moderation queue records')).toHaveClass('workspace-glass-panel');
         const tabs = screen.getByRole('tablist', { name: 'Moderation queues' });

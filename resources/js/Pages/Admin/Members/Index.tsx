@@ -1,6 +1,11 @@
 import { Head, Link, router } from '@inertiajs/react';
+import { IdCard } from 'lucide-react';
 import { FormEvent, useState } from 'react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
+import Badge from '../../../Components/Workspace/ui/Badge';
+import DataTable from '../../../Components/Workspace/ui/DataTable';
+import EmptyState from '../../../Components/Workspace/ui/EmptyState';
+import Pagination, { type PageMeta } from '../../../Components/Workspace/ui/Pagination';
 
 type RecentRead = {
     path: string;
@@ -22,15 +27,6 @@ type MemberRow = {
     recent_reads: RecentRead[];
 };
 
-type Paginator<T> = {
-    data: T[];
-    current_page: number;
-    last_page: number;
-    total: number;
-    prev_page_url: string | null;
-    next_page_url: string | null;
-};
-
 type Filters = { q: string; status: string };
 
 function formatWhen(iso: string): string {
@@ -48,112 +44,107 @@ function formatWhen(iso: string): string {
     }
 }
 
-export default function Index({ members, filters }: { members: Paginator<MemberRow>; filters: Filters }) {
+function RecentReads({ reads }: { reads: RecentRead[] }) {
+    if (reads.length === 0) {
+        return <span className="text-muted">No signed-in views recorded yet.</span>;
+    }
+
+    return (
+        <details>
+            <summary className="cursor-pointer font-medium text-teal-deep">
+                {reads.length} recent read{reads.length === 1 ? '' : 's'}
+            </summary>
+            <ul className="mt-2 flex flex-col gap-1">
+                {reads.map((read) => (
+                    <li key={`${read.path}-${read.viewed_at}`} className="flex flex-wrap justify-between gap-2">
+                        <span className="break-all">{read.path}</span>
+                        <span className="text-muted">{formatWhen(read.viewed_at)}</span>
+                    </li>
+                ))}
+            </ul>
+        </details>
+    );
+}
+
+export default function Index({ members, filters }: { members: PageMeta & { data: MemberRow[]; total: number }; filters: Filters }) {
     const [q, setQ] = useState(filters.q);
     const [status, setStatus] = useState(filters.status || 'all');
 
     function applyFilters(event: FormEvent) {
         event.preventDefault();
-        router.get(
-            '/admin/members',
-            { q: q || undefined, status: status === 'all' ? undefined : status },
-            { preserveState: true, replace: true },
-        );
+        router.get('/admin/members', { q: q || undefined, status: status === 'all' ? undefined : status }, { preserveState: true, replace: true });
     }
 
     return (
-        <WorkspaceLayout area="Admin" active="members" title="Members">
+        <WorkspaceLayout area="Admin" active="members" title="Members" subtitle="Public members, their plan and recent signed-in reading">
             <Head title="Members" />
-            <div className="mx-auto max-w-4xl flex flex-col gap-6">
-                <p className="text-sm text-muted">
-                    Search public members by name or email. Filter by free or paying status and review recent signed-in
-                    reading activity. To edit an account, change its security or delete it, use{' '}
-                    <Link href="/admin/users" className="text-body underline">Users</Link>.
-                </p>
+            <p className="text-sm text-muted">
+                Search public members by name or email. Filter by free or paying status and review recent signed-in reading activity. To edit an account,
+                change its security or delete it, use{' '}
+                <Link href="/admin/users" className="text-body underline">
+                    Users
+                </Link>
+                .
+            </p>
 
-                <form className="glass-form-panel flex flex-col gap-3 sm:flex-row sm:items-end" onSubmit={applyFilters}>
-                    <label className="flex-1 text-sm font-bold text-body">
-                        Search
-                        <input
-                            className="form-input mt-1"
-                            value={q}
-                            onChange={(e) => setQ(e.target.value)}
-                            placeholder="Name or email"
-                        />
-                    </label>
-                    <label className="text-sm font-bold text-body sm:w-40">
-                        Status
-                        <select className="form-input mt-1" value={status} onChange={(e) => setStatus(e.target.value)}>
-                            <option value="all">All</option>
-                            <option value="free">Free</option>
-                            <option value="paying">Paying</option>
-                        </select>
-                    </label>
-                    <button type="submit" className="button-primary w-fit">
-                        Apply
-                    </button>
-                </form>
+            <form role="search" aria-label="Filter members" className="sg-card grid gap-3 p-4 sm:grid-cols-[1fr_12rem_auto] sm:items-end" onSubmit={applyFilters}>
+                <label className="text-sm font-semibold text-body">
+                    Search
+                    <input className="form-input mt-1.5" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name or email" />
+                </label>
+                <label className="text-sm font-semibold text-body">
+                    Status
+                    <select className="form-input mt-1.5" value={status} onChange={(e) => setStatus(e.target.value)}>
+                        <option value="all">All</option>
+                        <option value="free">Free</option>
+                        <option value="paying">Paying</option>
+                    </select>
+                </label>
+                <button type="submit" className="sg-btn sg-btn-primary">
+                    Apply
+                </button>
+            </form>
 
-                <p className="text-sm text-muted">{members.total} member{members.total === 1 ? '' : 's'}</p>
+            <p className="text-sm text-muted">
+                {members.total} member{members.total === 1 ? '' : 's'}
+            </p>
 
-                <ul className="flex flex-col gap-4">
-                    {members.data.map((member) => (
-                        <li key={member.id} className="glass-form-panel">
-                            <div className="flex flex-wrap items-baseline justify-between gap-2">
-                                <div>
-                                    <h2 className="text-lg font-bold text-body">{member.name}</h2>
-                                    <p className="text-sm text-muted">{member.email}</p>
-                                </div>
-                                <p className="text-sm font-bold text-body">{member.membership_label}</p>
-                            </div>
-                            <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
-                                <div>
-                                    <dt className="text-muted">Signed up</dt>
-                                    <dd className="text-body">{formatWhen(member.signed_up_at)}</dd>
-                                </div>
-                                <div>
-                                    <dt className="text-muted">Plan</dt>
-                                    <dd className="text-body">
-                                        {member.plan_name
-                                            ? `${member.plan_name}${member.plan_interval ? ` (${member.plan_interval})` : ''}`
-                                            : '—'}
-                                    </dd>
-                                </div>
-                            </dl>
-                            <div className="mt-4">
-                                <h3 className="text-sm font-bold text-body">Recent reads</h3>
-                                {member.recent_reads.length === 0 ? (
-                                    <p className="mt-1 text-sm text-muted">No signed-in views recorded yet.</p>
-                                ) : (
-                                    <ul className="mt-2 flex flex-col gap-1 text-sm text-body">
-                                        {member.recent_reads.map((read) => (
-                                            <li key={`${read.path}-${read.viewed_at}`} className="flex flex-wrap justify-between gap-2">
-                                                <span>{read.path}</span>
-                                                <span className="text-muted">{formatWhen(read.viewed_at)}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
-                            </div>
-                        </li>
-                    ))}
-                </ul>
+            {members.data.length === 0 ? (
+                <EmptyState icon={IdCard} title="No members found" description="Try a different name, email or status." />
+            ) : (
+                <DataTable
+                    label="Members"
+                    rows={members.data}
+                    rowKey={(member) => member.id}
+                    columns={[
+                        {
+                            key: 'member',
+                            header: 'Member',
+                            primary: true,
+                            cell: (member) => (
+                                <>
+                                    <p className="font-semibold text-body">{member.name}</p>
+                                    <p className="text-xs text-muted">{member.email}</p>
+                                </>
+                            ),
+                        },
+                        {
+                            key: 'membership',
+                            header: 'Membership',
+                            cell: (member) => <Badge tone={member.is_paying ? 'ok' : 'neutral'}>{member.membership_label}</Badge>,
+                        },
+                        {
+                            key: 'plan',
+                            header: 'Plan',
+                            cell: (member) => (member.plan_name ? `${member.plan_name}${member.plan_interval ? ` (${member.plan_interval})` : ''}` : '—'),
+                        },
+                        { key: 'signed-up', header: 'Signed up', cell: (member) => <span className="text-muted">{formatWhen(member.signed_up_at)}</span> },
+                        { key: 'reads', header: 'Recent reads', cell: (member) => <RecentReads reads={member.recent_reads} /> },
+                    ]}
+                />
+            )}
 
-                {(members.prev_page_url || members.next_page_url) && (
-                    <div className="flex gap-3">
-                        {members.prev_page_url && (
-                            <button type="button" className="button-secondary" onClick={() => router.get(members.prev_page_url!)}>
-                                Previous
-                            </button>
-                        )}
-                        {members.next_page_url && (
-                            <button type="button" className="button-secondary" onClick={() => router.get(members.next_page_url!)}>
-                                Next
-                            </button>
-                        )}
-                    </div>
-                )}
-            </div>
+            <Pagination page={members} label="Members" />
         </WorkspaceLayout>
     );
 }
