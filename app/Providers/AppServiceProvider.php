@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\Auth\PendingTwoFactorLogin;
 use App\Services\Auth\RecentAuthentication;
 use App\Services\Integrations\IntegrationSecrets;
+use App\Services\Mail\MailgunDomainService;
 use App\Services\Membership\FakeStripeBillingClient;
 use App\Services\Membership\StripeApiBillingClient;
 use App\Services\Membership\StripeBillingClient;
@@ -39,6 +40,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(FakeStripeBillingClient::class);
         $this->app->singleton(SettingsRepository::class);
         $this->app->singleton(IntegrationSecrets::class);
+        $this->app->scoped(MailgunDomainService::class);
 
         $this->app->bind(StripeBillingClient::class, function ($app) {
             $secrets = $app->make(IntegrationSecrets::class);

@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Http\Controllers\AnalyticsConsentController;
 use App\Models\Release;
 use App\Services\Channels\PublicChannels;
+use App\Services\Mailing\SendingDomainAlerts;
 use App\Services\Settings\SettingsRepository;
 use App\Support\AnalyticsConfig;
 use App\Support\Settings\SettingDefinitions;
@@ -66,7 +67,23 @@ class HandleInertiaRequests extends Middleware
             $shared['editorDriver'] = fn () => app(SettingsRepository::class)->get(SettingDefinitions::EDITOR_DRIVER);
         }
 
+        if ($request->user()?->can('access-admin-area')) {
+            $shared['sendingDomainAlerts'] = fn () => $this->sendingDomainAlertsPayload();
+        }
+
         return $shared;
+    }
+
+    /**
+     * @return list<array{domain: string, message: string|null, newsletters: list<string>}>
+     */
+    private function sendingDomainAlertsPayload(): array
+    {
+        try {
+            return app(SendingDomainAlerts::class)->failing();
+        } catch (Throwable) {
+            return [];
+        }
     }
 
     /**

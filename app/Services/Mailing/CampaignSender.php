@@ -42,7 +42,9 @@ class CampaignSender
     }
 
     /**
-     * Verified only while the stored check matches the current sender email.
+     * Verified only while the stored check matches the current sender email
+     * and the From and reply-to domains are still approved (re-read on every
+     * call, so disabling a domain blocks queued sends too).
      */
     public function isVerified(?Newsletter $newsletter): bool
     {
@@ -53,7 +55,21 @@ class CampaignSender
         $verification = $newsletter->sender_verification ?? [];
 
         return ($verification['status'] ?? null) === self::VERIFIED
-            && Str::lower((string) ($verification['sender_email'] ?? '')) === Str::lower($newsletter->sender_email);
+            && Str::lower((string) ($verification['sender_email'] ?? '')) === Str::lower($newsletter->sender_email)
+            && $this->domainProblems($newsletter) === [];
+    }
+
+    /**
+     * Sending-domain reasons this newsletter cannot send right now.
+     *
+     * @return list<string>
+     */
+    public function domainProblems(Newsletter $newsletter): array
+    {
+        return array_values(array_filter([
+            SenderDomains::senderProblem($newsletter->sender_email),
+            SenderDomains::replyToProblem($newsletter->reply_to),
+        ]));
     }
 
     public function blockedMessage(?Newsletter $newsletter): string
@@ -64,6 +80,11 @@ class CampaignSender
 
         if (blank($newsletter->sender_email)) {
             return 'Set a sender email on the '.$newsletter->name.' newsletter before emailing it.';
+        }
+
+        $problems = $this->domainProblems($newsletter);
+        if ($problems !== []) {
+            return 'The '.$newsletter->name.' newsletter cannot send: '.implode(' ', $problems).' An admin can review it under Settings → Email sending domains.';
         }
 
         return 'The '.$newsletter->name.' sender ('.$newsletter->sender_email.') is not verified in Mailgun yet. Re-check it on the newsletter page before emailing.';

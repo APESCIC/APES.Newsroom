@@ -8,6 +8,7 @@ use App\Models\ApiToken;
 use App\Models\AuditLog;
 use App\Models\Comment;
 use App\Models\ContentApiKey;
+use App\Models\EmailSendingDomain;
 use App\Models\ImportRun;
 use App\Models\MediaAsset;
 use App\Models\MembershipPlan;
@@ -85,6 +86,12 @@ class AuthzMatrixTest extends TestCase
         'admin.settings.integrations.test' => Role::Admin,
         'admin.settings.integrations.update' => Role::SuperAdmin,
         'admin.settings.integrations.destroy' => Role::SuperAdmin,
+        'admin.settings.email-domains.index' => Role::Admin,
+        'admin.settings.email-domains.recheck' => Role::Admin,
+        'admin.settings.email-domains.store' => Role::Admin,
+        'admin.settings.email-domains.disable' => Role::Admin,
+        'admin.settings.email-domains.enable' => Role::Admin,
+        'admin.settings.email-domains.destroy' => Role::Admin,
         'admin.webhooks.index' => Role::Admin,
         'admin.webhooks.store' => Role::Admin,
         'admin.webhooks.update' => Role::Admin,
@@ -389,6 +396,7 @@ class AuthzMatrixTest extends TestCase
                     'reason' => 'Report',
                 ]),
                 'plan' => MembershipPlan::query()->firstOrFail(),
+                'emailSendingDomain' => EmailSendingDomain::query()->create(['domain' => 'matrix-'.Str::lower(Str::random(8)).'.example.org']),
                 'asset' => MediaAsset::query()->create([
                     'uuid' => (string) Str::uuid(),
                     'disk' => 'public',

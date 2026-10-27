@@ -12,6 +12,7 @@ use App\Models\Newsletter;
 use App\Models\NewsletterSegment;
 use App\Models\Post;
 use App\Models\User;
+use App\Services\Audit\AuditLogger;
 use App\Services\EditorJs\BlockRenderer;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -24,6 +25,7 @@ class CampaignService
     public function __construct(
         private readonly ConsentService $consent,
         private readonly CampaignSender $sender,
+        private readonly AuditLogger $audit,
     ) {}
 
     /**
@@ -110,6 +112,10 @@ class CampaignService
                 'completed_at' => $senderVerified ? null : now(),
             ]);
 
+            if ($campaign->wasRecentlyCreated && ! $senderVerified) {
+                $this->recordBlockedSend($senderNewsletter, $lockedPost, $actor, 'live');
+            }
+
             if (! $campaign->wasRecentlyCreated || ! $senderVerified) {
                 return $campaign->load('recipients');
             }
@@ -141,6 +147,8 @@ class CampaignService
             : $this->sender->newsletterForLists($lists);
 
         if (! $this->sender->isVerified($senderNewsletter)) {
+            $this->recordBlockedSend($senderNewsletter, $post, $actor, 'test');
+
             throw ValidationException::withMessages([
                 'email' => $this->sender->blockedMessage($senderNewsletter),
             ]);
@@ -214,6 +222,18 @@ class CampaignService
             ...$this->buildSnapshot($post, $senderNewsletter),
             'sender_verified' => $this->sender->isVerified($senderNewsletter),
         ];
+    }
+
+    private function recordBlockedSend(?Newsletter $newsletter, Post $post, User $actor, string $kind): void
+    {
+        $this->audit->record($actor, 'newsletter.send_blocked', $newsletter, [
+            'kind' => $kind,
+            'post_id' => $post->id,
+            'newsletter' => $newsletter?->slug,
+            'sender_email' => $newsletter?->sender_email,
+            'reasons' => $newsletter ? $this->sender->domainProblems($newsletter) : [],
+            'message' => $this->sender->blockedMessage($newsletter),
+        ]);
     }
 
     private function createRecipient(Campaign $campaign, string $email): CampaignRecipient

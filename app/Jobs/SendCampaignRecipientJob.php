@@ -15,6 +15,7 @@ use App\Services\Mailing\ConsentService;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 use Throwable;
@@ -50,6 +51,11 @@ class SendCampaignRecipientJob implements ShouldBeUnique, ShouldQueue
         $recipient->increment('attempts');
 
         if ($campaign->newsletter_id !== null && ! $sender->isVerified($campaign->newsletter)) {
+            Log::warning('Campaign send blocked: sender not verified or sending domain not approved.', [
+                'campaign_id' => $campaign->id,
+                'newsletter_id' => $campaign->newsletter_id,
+                'reasons' => $campaign->newsletter ? $sender->domainProblems($campaign->newsletter) : [],
+            ]);
             $recipient->update([
                 'status' => CampaignRecipientStatus::Skipped,
                 'last_error' => CampaignService::FAILURE_SENDER_UNVERIFIED,

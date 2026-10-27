@@ -2,13 +2,11 @@
 
 namespace App\Services\Mail;
 
+use App\Models\EmailSendingDomain;
 use App\Models\Newsletter;
-use App\Services\Integrations\IntegrationSecrets;
+use App\Models\User;
 use App\Services\Mailing\CampaignSender;
 use App\Services\Mailing\SenderDomains;
-use App\Support\Integrations\IntegrationDefinitions;
-use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 /**
@@ -21,21 +19,20 @@ class MailgunSenderCheck
 
     public const UNKNOWN = 'unknown';
 
-    /** @var array<string, array<string, mixed>> */
-    private array $domainCache = [];
-
     public function __construct(
-        private readonly DnsTxtResolver $dns,
-        private readonly IntegrationSecrets $secrets,
+        private readonly MailgunDomainService $mailgun,
+        private readonly SendingDomainChecker $domains,
     ) {}
 
     public function isConfigured(): bool
     {
-        return $this->secrets->configured(IntegrationDefinitions::MAILGUN, 'api_key');
+        return $this->mailgun->isConfigured();
     }
 
     /**
-     * Run the check and store the result on the newsletter.
+     * Run the check and store the result on the newsletter. When Mailgun was
+     * reached, the approved sending domain is re-checked too so its status
+     * matches what the sender check just saw.
      *
      * @return array<string, mixed>
      */
@@ -43,6 +40,14 @@ class MailgunSenderCheck
     {
         $result = $this->check($newsletter);
         $newsletter->forceFill(['sender_verification' => $result])->save();
+
+        if (isset($result['checks']) && $result['status'] !== self::UNKNOWN) {
+            $domain = EmailSendingDomain::query()->enabled()->where('domain', $result['domain'])->first();
+            if ($domain) {
+                $actor = auth()->user();
+                $this->domains->check($domain, $actor instanceof User ? $actor : null);
+            }
+        }
 
         return $result;
     }
@@ -71,19 +76,18 @@ class MailgunSenderCheck
             return [...$base, 'status' => self::UNKNOWN, 'domain' => $senderDomain, 'message' => 'The Mailgun API is not configured, so the sender cannot be checked.'];
         }
 
-        $mailgunDomain = Str::lower($this->secrets->get(IntegrationDefinitions::MAILGUN, 'domain') ?? $senderDomain);
+        $mailgunDomain = $this->mailgun->configuredDomain() ?? $senderDomain;
         if ($mailgunDomain !== $senderDomain && ! Str::endsWith($mailgunDomain, '.'.$senderDomain)) {
             return [...$base, 'status' => self::UNVERIFIED, 'domain' => $senderDomain, 'mailgun_domain' => $mailgunDomain, 'message' => 'The sender domain does not match the Mailgun sending domain.'];
         }
 
-        $mailgun = $this->mailgunDomain($mailgunDomain);
-        $dmarc = $this->hasDmarc($senderDomain);
+        $mailgun = $this->mailgun->lookup($mailgunDomain);
 
         $checks = [
             'mailgun_state' => $mailgun['state'] ?? null,
             'spf' => $mailgun['spf'] ?? false,
             'dkim' => $mailgun['dkim'] ?? false,
-            'dmarc' => $dmarc,
+            'dmarc' => $this->mailgun->dmarcRecord($senderDomain) !== null,
         ];
 
         if (isset($mailgun['error'])) {
@@ -106,56 +110,5 @@ class MailgunSenderCheck
             'checks' => $checks,
             'message' => $verified ? 'Sender domain is verified in Mailgun.' : 'Failing: '.implode(', ', $failing).'.',
         ];
-    }
-
-    /**
-     * @return array{state?: string|null, spf?: bool, dkim?: bool, error?: string}
-     */
-    private function mailgunDomain(string $domain): array
-    {
-        if (isset($this->domainCache[$domain])) {
-            return $this->domainCache[$domain];
-        }
-
-        $endpoint = trim($this->secrets->get(IntegrationDefinitions::MAILGUN, 'endpoint') ?? 'api.eu.mailgun.net', '/');
-
-        try {
-            $response = Http::withBasicAuth('api', (string) $this->secrets->get(IntegrationDefinitions::MAILGUN, 'api_key'))
-                ->acceptJson()
-                ->timeout(10)
-                ->get('https://'.$endpoint.'/v4/domains/'.rawurlencode($domain));
-        } catch (ConnectionException) {
-            return $this->domainCache[$domain] = ['error' => 'Could not reach the Mailgun API.'];
-        }
-
-        if ($response->status() === 404) {
-            return $this->domainCache[$domain] = ['state' => 'missing', 'spf' => false, 'dkim' => false];
-        }
-
-        if (! $response->successful()) {
-            return $this->domainCache[$domain] = ['error' => 'Mailgun API returned HTTP '.$response->status().'.'];
-        }
-
-        $records = collect($response->json('sending_dns_records', []));
-        $txtValid = fn (callable $match) => $records->contains(fn ($record) => Str::upper((string) ($record['record_type'] ?? '')) === 'TXT'
-            && ($record['valid'] ?? null) === 'valid'
-            && $match($record));
-
-        return $this->domainCache[$domain] = [
-            'state' => $response->json('domain.state'),
-            'spf' => $txtValid(fn ($record) => Str::startsWith(Str::lower((string) ($record['value'] ?? '')), 'v=spf1')),
-            'dkim' => $txtValid(fn ($record) => Str::contains(Str::lower((string) ($record['name'] ?? '')), '._domainkey.')),
-        ];
-    }
-
-    private function hasDmarc(string $domain): bool
-    {
-        foreach ($this->dns->txt('_dmarc.'.$domain) as $record) {
-            if (Str::startsWith(Str::lower(trim($record, ' "')), 'v=dmarc1')) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

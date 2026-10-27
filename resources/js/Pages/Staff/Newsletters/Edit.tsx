@@ -20,6 +20,10 @@ type NewsletterData = {
         message: string | null;
         checked_at: string | null;
     };
+    send_blocks: {
+        reasons: string[];
+        last_blocked_at: string | null;
+    };
     channel: string | null;
     show_on_home: boolean;
     show_in_nav: boolean;
@@ -30,24 +34,116 @@ type NewsletterData = {
 
 type ChannelOption = { value: string; label: string; slug: string; taken_by: string | null };
 
+type DomainOption = { domain: string; status: string; can_send: boolean };
+
+function splitAddress(address: string | null | undefined): { local: string; domain: string } {
+    if (!address || !address.includes('@')) return { local: address ?? '', domain: '' };
+    const at = address.lastIndexOf('@');
+    return { local: address.slice(0, at), domain: address.slice(at + 1).toLowerCase() };
+}
+
+function joinAddress(local: string, domain: string): string {
+    const trimmed = local.trim();
+    return trimmed === '' || domain === '' ? '' : `${trimmed}@${domain}`;
+}
+
+function AddressPicker({
+    id,
+    label,
+    local,
+    domain,
+    domains,
+    unavailableNote,
+    help,
+    error,
+    onLocalChange,
+    onDomainChange,
+}: {
+    id: string;
+    label: string;
+    local: string;
+    domain: string;
+    domains: string[];
+    unavailableNote: string;
+    help: string;
+    error?: string;
+    onLocalChange: (value: string) => void;
+    onDomainChange: (value: string) => void;
+}) {
+    const options = domain !== '' && !domains.includes(domain) ? [domain, ...domains] : domains;
+    const helpId = `${id}-help`;
+    const errorId = `${id}-error`;
+    const describedBy = error ? `${helpId} ${errorId}` : helpId;
+
+    return (
+        <fieldset aria-describedby={describedBy} aria-invalid={error ? true : undefined}>
+            <legend className="text-sm font-semibold">{label}</legend>
+            <div className="mt-1 flex flex-wrap items-center gap-1">
+                <label className="sr-only" htmlFor={`${id}_local`}>
+                    {label}: name before the @
+                </label>
+                <input
+                    id={`${id}_local`}
+                    className="min-w-0 flex-1 rounded border px-3 py-2"
+                    value={local}
+                    autoComplete="off"
+                    spellCheck={false}
+                    onChange={(e) => onLocalChange(e.target.value)}
+                />
+                <span aria-hidden="true">@</span>
+                <label className="sr-only" htmlFor={`${id}_domain`}>
+                    {label}: domain
+                </label>
+                <select id={`${id}_domain`} className="rounded border px-3 py-2" value={domain} onChange={(e) => onDomainChange(e.target.value)}>
+                    <option value="">Choose a domain</option>
+                    {options.map((option) => (
+                        <option key={option} value={option}>
+                            {option}
+                            {domains.includes(option) ? '' : ` (${unavailableNote})`}
+                        </option>
+                    ))}
+                </select>
+            </div>
+            <p id={helpId} className="mt-1 text-xs text-neutral-600">
+                {help}
+            </p>
+            {error && (
+                <p id={errorId} className="text-sm text-red-700">
+                    {error}
+                </p>
+            )}
+        </fieldset>
+    );
+}
+
 export default function NewsletterEdit({
     newsletter,
     segments = [],
     otherNewsletters = [],
     channelOptions = [],
+    domainOptions = [],
+    reservedLocalParts = [],
 }: {
     newsletter: NewsletterData | null;
     segments?: Array<{ id: number; name: string; also: string }>;
     otherNewsletters?: Array<{ id: number; name: string }>;
     channelOptions?: ChannelOption[];
+    domainOptions?: DomainOption[];
+    reservedLocalParts?: string[];
 }) {
+    const sender = splitAddress(newsletter?.sender_email);
+    const replyTo = splitAddress(newsletter?.reply_to);
+    const sendDomains = domainOptions.filter((option) => option.can_send).map((option) => option.domain);
+    const replyDomains = domainOptions.map((option) => option.domain);
     const form = useForm({
         name: newsletter?.name ?? '',
         slug: newsletter?.slug ?? '',
         description: newsletter?.description ?? '',
         sender_name: newsletter?.sender_name ?? '',
-        sender_email: newsletter?.sender_email ?? '',
-        reply_to: newsletter?.reply_to ?? '',
+        sender_local: sender.local,
+        sender_domain: sender.domain,
+        reply_local: replyTo.local,
+        reply_domain: replyTo.domain,
         subscribe_on_signup: newsletter?.subscribe_on_signup ?? false,
         channel: newsletter?.channel ?? '',
         show_on_home: newsletter?.show_on_home ?? false,
@@ -56,11 +152,17 @@ export default function NewsletterEdit({
         public_label: newsletter?.public_label ?? '',
         public_description: newsletter?.public_description ?? '',
     });
+    const addressErrors = form.errors as Partial<Record<'sender_email' | 'reply_to', string>>;
     const slugLocked = Boolean(newsletter?.channel);
     const linkedChannel = channelOptions.find((option) => option.value === form.data.channel);
 
     const submit: FormEventHandler = (event) => {
         event.preventDefault();
+        form.transform(({ sender_local, sender_domain, reply_local, reply_domain, ...data }) => ({
+            ...data,
+            sender_email: joinAddress(sender_local, sender_domain),
+            reply_to: joinAddress(reply_local, reply_domain),
+        }));
         if (newsletter) {
             form.patch(`/staff/newsletters/${newsletter.id}`);
         } else {
@@ -111,16 +213,45 @@ export default function NewsletterEdit({
                         <input id="sender_name" className="mt-1 w-full rounded border px-3 py-2" value={form.data.sender_name} onChange={(e) => form.setData('sender_name', e.target.value)} />
                     </label>
                     {form.errors.sender_name && <p className="text-sm text-red-700">{form.errors.sender_name}</p>}
-                    <label className="block text-sm font-semibold" htmlFor="sender_email">
-                        Sender email
-                        <input id="sender_email" type="email" className="mt-1 w-full rounded border px-3 py-2" value={form.data.sender_email} onChange={(e) => form.setData('sender_email', e.target.value)} />
-                    </label>
-                    {form.errors.sender_email && <p className="text-sm text-red-700">{form.errors.sender_email}</p>}
-                    <label className="block text-sm font-semibold" htmlFor="reply_to">
-                        Reply-to email
-                        <input id="reply_to" type="email" className="mt-1 w-full rounded border px-3 py-2" value={form.data.reply_to} onChange={(e) => form.setData('reply_to', e.target.value)} />
-                    </label>
-                    {form.errors.reply_to && <p className="text-sm text-red-700">{form.errors.reply_to}</p>}
+                    <AddressPicker
+                        id="sender_email"
+                        label="Sender email"
+                        local={form.data.sender_local}
+                        domain={form.data.sender_domain}
+                        domains={sendDomains}
+                        unavailableNote="not verified for sending"
+                        help={`Only approved domains that Mailgun has verified are listed. ${reservedLocalParts.length > 0 ? `Reserved names (${reservedLocalParts.join(', ')}) cannot be used.` : ''}`}
+                        error={addressErrors.sender_email}
+                        onLocalChange={(value) => form.setData('sender_local', value)}
+                        onDomainChange={(value) => form.setData('sender_domain', value)}
+                    />
+                    <AddressPicker
+                        id="reply_to"
+                        label="Reply-to email"
+                        local={form.data.reply_local}
+                        domain={form.data.reply_domain}
+                        domains={replyDomains}
+                        unavailableNote="not approved"
+                        help="Any enabled approved domain can be used for replies."
+                        error={addressErrors.reply_to}
+                        onLocalChange={(value) => form.setData('reply_local', value)}
+                        onDomainChange={(value) => form.setData('reply_domain', value)}
+                    />
+                    {newsletter && newsletter.send_blocks.reasons.length > 0 && (
+                        <div role="alert" className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-900">
+                            <p className="font-semibold">Sending is blocked for this newsletter</p>
+                            <ul className="mt-1 list-disc pl-5">
+                                {newsletter.send_blocks.reasons.map((reason) => (
+                                    <li key={reason}>{reason}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                    {newsletter?.send_blocks.last_blocked_at && (
+                        <p className="text-sm text-neutral-600">
+                            Last blocked send: {new Date(newsletter.send_blocks.last_blocked_at).toLocaleString('en-GB')}
+                        </p>
+                    )}
                     {newsletter && (
                         <div className="rounded border border-neutral-200 p-3 text-sm" aria-live="polite">
                             <p className="flex flex-wrap items-center gap-2">

@@ -202,6 +202,10 @@ export default function SettingsIndex({ settings }: { settings: SettingDefinitio
                 <Link href="/admin/settings/integrations" className="font-semibold underline">
                     Integrations and keys
                 </Link>
+                . The domains newsletters may send from are managed under{' '}
+                <Link href="/admin/settings/email-domains" className="font-semibold underline">
+                    Email sending domains
+                </Link>
                 .
             </p>
             <form onSubmit={submit} className="mx-auto flex max-w-3xl flex-col gap-6 rounded-card border border-border bg-white p-6">

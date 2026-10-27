@@ -13,6 +13,7 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Admin\ApiTokenController as AdminApiTokenController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\ContentApiKeyController as AdminContentApiKeyController;
+use App\Http\Controllers\Admin\EmailSendingDomainController as AdminEmailSendingDomainController;
 use App\Http\Controllers\Admin\GhostContentImportController;
 use App\Http\Controllers\Admin\GhostMembersImportController;
 use App\Http\Controllers\Admin\IntegrationController as AdminIntegrationController;
@@ -191,6 +192,19 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Admin->value])
         Route::get('/imports/ghost-members/{run}/report', [GhostMembersImportController::class, 'report'])->name('imports.ghost-members.report');
         Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
         Route::put('/settings', [SettingsController::class, 'update'])->middleware('auth.recent')->name('settings.update');
+        Route::prefix('/settings/email-domains')->name('settings.email-domains.')->group(function () {
+            Route::get('/', [AdminEmailSendingDomainController::class, 'index'])->name('index');
+            Route::post('/{emailSendingDomain}/recheck', [AdminEmailSendingDomainController::class, 'recheck'])
+                ->whereNumber('emailSendingDomain')
+                ->middleware('throttle:10,1')
+                ->name('recheck');
+            Route::middleware('auth.recent')->group(function () {
+                Route::post('/', [AdminEmailSendingDomainController::class, 'store'])->middleware('throttle:10,1')->name('store');
+                Route::post('/{emailSendingDomain}/disable', [AdminEmailSendingDomainController::class, 'disable'])->whereNumber('emailSendingDomain')->name('disable');
+                Route::post('/{emailSendingDomain}/enable', [AdminEmailSendingDomainController::class, 'enable'])->whereNumber('emailSendingDomain')->name('enable');
+                Route::delete('/{emailSendingDomain}', [AdminEmailSendingDomainController::class, 'destroy'])->whereNumber('emailSendingDomain')->name('destroy');
+            });
+        });
         Route::prefix('/settings/integrations')->name('settings.integrations.')->group(function () {
             $providers = IntegrationDefinitions::providerNames();
 
