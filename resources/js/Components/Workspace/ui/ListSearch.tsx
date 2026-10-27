@@ -37,7 +37,7 @@ export default function ListSearch({
                 <input type="search" value={q} onChange={(event) => setQ(event.target.value)} className="form-input mt-1.5" placeholder={placeholder} />
             </label>
             <button type="submit" className="sg-btn sg-btn-primary">
-                Search
+                Apply
             </button>
         </form>
     );
