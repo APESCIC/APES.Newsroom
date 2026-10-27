@@ -29,9 +29,9 @@ sessions without Cloudron OIDC:
 |---------|------|-----------------|
 | Guest | logout | `/` |
 | Public | `public@apes.local` | `/` |
-| Staff | `staff@apes.local` | `/staff/posts` |
-| Admin | `admin@apes.local` | `/admin/moderation` |
-| Super admin | `superadmin@apes.local` | `/admin/moderation` |
+| Staff | `staff@apes.local` | `/staff` |
+| Admin | `admin@apes.local` | `/admin` |
+| Super admin | `superadmin@apes.local` | `/admin` |
 
 Demo password for all seeded users: `password`. Only the public demo user
 can sign in with it: staff-level accounts are refused password, magic-link

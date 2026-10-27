@@ -8,6 +8,7 @@ import {
     IdCard,
     KeyRound,
     KeySquare,
+    LayoutDashboard,
     LayoutTemplate,
     Mail,
     MailCheck,
@@ -31,6 +32,7 @@ import type { SharedAuth } from '../../types/page';
 export type WorkspaceArea = 'Admin' | 'Staff';
 
 export type WorkspaceActive =
+    | 'dashboard'
     | 'moderation'
     | 'posts'
     | 'review'
@@ -69,9 +71,13 @@ export type NavGroup = {
 
 const canReview = (can: SharedAuth['can']) => can.reviewPosts === true;
 
-/** Sidebar sections for each panel, in display order (#353, #516). */
+/** Sidebar sections for each panel, in display order (#353, #516). The first item is the panel home. */
 export const navigation: Record<WorkspaceArea, NavGroup[]> = {
     Staff: [
+        {
+            heading: 'Overview',
+            items: [{ key: 'dashboard', href: '/staff', label: 'Dashboard', icon: LayoutDashboard, keywords: 'home overview summary' }],
+        },
         {
             heading: 'Content',
             items: [
@@ -101,6 +107,10 @@ export const navigation: Record<WorkspaceArea, NavGroup[]> = {
         },
     ],
     Admin: [
+        {
+            heading: 'Overview',
+            items: [{ key: 'dashboard', href: '/admin', label: 'Dashboard', icon: LayoutDashboard, keywords: 'home overview summary' }],
+        },
         {
             heading: 'People',
             items: [
