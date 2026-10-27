@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { FormEvent, useState, type KeyboardEvent } from 'react';
 import { UserRound } from 'lucide-react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
@@ -154,8 +154,7 @@ export default function ModerationIndex({
     };
 
     return (
-        <WorkspaceLayout area="Admin" active="moderation" title="Moderation queue" subtitle="Review public profiles, comments and reports">
-            <Head title="Moderation" />
+        <WorkspaceLayout area="Admin" active="moderation" title="Moderation" subtitle="Review public profiles, comments and reports">
             <>
                 <form onSubmit={submitSearch} className="sg-card flex flex-col gap-3 p-4 sm:flex-row sm:items-end" role="search" aria-label="Filter moderation queues">
                     <label className="flex-1 text-sm font-semibold text-body">

@@ -1,4 +1,3 @@
-import { Head } from '@inertiajs/react';
 import { Eye, MailOpen, MousePointerClick, PoundSterling, Send, UserCheck, Users, Wallet } from 'lucide-react';
 import type { ReactNode } from 'react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
@@ -29,7 +28,6 @@ export default function Index({ metrics }: { metrics: Metrics }) {
             title="Metrics"
             subtitle="First-party web views (no analytics cookie), newsletter open/click tokens, and membership counts. Data stays on this app."
         >
-            <Head title="Metrics" />
             <Section title="Web">
                 <StatTile label="Views (7 days)" value={metrics.web.views_7d} icon={Eye} />
                 <StatTile label="Views (30 days)" value={metrics.web.views_30d} icon={Eye} />

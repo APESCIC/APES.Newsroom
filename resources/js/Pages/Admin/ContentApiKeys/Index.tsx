@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import { KeySquare } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import ReasonConfirmDialog from '../../../Components/Admin/ReasonConfirmDialog';
@@ -37,7 +37,6 @@ export default function Index({
 
     return (
         <WorkspaceLayout area="Admin" active="content-api-keys" title="Content API keys" subtitle="Keys for headless reads of published content">
-            <Head title="Content API keys" />
             <>
                 {created && (
                     <section className="sg-card flex flex-col gap-2 border-l-4 !border-l-[var(--color-sg-accent)] p-4" aria-label="New key">

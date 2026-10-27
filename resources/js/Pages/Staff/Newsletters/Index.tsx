@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import { Mail, Plus } from 'lucide-react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
 import Badge from '../../../Components/Workspace/ui/Badge';
@@ -64,7 +64,6 @@ export default function NewslettersIndex({ newsletters, status }: { newsletters:
             subtitle="Every newsletter members can subscribe to, including the three channel lists"
             actions={newNewsletter}
         >
-            <Head title="Newsletters" />
             <Tabs
                 label="Filter newsletters by status"
                 className="self-start"

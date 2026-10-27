@@ -1,4 +1,4 @@
-import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { router, useForm, usePage } from '@inertiajs/react';
 import { Download, Upload } from 'lucide-react';
 import { FormEventHandler } from 'react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
@@ -42,7 +42,6 @@ export default function GhostContentImport({ runs }: { runs: Run[] }) {
             title="Ghost content import"
             subtitle="Upload a Ghost Admin content export. A dry run comes first; confirm separately to persist. Re-running the same export does not duplicate posts, tags, authors or redirects. No email is sent."
         >
-            <Head title="Ghost content import" />
             {errors?.confirm && (
                 <p role="alert" className="sg-card border-l-4 !border-l-[var(--color-sg-error)] px-4 py-3 text-sm text-danger">
                     {errors.confirm}

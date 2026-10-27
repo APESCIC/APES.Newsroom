@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 import type { FormEvent } from 'react';
 import ContactDetailsFields, { contactFormDefaults, type ContactDetailsValues } from '../../../Components/Account/ContactDetailsFields';
@@ -33,7 +33,6 @@ export default function Edit({ user }: { user: EditableUser }) {
                 </PillButton>
             }
         >
-            <Head title={`Edit ${user.name} · Users`} />
             <form className="flex flex-col gap-6" onSubmit={submit}>
                 <section className="glass-form-panel flex flex-col gap-4" aria-label="Account">
                     <h2 className="text-lg font-bold text-body">Account</h2>

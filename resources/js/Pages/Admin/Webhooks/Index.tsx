@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import { Trash2, Webhook } from 'lucide-react';
 import { FormEvent, useState } from 'react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
@@ -161,7 +161,6 @@ export default function Index({
             title="Webhooks"
             subtitle="Outbound signed webhooks (HMAC-SHA256). Delivery is queued with retries and never blocks publish or membership flows."
         >
-            <Head title="Webhooks" />
             {revealedSecret && (
                 <section className="sg-card flex flex-col gap-2 border-l-4 !border-l-[var(--color-sg-accent)] p-4" aria-label="Signing secret">
                     <p className="font-semibold text-body">

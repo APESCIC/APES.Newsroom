@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import { Tag } from 'lucide-react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
 import Badge from '../../../Components/Workspace/ui/Badge';
@@ -146,7 +146,6 @@ export default function Index({ offers }: { offers: OfferRow[] }) {
             title="Offers"
             subtitle="Time-bound or usage-limited promo codes applied at membership checkout. Stripe test-mode coupons are created when billing keys are configured."
         >
-            <Head title="Offers" />
             <CreateOfferForm />
             {offers.length === 0 ? (
                 <EmptyState icon={Tag} title="No offers yet" description="Create a code above to offer a membership discount." />

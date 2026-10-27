@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
 import Badge from '../../../Components/Workspace/ui/Badge';
 
@@ -75,7 +75,6 @@ export default function Index({ plans }: { plans: Plan[] }) {
             title="Membership plans"
             subtitle="Configure monthly and yearly supporter tiers. Use Stripe test-mode price ids only until live charges are authorized."
         >
-            <Head title="Membership plans" />
             {plans.map((plan) => (
                 <PlanRow key={plan.id} plan={plan} />
             ))}

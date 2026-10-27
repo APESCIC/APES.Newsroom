@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { Plus, Rocket } from 'lucide-react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
 import Badge from '../../../Components/Workspace/ui/Badge';
@@ -22,7 +22,7 @@ export default function ReleasesIndex({ releases }: { releases: ReleaseRow[] }) 
         <WorkspaceLayout
             area="Admin"
             active="releases"
-            title="Release notes"
+            title="Releases"
             subtitle="Author Change Log Hub entries for public visitors."
             actions={
                 <PillButton href="/admin/releases/new" icon={Plus}>
@@ -30,7 +30,6 @@ export default function ReleasesIndex({ releases }: { releases: ReleaseRow[] }) 
                 </PillButton>
             }
         >
-            <Head title="Release notes" />
             {releases.length === 0 ? (
                 <EmptyState icon={Rocket} title="No release notes yet" description="Create the first entry for the Change Log Hub." />
             ) : (

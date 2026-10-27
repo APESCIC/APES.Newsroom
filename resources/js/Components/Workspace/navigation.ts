@@ -84,7 +84,7 @@ export const navigation: Record<WorkspaceArea, NavGroup[]> = {
                 { key: 'posts', href: '/staff/posts', label: 'Posts', icon: FileText, keywords: 'articles stories drafts' },
                 { key: 'review', href: '/staff/posts/review', label: 'Review queue', icon: ClipboardCheck, keywords: 'approve submitted', visible: canReview },
                 { key: 'pages', href: '/staff/pages', label: 'Pages', icon: FileStack, keywords: 'static about' },
-                { key: 'media', href: '/staff/media', label: 'Media', icon: Image, keywords: 'images uploads library' },
+                { key: 'media', href: '/staff/media', label: 'Media library', icon: Image, keywords: 'images uploads library' },
             ],
         },
         {
@@ -97,7 +97,7 @@ export const navigation: Record<WorkspaceArea, NavGroup[]> = {
         {
             heading: 'Commerce',
             items: [
-                { key: 'membership-plans', href: '/staff/membership-plans', label: 'Plans', icon: Wallet, keywords: 'membership pricing stripe' },
+                { key: 'membership-plans', href: '/staff/membership-plans', label: 'Membership plans', icon: Wallet, keywords: 'membership pricing stripe' },
                 { key: 'offers', href: '/staff/offers', label: 'Offers', icon: Tag, keywords: 'discount coupon promotion' },
             ],
         },

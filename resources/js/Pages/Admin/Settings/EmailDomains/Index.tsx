@@ -1,4 +1,4 @@
-import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { router, useForm, usePage } from '@inertiajs/react';
 import { Ban, Settings, Trash2 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import WorkspaceLayout from '../../../../Components/Layout/WorkspaceLayout';
@@ -372,7 +372,7 @@ export default function EmailDomainsIndex({
         <WorkspaceLayout
             area="Admin"
             active="email-domains"
-            title="Email sending domains"
+            title="Sending domains"
             subtitle="Domains newsletters may send from or use for replies."
             actions={
                 <PillButton href="/admin/settings" variant="secondary" icon={Settings}>
@@ -380,7 +380,6 @@ export default function EmailDomainsIndex({
                 </PillButton>
             }
         >
-            <Head title="Email sending domains" />
             <>
                 {removeError && (
                     <p role="alert" className="sg-card border-l-4 !border-l-[var(--color-sg-error)] px-4 py-3 text-sm text-danger">

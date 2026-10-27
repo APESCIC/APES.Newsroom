@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { ClipboardCheck, FileText, Plus } from 'lucide-react';
 import { FormEvent, useState } from 'react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
@@ -86,7 +86,6 @@ export default function PostsIndex({
 
     return (
         <WorkspaceLayout area="Staff" active="posts" title="Posts" subtitle="Manage and publish editorial content" actions={actions}>
-            <Head title="Staff — Posts" />
             <form onSubmit={applyFilters} className="sg-card grid gap-3 p-4 sm:grid-cols-[1fr_14rem_auto] sm:items-end" role="search" aria-label="Search and filter posts">
                 <label className="text-sm font-semibold text-body">
                     Search title or author

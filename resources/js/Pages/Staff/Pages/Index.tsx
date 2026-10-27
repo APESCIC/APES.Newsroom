@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import { FileStack, Plus } from 'lucide-react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
 import { PostStatusBadge } from '../../../Components/Staff/PostBadges';
@@ -35,7 +35,6 @@ export default function PagesIndex({ pages, filterStatus }: { pages: PageRow[]; 
 
     return (
         <WorkspaceLayout area="Staff" active="pages" title="Pages" subtitle="Static pages distinct from news articles" actions={newPage}>
-            <Head title="Pages" />
             <Tabs label="Page status filters" items={tabs} className="self-start" />
             {pages.length === 0 ? (
                 <EmptyState icon={FileStack} title="No pages yet" description="Pages hold content such as About or Volunteer that stays out of news lists." action={newPage} />

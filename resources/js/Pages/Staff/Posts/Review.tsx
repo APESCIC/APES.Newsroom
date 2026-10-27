@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import { ClipboardCheck, FileText } from 'lucide-react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
 import { ChannelLabel } from '../../../Components/Staff/PostBadges';
@@ -30,7 +30,6 @@ export default function ReviewQueue({ posts }: { posts: Post[] }) {
                 </PillButton>
             }
         >
-            <Head title="Review queue" />
             {posts.length === 0 ? (
                 <EmptyState icon={ClipboardCheck} title="Nothing to review" description="No posts are awaiting review." />
             ) : (
