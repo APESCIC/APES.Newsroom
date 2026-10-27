@@ -24,5 +24,5 @@
     "Public impact: members with complimentary access can read paid content; no public page changes",
     "Internal impact: UserPolicy, MembershipPolicy, new MailingContactPolicy and ProfilePolicy, UserDetailsUpdater, StaffContactService, memberships comp and staff note columns, ConsentAction unsuppressed and contact_updated, people-actions rate limit"
   ],
-  "pr": 0
+  "pr": 594
 }
