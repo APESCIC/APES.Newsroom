@@ -89,7 +89,7 @@ describe('person page', () => {
 
         expect(screen.getByRole('button', { name: 'Grant complimentary access' })).toBeInTheDocument();
         expect(screen.getByLabelText('Internal member note')).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Send a confirmation email for Clinic news' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Send confirmation for Clinic news' })).toBeInTheDocument();
 
         await user.click(screen.getByRole('button', { name: 'Unsubscribe from Rescue diary' }));
         const dialog = screen.getByRole('alertdialog', { name: 'Unsubscribe from Rescue diary?' });

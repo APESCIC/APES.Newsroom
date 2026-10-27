@@ -88,7 +88,7 @@ export default function SubscriptionsCard({ mailing, canManage, canSuppress }: {
                                 {row.can_subscribe && row.newsletter_id !== null && !mailing.suppressed && (
                                     <ReasonActionButton
                                         label="Send confirmation"
-                                        ariaLabel={`Send a confirmation email for ${row.label}`}
+                                        ariaLabel={`Send confirmation for ${row.label}`}
                                         icon={MailPlus}
                                         title={`Ask them to subscribe to ${row.label}?`}
                                         description="We email a confirmation link. The subscription stays pending until they confirm it."

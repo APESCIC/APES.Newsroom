@@ -56,7 +56,7 @@ function ResetProfileFields({ userId, name }: { userId: number; name: string }) 
     return (
         <ReasonActionButton
             label="Reset fields"
-            ariaLabel={`Reset public profile fields for ${name}`}
+            ariaLabel={`Reset fields for ${name}`}
             icon={Eraser}
             title={`Reset ${name}'s public profile?`}
             description="Clears the display name, bio and avatar. The moderation status does not change."
