@@ -25,8 +25,7 @@ Milestone: vX.Y.Z
 
 ## After merge
 
-Merging does **not** auto-deploy. Finish the loop in
-[`docs/agent-workflow.md`](../docs/agent-workflow.md) and record it here or on the issue:
+Merging does **not** auto-deploy. Record the following here or on the issue:
 
 - [ ] Tag `vX.Y.Z` pushed on the merge commit; GitHub Release published
 - [ ] **Deploy to Cloudron (beta)** dispatched against `main` (run URL: …)
