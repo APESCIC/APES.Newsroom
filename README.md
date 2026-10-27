@@ -31,8 +31,7 @@ Last verified: **2026-09-24**.
 
 See [Epic #1](https://github.com/APESCIC/APES.Newsroom/issues/1) and the
 [delivery record](docs/epic-1-build-plan.md) for the original dependency map
-and completion evidence. Agents and contributors must follow
-[`AGENTS.md`](AGENTS.md) and keep issue records current.
+and completion evidence.
 
 ## Product capabilities
 

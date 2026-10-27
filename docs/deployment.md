@@ -94,14 +94,13 @@ These happen once, outside of CI, before the first deploy can work.
    The Environment name stays **`beta`**, but it targets the live LAMP app
    (`https://www.apesnews.org.uk/`, app id `74a2a784-a161-4787-84ff-2b8efc957bc8`). Keep secrets aligned with that origin.  <!-- pragma: allowlist secret -->
 
-## Cloud Agent / local Cloudron CLI
+## Local Cloudron CLI
 
-Cloud Agents (and local ops) can use the same Cloudron API without running
-the full GitHub deploy workflow. See also [`AGENTS.md`](../AGENTS.md) for
-branch naming, secret **names**, and deploy authorization rules.
+Local ops can use the same Cloudron API without running the full GitHub
+deploy workflow.
 
-1. Install the CLI (user-writable prefix; avoids root `npm -g`). Optional on
-   Cloud Agent boots — not required for everyday coding:
+1. Install the CLI (user-writable prefix; avoids root `npm -g`). Not required
+   for everyday coding:
 
    ```bash
    npm install --prefix "$HOME/.local" cloudron@^9
@@ -112,7 +111,7 @@ branch naming, secret **names**, and deploy authorization rules.
 2. Provide secrets `CLOUDRON_FQDN`, `CLOUDRON_TOKEN`, `CLOUDRON_APP_ID`
    (and `CLOUDRON_APP_ORIGIN_HOST=www.apesnews.org.uk`) — the same values as the  <!-- pragma: allowlist secret -->
    `beta` GitHub Environment (which targets the live LAMP app). Never commit
-   tokens. Do not put secrets in `.cursor/environment.json`.
+   tokens.
 
 3. Use the wrapper:
 
@@ -124,10 +123,6 @@ branch naming, secret **names**, and deploy authorization rules.
 `scripts/cloudron.sh` requires those env vars and forwards to `cloudron`
 with `--server` / `--token` / `--app`. Restarting the app re-runs
 `/app/data/run.sh` and starts the queue worker again.
-
-Repo-managed Cursor Cloud config lives in [`.cursor/environment.json`](../.cursor/environment.json)
-and [`.cursor/Dockerfile`](../.cursor/Dockerfile). After merging env changes,
-save/rebuild the Cursor environment in the dashboard.
 
 ## What a deploy actually does
 
