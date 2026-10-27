@@ -24,5 +24,5 @@
     "Public impact: none",
     "Internal impact: new Staff and Admin DashboardControllers, PanelNotFoundController panel fallback routes, PanelErrorPage and Errors/Panel for in-panel 403/404, WorkspaceLayout owns the document title, paginated Pages and Newsletters indexes, admin-only Stripe and MRR props, ModerationCounts service, MetricsDashboard split by section, Playwright panels spec"
   ],
-  "pr": 0
+  "pr": 593
 }
