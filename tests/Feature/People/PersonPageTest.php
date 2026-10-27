@@ -3,6 +3,7 @@
 namespace Tests\Feature\People;
 
 use App\Enums\SubscriptionStatus;
+use App\Models\ContentView;
 use App\Models\MailingContact;
 use App\Models\MailingListSubscription;
 use App\Models\Membership;
@@ -114,6 +115,22 @@ class PersonPageTest extends TestCase
                 ->component('Staff/People/Index')
                 ->where('people.total', 1)
                 ->where('people.data.0.id', $member->id));
+    }
+
+    public function test_people_list_never_sends_reading_history_to_staff(): void
+    {
+        $member = User::factory()->create();
+        ContentView::query()->create([
+            'user_id' => $member->id,
+            'path' => '/articles/private-reading',
+            'viewed_at' => now(),
+        ]);
+
+        $this->actingAs(User::factory()->staff()->create())
+            ->get(route('staff.people.index'))
+            ->assertOk()
+            ->assertDontSee('private-reading')
+            ->assertInertia(fn (Assert $page) => $page->missing('people.data.0.recent_reads'));
     }
 
     public function test_legacy_members_link_now_opens_people(): void

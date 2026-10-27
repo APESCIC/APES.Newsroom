@@ -23,10 +23,13 @@ class MemberCrmService
      *     is_comped: bool,
      *     plan_name: string|null,
      *     plan_interval: string|null,
-     *     recent_reads: list<array{path: string, viewed_at: string, post_id: int|null, page_id: int|null}>
+     *     recent_reads?: list<array{path: string, viewed_at: string, post_id: int|null, page_id: int|null}>
      * }>
+     *
+     * Reading history is admin-only CRM data; the staff People list passes
+     * $withRecentReads = false so it is never queried or sent.
      */
-    public function paginate(?string $search, ?string $statusFilter, int $perPage = 20): LengthAwarePaginator
+    public function paginate(?string $search, ?string $statusFilter, int $perPage = 20, bool $withRecentReads = true): LengthAwarePaginator
     {
         $query = User::query()
             ->where('role', Role::Public)
@@ -58,14 +61,13 @@ class MemberCrmService
         /** @var LengthAwarePaginator<int, User> $page */
         $page = $query->paginate($perPage)->withQueryString();
 
-        $userIds = $page->getCollection()->pluck('id')->all();
-        $recentByUser = $this->recentReadsForUsers($userIds);
+        $recentByUser = $withRecentReads ? $this->recentReadsForUsers($page->getCollection()->pluck('id')->all()) : null;
 
         return $page->through(function (User $user) use ($recentByUser): array {
             $membership = $user->membership;
             $status = $membership?->status ?? MembershipStatus::Free;
 
-            return [
+            $row = [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
@@ -76,8 +78,13 @@ class MemberCrmService
                 'is_comped' => $membership?->isComped() ?? false,
                 'plan_name' => $membership?->plan?->name,
                 'plan_interval' => $membership?->plan?->interval ?? $membership?->interval,
-                'recent_reads' => $recentByUser[$user->id] ?? [],
             ];
+
+            if ($recentByUser !== null) {
+                $row['recent_reads'] = $recentByUser[$user->id] ?? [];
+            }
+
+            return $row;
         });
     }
 

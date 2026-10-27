@@ -34,7 +34,7 @@ class PersonController extends Controller
 
         return Inertia::render('Staff/People/Index', [
             'filters' => ['q' => $search ?? '', 'status' => $status],
-            'people' => $crm->paginate($search, $status),
+            'people' => $crm->paginate($search, $status, withRecentReads: false),
         ]);
     }
 
