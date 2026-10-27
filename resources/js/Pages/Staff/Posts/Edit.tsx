@@ -1,4 +1,5 @@
-import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { Eye, FileText, Mail, Trash2 } from 'lucide-react';
 import { FormEventHandler, useCallback, useEffect, useRef, useState } from 'react';
 import type { OutputData } from '@editorjs/editorjs';
 import EditorField, { type EditorFieldHandle } from '../../../Components/editor/EditorField';
@@ -6,8 +7,12 @@ import EditorSessionNotice from '../../../Components/editor/EditorSessionNotice'
 import AiAssistPanel from '../../../Components/Staff/AiAssistPanel';
 import HeroImageField from '../../../Components/Staff/HeroImageField';
 import MediaLibraryPicker from '../../../Components/Staff/MediaLibraryPicker';
+import { PostStatusBadge } from '../../../Components/Staff/PostBadges';
 import type { HeroMediaAsset, HeroUploadLimits } from '../../../Components/Staff/heroImageUpload';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
+import ActionMenu from '../../../Components/Workspace/ui/ActionMenu';
+import ConfirmDialog from '../../../Components/Workspace/ui/ConfirmDialog';
+import PillButton from '../../../Components/Workspace/ui/PillButton';
 import type { EditorDriver } from '../../../types/editor';
 import type { SharedPageProps } from '../../../types/page';
 
@@ -251,6 +256,7 @@ export default function PostEdit({
     const [sessionEditor] = useState<EditorDriver>(siteEditor);
     const [scheduleAt, setScheduleAt] = useState(post?.scheduled_for ?? '');
     const [rejectNotes, setRejectNotes] = useState('');
+    const [confirmDelete, setConfirmDelete] = useState(false);
     const autosaveTimer = useRef<number | null>(null);
     const previousPostId = useRef<number | null>(post?.id ?? null);
     const editorField = useRef<EditorFieldHandle | null>(null);
@@ -367,50 +373,46 @@ export default function PostEdit({
         <WorkspaceLayout
             area="Staff"
             active="posts"
-            title={isNew ? 'New draft' : 'Edit draft'}
-            subtitle={!isNew ? `Status: ${post.status}` : 'Compose editorial content'}
+            title={isNew ? 'New draft' : 'Edit post'}
+            subtitle={isNew ? 'Compose editorial content' : post.title}
             actions={
-                <div className="flex flex-wrap gap-2">
-                    <Link href="/staff/posts" className="button-secondary">
+                <>
+                    <PillButton href="/staff/posts" variant="secondary" icon={FileText}>
                         Posts
-                    </Link>
+                    </PillButton>
                     {!isNew && (
                         <>
-                            <Link href={`/staff/posts/${post.id}/preview`} className="button-secondary">
+                            <PillButton href={`/staff/posts/${post.id}/preview`} variant="secondary" icon={Eye}>
                                 Preview
-                            </Link>
-                            <Link href={`/staff/posts/${post.id}/campaign`} className="button-secondary">
+                            </PillButton>
+                            <PillButton href={`/staff/posts/${post.id}/campaign`} variant="secondary" icon={Mail}>
                                 Campaign
-                            </Link>
+                            </PillButton>
                         </>
                     )}
-                </div>
+                </>
             }
         >
             <Head title={isNew ? 'New post' : `Edit: ${post.title}`} />
-            <main id="main-content" className="mx-auto max-w-workspace px-5 py-6 sm:px-6 lg:px-8">
+            <>
                 {post?.review_notes && (
-                    <p className="mb-4 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                        Review notes: {post.review_notes}
+                    <p className="sg-card border-l-4 !border-l-[var(--color-sg-warn)] px-4 py-3 text-sm text-body">
+                        <span className="font-semibold text-warning">Review notes:</span> {post.review_notes}
                     </p>
                 )}
                 {errors.conflict && (
-                    <p className="mb-4 rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+                    <p className="sg-card border-l-4 !border-l-[var(--color-sg-error)] px-4 py-3 text-sm text-danger" role="alert">
                         {errors.conflict}
                     </p>
                 )}
                 {extraErrors.map(([key, message]) => (
-                    <p
-                        key={key}
-                        className="mb-4 rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800"
-                        role="alert"
-                    >
+                    <p key={key} className="sg-card border-l-4 !border-l-[var(--color-sg-error)] px-4 py-3 text-sm text-danger" role="alert">
                         {message}
                     </p>
                 ))}
 
-                <form onSubmit={submit} className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
-                    <div className="workspace-glass-panel flex flex-col gap-4 p-5 sm:p-6">
+                <form onSubmit={submit} className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+                    <div className="sg-card flex min-w-0 flex-col gap-4 p-5 sm:p-6">
                         <div>
                             <label htmlFor="title">Title</label>
                             <input
@@ -583,48 +585,45 @@ export default function PostEdit({
                         )}
                     </div>
 
-                    <aside
-                        className="workspace-glass-panel workspace-composer-panel flex flex-col gap-4 p-5"
-                        data-testid="composer-publish-panel"
-                    >
-                        {post?.review_notes && (
-                            <p className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                                Review notes: {post.review_notes}
-                            </p>
-                        )}
+                    <aside className="sg-card workspace-composer-panel flex flex-col gap-4 p-5" data-testid="composer-publish-panel">
                         <div>
-                            <h2 className="text-sm font-bold tracking-wide text-muted uppercase">Publish</h2>
-                            <div className="mt-3 flex flex-col gap-2">
-                                <button type="submit" disabled={processing} className="button-primary">
+                            <div className="flex items-center justify-between gap-2">
+                                <h2 className="text-base font-semibold text-body">Publish</h2>
+                                {!isNew && (
+                                    <ActionMenu
+                                        label="More post actions"
+                                        actions={[{ label: 'Soft delete', icon: Trash2, tone: 'danger', onSelect: () => setConfirmDelete(true) }]}
+                                    />
+                                )}
+                            </div>
+                            <p className="mt-1 flex items-center gap-2 text-sm text-muted">
+                                Status: {isNew ? <span className="font-medium text-body">Not saved yet</span> : <PostStatusBadge status={post.status} />}
+                            </p>
+                            <div className="mt-4 flex flex-col gap-2">
+                                <button type="submit" disabled={processing} className="sg-btn sg-btn-primary">
                                     {isNew ? 'Create draft' : 'Save'}
                                 </button>
                                 {!isNew && (
-                                    <button
-                                        type="button"
-                                        className="button-secondary"
-                                        onClick={() => action(`/staff/posts/${post.id}/submit`)}
-                                    >
+                                    <button type="button" className="sg-btn sg-btn-secondary" onClick={() => action(`/staff/posts/${post.id}/submit`)}>
                                         Submit for review
                                     </button>
                                 )}
                                 {!isNew && canPublish && (
                                     <>
-                                        <button
-                                            type="button"
-                                            className="button-secondary"
-                                            onClick={() => action(`/staff/posts/${post.id}/publish`)}
-                                        >
-                                            Publish
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="button-secondary"
-                                            onClick={() => action(`/staff/posts/${post.id}/unpublish`)}
-                                        >
-                                            Unpublish
-                                        </button>
-                                        <div className="flex flex-col gap-2">
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <button type="button" className="sg-btn sg-btn-secondary" onClick={() => action(`/staff/posts/${post.id}/publish`)}>
+                                                Publish
+                                            </button>
+                                            <button type="button" className="sg-btn sg-btn-secondary" onClick={() => action(`/staff/posts/${post.id}/unpublish`)}>
+                                                Unpublish
+                                            </button>
+                                        </div>
+                                        <div className="mt-2 flex flex-col gap-2 border-t border-border pt-3">
+                                            <label htmlFor="schedule_at" className="text-sm font-semibold text-body">
+                                                Schedule for
+                                            </label>
                                             <input
+                                                id="schedule_at"
                                                 type="datetime-local"
                                                 value={scheduleAt}
                                                 onChange={(e) => setScheduleAt(e.target.value)}
@@ -632,45 +631,31 @@ export default function PostEdit({
                                             />
                                             <button
                                                 type="button"
-                                                className="button-secondary"
-                                                onClick={() =>
-                                                    action(`/staff/posts/${post.id}/schedule`, {
-                                                        scheduled_for: scheduleAt,
-                                                    })
-                                                }
+                                                className="sg-btn sg-btn-secondary"
+                                                onClick={() => action(`/staff/posts/${post.id}/schedule`, { scheduled_for: scheduleAt })}
                                             >
                                                 Schedule
                                             </button>
                                         </div>
-                                        <div className="flex flex-col gap-2">
+                                        <div className="mt-2 flex flex-col gap-2 border-t border-border pt-3">
+                                            <label htmlFor="reject_notes" className="text-sm font-semibold text-body">
+                                                Rejection notes
+                                            </label>
                                             <input
+                                                id="reject_notes"
                                                 value={rejectNotes}
                                                 onChange={(e) => setRejectNotes(e.target.value)}
-                                                placeholder="Rejection notes"
                                                 className="form-input"
                                             />
                                             <button
                                                 type="button"
-                                                className="button-secondary"
-                                                onClick={() =>
-                                                    action(`/staff/posts/${post.id}/reject`, {
-                                                        review_notes: rejectNotes,
-                                                    })
-                                                }
+                                                className="sg-btn sg-btn-secondary"
+                                                onClick={() => action(`/staff/posts/${post.id}/reject`, { review_notes: rejectNotes })}
                                             >
                                                 Reject
                                             </button>
                                         </div>
                                     </>
-                                )}
-                                {!isNew && (
-                                    <button
-                                        type="button"
-                                        className="button-danger"
-                                        onClick={() => router.delete(`/staff/posts/${post.id}`)}
-                                    >
-                                        Soft delete
-                                    </button>
                                 )}
                             </div>
                             <FieldError message={errors.expected_updated_at} />
@@ -753,7 +738,21 @@ export default function PostEdit({
                         </fieldset>
                     </aside>
                 </form>
-            </main>
+                {!isNew && (
+                    <ConfirmDialog
+                        open={confirmDelete}
+                        title="Soft delete this post?"
+                        description={`“${post.title}” will be taken off the site and marked as deleted.`}
+                        confirmLabel="Soft delete"
+                        destructive
+                        onCancel={() => setConfirmDelete(false)}
+                        onConfirm={() => {
+                            setConfirmDelete(false);
+                            router.delete(`/staff/posts/${post.id}`);
+                        }}
+                    />
+                )}
+            </>
         </WorkspaceLayout>
     );
 }

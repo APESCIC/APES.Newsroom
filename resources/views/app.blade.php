@@ -24,6 +24,8 @@
         @endisset
 
         <link rel="icon" type="image/png" sizes="32x32" href="/brand/apes-favicon-32.png">
+        <link rel="icon" type="image/png" sizes="192x192" href="/brand/apes-favicon-192.png">
+        <link rel="apple-touch-icon" sizes="180x180" href="/brand/apes-touch-icon-180.png">
 
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx'])

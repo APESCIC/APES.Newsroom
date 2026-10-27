@@ -1,8 +1,10 @@
 # APES Newsroom — design tokens
 
 > **Status:** Public **Direction C** (Glassmorphism Modern) under #36/#55.
-> Authenticated workspaces use **Direction B — Glass Studio** under #145/#167
-> (milestone v1.6.0). Magazine Bold Grid (#53) remains superseded and retired.
+> Staff and admin panels use **Soft glass** from v1.20.0 (#513); see
+> [soft-glass-panels.md](soft-glass-panels.md) for the panel tokens. Direction B
+> Glass Studio (#145/#167) is retired. Magazine Bold Grid (#53) remains
+> superseded and retired.
 
 ## Brand direction
 

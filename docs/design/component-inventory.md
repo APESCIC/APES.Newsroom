@@ -1,8 +1,10 @@
 # APES Newsroom — Component inventory
 
-> **Status:** Direction C (Glassmorphism Modern) public components under #55;
-> Direction B Glass Studio workspace shell under #145/#167 (v1.6.0).
-> Supersedes Magazine Bold Grid (#53).
+> **Status:** Direction C (Glassmorphism Modern) public components under #55.
+> The staff and admin panels use the Soft glass shell and components from
+> v1.20.0 (#513), listed in [soft-glass-panels.md](soft-glass-panels.md); the
+> Direction B workspace rows below are historical. Supersedes Magazine Bold
+> Grid (#53).
 
 ## Direction A layout and content
 

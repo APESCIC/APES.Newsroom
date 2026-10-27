@@ -1,5 +1,10 @@
-import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
+import { Download, Upload } from 'lucide-react';
 import { FormEventHandler } from 'react';
+import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
+import Badge from '../../../Components/Workspace/ui/Badge';
+import EmptyState from '../../../Components/Workspace/ui/EmptyState';
+import { FormSection } from '../../../Components/Workspace/ui/FormField';
 
 type Run = {
     id: number;
@@ -13,7 +18,6 @@ type Run = {
 };
 
 export default function GhostMembersImport({ runs }: { runs: Run[] }) {
-    const { flash } = usePage().props as { flash?: { status?: string } };
     const form = useForm<{ csv: File | null; mode: 'dry-run' }>({
         csv: null,
         mode: 'dry-run',
@@ -27,20 +31,17 @@ export default function GhostMembersImport({ runs }: { runs: Run[] }) {
     };
 
     return (
-        <>
+        <WorkspaceLayout area="Admin" active="members" title="Ghost members import" subtitle="Dry-run a Ghost Admin members export. No email is sent from import runs.">
             <Head title="Ghost members import" />
-            <main className="mx-auto max-w-3xl px-6 py-12">
-                <h1 className="text-2xl font-semibold">Ghost members CSV import</h1>
-                <p className="mt-2 text-sm text-muted">
-                    Upload a Ghost Admin members export for a dry run of contacts and opt-outs. Newsletter subscriptions are
-                    reconciled from Ghost&apos;s per-newsletter exports with <code>php artisan ghost:reconcile-newsletters</code>{' '}
-                    (dry run first, then apply after sign-off). No email is sent from import runs.
-                </p>
-                {flash?.status && <p className="mt-4 text-sm text-green-700">{flash.status}</p>}
+            <p className="text-sm text-muted">
+                Upload a Ghost Admin members export for a dry run of contacts and opt-outs. Newsletter subscriptions are reconciled from Ghost&apos;s
+                per-newsletter exports with <code>php artisan ghost:reconcile-newsletters</code> (dry run first, then apply after sign-off).
+            </p>
 
-                <form onSubmit={submit} className="mt-8 flex flex-col gap-4 rounded border p-4">
+            <FormSection title="Upload export">
+                <form onSubmit={submit} className="flex flex-col gap-4">
                     <div>
-                        <label htmlFor="csv" className="text-sm font-medium">
+                        <label htmlFor="csv" className="text-sm font-semibold text-body">
                             Members CSV
                         </label>
                         <input
@@ -49,48 +50,48 @@ export default function GhostMembersImport({ runs }: { runs: Run[] }) {
                             accept=".csv,text/csv"
                             required
                             onChange={(e) => form.setData('csv', e.target.files?.[0] ?? null)}
-                            className="mt-1 block w-full text-sm"
+                            className="form-input mt-1.5"
                         />
-                        {form.errors.csv && <p className="text-sm text-red-600">{form.errors.csv}</p>}
+                        {form.errors.csv && <p className="mt-1 text-sm text-danger">{form.errors.csv}</p>}
                     </div>
-                    {form.errors.mode && <p className="text-sm text-red-600">{form.errors.mode}</p>}
-                    <button
-                        type="submit"
-                        disabled={form.processing}
-                        className="w-fit rounded bg-apes-primary px-4 py-2 text-white"
-                    >
+                    {form.errors.mode && <p className="text-sm text-danger">{form.errors.mode}</p>}
+                    <button type="submit" disabled={form.processing} className="sg-btn sg-btn-primary self-start">
+                        <Upload aria-hidden="true" className="h-4 w-4" />
                         Queue dry run
                     </button>
                 </form>
+            </FormSection>
 
-                <section className="mt-10">
-                    <h2 className="text-lg font-medium">Recent runs</h2>
-                    <ul className="mt-4 space-y-3 text-sm">
+            <section aria-label="Recent runs" className="flex flex-col gap-3">
+                <h2 className="text-lg font-semibold text-body">Recent runs</h2>
+                {runs.length === 0 ? (
+                    <EmptyState title="No import runs yet." />
+                ) : (
+                    <ul className="flex flex-col gap-3 text-sm">
                         {runs.map((run) => (
-                            <li key={run.id} className="rounded border p-3">
-                                <p>
-                                    #{run.id} — {run.type === 'ghost_newsletters_csv' ? 'newsletter reconcile' : 'members'} — {run.status} —{' '}
-                                    {run.dry_run ? 'dry-run' : 'applied'}
+                            <li key={run.id} className="sg-card p-4">
+                                <p className="flex flex-wrap items-center gap-2 font-semibold text-body">
+                                    #{run.id} {run.type === 'ghost_newsletters_csv' ? 'newsletter reconcile' : 'members'}
+                                    <Badge tone={run.status === 'completed' ? 'ok' : run.status === 'failed' ? 'error' : 'info'}>{run.status}</Badge>
+                                    <Badge tone="neutral">{run.dry_run ? 'dry-run' : 'applied'}</Badge>
                                 </p>
-                                <p className="text-muted">Checksum: {run.source_checksum}</p>
+                                <p className="mt-1 break-all text-muted">Checksum: {run.source_checksum}</p>
                                 {run.report && (
-                                    <pre className="mt-2 overflow-auto rounded-control bg-page-tint p-2 text-xs">
-                                        {JSON.stringify(run.report, null, 2)}
-                                    </pre>
+                                    <pre className="mt-2 max-h-64 overflow-auto rounded-xl bg-white/70 p-3 text-xs">{JSON.stringify(run.report, null, 2)}</pre>
                                 )}
                                 <button
                                     type="button"
-                                    className="mt-2 underline"
+                                    className="sg-btn sg-btn-secondary sg-btn-sm mt-3"
                                     onClick={() => router.visit(`/admin/imports/ghost-members/${run.id}/report`)}
                                 >
+                                    <Download aria-hidden="true" className="h-4 w-4" />
                                     Download report
                                 </button>
                             </li>
                         ))}
-                        {runs.length === 0 && <li className="text-muted">No import runs yet.</li>}
                     </ul>
-                </section>
-            </main>
-        </>
+                )}
+            </section>
+        </WorkspaceLayout>
     );
 }

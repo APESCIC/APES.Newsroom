@@ -110,6 +110,75 @@ jobs:
           path: public/build
           retention-days: 7
 
+  e2e:
+    name: Panels (screenshots and accessibility)
+    runs-on: ubuntu-latest
+    env:
+      APP_ENV: local
+      APP_URL: http://127.0.0.1:8012
+      DB_CONNECTION: sqlite
+      SESSION_DRIVER: file
+      CACHE_STORE: file
+      QUEUE_CONNECTION: sync
+      PHP_CLI_SERVER_WORKERS: 4
+      E2E_BASE_URL: http://127.0.0.1:8012
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, xml, curl, pdo_sqlite, bcmath, intl, zip, gd
+          coverage: none
+          tools: composer:v2
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install and build frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Prepare seeded app
+        run: |
+          cp .env.example .env
+          php artisan key:generate --ansi
+          echo "DB_DATABASE=$GITHUB_WORKSPACE/database/e2e.sqlite" >> "$GITHUB_ENV"
+          touch database/e2e.sqlite
+          DB_DATABASE="$GITHUB_WORKSPACE/database/e2e.sqlite" php artisan migrate:fresh --force --seeder='Database\Seeders\VisualRegressionSeeder'
+
+      - name: Start app
+        run: |
+          php artisan serve --host=127.0.0.1 --port=8012 > storage/logs/e2e-server.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8012/health && exit 0; sleep 1; done
+          cat storage/logs/e2e-server.log
+          exit 1
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright
+        run: npx playwright test panels
+
+      - name: Upload screenshots and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: |
+            playwright-report
+            test-results
+            tests/e2e/__screenshots__/linux
+            storage/logs
+          retention-days: 7
+
   changelog:
     name: Changelog gate
     if: github.event_name == 'pull_request'

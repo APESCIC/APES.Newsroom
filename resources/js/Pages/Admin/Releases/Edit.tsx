@@ -50,7 +50,7 @@ function FieldError({ message }: { message?: string }) {
         return null;
     }
 
-    return <p className="mt-1 text-sm text-red-700">{message}</p>;
+    return <p className="mt-1 text-sm text-danger">{message}</p>;
 }
 
 export default function ReleaseEdit({
@@ -83,13 +83,13 @@ export default function ReleaseEdit({
             title={editing ? `Edit ${release?.version ?? 'release'}` : 'New release'}
             subtitle="Structured fields match the public Change Log Hub card sections."
             actions={
-                <Link href="/admin/releases" className="button-glass inline-flex min-h-11 items-center px-4">
+                <Link href="/admin/releases" className="sg-btn sg-btn-secondary">
                     Back to list
                 </Link>
             }
         >
             <Head title={editing ? 'Edit release' : 'New release'} />
-            <form onSubmit={submit} className="mx-auto flex max-w-3xl flex-col gap-6 rounded-card border border-border bg-white p-6">
+            <form onSubmit={submit} className="sg-card flex flex-col gap-6 p-5 sm:p-6">
                 <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                         <label htmlFor="version" className="text-sm font-semibold">

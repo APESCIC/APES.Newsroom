@@ -1,4 +1,4 @@
-type LogoVariant = 'horizontal' | 'masthead' | 'footer' | 'square' | 'compact';
+type LogoVariant = 'horizontal' | 'masthead' | 'footer' | 'square' | 'compact' | 'mark';
 
 const logoFiles: Record<LogoVariant, { src: string; width: number; height: number }> = {
     horizontal: { src: '/brand/apes-logo-horizontal.png', width: 440, height: 250 },
@@ -6,6 +6,7 @@ const logoFiles: Record<LogoVariant, { src: string; width: number; height: numbe
     footer: { src: '/brand/apes-logo-footer-64.png', width: 64, height: 64 },
     square: { src: '/brand/apes-logo-square.png', width: 1024, height: 1024 },
     compact: { src: '/brand/apes-logo-compact.png', width: 512, height: 512 },
+    mark: { src: '/brand/apes-logo-mark.png', width: 240, height: 154 },
 };
 
 export default function ApesLogo({

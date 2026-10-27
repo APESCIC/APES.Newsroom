@@ -1,5 +1,10 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
+import { ArrowLeft, Send } from 'lucide-react';
 import { FormEventHandler } from 'react';
+import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
+import Badge from '../../../Components/Workspace/ui/Badge';
+import { FormSection } from '../../../Components/Workspace/ui/FormField';
+import PillButton from '../../../Components/Workspace/ui/PillButton';
 
 type Snapshot = {
     title: string;
@@ -29,52 +34,68 @@ export default function CampaignPreview({
     };
 
     return (
-        <>
+        <WorkspaceLayout
+            area="Staff"
+            active="posts"
+            title="Campaign preview"
+            subtitle={post.title}
+            actions={
+                <PillButton href={`/staff/posts/${post.id}/edit`} variant="secondary" icon={ArrowLeft}>
+                    Back to post
+                </PillButton>
+            }
+        >
             <Head title={`Campaign preview: ${post.title}`} />
-            <main className="mx-auto max-w-2xl px-6 py-12">
-                <Link href={`/staff/posts/${post.id}/edit`} className="text-sm underline">
-                    ← Back to post
-                </Link>
-                <h1 className="mt-4 text-2xl font-semibold">Campaign preview</h1>
-                {status === 'test-send-queued' && (
-                    <p className="mt-2 text-sm text-green-700">Test send queued. It cannot trigger a live campaign.</p>
-                )}
+            {status === 'test-send-queued' && (
+                <p role="status" className="sg-card px-4 py-3 text-sm font-medium text-success">
+                    Test send queued. It cannot trigger a live campaign.
+                </p>
+            )}
 
-                <p className={`mt-4 text-sm ${snapshot.sender_verified ? 'text-muted' : 'text-warning'}`}>
+            <div className="sg-card flex flex-wrap items-center gap-2 px-4 py-3 text-sm">
+                {snapshot.sender_verified ? <Badge tone="ok">Sender verified</Badge> : <Badge tone="warning">Sender not verified</Badge>}
+                <span className="text-body">
                     {snapshot.sender
                         ? `From: ${snapshot.sender.name ? `${snapshot.sender.name} <${snapshot.sender.address}>` : snapshot.sender.address}${snapshot.sender.reply_to ? ` · Reply-to: ${snapshot.sender.reply_to}` : ''}`
                         : 'No newsletter sender is set.'}
                     {snapshot.sender_verified ? '' : ' Sender not verified in Mailgun yet, so sending is blocked.'}
+                </span>
+            </div>
+
+            <article aria-label="Email preview" className="sg-card mx-auto w-full max-w-2xl p-6 sm:p-8">
+                <p className="text-sm text-muted">
+                    {snapshot.channel_label} · {snapshot.author}
                 </p>
+                <h2 className="mt-2 text-xl font-bold text-body">{snapshot.title}</h2>
+                {snapshot.excerpt && <p className="mt-3 text-body">{snapshot.excerpt}</p>}
+                <a href={snapshot.read_more_url} className="mt-4 inline-block text-sm font-semibold text-teal-deep underline">
+                    Read the full story
+                </a>
+            </article>
 
-                <article className="mt-8 rounded-card border border-border p-6">
-                    <p className="text-sm text-muted">
-                        {snapshot.channel_label} · {snapshot.author}
-                    </p>
-                    <h2 className="mt-2 text-xl font-bold text-body">{snapshot.title}</h2>
-                    {snapshot.excerpt && <p className="mt-3 text-body">{snapshot.excerpt}</p>}
-                    <a href={snapshot.read_more_url} className="mt-4 inline-block text-sm underline">
-                        Read the full story
-                    </a>
-                </article>
-
-                <form onSubmit={sendTest} className="mt-8 flex flex-col gap-3 border-t pt-6">
-                    <h2 className="font-medium">Test send</h2>
-                    <p className="text-sm text-muted">Enter an explicit recipient. Never pre-filled from live lists.</p>
-                    <input
-                        type="email"
-                        required
-                        value={data.email}
-                        onChange={(e) => setData('email', e.target.value)}
-                        placeholder="you@example.com"
-                        className="w-full max-w-md rounded border px-3 py-2"
-                    />
-                    {errors.email && <p className="text-sm text-red-600">{errors.email}</p>}
-                    <button type="submit" disabled={processing} className="w-fit rounded bg-apes-primary px-4 py-2 text-white">
+            <FormSection title="Test send" description="Enter an explicit recipient. Never pre-filled from live lists.">
+                <form onSubmit={sendTest} className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                    <label htmlFor="test-recipient" className="sr-only">
+                        Test recipient email
+                    </label>
+                    <div className="flex-1">
+                        <input
+                            id="test-recipient"
+                            type="email"
+                            required
+                            value={data.email}
+                            onChange={(e) => setData('email', e.target.value)}
+                            placeholder="you@example.com"
+                            className="form-input"
+                        />
+                        {errors.email && <p className="mt-1 text-sm text-danger">{errors.email}</p>}
+                    </div>
+                    <button type="submit" disabled={processing} className="sg-btn sg-btn-primary">
+                        <Send aria-hidden="true" className="h-4 w-4" />
                         Queue test send
                     </button>
                 </form>
-            </main>
-        </>
+            </FormSection>
+        </WorkspaceLayout>
     );
 }

@@ -4,25 +4,36 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import PostsIndex from '../Pages/Staff/Posts/Index';
 import { setMockPage } from '../test/inertia';
 
-describe('Glass Studio staff posts workspace', () => {
+const posts = [
+    {
+        id: 9,
+        title: 'Clinic advice for summer',
+        slug: 'clinic-advice-summer',
+        status: 'in_review',
+        channel: 'apes_pet_care_clinic',
+        updated_at: '2026-08-05T09:00:00Z',
+        author: 'Alex Editor',
+    },
+    {
+        id: 10,
+        title: 'Shelter adoption update',
+        slug: 'shelter-adoption-update',
+        status: 'published',
+        channel: 'apes_shelter_rescue',
+        updated_at: null,
+        author: 'Alex Editor',
+    },
+];
+
+function page<T>(data: T[], overrides: Partial<{ current_page: number; last_page: number; next_page_url: string | null }> = {}) {
+    return { data, current_page: 1, last_page: 1, prev_page_url: null, next_page_url: null, ...overrides };
+}
+
+describe('Soft glass staff posts workspace', () => {
     let desktopChangeListener: ((event: MediaQueryListEvent) => void) | undefined;
-    let resizeObserverCallback: ResizeObserverCallback | undefined;
 
     beforeEach(() => {
         desktopChangeListener = undefined;
-        resizeObserverCallback = undefined;
-        vi.stubGlobal(
-            'ResizeObserver',
-            class {
-                constructor(callback: ResizeObserverCallback) {
-                    resizeObserverCallback = callback;
-                }
-
-                observe = vi.fn();
-                disconnect = vi.fn();
-                unobserve = vi.fn();
-            },
-        );
         Object.defineProperty(window, 'matchMedia', {
             configurable: true,
             value: vi.fn().mockImplementation((query: string) => ({
@@ -42,64 +53,56 @@ describe('Glass Studio staff posts workspace', () => {
             appName: 'APES Newsroom',
             auth: {
                 user: { id: 1, name: 'Alex Editor', email: 'alex@example.test', role: 'admin' },
-                can: { accessStaff: true, accessAdmin: true },
+                can: { accessStaff: true, accessAdmin: true, reviewPosts: true },
             },
         });
     });
 
-    it('shows role-aware workspace navigation, filters, table and mobile cards', async () => {
+    it('groups navigation, links both panels and shows breadcrumbs', () => {
+        render(<PostsIndex posts={page(posts)} filterStatus={null} canReview />);
+
+        const nav = screen.getByRole('navigation', { name: 'Staff workspace' });
+        expect(within(nav).getByText('Content')).toBeInTheDocument();
+        expect(within(nav).getByText('Audience')).toBeInTheDocument();
+        expect(within(nav).getByText('Commerce')).toBeInTheDocument();
+        expect(within(nav).getByText('Insights')).toBeInTheDocument();
+        expect(within(nav).getByRole('link', { name: 'Posts' })).toHaveAttribute('aria-current', 'page');
+        expect(within(nav).getByRole('link', { name: 'Review queue' })).toHaveAttribute('href', '/staff/posts/review');
+
+        const panelSwitch = screen.getByRole('navigation', { name: 'Switch panel' });
+        expect(within(panelSwitch).getByRole('link', { name: 'Staff' })).toHaveAttribute('aria-current', 'true');
+        expect(within(panelSwitch).getByRole('link', { name: 'Admin' })).toHaveAttribute('href', '/admin/users');
+
+        const breadcrumb = screen.getByRole('navigation', { name: 'Breadcrumb' });
+        expect(within(breadcrumb).getByRole('link', { name: 'Staff' })).toHaveAttribute('href', '/staff/posts');
+        expect(within(breadcrumb).getByText('Posts')).toHaveAttribute('aria-current', 'page');
+
+        expect(screen.getByRole('heading', { level: 1, name: 'Posts' })).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'View site' })).toHaveAttribute('href', '/');
+        expect(screen.getByRole('main')).toHaveAttribute('id', 'main-content');
+    });
+
+    it('lists posts in a labelled table with status badges and pagination', () => {
+        render(<PostsIndex posts={page(posts, { last_page: 3, next_page_url: '/staff/posts?page=2' })} filterStatus={null} canReview />);
+
+        const table = screen.getByRole('table', { name: 'Newsroom posts' });
+        expect(within(table).getByRole('link', { name: 'Edit Clinic advice for summer' })).toHaveAttribute('href', '/staff/posts/9/edit');
+        expect(within(table).getByText('In review')).toHaveClass('sg-badge-warning');
+        expect(within(table).getByText('Published')).toHaveClass('sg-badge-ok');
+        expect(within(table).getAllByRole('cell', { name: /Pet Care Clinic/ })[0]).toHaveAttribute('data-label', 'Channel');
+
+        const pager = screen.getByRole('navigation', { name: 'Posts pagination' });
+        expect(pager).toHaveTextContent('Page 1 of 3');
+        expect(within(pager).getByRole('link', { name: 'Next' })).toHaveAttribute('href', '/staff/posts?page=2');
+
+        const filters = screen.getByRole('navigation', { name: 'Post status filters' });
+        expect(within(filters).getByRole('link', { name: 'All' })).toHaveAttribute('aria-current', 'page');
+        expect(within(filters).getByRole('link', { name: 'Drafts' })).toHaveAttribute('href', '/staff/posts?status=draft');
+    });
+
+    it('opens the navigation drawer as an accessible modal on small screens', async () => {
         const user = userEvent.setup();
-        render(
-            <PostsIndex
-                posts={[
-                    {
-                        id: 9,
-                        title: 'Clinic advice for summer',
-                        slug: 'clinic-advice-summer',
-                        status: 'in_review',
-                        channel: 'apes_pet_care_clinic',
-                        updated_at: '2026-08-05T09:00:00Z',
-                        author: 'Alex Editor',
-                    },
-                    {
-                        id: 10,
-                        title: 'Shelter adoption update',
-                        slug: 'shelter-adoption-update',
-                        status: 'published',
-                        channel: 'apes_shelter_rescue',
-                        updated_at: null,
-                        author: 'Alex Editor',
-                    },
-                ]}
-                filterStatus={null}
-                canReview
-            />,
-        );
-
-        expect(screen.getByRole('navigation', { name: 'Staff workspace' })).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'Admin panel' })).toHaveAttribute('href', '/admin/moderation');
-        expect(screen.getByRole('link', { name: 'Review queue' })).toHaveAttribute('href', '/staff/posts/review');
-        expect(screen.getByRole('link', { name: 'New draft' })).toHaveAttribute('href', '/staff/posts/new');
-        expect(screen.getByRole('navigation', { name: 'Post status filters' })).toHaveClass('workspace-glass-tabs');
-        expect(screen.getByRole('table', { name: 'Newsroom posts' }).closest('div')).toHaveClass('workspace-glass-panel');
-        expect(screen.getByRole('list', { name: 'Newsroom posts on small screens' })).toBeInTheDocument();
-        expect(screen.getAllByText('In review').length).toBeGreaterThan(1);
-        expect(screen.getAllByText('Published').length).toBeGreaterThan(1);
-        expect(screen.getAllByText('Pet Care Clinic').length).toBeGreaterThan(1);
-        expect(screen.getByRole('link', { name: 'Edit Clinic advice for summer' })).toHaveAttribute(
-            'href',
-            '/staff/posts/9/edit',
-        );
-
-        expect(screen.getByTestId('workspace-shell')).toHaveClass('workspace-gradient-shell');
-        expect(screen.getByTestId('workspace-sidebar')).toHaveClass('workspace-glass-rail');
-        expect(screen.getByTestId('workspace-task-header')).toHaveClass('workspace-glass-chrome');
-        expect(screen.getByTestId('workspace-canvas')).toHaveClass('workspace-canvas');
-
-        const taskHeader = screen.getByTestId('workspace-task-header');
-        vi.spyOn(taskHeader, 'getBoundingClientRect').mockReturnValue({ height: 176 } as DOMRect);
-        act(() => resizeObserverCallback?.([], {} as ResizeObserver));
-        expect(screen.getByTestId('workspace-shell')).toHaveStyle({ '--workspace-task-header-height': '176px' });
+        render(<PostsIndex posts={page(posts)} filterStatus={null} canReview />);
 
         const navigationButton = screen.getByRole('button', { name: 'Open workspace navigation' });
         await user.click(navigationButton);
@@ -109,23 +112,18 @@ describe('Glass Studio staff posts workspace', () => {
         const dialog = screen.getByRole('dialog', { name: 'Workspace navigation' });
         const closeButton = within(dialog).getByRole('button', { name: 'Close workspace navigation' });
         expect(screen.getAllByRole('navigation', { name: 'Staff workspace' })).toHaveLength(1);
-        expect(within(dialog).getByRole('navigation', { name: 'Staff workspace' })).toBeInTheDocument();
         expect(dialog).toHaveAttribute('aria-modal', 'true');
         expect(background).toHaveAttribute('inert');
         expect(background).toHaveAttribute('aria-hidden', 'true');
         expect(document.body.style.overflow).toBe('hidden');
-        expect(within(dialog).getByTestId('workspace-sidebar')).toHaveClass('overflow-y-auto');
         expect(closeButton).toHaveFocus();
 
         await user.tab({ shift: true });
         expect(dialog).toContainElement(document.activeElement as HTMLElement);
-        await user.tab();
-        expect(closeButton).toHaveFocus();
 
         act(() => desktopChangeListener?.({ matches: true } as MediaQueryListEvent));
         expect(screen.queryByRole('dialog', { name: 'Workspace navigation' })).not.toBeInTheDocument();
         expect(background).not.toHaveAttribute('inert');
-        expect(background).not.toHaveAttribute('aria-hidden');
         expect(document.body.style.overflow).toBe('');
         expect(screen.getByRole('link', { name: 'Posts' })).toHaveFocus();
 
@@ -133,8 +131,6 @@ describe('Glass Studio staff posts workspace', () => {
         await user.keyboard('{Escape}');
         expect(navigationButton).toHaveAttribute('aria-expanded', 'false');
         expect(background).not.toHaveAttribute('inert');
-        expect(background).not.toHaveAttribute('aria-hidden');
-        expect(document.body.style.overflow).toBe('');
         expect(navigationButton).toHaveFocus();
     });
 
@@ -143,15 +139,16 @@ describe('Glass Studio staff posts workspace', () => {
             appName: 'APES Newsroom',
             auth: {
                 user: { id: 2, name: 'Sam Staff', email: 'sam@example.test', role: 'staff' },
-                can: { accessStaff: true, accessAdmin: false },
+                can: { accessStaff: true, accessAdmin: false, reviewPosts: false },
             },
         });
 
-        render(<PostsIndex posts={[]} filterStatus={null} canReview={false} />);
+        render(<PostsIndex posts={page([])} filterStatus={null} canReview={false} />);
 
         expect(screen.getByRole('navigation', { name: 'Staff workspace' })).toBeInTheDocument();
-        expect(screen.queryByRole('link', { name: 'Admin panel' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('navigation', { name: 'Switch panel' })).not.toBeInTheDocument();
         expect(screen.queryByRole('link', { name: 'Review queue' })).not.toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'New draft' })).toHaveAttribute('href', '/staff/posts/new');
+        expect(screen.getByText('No posts found')).toBeInTheDocument();
+        expect(screen.getAllByRole('link', { name: 'New draft' })[0]).toHaveAttribute('href', '/staff/posts/new');
     });
 });

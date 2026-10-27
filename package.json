@@ -8,7 +8,8 @@
         "typecheck": "tsc --noEmit",
         "lint": "eslint resources/js",
         "test:frontend": "vitest run",
-        "test:frontend:watch": "vitest"
+        "test:frontend:watch": "vitest",
+        "test:e2e": "playwright test panels"
     },
     "dependencies": {
         "@editorjs/delimiter": "^1.4.2",
@@ -23,15 +24,19 @@
         "@editorjs/quote": "^2.7.6",
         "@editorjs/table": "^2.4.5",
         "@fontsource-variable/instrument-sans": "5.3.0",
+        "@fontsource-variable/inter": "^5.3.0",
         "@inertiajs/react": "^2.0",
         "@simplewebauthn/browser": "^14.0.0",
         "@tinymce/tinymce-react": "^6.3.1",
+        "lucide-react": "^1.61.0",
         "react": "^19.0",
         "react-dom": "^19.0",
         "tinymce": "^8.10.0"
     },
     "devDependencies": {
+        "@axe-core/playwright": "^4.14.0",
         "@eslint/js": "^9.0",
+        "@playwright/test": "^1.64.1",
         "@tailwindcss/vite": "^4.0.0",
         "@testing-library/jest-dom": "^7.0.0",
         "@testing-library/react": "^16.3.2",

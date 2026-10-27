@@ -13,6 +13,7 @@ export type SharedAuth = {
         accessStaff: boolean;
         accessAdmin: boolean;
         accessSuperAdmin?: boolean;
+        reviewPosts?: boolean;
     };
 };
 

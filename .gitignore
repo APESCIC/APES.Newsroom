@@ -13,6 +13,10 @@
 /.zed
 /auth.json
 /node_modules
+/test-results
+/playwright-report
+/tests/e2e/__screenshots__/win32
+/tests/e2e/__screenshots__/darwin
 /public/build
 /public/fonts-manifest.dev.json
 /public/hot

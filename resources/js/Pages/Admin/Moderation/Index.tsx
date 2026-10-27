@@ -1,7 +1,8 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEvent, useState, type KeyboardEvent } from 'react';
-import LineIcon from '../../../Components/Icons/LineIcon';
+import { UserRound } from 'lucide-react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
+import Pagination from '../../../Components/Workspace/ui/Pagination';
 
 type PendingProfile = {
     id: number;
@@ -57,30 +58,18 @@ function EmptyQueue({ children }: { children: string }) {
 }
 
 function QueuePager({ page, label }: { page: Page<unknown>; label: string }) {
-    if (page.meta.last_page <= 1) {
-        return null;
-    }
-
     return (
-        <nav className="mt-6 flex items-center justify-between gap-3 text-sm" aria-label={`${label} pagination`}>
-            {page.links.prev ? (
-                <Link href={page.links.prev} className="button-secondary min-h-11">
-                    Previous
-                </Link>
-            ) : (
-                <span className="text-muted">Previous</span>
-            )}
-            <span className="text-muted">
-                Page {page.meta.current_page} of {page.meta.last_page}
-            </span>
-            {page.links.next ? (
-                <Link href={page.links.next} className="button-secondary min-h-11">
-                    Next
-                </Link>
-            ) : (
-                <span className="text-muted">Next</span>
-            )}
-        </nav>
+        <div className="mt-6">
+            <Pagination
+                label={label}
+                page={{
+                    current_page: page.meta.current_page,
+                    last_page: page.meta.last_page,
+                    prev_page_url: page.links.prev,
+                    next_page_url: page.links.next,
+                }}
+            />
+        </div>
     );
 }
 
@@ -165,10 +154,10 @@ export default function ModerationIndex({
     };
 
     return (
-        <WorkspaceLayout area="Admin" active="moderation" title="Moderation queue">
+        <WorkspaceLayout area="Admin" active="moderation" title="Moderation queue" subtitle="Review public profiles, comments and reports">
             <Head title="Moderation" />
-            <main id="main-content" className="mx-auto max-w-workspace px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
-                <form onSubmit={submitSearch} className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end" role="search" aria-label="Filter moderation queues">
+            <>
+                <form onSubmit={submitSearch} className="sg-card flex flex-col gap-3 p-4 sm:flex-row sm:items-end" role="search" aria-label="Filter moderation queues">
                     <label className="flex-1 text-sm font-semibold text-body">
                         Search queues
                         <input
@@ -184,26 +173,26 @@ export default function ModerationIndex({
                     </button>
                 </form>
 
-                <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Moderation summary">
+                <section className="grid grid-cols-2 gap-3 xl:grid-cols-4" aria-label="Moderation summary">
                     {queues.map((queue) => (
                         <button
                             key={queue.id}
                             type="button"
-                            className={`workspace-glass-card min-h-32 p-5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)] ${
-                                activeQueue === queue.id ? '' : 'hover:border-teal-deep'
-                            }`}
+                            className="workspace-glass-card flex min-h-28 flex-col-reverse justify-end gap-3 p-5 text-left transition-colors hover:bg-white/60"
                             onClick={() => setActiveQueue(queue.id)}
-                            aria-label={`${queue.summaryLabel}: ${queue.count}`}
                             aria-pressed={activeQueue === queue.id}
                         >
+                            <span className="block text-sm font-semibold text-muted">
+                                {queue.summaryLabel}
+                                <span className="sr-only">: </span>
+                            </span>
                             <span className="block text-3xl font-bold text-brand-ink">{queue.count}</span>
-                            <span className="mt-3 block text-sm font-semibold text-muted">{queue.summaryLabel}</span>
                         </button>
                     ))}
                 </section>
 
-                <section className="workspace-glass-panel mt-8" aria-label="Moderation queue records">
-                    <div className="workspace-glass-tabs px-2 sm:px-4">
+                <section className="workspace-glass-panel" aria-label="Moderation queue records">
+                    <div className="workspace-glass-tabs m-4 max-w-full self-start sm:m-5">
                         <div role="tablist" aria-label="Moderation queues" className="flex gap-1 overflow-x-auto">
                             {queues.map((queue) => (
                                 <button
@@ -214,11 +203,7 @@ export default function ModerationIndex({
                                     aria-selected={activeQueue === queue.id}
                                     aria-controls={`panel-${queue.id}`}
                                     tabIndex={activeQueue === queue.id ? 0 : -1}
-                                    className={`min-h-11 shrink-0 border-b-2 px-4 py-3 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus)] ${
-                                        activeQueue === queue.id
-                                            ? 'border-teal-deep text-teal-deep'
-                                            : 'border-transparent text-muted hover:text-body'
-                                    }`}
+                                    className="sg-tab shrink-0"
                                     onClick={() => setActiveQueue(queue.id)}
                                     onKeyDown={(event) => handleTabKey(event, queue.id)}
                                 >
@@ -278,7 +263,7 @@ export default function ModerationIndex({
                                             <li key={profile.id} className="workspace-glass-card p-5">
                                                 <div className="flex items-start gap-4">
                                                     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-mist text-teal-deep">
-                                                        <LineIcon name="user" className="h-5 w-5" />
+                                                        <UserRound aria-hidden="true" className="h-5 w-5" />
                                                     </span>
                                                     <div>
                                                         <h3 className="font-bold text-brand-ink">{name}</h3>
@@ -389,7 +374,7 @@ export default function ModerationIndex({
                         ) : <EmptyQueue>No profiles are suspended.</EmptyQueue>}
                     </div>
                 </section>
-            </main>
+            </>
         </WorkspaceLayout>
     );
 }
