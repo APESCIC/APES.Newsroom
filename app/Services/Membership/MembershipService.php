@@ -3,20 +3,24 @@
 namespace App\Services\Membership;
 
 use App\Enums\MembershipStatus;
-use App\Models\MailingContact;
 use App\Models\Membership;
 use App\Models\User;
+use App\Services\Mailing\LinkMailingContactService;
 use App\Services\Webhooks\OutboundWebhookDispatcher;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class MembershipService
 {
-    public function __construct(private readonly OutboundWebhookDispatcher $webhooks) {}
+    public function __construct(
+        private readonly OutboundWebhookDispatcher $webhooks,
+        private readonly LinkMailingContactService $mailingLinks,
+    ) {}
 
     /**
-     * Ensure the user has a free membership row and a mailing contact linked by email.
-     * Does not subscribe the contact to any list or newsletter.
+     * Ensure the user has a free membership row. Mailing contacts are linked
+     * only after email ownership is verified (#506); before that, create an
+     * unlinked contact for brand-new emails only and leave pre-existing
+     * mailing-only contacts unclaimed.
      */
     public function provisionFreeMember(User $user): Membership
     {
@@ -28,7 +32,15 @@ class MembershipService
                 ['status' => MembershipStatus::Free],
             );
             $created = $membership->wasRecentlyCreated;
-            $this->linkMailingContact($user);
+
+            if ($user->email_verified_at !== null) {
+                $this->mailingLinks->link($user);
+            } else {
+                $this->mailingLinks->ensureUnlinkedContactForEmail(
+                    (string) $user->email,
+                    $user->name !== '' ? $user->name : null,
+                );
+            }
 
             return $membership->fresh() ?? $membership;
         });
@@ -52,24 +64,5 @@ class MembershipService
         );
 
         return $membership->fresh() ?? $membership;
-    }
-
-    /**
-     * Link or create a mailing contact for the user's email without changing subscriptions.
-     */
-    public function linkMailingContact(User $user): MailingContact
-    {
-        $email = Str::lower(trim($user->email));
-
-        $contact = MailingContact::query()->firstOrCreate(
-            ['email' => $email],
-            ['user_id' => $user->id],
-        );
-
-        if ($contact->user_id !== $user->id) {
-            $contact->update(['user_id' => $user->id]);
-        }
-
-        return $contact->fresh() ?? $contact;
     }
 }

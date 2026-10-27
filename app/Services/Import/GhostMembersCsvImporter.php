@@ -109,7 +109,15 @@ class GhostMembersCsvImporter
         }
 
         DB::transaction(function () use ($email, $optedOut, $member, &$report) {
-            $contact = MailingContact::query()->firstOrCreate(['email' => $email]);
+            $name = trim((string) ($member['name'] ?? ''));
+            $contact = MailingContact::query()->firstOrCreate(
+                ['email' => $email],
+                ['name' => $name !== '' ? $name : null],
+            );
+
+            if ($name !== '' && blank($contact->name)) {
+                $contact->update(['name' => $name]);
+            }
 
             if (! $optedOut) {
                 return;

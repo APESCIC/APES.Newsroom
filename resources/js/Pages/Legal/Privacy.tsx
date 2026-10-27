@@ -25,7 +25,8 @@ export default function Privacy() {
                 <h2>Your rights</h2>
                 <p>
                     See the <Link href="/legal/rights">rights page</Link> for access, export, correction, erasure, and
-                    mailing preference controls.
+                    mailing preference controls. If you delete your account, newsletter subscriptions are kept as a
+                    mailing-list-only contact unless you choose to remove them on the account page.
                 </p>
                 <h2>Contact</h2>
                 <p>Privacy questions: write to APES CIC at the address below, call, or email.</p>

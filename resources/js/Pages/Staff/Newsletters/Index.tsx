@@ -22,6 +22,8 @@ type NewsletterRow = {
     confirmed_count: number;
     pending_count: number;
     unsubscribed_count: number;
+    account_confirmed_count: number;
+    mailing_only_confirmed_count: number;
 };
 
 const FILTERS: Array<{ value: StatusFilter; label: string }> = [
@@ -95,7 +97,9 @@ export default function NewslettersIndex({ newsletters, status }: { newsletters:
                             </p>
                         </div>
                         <p className="text-sm text-neutral-700">
-                            {newsletter.confirmed_count} confirmed · {newsletter.pending_count} pending · {newsletter.unsubscribed_count} unsubscribed
+                            {newsletter.confirmed_count} confirmed
+                            {' '}({newsletter.account_confirmed_count} account · {newsletter.mailing_only_confirmed_count} mailing-only)
+                            {' '}· {newsletter.pending_count} pending · {newsletter.unsubscribed_count} unsubscribed
                         </p>
                     </li>
                 ))}

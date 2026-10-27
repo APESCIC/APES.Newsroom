@@ -31,6 +31,10 @@ type PendingEmail = {
     expires_at: string;
 };
 
+type MatchedMailingNotice = {
+    newsletters: string[];
+};
+
 type ProfileProps = {
     user: ProfileUser;
     pending_email?: PendingEmail | null;
@@ -40,6 +44,7 @@ type ProfileProps = {
     status?: string;
     can_delete_account: boolean;
     deletion_block_reason: string | null;
+    matched_mailing_notice?: MatchedMailingNotice | null;
 };
 
 function formatMoney(amountPence: number, currency: string): string {
@@ -91,10 +96,12 @@ export default function Profile({
     status,
     can_delete_account,
     deletion_block_reason,
+    matched_mailing_notice = null,
 }: ProfileProps) {
     const { data, setData, patch, processing, errors, reset, delete: destroy } = useForm({
         name: user.name,
         email: user.email,
+        keep_newsletter_subscriptions: true as boolean,
     });
 
     const submit: FormEventHandler = (e) => {
@@ -104,7 +111,11 @@ export default function Profile({
     };
 
     const deleteAccount = () => {
-        if (confirm('Delete your account permanently? This cannot be undone.')) {
+        const keep = data.keep_newsletter_subscriptions;
+        const message = keep
+            ? 'Delete your account permanently? Your newsletter subscriptions will be kept.'
+            : 'Delete your account permanently and remove your newsletter subscriptions? This cannot be undone.';
+        if (confirm(message)) {
             destroy('/account');
         }
     };
@@ -132,6 +143,29 @@ export default function Profile({
 
                     {status === 'profile-updated' && <p className="status-badge-success mt-4">Profile updated.</p>}
                     {status === 'email-verified' && <p className="status-badge-success mt-4">Email verified.</p>}
+
+                    {matched_mailing_notice && (
+                        <div className="mt-4 rounded-control border border-teal-deep bg-page-tint p-3 text-sm text-body" role="status">
+                            <p className="font-semibold">We found your existing newsletter subscriptions</p>
+                            <ul className="mt-2 list-disc pl-5">
+                                {matched_mailing_notice.newsletters.map((name) => (
+                                    <li key={name}>{name}</li>
+                                ))}
+                            </ul>
+                            <div className="mt-2 flex flex-wrap gap-3">
+                                <Link href="/account/mailing" className="text-teal-deep hover:underline">
+                                    Manage preferences
+                                </Link>
+                                <button
+                                    type="button"
+                                    className="text-muted hover:underline"
+                                    onClick={() => router.post('/account/mailing/matched-notice/dismiss', {}, { preserveScroll: true })}
+                                >
+                                    Dismiss
+                                </button>
+                            </div>
+                        </div>
+                    )}
                     {status && EMAIL_STATUS_MESSAGES[status] && (
                         <p className="status-badge-success mt-4" role="status">{EMAIL_STATUS_MESSAGES[status]}</p>
                     )}
@@ -259,9 +293,25 @@ export default function Profile({
                 <div className="glass-form-panel mt-6">
                     <h2 className="text-lg font-bold text-danger">Danger zone</h2>
                     {can_delete_account ? (
-                        <button type="button" onClick={deleteAccount} className="button-danger mt-2">
-                            Delete account
-                        </button>
+                        <>
+                            <label className="mt-3 flex items-start gap-2 text-sm text-body">
+                                <input
+                                    type="checkbox"
+                                    className="mt-1"
+                                    checked={data.keep_newsletter_subscriptions}
+                                    onChange={(e) => setData('keep_newsletter_subscriptions', e.target.checked)}
+                                />
+                                <span>
+                                    Keep my newsletter subscriptions
+                                    <span className="block text-muted">
+                                        Checked by default. Uncheck to remove your mailing contact and list memberships when the account is deleted.
+                                    </span>
+                                </span>
+                            </label>
+                            <button type="button" onClick={deleteAccount} className="button-danger mt-3">
+                                Delete account
+                            </button>
+                        </>
                     ) : (
                         <p className="mt-2 text-sm text-muted">{deletion_block_reason}</p>
                     )}

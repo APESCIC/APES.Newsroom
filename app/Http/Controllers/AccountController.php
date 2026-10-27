@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\SubscriptionStatus;
 use App\Http\Requests\UpdateAccountRequest;
 use App\Models\AuditLog;
+use App\Models\MailingContact;
+use App\Models\MailingListSubscription;
 use App\Models\MembershipPlan;
 use App\Services\Account\AccountDeletionPolicy;
 use App\Services\Account\AccountEmailChangeService;
+use App\Services\Account\AccountMailingDeletion;
 use App\Services\Audit\AuditLogger;
 use App\Services\Auth\RecentAuthentication;
 use App\Services\Integrations\IntegrationSecrets;
@@ -26,6 +30,7 @@ class AccountController extends Controller
     public function __construct(
         private readonly AccountDeletionPolicy $deletionPolicy,
         private readonly AccountEmailChangeService $emailChanges,
+        private readonly AccountMailingDeletion $mailingDeletion,
         private readonly MembershipService $memberships,
         private readonly IntegrationSecrets $secrets,
     ) {}
@@ -66,7 +71,45 @@ class AccountController extends Controller
             'status' => session('status'),
             'can_delete_account' => $deletionBlockReason === null,
             'deletion_block_reason' => $deletionBlockReason,
+            'matched_mailing_notice' => $this->matchedMailingNotice($user),
         ]);
+    }
+
+    /**
+     * @return array{newsletters: list<string>}|null
+     */
+    private function matchedMailingNotice($user): ?array
+    {
+        if (! $user->matched_mailing_notice_pending) {
+            return null;
+        }
+
+        $contact = MailingContact::query()->forNormalizedEmail((string) $user->email)->first();
+        if (! $contact) {
+            return null;
+        }
+
+        $names = $contact->subscriptions()
+            ->with('newsletter')
+            ->whereIn('status', [SubscriptionStatus::Confirmed, SubscriptionStatus::Pending])
+            ->get()
+            ->map(fn (MailingListSubscription $sub) => $sub->newsletter?->name ?? $sub->list?->label() ?? 'Newsletter')
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($names === []) {
+            return null;
+        }
+
+        return ['newsletters' => $names];
+    }
+
+    public function dismissMatchedMailingNotice(Request $request): RedirectResponse
+    {
+        $request->user()->forceFill(['matched_mailing_notice_pending' => false])->save();
+
+        return back();
     }
 
     public function update(UpdateAccountRequest $request, RecentAuthentication $recentAuth, AuditLogger $audit): RedirectResponse
@@ -129,12 +172,18 @@ class AccountController extends Controller
 
     public function destroy(Request $request): RedirectResponse
     {
+        $request->validate([
+            'keep_newsletter_subscriptions' => ['sometimes', 'boolean'],
+        ]);
+        $keepSubscriptions = $request->boolean('keep_newsletter_subscriptions', true);
+
         $user = $request->user();
-        $deletionBlockReason = DB::transaction(function () use ($user) {
+        $deletionBlockReason = DB::transaction(function () use ($user, $keepSubscriptions, $request) {
             $lockedUser = $user->newQuery()->lockForUpdate()->findOrFail($user->id);
             $reason = $this->deletionPolicy->blockingReason($lockedUser);
 
             if ($reason === null) {
+                $this->mailingDeletion->handleBeforeUserDelete($lockedUser, $keepSubscriptions, $request);
                 AuditLog::query()->where('actor_id', $lockedUser->id)->selfService()->update(['actor_id' => null]);
                 $lockedUser->delete();
             }

@@ -1,9 +1,10 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import AccountLayout from '../../Components/Layout/AccountLayout';
 
 type ListState = { list: string; label: string; purpose: string; status: string | null };
 type NewsletterState = { id: number; name: string; description: string | null; status: string | null };
+type MatchedMailingNotice = { newsletters: string[] };
 
 export default function Preferences({
     email,
@@ -11,12 +12,14 @@ export default function Preferences({
     newsletters = [],
     signed,
     status,
+    matched_mailing_notice = null,
 }: {
     email: string;
     lists: ListState[];
     newsletters?: NewsletterState[];
     signed: boolean;
     status?: string;
+    matched_mailing_notice?: MatchedMailingNotice | null;
 }) {
     const initial = lists.filter((l) => l.status === 'confirmed' || l.status === 'pending').map((l) => l.list);
     const initialNewsletters = newsletters.filter((n) => n.status === 'confirmed' || n.status === 'pending').map((n) => n.id);
@@ -56,6 +59,25 @@ export default function Preferences({
             >
                 {status === 'preferences-updated' && (
                     <p className="status-badge-success mt-4">Preferences saved. Confirm any new lists via email.</p>
+                )}
+
+                {matched_mailing_notice && (
+                    <div className="mt-4 rounded-control border border-teal-deep bg-page-tint p-3 text-sm text-body" role="status">
+                        <p className="font-semibold">We found your existing newsletter subscriptions</p>
+                        <ul className="mt-2 list-disc pl-5">
+                            {matched_mailing_notice.newsletters.map((name) => (
+                                <li key={name}>{name}</li>
+                            ))}
+                        </ul>
+                        <p className="mt-2 text-muted">You can change them below, then save.</p>
+                        <button
+                            type="button"
+                            className="mt-2 text-muted hover:underline"
+                            onClick={() => router.post('/account/mailing/matched-notice/dismiss', {}, { preserveScroll: true })}
+                        >
+                            Dismiss
+                        </button>
+                    </div>
                 )}
 
                 <form onSubmit={submit} className="mt-6 flex flex-col gap-4">

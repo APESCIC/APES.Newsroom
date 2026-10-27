@@ -12,6 +12,7 @@ export type WorkspaceActive =
     | 'pages'
     | 'media'
     | 'newsletters'
+    | 'subscribers'
     | 'membership-plans'
     | 'offers'
     | 'metrics'
@@ -41,6 +42,7 @@ function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: Wo
         links.push({ href: '/staff/pages', label: 'Pages', icon: 'document', active: active === 'pages' });
         links.push({ href: '/staff/media', label: 'Media', icon: 'image', active: active === 'media' });
         links.push({ href: '/staff/newsletters', label: 'Newsletters', icon: 'document', active: active === 'newsletters' });
+        links.push({ href: '/staff/subscribers', label: 'Subscribers', icon: 'user', active: active === 'subscribers' });
         links.push({ href: '/staff/membership-plans', label: 'Plans', icon: 'document', active: active === 'membership-plans' });
         links.push({ href: '/staff/offers', label: 'Offers', icon: 'document', active: active === 'offers' });
         links.push({ href: '/staff/metrics', label: 'Metrics', icon: 'document', active: active === 'metrics' });

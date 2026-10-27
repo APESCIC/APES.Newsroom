@@ -6,6 +6,8 @@ use App\Enums\Role;
 use App\Exceptions\Auth\LdapUnreachableException;
 use App\Models\User;
 use App\Services\Audit\AuditLogger;
+use App\Services\Mailing\LinkMailingContactService;
+use RuntimeException;
 
 /**
  * Reconciles a Cloudron OIDC identity into a local staff User record,
@@ -23,6 +25,7 @@ class StaffReconciler
         private readonly LdapGroupLookup $ldap,
         private readonly UserSessionRevoker $sessions,
         private readonly AuditLogger $audit,
+        private readonly LinkMailingContactService $mailingLinks,
     ) {}
 
     public function reconcile(StaffOidcIdentity $identity): StaffReconcileResult
@@ -80,6 +83,13 @@ class StaffReconciler
             'role' => $role,
             'ldap_group_snapshot' => $groups,
         ])->save();
+
+        // OIDC email is treated as verified — link any mailing-only contact (#506).
+        try {
+            $this->mailingLinks->link($user->fresh() ?? $user);
+        } catch (RuntimeException) {
+            // Conflict (contact owned by another account) must not block staff login.
+        }
 
         $promoted = $previousRole !== null && $role->rank() > $previousRole->rank();
 

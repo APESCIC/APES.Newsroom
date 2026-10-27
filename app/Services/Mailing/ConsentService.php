@@ -14,6 +14,7 @@ use App\Models\Suppression;
 use App\Models\User;
 use App\Notifications\ConfirmMailingListNotification;
 use App\Notifications\ConfirmNewsletterNotification;
+use App\Support\EmailAddress;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -207,10 +208,22 @@ class ConsentService
             return [];
         }
 
-        $email = Str::lower(trim($user->email));
+        $email = EmailAddress::normalize((string) $user->email);
 
         return DB::transaction(function () use ($newsletters, $user, $email, $ip, $userAgent) {
-            $contact = MailingContact::query()->firstOrCreate(['email' => $email], ['user_id' => $user->id]);
+            // Never claim user_id before verification (#506). Opt-outs / suppressions /
+            // confirmed rows win over registration ticks (#506 / #508).
+            $contact = MailingContact::query()->forNormalizedEmail($email)->first()
+                ?? MailingContact::query()->create([
+                    'email' => $email,
+                    'name' => $user->name !== '' ? $user->name : null,
+                    'user_id' => null,
+                ]);
+
+            if (Suppression::query()->where('email', $email)->exists()) {
+                return [];
+            }
+
             $requested = [];
 
             foreach ($newsletters as $newsletter) {
@@ -221,8 +234,14 @@ class ConsentService
                         : ['mailing_contact_id' => $contact->id, 'newsletter_id' => $newsletter->id],
                 );
 
-                if ($subscription->status === SubscriptionStatus::Confirmed) {
-                    continue;
+                if ($subscription->exists) {
+                    if (in_array($subscription->status, [
+                        SubscriptionStatus::Confirmed,
+                        SubscriptionStatus::Unsubscribed,
+                        SubscriptionStatus::Pending,
+                    ], true)) {
+                        continue;
+                    }
                 }
 
                 $subscription->fill([
@@ -255,7 +274,9 @@ class ConsentService
      */
     public function confirmRegistrationRequests(User $user): int
     {
-        $contact = MailingContact::query()->where('email', Str::lower(trim($user->email)))->first();
+        $contact = MailingContact::query()
+            ->forNormalizedEmail((string) $user->email)
+            ->first();
         if (! $contact) {
             return 0;
         }

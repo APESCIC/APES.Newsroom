@@ -32,6 +32,7 @@ class User extends Authenticatable implements HasPasskeys, MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime',
+            'matched_mailing_notice_pending' => 'boolean',
             'password' => 'hashed',
             'role' => Role::class,
             'ldap_group_snapshot' => 'array',

@@ -17,8 +17,12 @@ class MailingContactFactory extends Factory
      */
     public function definition(): array
     {
+        $email = fake()->unique()->safeEmail();
+
         return [
-            'email' => fake()->unique()->safeEmail(),
+            'email' => $email,
+            'email_normalized' => strtolower(trim($email)),
+            'name' => null,
             'user_id' => null,
         ];
     }
