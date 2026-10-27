@@ -24,5 +24,5 @@
     "Public impact: none; public pages are unchanged apart from higher-resolution browser icons",
     "Internal impact: WorkspaceLayout, Components/Workspace (navigation, command palette, Soft glass UI kit), app.css panel tokens, paginated staff posts index, auth.can.reviewPosts shared prop, Playwright and axe CI job, VisualRegressionSeeder"
   ],
-  "pr": 0
+  "pr": 566
 }
