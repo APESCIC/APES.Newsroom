@@ -14,9 +14,10 @@ class OfferController extends Controller
 {
     public function __construct(private readonly OfferService $offers) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
         return Inertia::render('Staff/Offers/Index', [
+            'canManageStripe' => $request->user()->can('access-admin-area'),
             'offers' => Offer::query()
                 ->latest()
                 ->get()

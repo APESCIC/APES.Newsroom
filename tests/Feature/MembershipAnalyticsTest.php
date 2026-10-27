@@ -190,6 +190,12 @@ class MembershipAnalyticsTest extends TestCase
                 ->where('metrics.newsletters.sent', 1)
                 ->where('metrics.newsletters.opened', 1)
                 ->where('metrics.newsletters.clicked', 1)
+                ->where('metrics.subscriptions', null));
+
+        $this->actingAs($admin)
+            ->get(route('staff.metrics.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
                 ->where('metrics.subscriptions.active', 1)
                 ->where('metrics.subscriptions.mrr_pence', $plan->amount_pence));
     }

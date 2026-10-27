@@ -11,6 +11,7 @@ use App\Services\Membership\FakeStripeBillingClient;
 use App\Services\Membership\MembershipBillingService;
 use App\Services\Membership\MembershipService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class MembershipStripeTest extends TestCase
@@ -127,12 +128,12 @@ class MembershipStripeTest extends TestCase
         $this->assertSame(MembershipStatus::Canceled, $membership->fresh()->status);
     }
 
-    public function test_staff_can_update_plan_price_id(): void
+    public function test_admin_can_update_plan_price_id(): void
     {
-        $staff = User::factory()->staff()->create();
+        $admin = User::factory()->admin()->create();
         $plan = MembershipPlan::query()->where('slug', 'monthly')->firstOrFail();
 
-        $this->actingAs($staff)
+        $this->actingAs($admin)
             ->patch(route('staff.membership-plans.update', $plan), [
                 'name' => 'Monthly supporter',
                 'amount_pence' => 600,
@@ -143,6 +144,40 @@ class MembershipStripeTest extends TestCase
 
         $this->assertSame(600, $plan->fresh()->amount_pence);
         $this->assertSame('price_test_monthly', $plan->fresh()->stripe_price_id);
+    }
+
+    public function test_staff_can_edit_plans_but_cannot_see_or_change_the_stripe_price_id(): void
+    {
+        $this->withoutVite();
+        $staff = User::factory()->staff()->create();
+        $plan = MembershipPlan::query()->where('slug', 'monthly')->firstOrFail();
+        $plan->update(['stripe_price_id' => 'price_existing']);
+
+        $this->actingAs($staff)
+            ->get(route('staff.membership-plans.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('canManageStripe', false)
+                ->missing('plans.0.stripe_price_id'))
+            ->assertDontSee('price_existing');
+
+        $this->actingAs($staff)
+            ->patch(route('staff.membership-plans.update', $plan), [
+                'name' => 'Monthly supporter',
+                'amount_pence' => 700,
+                'stripe_price_id' => 'price_from_staff',
+                'is_active' => true,
+            ])
+            ->assertRedirect(route('staff.membership-plans.index'));
+
+        $this->assertSame(700, $plan->fresh()->amount_pence);
+        $this->assertSame('price_existing', $plan->fresh()->stripe_price_id);
+
+        $this->actingAs(User::factory()->admin()->create())
+            ->get(route('staff.membership-plans.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('canManageStripe', true)
+                ->where('plans', fn ($plans) => collect($plans)->contains('stripe_price_id', 'price_existing')));
     }
 
     public function test_invalid_webhook_signature_is_rejected(): void
