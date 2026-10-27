@@ -24,6 +24,7 @@ class AdminUserPresenter
     public function __construct(
         private readonly TwoFactorService $twoFactor,
         private readonly SessionTracker $sessions,
+        private readonly UserErasureService $erasure,
     ) {}
 
     /**
@@ -50,6 +51,8 @@ class AdminUserPresenter
      */
     public function detail(User $user, User $actor): array
     {
+        $canErase = $actor->can('erase', $user);
+
         return [
             ...$this->row($user),
             'lock' => $user->isLocked() ? [
@@ -60,7 +63,15 @@ class AdminUserPresenter
             'can' => [
                 'manage_security' => $actor->can('manageSecurity', $user),
                 'change_role' => $actor->can('changeRole', $user),
+                'update' => $actor->can('update', $user),
+                'resend_verification' => $actor->can('resendVerification', $user)
+                    && ! $user->requiresSso()
+                    && ! $user->hasVerifiedEmail(),
+                'erase' => $canErase,
             ],
+            'erase_mode' => $canErase ? $this->erasure->plannedMode($user) : null,
+            'contact_details' => $user->contactDetails(),
+            'pending_email' => $this->pendingEmail($user),
             'email_verified_at' => $user->email_verified_at?->toIso8601String(),
             'sso_managed' => $user->requiresSso(),
             'role_source' => $user->auth_provider === 'cloudron_oidc'
@@ -92,6 +103,34 @@ class AdminUserPresenter
             'security_events' => $this->securityEvents($user),
             'login_history' => $this->loginHistory($user),
         ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function editable(User $user): array
+    {
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'sso_managed' => $user->auth_provider === 'cloudron_oidc',
+            'pending_email' => $this->pendingEmail($user),
+            'contact_details' => $user->contactDetails(),
+        ];
+    }
+
+    /**
+     * @return array{email: string, expires_at: string|null}|null
+     */
+    private function pendingEmail(User $user): ?array
+    {
+        $pending = $user->emailChangeRequests()->pending()->latest('id')->first();
+
+        return $pending ? [
+            'email' => $pending->new_email,
+            'expires_at' => $pending->expires_at?->toIso8601String(),
+        ] : null;
     }
 
     /**

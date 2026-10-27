@@ -1,4 +1,4 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
 
@@ -67,7 +67,8 @@ export default function Index({ members, filters }: { members: Paginator<MemberR
             <div className="mx-auto max-w-4xl flex flex-col gap-6">
                 <p className="text-sm text-muted">
                     Search public members by name or email. Filter by free or paying status and review recent signed-in
-                    reading activity.
+                    reading activity. To edit an account, change its security or delete it, use{' '}
+                    <Link href="/admin/users" className="text-body underline">Users</Link>.
                 </p>
 
                 <form className="glass-form-panel flex flex-col gap-3 sm:flex-row sm:items-end" onSubmit={applyFilters}>

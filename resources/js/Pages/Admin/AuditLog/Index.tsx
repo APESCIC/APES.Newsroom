@@ -9,6 +9,7 @@ export type AuditFilters = {
     actor: string;
     action: string;
     subject_type: string;
+    subject_id: string;
     from: string;
     to: string;
     ip: string;
@@ -81,6 +82,10 @@ export default function Index({
                                 </option>
                             ))}
                         </select>
+                    </label>
+                    <label className="text-sm font-bold text-body">
+                        Subject id
+                        <input inputMode="numeric" className="form-input mt-1" value={values.subject_id} onChange={(e) => set('subject_id')(e.target.value)} />
                     </label>
                     <label className="text-sm font-bold text-body">
                         From

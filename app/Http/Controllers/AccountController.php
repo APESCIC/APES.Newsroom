@@ -4,13 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Enums\SubscriptionStatus;
 use App\Http\Requests\UpdateAccountRequest;
-use App\Models\AuditLog;
 use App\Models\MailingContact;
 use App\Models\MailingListSubscription;
 use App\Models\MembershipPlan;
 use App\Services\Account\AccountDeletionPolicy;
 use App\Services\Account\AccountEmailChangeService;
-use App\Services\Account\AccountMailingDeletion;
+use App\Services\Account\AccountEraser;
 use App\Services\Audit\AuditLogger;
 use App\Services\Auth\RecentAuthentication;
 use App\Services\Integrations\IntegrationSecrets;
@@ -20,7 +19,6 @@ use App\Support\Integrations\IntegrationDefinitions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -30,7 +28,7 @@ class AccountController extends Controller
     public function __construct(
         private readonly AccountDeletionPolicy $deletionPolicy,
         private readonly AccountEmailChangeService $emailChanges,
-        private readonly AccountMailingDeletion $mailingDeletion,
+        private readonly AccountEraser $eraser,
         private readonly MembershipService $memberships,
         private readonly IntegrationSecrets $secrets,
     ) {}
@@ -44,6 +42,7 @@ class AccountController extends Controller
 
         return Inertia::render('Account/Profile', [
             'user' => $user->only(['name', 'email', 'role', 'auth_provider']),
+            'contact_details' => $user->contactDetails(),
             'pending_email' => $pendingEmail ? [
                 'email' => $pendingEmail->new_email,
                 'expires_at' => $pendingEmail->expires_at->toIso8601String(),
@@ -146,6 +145,7 @@ class AccountController extends Controller
                 'email_verified_at' => $user->email_verified_at?->toIso8601String(),
                 'created_at' => $user->created_at?->toIso8601String(),
             ],
+            'contact_details' => $user->contactDetails(),
             'membership' => $user->membership ? [
                 'status' => $user->membership->status->value,
                 'interval' => $user->membership->interval,
@@ -177,19 +177,7 @@ class AccountController extends Controller
         ]);
         $keepSubscriptions = $request->boolean('keep_newsletter_subscriptions', true);
 
-        $user = $request->user();
-        $deletionBlockReason = DB::transaction(function () use ($user, $keepSubscriptions, $request) {
-            $lockedUser = $user->newQuery()->lockForUpdate()->findOrFail($user->id);
-            $reason = $this->deletionPolicy->blockingReason($lockedUser);
-
-            if ($reason === null) {
-                $this->mailingDeletion->handleBeforeUserDelete($lockedUser, $keepSubscriptions, $request);
-                AuditLog::query()->where('actor_id', $lockedUser->id)->selfService()->update(['actor_id' => null]);
-                $lockedUser->delete();
-            }
-
-            return $reason;
-        });
+        $deletionBlockReason = $this->eraser->deleteIfAllowed($request->user(), $keepSubscriptions, $request);
 
         if ($deletionBlockReason !== null) {
             return back()->withErrors(['delete_account' => $deletionBlockReason]);

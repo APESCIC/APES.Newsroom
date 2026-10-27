@@ -2,6 +2,7 @@
 
 use App\Enums\Channel;
 use App\Enums\Role;
+use App\Http\Controllers\Account\ContactDetailsController as AccountContactDetailsController;
 use App\Http\Controllers\Account\EmailChangeController as AccountEmailChangeController;
 use App\Http\Controllers\Account\MembershipCheckoutController;
 use App\Http\Controllers\Account\PasskeyController as AccountPasskeyController;
@@ -114,6 +115,8 @@ Route::get('/{channel}', [ChannelController::class, 'show'])
 Route::middleware(['auth', 'verified'])->prefix('account')->name('account.')->group(function () {
     Route::get('/', [AccountController::class, 'show'])->name('show');
     Route::patch('/', [AccountController::class, 'update'])->name('update');
+    Route::patch('/contact-details', [AccountContactDetailsController::class, 'update'])
+        ->middleware('throttle:contact-details')->name('contact-details.update');
     Route::post('/email/resend', [AccountEmailChangeController::class, 'resend'])
         ->middleware('throttle:email-change')
         ->name('email.resend');
@@ -228,7 +231,11 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Admin->value])
         Route::get('/audit-log/export', [AuditLogController::class, 'export'])->middleware('auth.recent')->name('audit-log.export');
         Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
         Route::get('/users/{user}', [AdminUserController::class, 'show'])->whereNumber('user')->name('users.show');
-        Route::middleware('auth.recent')->group(function () {
+        Route::get('/users/{user}/edit', [AdminUserController::class, 'edit'])->whereNumber('user')->name('users.edit');
+        Route::middleware(['auth.recent', 'throttle:admin-user-actions'])->group(function () {
+            Route::patch('/users/{user}', [AdminUserController::class, 'update'])->whereNumber('user')->name('users.update');
+            Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->whereNumber('user')->name('users.destroy');
+            Route::post('/users/{user}/verification', [AdminUserSecurityController::class, 'resendVerification'])->whereNumber('user')->name('users.verification');
             Route::post('/users/{user}/lock', [AdminUserSecurityController::class, 'lock'])->whereNumber('user')->name('users.lock');
             Route::post('/users/{user}/unlock', [AdminUserSecurityController::class, 'unlock'])->whereNumber('user')->name('users.unlock');
             Route::post('/users/{user}/sign-out', [AdminUserSecurityController::class, 'signOut'])->whereNumber('user')->name('users.sign-out');

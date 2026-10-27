@@ -46,6 +46,22 @@ class UserFactory extends Factory
         ]);
     }
 
+    public function withContactDetails(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'address_line1' => '10 Example Street',
+            'address_line2' => 'Flat 2',
+            'address_town' => 'Leeds',
+            'address_county' => 'West Yorkshire',
+            'address_postcode' => 'LS1 4AP',
+            'address_country' => 'GB',
+            'mobile_number' => '+447700900123',
+            'whatsapp_type' => 'number',
+            'whatsapp_value' => '+447700900123',
+            'whatsapp_same_as_mobile' => true,
+        ]);
+    }
+
     public function staff(): static
     {
         return $this->state(fn (array $attributes) => [

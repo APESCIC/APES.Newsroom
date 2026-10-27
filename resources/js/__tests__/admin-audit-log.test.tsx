@@ -6,7 +6,7 @@ import type { Paginator } from '../Components/Admin/types';
 import AuditLogIndex, { type AuditEntry, type AuditFilters } from '../Pages/Admin/AuditLog/Index';
 import { getInertiaMock, setMockPage } from '../test/inertia';
 
-const emptyFilters: AuditFilters = { actor: '', action: '', subject_type: '', from: '', to: '', ip: '' };
+const emptyFilters: AuditFilters = { actor: '', action: '', subject_type: '', subject_id: '', from: '', to: '', ip: '' };
 
 function page(data: AuditEntry[], overrides: Partial<Paginator<AuditEntry>> = {}): Paginator<AuditEntry> {
     return {

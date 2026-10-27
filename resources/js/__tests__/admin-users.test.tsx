@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { EMPTY_CONTACT_DETAILS } from '../Components/Account/ContactDetailsFields';
 import UsersIndex, { type UserFilters } from '../Pages/Admin/Users/Index';
 import UsersShow from '../Pages/Admin/Users/Show';
 import type { UserDetail, UserRow } from '../Pages/Admin/Users/types';
@@ -24,7 +25,10 @@ const row: UserRow = {
 const detail: UserDetail = {
     ...row,
     lock: null,
-    can: { manage_security: true, change_role: false },
+    can: { manage_security: true, change_role: false, update: true, resend_verification: false, erase: false },
+    erase_mode: null,
+    contact_details: EMPTY_CONTACT_DETAILS,
+    pending_email: null,
     email_verified_at: '2026-10-01T10:00:00+00:00',
     sso_managed: false,
     role_source: { type: 'in_app', groups: [] },
@@ -103,9 +107,9 @@ describe('Admin users pages', () => {
 
         const access = within(screen.getByRole('region', { name: 'Account access' }));
         expect(access.getByText('Active. The account can sign in.')).toBeInTheDocument();
-        await user.click(access.getByRole('button', { name: 'Lock account' }));
+        await user.click(access.getByRole('button', { name: 'Lock (suspend) account' }));
 
-        const dialog = within(screen.getByRole('dialog', { name: 'Lock this account?' }));
+        const dialog = within(screen.getByRole('dialog', { name: 'Lock (suspend) this account?' }));
         await user.type(dialog.getByLabelText('Reason (recorded in the audit log)'), 'Suspicious sign-ins');
         await user.click(dialog.getByRole('button', { name: 'Lock account' }));
 
@@ -138,7 +142,7 @@ describe('Admin users pages', () => {
 
     it('lets a super admin remove a stale elevated role and explains the directory otherwise', async () => {
         const user = userEvent.setup();
-        const { unmount } = render(<UsersShow user={{ ...detail, role: 'staff', can: { manage_security: true, change_role: true } }} />);
+        const { unmount } = render(<UsersShow user={{ ...detail, role: 'staff', can: { ...detail.can, manage_security: true, change_role: true } }} />);
 
         const account = within(screen.getByRole('region', { name: 'Account' }));
         await user.click(account.getByRole('button', { name: 'Change role to Public' }));
@@ -163,15 +167,82 @@ describe('Admin users pages', () => {
         const access = within(screen.getByRole('region', { name: 'Account access' }));
         expect(access.getByText(/by Alex Admin · Phished/)).toBeInTheDocument();
         expect(access.getByRole('button', { name: 'Unlock account' })).toBeInTheDocument();
-        expect(access.queryByRole('button', { name: 'Lock account' })).not.toBeInTheDocument();
+        expect(access.queryByRole('button', { name: 'Lock (suspend) account' })).not.toBeInTheDocument();
     });
 
     it('hides security actions the admin may not take', () => {
-        render(<UsersShow user={{ ...detail, can: { manage_security: false, change_role: false } }} />);
+        render(<UsersShow user={{ ...detail, can: { ...detail.can, manage_security: false, change_role: false } }} />);
 
         const access = within(screen.getByRole('region', { name: 'Account access' }));
         expect(access.queryByRole('button')).not.toBeInTheDocument();
         expect(access.getByText('You cannot change security settings for this account.')).toBeInTheDocument();
+    });
+
+    it('links the user list to the Members CRM', () => {
+        render(<UsersIndex filters={filters} roles={['public']} users={{ data: [], current_page: 1, last_page: 1, per_page: 25, total: 0, prev_page_url: null, next_page_url: null }} />);
+
+        const intro = screen.getByText(/For membership plans and reading activity/);
+        expect(within(intro).getByRole('link', { name: 'Members' })).toHaveAttribute('href', '/admin/members');
+    });
+
+    it('shows private contact details and an edit link', () => {
+        render(
+            <UsersShow
+                user={{
+                    ...detail,
+                    contact_details: {
+                        ...EMPTY_CONTACT_DETAILS,
+                        address_line1: '10 Example Street',
+                        address_postcode: 'LS1 4AP',
+                        mobile_number: '+447700900123',
+                        whatsapp_type: 'username',
+                        whatsapp_value: 'paula',
+                    },
+                }}
+            />,
+        );
+
+        const contact = within(screen.getByRole('region', { name: 'Contact details' }));
+        expect(contact.getByText('10 Example Street')).toBeInTheDocument();
+        expect(contact.getByText('+447700900123')).toBeInTheDocument();
+        expect(contact.getByText('@paula')).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Edit details' })).toHaveAttribute('href', '/admin/users/9/edit');
+    });
+
+    it('resends verification after asking for a reason', async () => {
+        const user = userEvent.setup();
+        render(<UsersShow user={{ ...detail, email_verified: false, can: { ...detail.can, resend_verification: true } }} />);
+
+        await user.click(screen.getByRole('button', { name: 'Resend verification email' }));
+        const dialog = within(screen.getByRole('dialog', { name: 'Resend the verification email?' }));
+        await user.type(dialog.getByLabelText('Reason (recorded in the audit log)'), 'Lost the email');
+        await user.click(dialog.getByRole('button', { name: 'Send email' }));
+
+        expect(getInertiaMock().post).toHaveBeenCalledWith('/admin/users/9/verification', { reason: 'Lost the email' }, expect.anything());
+    });
+
+    it('deletes a user only after a reason and typed email', async () => {
+        const user = userEvent.setup();
+        render(<UsersShow user={{ ...detail, can: { ...detail.can, erase: true }, erase_mode: 'anonymised' }} />);
+
+        const region = within(screen.getByRole('region', { name: 'Delete user' }));
+        expect(region.getByText(/anonymised instead/)).toBeInTheDocument();
+        await user.click(region.getByRole('button', { name: 'Delete user' }));
+
+        const dialog = within(screen.getByRole('dialog', { name: 'Delete this user?' }));
+        await user.type(dialog.getByLabelText('Type paula@example.test to confirm'), 'paula@example.test');
+        await user.type(dialog.getByLabelText('Reason (recorded in the audit log)'), 'Erasure request');
+        await user.click(dialog.getByRole('button', { name: 'Anonymise user' }));
+
+        expect(getInertiaMock().delete).toHaveBeenCalledWith('/admin/users/9', expect.objectContaining({
+            data: { reason: 'Erasure request', confirm_email: 'paula@example.test' },
+        }));
+    });
+
+    it('explains when only a super admin can delete', () => {
+        render(<UsersShow user={detail} />);
+
+        expect(within(screen.getByRole('region', { name: 'Delete user' })).getByText('Only a super admin can delete this account.')).toBeInTheDocument();
     });
 
     it('explains that SSO accounts get their second factor from Cloudron', () => {

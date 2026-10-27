@@ -32,8 +32,8 @@ export function availableActions(user: UserDetail): SecurityAction[] {
         : [
               {
                   key: 'lock',
-                  label: 'Lock account',
-                  title: 'Lock this account?',
+                  label: 'Lock (suspend) account',
+                  title: 'Lock (suspend) this account?',
                   description: `${user.name} will be signed out everywhere and blocked from every sign-in method and API token until unlocked. They will be told by email.`,
                   confirmLabel: 'Lock account',
                   url: `${base}/lock`,
@@ -52,6 +52,18 @@ export function availableActions(user: UserDetail): SecurityAction[] {
             destructive: false,
         },
     ];
+
+    if (user.can.resend_verification) {
+        credentials.push({
+            key: 'verification',
+            label: 'Resend verification email',
+            title: 'Resend the verification email?',
+            description: `A new link to verify ${user.email} is sent to that address.`,
+            confirmLabel: 'Send email',
+            url: `${base}/verification`,
+            destructive: false,
+        });
+    }
 
     if (!user.sso_managed && user.sign_in_method === 'password') {
         credentials.push({

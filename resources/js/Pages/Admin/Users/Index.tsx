@@ -1,9 +1,10 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import FilterBar from '../../../Components/Admin/FilterBar';
 import Pagination from '../../../Components/Admin/Pagination';
 import type { Paginator } from '../../../Components/Admin/types';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
+import type { SharedPageProps } from '../../../types/page';
 import { methodLabel, roleLabel, type Role, type UserRow } from './types';
 
 export type UserFilters = { q: string; role: string; method: string; status: string; security: string };
@@ -11,11 +12,21 @@ export type UserFilters = { q: string; role: string; method: string; status: str
 export default function Index({ filters, users, roles }: { filters: UserFilters; users: Paginator<UserRow>; roles: Role[] }) {
     const [values, setValues] = useState<UserFilters>(filters);
     const set = (key: keyof UserFilters) => (value: string) => setValues((current) => ({ ...current, [key]: value }));
+    const { flash } = usePage<SharedPageProps>().props;
 
     return (
         <WorkspaceLayout area="Admin" active="users" title="Users" subtitle="Find accounts and review their security">
             <Head title="Users" />
             <div className="mx-auto flex max-w-5xl flex-col gap-6">
+                {flash?.status && (
+                    <p role="status" className="workspace-glass-card px-4 py-3 text-sm font-semibold text-body">
+                        {flash.status}
+                    </p>
+                )}
+                <p className="text-sm text-muted">
+                    Every account, with sign-in, security and contact details. For membership plans and reading activity of public
+                    readers, see <Link href="/admin/members" className="text-body underline">Members</Link>.
+                </p>
                 <FilterBar action="/admin/users" values={values} label="Filter users">
                     <label className="text-sm font-bold text-body">
                         Search
@@ -47,7 +58,7 @@ export default function Index({ filters, users, roles }: { filters: UserFilters;
                             <option value="">Any</option>
                             <option value="verified">Email verified</option>
                             <option value="unverified">Email not verified</option>
-                            <option value="locked">Locked</option>
+                            <option value="locked">Locked (suspended)</option>
                         </select>
                     </label>
                     <label className="text-sm font-bold text-body">

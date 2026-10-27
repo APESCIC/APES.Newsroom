@@ -16,12 +16,38 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\LaravelPasskeys\Models\Concerns\HasPasskeys;
 use Spatie\LaravelPasskeys\Models\Concerns\InteractsWithPasskeys;
 
-#[Fillable(['name', 'email', 'password', 'auth_provider', 'external_id'])]
-#[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes', 'two_factor_last_used_step'])]
+#[Fillable([
+    'name', 'email', 'password', 'auth_provider', 'external_id',
+    'address_line1', 'address_line2', 'address_town', 'address_county', 'address_postcode', 'address_country',
+    'mobile_number', 'whatsapp_type', 'whatsapp_value', 'whatsapp_same_as_mobile',
+])]
+#[Hidden([
+    'password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes', 'two_factor_last_used_step',
+    'address_line1', 'address_line2', 'address_town', 'address_county', 'address_postcode', 'address_country',
+    'mobile_number', 'whatsapp_type', 'whatsapp_value', 'whatsapp_same_as_mobile',
+])]
 class User extends Authenticatable implements HasPasskeys, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, InteractsWithPasskeys, Notifiable;
+
+    /**
+     * Private contact columns. Only shown to the account holder and Admin+.
+     *
+     * @var list<string>
+     */
+    public const CONTACT_FIELDS = [
+        'address_line1',
+        'address_line2',
+        'address_town',
+        'address_county',
+        'address_postcode',
+        'address_country',
+        'mobile_number',
+        'whatsapp_type',
+        'whatsapp_value',
+        'whatsapp_same_as_mobile',
+    ];
 
     /**
      * Get the attributes that should be cast.
@@ -42,6 +68,47 @@ class User extends Authenticatable implements HasPasskeys, MustVerifyEmail
             'two_factor_confirmed_at' => 'datetime',
             'two_factor_last_used_step' => 'integer',
             'locked_at' => 'datetime',
+            'address_line1' => 'encrypted',
+            'address_line2' => 'encrypted',
+            'address_town' => 'encrypted',
+            'address_county' => 'encrypted',
+            'address_postcode' => 'encrypted',
+            'mobile_number' => 'encrypted',
+            'whatsapp_value' => 'encrypted',
+            'whatsapp_same_as_mobile' => 'boolean',
+        ];
+    }
+
+    /**
+     * @return array{address_line1: ?string, address_line2: ?string, address_town: ?string, address_county: ?string, address_postcode: ?string, address_country: string, mobile_number: ?string, whatsapp_type: ?string, whatsapp_value: ?string, whatsapp_same_as_mobile: bool}
+     */
+    public function contactDetails(): array
+    {
+        return [
+            'address_line1' => $this->address_line1,
+            'address_line2' => $this->address_line2,
+            'address_town' => $this->address_town,
+            'address_county' => $this->address_county,
+            'address_postcode' => $this->address_postcode,
+            'address_country' => $this->address_country ?? 'GB',
+            'mobile_number' => $this->mobile_number,
+            'whatsapp_type' => $this->whatsapp_type,
+            'whatsapp_value' => $this->whatsapp_value,
+            'whatsapp_same_as_mobile' => (bool) $this->whatsapp_same_as_mobile,
+        ];
+    }
+
+    /**
+     * Values for clearing every contact column during erasure.
+     *
+     * @return array<string, mixed>
+     */
+    public static function clearedContactDetails(): array
+    {
+        return [
+            ...array_fill_keys(self::CONTACT_FIELDS, null),
+            'address_country' => 'GB',
+            'whatsapp_same_as_mobile' => false,
         ];
     }
 

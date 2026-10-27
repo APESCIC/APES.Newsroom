@@ -4,12 +4,20 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\Role;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\User;
+use App\Services\Account\AccountEmailChangeService;
 use App\Services\Admin\AdminUserPresenter;
+use App\Services\Admin\UserErasureService;
+use App\Services\Audit\AuditLogger;
+use App\Support\Account\ContactDetails;
+use App\Support\EmailAddress;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -61,6 +69,72 @@ class UserController extends Controller
         return Inertia::render('Admin/Users/Show', [
             'user' => $this->presenter->detail($user, $request->user()),
         ]);
+    }
+
+    public function edit(User $user): Response
+    {
+        Gate::authorize('update', $user);
+
+        return Inertia::render('Admin/Users/Edit', [
+            'user' => $this->presenter->editable($user),
+        ]);
+    }
+
+    public function update(UpdateUserRequest $request, User $user, AccountEmailChangeService $emailChanges, AuditLogger $audit): RedirectResponse
+    {
+        $validated = $request->validated();
+        $contact = ContactDetails::only($validated);
+        $contactChanged = ContactDetails::changedGroups($user, $contact);
+        $nameChanged = $validated['name'] !== $user->name;
+        $emailChanged = $validated['email'] !== EmailAddress::normalize((string) $user->email);
+
+        if (! $nameChanged && ! $emailChanged && $contactChanged === []) {
+            return to_route('admin.users.show', $user)->with('status', 'No changes to save.');
+        }
+
+        $payload = ['reason' => $validated['reason']];
+
+        if ($nameChanged) {
+            $payload['name'] = ['from' => $user->name, 'to' => $validated['name']];
+        }
+
+        if ($contactChanged !== []) {
+            $user->forceFill($contact)->save();
+            $payload['contact_details_changed'] = $contactChanged;
+        }
+
+        if ($emailChanged) {
+            $emailChanges->request($user, ['name' => $validated['name'], 'email' => $validated['email']]);
+            $payload['email_change_requested'] = true;
+        } elseif ($nameChanged) {
+            $user->forceFill(['name' => $validated['name']])->save();
+        }
+
+        $audit->record($request->user(), 'user.updated', $user, $payload, $request);
+
+        return to_route('admin.users.show', $user)->with('status', $emailChanged
+            ? 'Changes saved. The new email address applies once the user confirms it from their inbox.'
+            : 'Changes saved.');
+    }
+
+    public function destroy(Request $request, User $user, UserErasureService $erasure): RedirectResponse
+    {
+        Gate::authorize('erase', $user);
+
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'min:3', 'max:500'],
+            'confirm_email' => ['required', 'string'],
+        ]);
+
+        if (EmailAddress::normalize($validated['confirm_email']) !== EmailAddress::normalize((string) $user->email)) {
+            throw ValidationException::withMessages(['confirm_email' => 'Type the user\'s email address exactly to confirm.']);
+        }
+
+        $mode = $erasure->erase($user, $request->user(), trim($validated['reason']), $request);
+
+        return to_route('admin.users.index')->with('status', $mode === UserErasureService::MODE_DELETED
+            ? 'User deleted.'
+            : 'User anonymised and locked. Their authored content is kept under "Deleted user".');
     }
 
     /**
