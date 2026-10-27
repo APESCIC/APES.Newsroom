@@ -14,9 +14,9 @@ the server environment (Cloudron-injected or needed before the app boots).
 
 | Provider | Key | Env var | Config key | Consumer | Management |
 |----------|-----|---------|------------|----------|------------|
-| Mailgun | API key | `MAILGUN_API_KEY` | `services.mailgun.secret` | `MailgunSenderCheck` (read-only sender domain checks) | Admin-managed |
-| Mailgun | Sending domain | `MAILGUN_DOMAIN` | `services.mailgun.domain` | `MailgunSenderCheck` | Admin-managed |
-| Mailgun | API endpoint | `MAILGUN_ENDPOINT` | `services.mailgun.endpoint` | `MailgunSenderCheck` | Admin-managed |
+| Mailgun | API key | `MAILGUN_API_KEY` | `services.mailgun.secret` | `MailgunDomainService` (read-only domain lookups for `MailgunSenderCheck` and [email sending domains](email-sending-domains.md)) | Admin-managed |
+| Mailgun | Sending domain | `MAILGUN_DOMAIN` | `services.mailgun.domain` | `MailgunDomainService` | Admin-managed |
+| Mailgun | API endpoint | `MAILGUN_ENDPOINT` | `services.mailgun.endpoint` | `MailgunDomainService` | Admin-managed |
 | Stripe | Secret key | `STRIPE_SECRET` | `services.stripe.secret` | `StripeBillingClient` binding, `AccountController` | Admin-managed |
 | Stripe | Publishable key | `STRIPE_PUBLISHABLE` | `services.stripe.publishable` | Not read by code yet | Admin-managed |
 | Stripe | Webhook signing secret | `STRIPE_WEBHOOK_SECRET` | `services.stripe.webhook_secret` | `StripeApiBillingClient::constructWebhookEvent` | Admin-managed |
