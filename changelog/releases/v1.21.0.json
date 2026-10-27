@@ -1,0 +1,28 @@
+{
+  "version": "v1.21.0",
+  "slug": "release-v1-21-0",
+  "released_at": "2026-10-27",
+  "previous_version": "v1.20.0",
+  "theme": "Staff and admin dashboards",
+  "change_types": ["added", "changed"],
+  "topic_tags": ["internal-only", "accessibility"],
+  "summary": "The staff and admin panels now open on dashboards, keep their navigation on missing or restricted pages, and make long lists and destructive actions easier and safer to use.",
+  "detailed_changes": [
+    "A staff dashboard at /staff shows draft, review, scheduled and recently published counts that link to filtered post lists, items needing attention, recent activity, reader insights and quick actions for a new post, page or newsletter (#351).",
+    "An admin dashboard at /admin shows moderation queue sizes, the latest release, settings shortcuts and recent audit events (#352).",
+    "Dashboard is the first item in each panel's sidebar, and the Staff/Admin switch, breadcrumbs and Ctrl K search now lead to the dashboards (#351, #352).",
+    "Unknown /staff and /admin addresses show a page-not-found message inside the panel, and pages a role cannot open explain which role is needed, both with a link back to the dashboard; public error pages are unchanged (#354).",
+    "Every panel tab title now reads 'Page - Staff - APES Newsroom' or 'Page - Admin - APES Newsroom', and sidebar labels match page headings, for example Membership plans, Media library and Sending domains (#355).",
+    "Pages and Newsletters are paginated with search kept in the address bar; Posts, Pages and Newsletters move row actions into a menu, and delete, unpublish and archive ask for confirmation (#356).",
+    "Stripe price ids, test-mode revenue and webhook signing details are shown only to admins, inside an Advanced section, and are no longer sent to staff (#357).",
+    "Keyboard focus returns to the row menu when a confirmation is cancelled, and automated accessibility, layout and screenshot checks now cover the dashboards and the in-panel error pages (#359, #360)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff, /admin, /staff/*, /admin/*",
+    "User groups affected: staff, admins and super admins",
+    "Public impact: none",
+    "Internal impact: new Staff and Admin DashboardControllers, PanelNotFoundController panel fallback routes, PanelErrorPage and Errors/Panel for in-panel 403/404, WorkspaceLayout owns the document title, paginated Pages and Newsletters indexes, admin-only Stripe and MRR props, ModerationCounts service, MetricsDashboard split by section, Playwright panels spec"
+  ],
+  "pr": 0
+}

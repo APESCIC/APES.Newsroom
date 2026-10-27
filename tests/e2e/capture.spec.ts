@@ -16,12 +16,12 @@ test.describe('capture panel screenshots', () => {
             await loginAs(page, panelPage.role);
 
             await page.setViewportSize({ width: 1280, height: 900 });
-            await openPanelPage(page, panelPage.path);
+            await openPanelPage(page, panelPage.path, panelPage.status);
             await fitViewportToPage(page);
             await page.screenshot({ path: path.join(captureDir!, `${panelPage.name}.jpg`), quality: 70 });
 
             await page.setViewportSize({ width: 375, height: 812 });
-            await openPanelPage(page, panelPage.path);
+            await openPanelPage(page, panelPage.path, panelPage.status);
             await page.screenshot({ path: path.join(captureDir!, `${panelPage.name}-375.jpg`), quality: 70 });
         });
     }
