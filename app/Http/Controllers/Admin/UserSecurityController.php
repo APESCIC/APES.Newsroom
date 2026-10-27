@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\Admin\AccountLockService;
 use App\Services\Admin\AdminSecurityActions;
 use App\Services\Admin\UserRoleChanger;
+use App\Services\Audit\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -105,6 +106,22 @@ class UserSecurityController extends Controller
         $removed = $this->actions->removePasskeys($user, $request->user(), $reason, $request);
 
         return back()->with('status', "Removed {$removed} passkey".($removed === 1 ? '' : 's').'.');
+    }
+
+    public function resendVerification(Request $request, User $user, AuditLogger $audit): RedirectResponse
+    {
+        Gate::authorize('resendVerification', $user);
+        $reason = $this->reason($request);
+        $this->refuseForSso($user);
+
+        if ($user->hasVerifiedEmail()) {
+            throw ValidationException::withMessages(['reason' => 'This email address is already verified.']);
+        }
+
+        $user->sendEmailVerificationNotification();
+        $audit->record($request->user(), 'user.verification_resent', $user, ['reason' => $reason], $request);
+
+        return back()->with('status', 'Verification email sent.');
     }
 
     public function changeRole(Request $request, User $user, UserRoleChanger $roles): RedirectResponse

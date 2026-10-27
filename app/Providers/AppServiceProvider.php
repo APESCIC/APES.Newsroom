@@ -100,6 +100,18 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute($perMinute)->by('media-upload:'.($request->user()?->id ?: $request->ip()));
         });
 
+        RateLimiter::for('admin-user-actions', function (Request $request) {
+            $target = $request->route('user');
+            $targetId = $target instanceof User ? $target->getKey() : (string) $target;
+
+            return [
+                Limit::perMinute(10)->by('admin-user-actions:'.$request->user()?->id.':'.$targetId),
+                Limit::perMinute(30)->by('admin-user-actions:'.$request->user()?->id),
+            ];
+        });
+
+        RateLimiter::for('contact-details', fn (Request $request) => Limit::perMinute(10)->by('contact-details:'.$request->user()?->id));
+
         $this->configureAuthRateLimits();
     }
 

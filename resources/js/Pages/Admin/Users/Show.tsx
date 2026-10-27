@@ -1,10 +1,50 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
+import type { ContactDetailsValues } from '../../../Components/Account/ContactDetailsFields';
+import UserEraseControl from '../../../Components/Admin/UserEraseControl';
 import UserRoleControl from '../../../Components/Admin/UserRoleControl';
 import UserSecurityActions from '../../../Components/Admin/UserSecurityActions';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
 import type { SharedPageProps } from '../../../types/page';
-import { formatWhen, methodLabel, resultLabel, roleLabel, type UserDetail } from './types';
+import { eventLabel, formatWhen, methodLabel, resultLabel, roleLabel, type UserDetail } from './types';
+
+function whatsappSummary(details: ContactDetailsValues): string | null {
+    if (details.whatsapp_same_as_mobile) return 'Same as mobile';
+    if (!details.whatsapp_value) return null;
+
+    return details.whatsapp_type === 'username' ? `@${details.whatsapp_value}` : details.whatsapp_value;
+}
+
+function ContactDetailsSummary({ details }: { details: ContactDetailsValues }) {
+    const address = [
+        details.address_line1,
+        details.address_line2,
+        details.address_town,
+        details.address_county,
+        details.address_postcode,
+        details.address_line1 || details.address_postcode ? details.address_country : null,
+    ].filter(Boolean);
+    const whatsapp = whatsappSummary(details);
+
+    return (
+        <dl className="grid gap-3 text-sm sm:grid-cols-3">
+            <div>
+                <dt className="text-muted">Postal address</dt>
+                <dd className="text-body">
+                    {address.length === 0 ? 'Not given' : address.map((line) => <span key={line} className="block">{line}</span>)}
+                </dd>
+            </div>
+            <div>
+                <dt className="text-muted">Mobile</dt>
+                <dd className="text-body">{details.mobile_number ?? 'Not given'}</dd>
+            </div>
+            <div>
+                <dt className="text-muted">WhatsApp</dt>
+                <dd className="text-body">{whatsapp ?? 'Not given'}</dd>
+            </div>
+        </dl>
+    );
+}
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
     return (
@@ -29,9 +69,16 @@ export default function Show({ user }: { user: UserDetail }) {
             title={user.name}
             subtitle={user.email}
             actions={
-                <Link href="/admin/users" className="button-secondary">
-                    All users
-                </Link>
+                <div className="flex flex-wrap gap-3">
+                    {user.can.update && (
+                        <Link href={`/admin/users/${user.id}/edit`} className="button-primary">
+                            Edit details
+                        </Link>
+                    )}
+                    <Link href="/admin/users" className="button-secondary">
+                        All users
+                    </Link>
+                </div>
             }
         >
             <Head title={`${user.name} · Users`} />
@@ -82,7 +129,18 @@ export default function Show({ user }: { user: UserDetail }) {
                             <dd className="text-body">{formatWhen(user.created_at)}</dd>
                         </div>
                     </dl>
+                    {user.pending_email && (
+                        <p className="text-sm text-body" role="status">
+                            Waiting for confirmation of a change to <strong>{user.pending_email.email}</strong>
+                            {user.pending_email.expires_at ? ` (link expires ${formatWhen(user.pending_email.expires_at)})` : ''}.
+                        </p>
+                    )}
                     <UserRoleControl user={user} />
+                </Section>
+
+                <Section title="Contact details">
+                    <p className="text-sm text-muted">Private. Visible only to the account holder and administrators.</p>
+                    <ContactDetailsSummary details={user.contact_details} />
                 </Section>
 
                 <Section title="Second factor">
@@ -194,7 +252,14 @@ export default function Show({ user }: { user: UserDetail }) {
                         <ul className="flex flex-col gap-2 text-sm">
                             {user.security_events.map((event) => (
                                 <li key={event.id} className="flex flex-wrap justify-between gap-2">
-                                    <span className="font-mono text-body">{event.action}</span>
+                                    <span className="text-body">
+                                        <span className="font-mono">{eventLabel(event.action)}</span>
+                                        {event.payload.length > 0 && (
+                                            <span className="block text-xs text-muted">
+                                                {event.payload.map((pair) => `${pair.key}: ${pair.value}`).join(' · ')}
+                                            </span>
+                                        )}
+                                    </span>
                                     <span className="text-muted">
                                         {event.actor ? event.actor.name : 'System'} · {formatWhen(event.created_at)}
                                     </span>
@@ -202,9 +267,18 @@ export default function Show({ user }: { user: UserDetail }) {
                             ))}
                         </ul>
                     )}
-                    <Link href={`/admin/audit-log?actor=${user.id}`} className="text-sm text-body underline">
-                        Everything this user did in the audit log
-                    </Link>
+                    <div className="flex flex-wrap gap-4">
+                        <Link href={`/admin/audit-log?actor=${user.id}`} className="text-sm text-body underline">
+                            Everything this user did in the audit log
+                        </Link>
+                        <Link href={`/admin/audit-log?subject_type=User&subject_id=${user.id}`} className="text-sm text-body underline">
+                            Everything done to this account
+                        </Link>
+                    </div>
+                </Section>
+
+                <Section title="Delete user">
+                    <UserEraseControl user={user} />
                 </Section>
             </div>
         </WorkspaceLayout>

@@ -1,0 +1,29 @@
+{
+  "version": "v1.19.0",
+  "slug": "release-v1-19-0",
+  "released_at": "2026-10-27",
+  "previous_version": "v1.18.0",
+  "theme": "User management and account contact details",
+  "change_types": ["added", "changed", "security"],
+  "topic_tags": ["compliance", "public-facing"],
+  "summary": "Accounts can hold an optional, encrypted postal address, mobile number and WhatsApp contact, and admins can edit, re-verify and safely delete users from the Users screens, with every action audited.",
+  "detailed_changes": [
+    "Accounts have optional UK postal address, mobile number and WhatsApp (number or username, or 'same as mobile') fields, stored encrypted and hidden from all public pages, APIs and shared page data (#343, #346).",
+    "Mobile and WhatsApp numbers are normalised to international format (07700 900123 becomes +447700900123), and UK postcodes are checked when the country is GB (#344).",
+    "A new Contact details section on the account page lets people add, change or clear these fields; the data download now includes them (#345, #346).",
+    "Admins can edit a user's name, email (confirmed by the user from the new inbox) and contact details from Admin → Users, with a reason; SSO names and emails stay managed by Cloudron (#338).",
+    "Admins can resend the verification email for unverified, non-SSO accounts; user actions are rate limited (#341).",
+    "Super admins can delete a user: accounts without editorial or audit records are deleted, others are anonymised and locked so authored content stays attributed to 'Deleted user' (#340).",
+    "Lock is labelled Lock (suspend); role changes keep their reason, audit entry and session sign-out, and SSO roles stay with Cloudron directory groups (#339).",
+    "Every new action is audited without contact values, shown on the user page, and the audit log can be filtered to everything done to one account (#342).",
+    "The privacy notice and Your data rights page explain the purpose, visibility, lawful basis and retention of contact details, and how administrator-led erasure works (#346)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /account, /account/contact-details, /admin/users, /admin/users/{id}, /admin/users/{id}/edit, /admin/audit-log, /legal/privacy, /legal/rights",
+    "User groups affected: all signed-in users (optional contact details); admins and super admins managing users",
+    "Public impact: new optional contact details on the account page and updated privacy copy; nothing new is shown publicly",
+    "Internal impact: users table contact columns (encrypted), UserPolicy update/resendVerification/erase, AccountEraser, UserErasureService, admin-user-actions rate limiter, libphonenumber dependency"
+  ],
+  "pr": 0
+}

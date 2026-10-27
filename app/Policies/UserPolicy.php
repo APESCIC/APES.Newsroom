@@ -39,6 +39,30 @@ class UserPolicy
     }
 
     /**
+     * Edit name, email (via confirmation) and private contact details.
+     */
+    public function update(User $actor, User $user): bool
+    {
+        return $this->manageSecurity($actor, $user);
+    }
+
+    public function resendVerification(User $actor, User $user): bool
+    {
+        return $this->manageSecurity($actor, $user);
+    }
+
+    /**
+     * Delete or anonymise another account. Super admins only, and never
+     * another super admin, so the last owner cannot be removed.
+     */
+    public function erase(User $actor, User $user): bool
+    {
+        return $actor->role === Role::SuperAdmin
+            && ! $actor->is($user)
+            && $user->role !== Role::SuperAdmin;
+    }
+
+    /**
      * In-app role changes apply only to accounts that do not sign in through
      * Cloudron SSO; directory groups stay the source of truth for SSO roles.
      */

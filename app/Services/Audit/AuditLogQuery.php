@@ -24,6 +24,7 @@ class AuditLogQuery
             'actor' => ['nullable', 'string', 'max:255'],
             'action' => ['nullable', 'string', 'max:120', 'regex:/^[a-z0-9_.-]+$/'],
             'subject_type' => ['nullable', 'string', 'max:120'],
+            'subject_id' => ['nullable', 'integer', 'min:1'],
             'from' => ['nullable', 'date'],
             'to' => ['nullable', 'date', 'after_or_equal:from'],
             'ip' => ['nullable', 'ip'],
@@ -31,7 +32,7 @@ class AuditLogQuery
     }
 
     /**
-     * @return array{actor: string, action: string, subject_type: string, from: string, to: string, ip: string}
+     * @return array{actor: string, action: string, subject_type: string, subject_id: string, from: string, to: string, ip: string}
      */
     public static function filters(Request $request): array
     {
@@ -41,6 +42,7 @@ class AuditLogQuery
             'actor' => trim((string) ($validated['actor'] ?? '')),
             'action' => (string) ($validated['action'] ?? ''),
             'subject_type' => (string) ($validated['subject_type'] ?? ''),
+            'subject_id' => (string) ($validated['subject_id'] ?? ''),
             'from' => (string) ($validated['from'] ?? ''),
             'to' => (string) ($validated['to'] ?? ''),
             'ip' => (string) ($validated['ip'] ?? ''),
@@ -48,7 +50,7 @@ class AuditLogQuery
     }
 
     /**
-     * @param  array{actor: string, action: string, subject_type: string, from: string, to: string, ip: string}  $filters
+     * @param  array{actor: string, action: string, subject_type: string, subject_id: string, from: string, to: string, ip: string}  $filters
      * @return Builder<AuditLog>
      */
     public static function build(array $filters): Builder
@@ -71,6 +73,10 @@ class AuditLogQuery
         if ($filters['subject_type'] !== '') {
             $type = self::subjectTypes()->search($filters['subject_type']);
             $query->where('subject_type', $type === false ? '' : $type);
+        }
+
+        if ($filters['subject_id'] !== '') {
+            $query->where('subject_id', (int) $filters['subject_id']);
         }
 
         if ($filters['from'] !== '') {

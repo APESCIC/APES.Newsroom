@@ -150,6 +150,7 @@ gitignored.
 | Admin API tokens | [`docs/api.md`](docs/api.md) |
 | Integration keys & health checks | [`docs/integrations.md`](docs/integrations.md) |
 | Approved email sending domains | [`docs/email-sending-domains.md`](docs/email-sending-domains.md) |
+| Admin user management & contact fields | [`docs/user-management.md`](docs/user-management.md) |
 | Staff editors (Editor.js / TinyMCE) | [`docs/editors.md`](docs/editors.md) |
 
 Quick checks before opening a PR: `composer test`, `composer lint`,
