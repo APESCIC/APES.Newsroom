@@ -25,5 +25,5 @@
     "Public impact: new optional contact details on the account page and updated privacy copy; nothing new is shown publicly",
     "Internal impact: users table contact columns (encrypted), UserPolicy update/resendVerification/erase, AccountEraser, UserErasureService, admin-user-actions rate limiter, libphonenumber dependency"
   ],
-  "pr": 0
+  "pr": 561
 }
