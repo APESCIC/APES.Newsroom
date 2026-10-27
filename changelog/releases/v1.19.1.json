@@ -19,5 +19,5 @@
     "Public impact: none",
     "Internal impact: AGENTS.md, docs/agent-workflow.md, .cursor/Dockerfile, .github PR and issue templates, CODEOWNERS"
   ],
-  "pr": 0
+  "pr": 563
 }
