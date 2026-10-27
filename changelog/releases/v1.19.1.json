@@ -1,0 +1,23 @@
+{
+  "version": "v1.19.1",
+  "slug": "release-v1-19-1",
+  "released_at": "2026-10-27",
+  "previous_version": "v1.19.0",
+  "theme": "Agent workflow",
+  "change_types": ["changed"],
+  "topic_tags": ["internal-only"],
+  "summary": "Contributor and agent guidance now covers the full delivery loop, from issue and milestone tracking through release and deploy; nothing changes for members.",
+  "detailed_changes": [
+    "AGENTS.md describes one required loop: issue, version milestone and sub-issues at the start; commit, PR, green CI, merge, tagged release and Cloudron deploy at the end (#562).",
+    "A new docs/agent-workflow.md runbook lists the exact GitHub CLI commands for each step (#562).",
+    "The Cursor Cloud agent image installs the GitHub CLI (#562).",
+    "Pull request and issue templates ask for the parent issue and target milestone, and the PR template carries a post-merge release and deploy checklist (#562).",
+    "Issue template assignees and CODEOWNERS point at the current maintainer account (#562)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Public impact: none",
+    "Internal impact: AGENTS.md, docs/agent-workflow.md, .cursor/Dockerfile, .github PR and issue templates, CODEOWNERS"
+  ],
+  "pr": 0
+}

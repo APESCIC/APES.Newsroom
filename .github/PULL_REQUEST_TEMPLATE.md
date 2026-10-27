@@ -5,6 +5,8 @@
 ## Issue
 
 Closes #
+Parent: #
+Milestone: vX.Y.Z
 
 ## Test plan
 
@@ -14,14 +16,21 @@ Closes #
 - [ ] `npm run lint`
 - [ ] Other: …
 
-## Deploy note
-
-Merging this PR does **not** auto-deploy. Cloudron updates require a deliberate
-run of **Deploy to Cloudron (beta)** against `main` (GitHub Environment `beta`
-→ live LAMP at `www.apesnews.org.uk`). Never commit `CLOUDRON_TOKEN`.  <!-- pragma: allowlist secret -->
-
 ## Checklist
 
 - [ ] Conventional commit / title references `#N`
-- [ ] Changelog entry under `changelog/releases/` (or PR labeled `skip-changelog`)
+- [ ] Changelog entry `changelog/releases/vX.Y.Z.json` matches the milestone (or PR labeled `skip-changelog`)
+- [ ] Issue and PR assigned to the milestone
 - [ ] No secrets or production credentials in the diff
+
+## After merge
+
+Merging does **not** auto-deploy. Finish the loop in
+[`docs/agent-workflow.md`](../docs/agent-workflow.md) and record it here or on the issue:
+
+- [ ] Tag `vX.Y.Z` pushed on the merge commit; GitHub Release published
+- [ ] **Deploy to Cloudron (beta)** dispatched against `main` (run URL: …)
+- [ ] `https://www.apesnews.org.uk/health` returns `"status":"ok"`  <!-- pragma: allowlist secret -->
+- [ ] Issues closed against acceptance criteria; milestone closed when empty
+
+Never commit `CLOUDRON_TOKEN`.

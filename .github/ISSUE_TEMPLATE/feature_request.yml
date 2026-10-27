@@ -5,7 +5,7 @@ type: Feature
 labels:
   - enhancement
 assignees:
-  - bmurphy-apescic
+  - apescic-director
 body:
   - type: textarea
     id: need
@@ -52,6 +52,22 @@ body:
         - [ ] ...
     validations:
       required: true
+  - type: input
+    id: parent
+    attributes:
+      label: Parent issue
+      description: The feature or epic this belongs to, if any. It will be linked as a sub-issue.
+      placeholder: "#123"
+    validations:
+      required: false
+  - type: input
+    id: milestone
+    attributes:
+      label: Target milestone
+      description: Version milestone this should ship in, if known. Maintainers set the milestone itself.
+      placeholder: v1.20.0
+    validations:
+      required: false
   - type: textarea
     id: dependencies
     attributes:
