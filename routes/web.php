@@ -43,6 +43,7 @@ use App\Http\Controllers\Mailing\PreferenceController;
 use App\Http\Controllers\Mailing\SignupController;
 use App\Http\Controllers\Mailing\UnsubscribeController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\PanelNotFoundController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReactionController;
 use App\Http\Controllers\ReportController;
@@ -264,6 +265,8 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Admin->value])
             Route::patch('/webhooks/{webhook}', [AdminWebhookController::class, 'update'])->name('webhooks.update');
             Route::delete('/webhooks/{webhook}', [AdminWebhookController::class, 'destroy'])->name('webhooks.destroy');
         });
+
+        Route::fallback(PanelNotFoundController::class)->name('fallback');
     });
 
 Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
@@ -349,6 +352,8 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
         Route::post('/media/unsplash/select', [StaffMediaController::class, 'unsplashSelect'])->name('media.unsplash.select');
         Route::get('/ai/status', [StaffAiAssistController::class, 'status'])->name('ai.status');
         Route::post('/ai/suggest', StaffAiAssistController::class)->name('ai.suggest');
+
+        Route::fallback(PanelNotFoundController::class)->name('fallback');
     });
 
 require __DIR__.'/auth.php';
