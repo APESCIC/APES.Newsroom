@@ -1,5 +1,6 @@
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
+import ContactDetailsFields, { contactFormDefaults, type ContactDetailsValues } from '../../Components/Account/ContactDetailsFields';
 import PublicLayout from '../../Components/Layout/PublicLayout';
 
 type ProfileUser = {
@@ -37,6 +38,7 @@ type MatchedMailingNotice = {
 
 type ProfileProps = {
     user: ProfileUser;
+    contact_details?: ContactDetailsValues | null;
     pending_email?: PendingEmail | null;
     membership: MembershipSummary;
     plans?: PlanOption[];
@@ -60,6 +62,31 @@ const EMAIL_STATUS_MESSAGES: Record<string, string> = {
     'email-change-cancelled': 'Email change cancelled. Your email address has not changed.',
     'email-changed': 'Email address changed. Other sessions have been signed out.',
 };
+
+function ContactDetailsSection({ details, saved }: { details: ContactDetailsValues | null; saved: boolean }) {
+    const { data, setData, patch, processing, errors } = useForm<ContactDetailsValues>(contactFormDefaults(details));
+
+    const submit: FormEventHandler = (e) => {
+        e.preventDefault();
+        patch('/account/contact-details', { preserveScroll: true });
+    };
+
+    return (
+        <section className="glass-form-panel mt-6" aria-labelledby="contact-details-heading">
+            <h2 id="contact-details-heading" className="text-lg font-bold text-body">Contact details</h2>
+            <p className="mt-1 text-sm text-muted">
+                Optional. Only you and APES administrators can see these. They are never shown on your public profile.
+            </p>
+            {saved && <p className="status-badge-success mt-4" role="status">Contact details saved.</p>}
+            <form onSubmit={submit} className="mt-4 flex flex-col gap-4">
+                <ContactDetailsFields values={data} errors={errors} onChange={(field, value) => setData((current) => ({ ...current, [field]: value }))} />
+                <button type="submit" disabled={processing} className="button-primary w-fit">
+                    Save contact details
+                </button>
+            </form>
+        </section>
+    );
+}
 
 function PendingEmailNotice({ pending }: { pending: PendingEmail }) {
     return (
@@ -89,6 +116,7 @@ function PendingEmailNotice({ pending }: { pending: PendingEmail }) {
 
 export default function Profile({
     user,
+    contact_details = null,
     pending_email = null,
     membership,
     plans = [],
@@ -200,6 +228,8 @@ export default function Profile({
                         </button>
                     </form>
                 </div>
+
+                <ContactDetailsSection details={contact_details} saved={status === 'contact-details-updated'} />
 
                 <div className="glass-form-panel mt-6">
                     <h2 className="text-lg font-bold text-body">Sign-in and security</h2>

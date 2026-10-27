@@ -18,9 +18,33 @@ export default function Privacy() {
                 <h2>What we collect</h2>
                 <ul>
                     <li>Account details you provide (name, email, password or magic-link authentication).</li>
+                    <li>Optional contact details: postal address, mobile number and WhatsApp number or username.</li>
                     <li>Mailing list preferences and consent records when you subscribe.</li>
                     <li>Optional public profile, comments, and reactions if you use those features.</li>
                     <li>Technical logs needed to keep the service secure.</li>
+                </ul>
+                <h2>Optional contact details</h2>
+                <p>
+                    You can add a postal address, mobile number and WhatsApp contact on your account page. They are optional,
+                    and we use them only to contact you about your account or membership when email is not enough.
+                </p>
+                <ul>
+                    <li>
+                        <strong>Who can see them:</strong> you and APES administrators. They are never shown on your public
+                        profile, in comments, in newsletters or through our APIs.
+                    </li>
+                    <li>
+                        <strong>Lawful basis:</strong> your consent. You can change or remove them at any time on the account
+                        page.
+                    </li>
+                    <li>
+                        <strong>Storage and retention:</strong> they are stored encrypted and kept while your account exists.
+                        They are included in your data download and erased when you clear them or your account is deleted.
+                    </li>
+                    <li>
+                        <strong>Changes by administrators:</strong> if an administrator corrects these details, the change and
+                        its reason are recorded in our audit log without the values themselves.
+                    </li>
                 </ul>
                 <h2>Your rights</h2>
                 <p>
