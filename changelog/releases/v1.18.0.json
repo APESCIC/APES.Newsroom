@@ -21,5 +21,6 @@
     "User groups affected: admins managing email settings; staff editing newsletter senders",
     "Public impact: none directly; newsletters only send from verified, approved domains",
     "Internal impact: email_sending_domains table, MailgunDomainService, SendingDomainChecker, mailing:check-sending-domains (daily)"
-  ]
+  ],
+  "pr": 559
 }
