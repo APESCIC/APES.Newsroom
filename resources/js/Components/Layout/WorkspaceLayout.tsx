@@ -314,7 +314,7 @@ export default function WorkspaceLayout({
                     <aside
                         ref={navigationDialogRef}
                         id={navigationId}
-                        className="h-full w-[min(18rem,88vw)] p-3"
+                        className="h-full w-[min(20rem,88vw)] p-3"
                         role="dialog"
                         aria-modal="true"
                         aria-label="Workspace navigation"
