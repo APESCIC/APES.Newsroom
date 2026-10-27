@@ -24,6 +24,12 @@ export type PublicChannel = {
     signup_slug: string;
 };
 
+export type SendingDomainAlert = {
+    domain: string;
+    message: string | null;
+    newsletters: string[];
+};
+
 export type SharedPageProps = {
     appName: string;
     auth: SharedAuth;
@@ -34,6 +40,7 @@ export type SharedPageProps = {
     } | null;
     devTools?: boolean;
     editorDriver?: EditorDriver;
+    sendingDomainAlerts?: SendingDomainAlert[];
     flash?: { status?: string | null };
     errors?: Record<string, string>;
 };

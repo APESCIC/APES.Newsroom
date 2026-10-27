@@ -19,7 +19,9 @@ return [
     | Approved newsletter sender domains
     |--------------------------------------------------------------------------
     |
-    | Comma-separated. Newsletter sender emails must use one of these domains.
+    | Comma-separated. Only used to seed Admin → Settings → Email sending
+    | domains on first migration; after that the database list is the
+    | source of truth.
     |
     */
     'sender_domains' => explode(',', (string) env('MAILING_SENDER_DOMAINS', 'apesnews.org.uk')),

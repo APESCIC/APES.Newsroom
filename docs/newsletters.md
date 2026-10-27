@@ -11,7 +11,7 @@ Newsletters are audiences stored in `newsletters`, separate from the three fixed
 | `description` | Purpose shown to staff |
 | `legacy_list` | Optional unique link to a `MailingList` value (`apes_cic`, `apes_shelter_rescue`, `apes_pet_care_clinic`) |
 | `ghost_slug` | Slug of the matching Ghost newsletter (see [`docs/migration/ghost-newsletters.md`](migration/ghost-newsletters.md)) |
-| `sender_name`, `sender_email`, `reply_to` | From and Reply-To for campaigns and confirmation emails. Sender email must use an approved domain (`MAILING_SENDER_DOMAINS`) |
+| `sender_name`, `sender_email`, `reply_to` | From and Reply-To for campaigns and confirmation emails. From must use an enabled, verified approved domain; reply-to an enabled approved domain (see [`docs/email-sending-domains.md`](email-sending-domains.md)) |
 | `subscribe_on_signup` | Offer this newsletter as an opt-in checkbox on `/register` |
 | `sender_verification` | Last result of `mailing:verify-senders` (status, checks, message) |
 | `archived_at` | Set when staff archive an audience. Archived newsletters are hidden from signup and segments and return no recipients. Ghost's archived newsletters are not imported (#499) |
@@ -30,7 +30,7 @@ Staff manage newsletters at `/staff/newsletters`. The index shows confirmed, pen
 
 A campaign takes its sender from the post's segment newsletter. Otherwise it uses the first selected channel list, in fixed order: APES CIC, then Shelter & Rescue, then Pet Care Clinic. That newsletter is stored on `campaigns.newsletter_id`, and the campaign email uses its From and Reply-To.
 
-Mail is sent through Cloudron SMTP. `php artisan mailing:verify-senders` (or **Re-check sender** on the edit page) calls the Mailgun API read-only, using `MAILGUN_API_KEY`, `MAILGUN_ENDPOINT` and optionally `MAILGUN_DOMAIN`. It confirms the sender domain is active with valid SPF and DKIM, and checks DMARC in DNS. A sender counts as verified only while the stored check matches its current sender email.
+Mail is sent through Cloudron SMTP. `php artisan mailing:verify-senders` (or **Re-check sender** on the edit page) calls the Mailgun API read-only, using `MAILGUN_API_KEY`, `MAILGUN_ENDPOINT` and optionally `MAILGUN_DOMAIN`. It confirms the sender domain is active with valid SPF and DKIM, and checks DMARC in DNS. A sender counts as verified only while the stored check matches its current sender email **and** its From and reply-to domains are still approved (re-checked at send time; see [`docs/email-sending-domains.md`](email-sending-domains.md)).
 
 Unverified senders are blocked:
 

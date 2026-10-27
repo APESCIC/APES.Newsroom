@@ -21,6 +21,7 @@ export type WorkspaceActive =
     | 'releases'
     | 'settings'
     | 'integrations'
+    | 'email-domains'
     | 'audit-log'
     | 'users'
     | 'api-tokens'
@@ -59,6 +60,7 @@ function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: Wo
         links.push({ href: '/admin/releases', label: 'Releases', icon: 'document', active: active === 'releases' });
         links.push({ href: '/admin/settings', label: 'Settings', icon: 'settings', active: active === 'settings' });
         links.push({ href: '/admin/settings/integrations', label: 'Integrations', icon: 'shield', active: active === 'integrations' });
+        links.push({ href: '/admin/settings/email-domains', label: 'Email domains', icon: 'settings', active: active === 'email-domains' });
     }
 
     return (
@@ -88,6 +90,30 @@ function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: Wo
                 </Link>
             )}
         </nav>
+    );
+}
+
+function SendingDomainAlertBanner({ active }: { active: WorkspaceActive }) {
+    const { sendingDomainAlerts = [] } = usePage<SharedPageProps>().props;
+    if (sendingDomainAlerts.length === 0) return null;
+
+    return (
+        <div role="alert" className="mx-auto mb-4 max-w-3xl rounded-control border border-danger bg-white p-3 text-sm text-body" data-testid="sending-domain-alert">
+            <p className="font-semibold text-danger">Newsletter sending is blocked for a failing email domain</p>
+            <ul className="mt-1 list-disc pl-5">
+                {sendingDomainAlerts.map((alert) => (
+                    <li key={alert.domain}>
+                        <span className="font-semibold">{alert.domain}</span> (used by {alert.newsletters.join(', ')})
+                        {alert.message ? `: ${alert.message}` : ''}
+                    </li>
+                ))}
+            </ul>
+            {active !== 'email-domains' && (
+                <Link href="/admin/settings/email-domains" className="mt-2 inline-block font-semibold underline">
+                    Review email sending domains
+                </Link>
+            )}
+        </div>
     );
 }
 
@@ -315,6 +341,7 @@ export default function WorkspaceLayout({
                         {actions}
                     </header>
                     <div className="workspace-canvas" data-testid="workspace-canvas">
+                        {area === 'Admin' && <SendingDomainAlertBanner active={active} />}
                         {children}
                     </div>
                 </div>

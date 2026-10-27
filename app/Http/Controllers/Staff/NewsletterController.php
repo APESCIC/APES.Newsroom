@@ -5,11 +5,15 @@ namespace App\Http\Controllers\Staff;
 use App\Enums\Channel;
 use App\Enums\SubscriptionStatus;
 use App\Http\Controllers\Controller;
+use App\Models\Campaign;
+use App\Models\EmailSendingDomain;
 use App\Models\Newsletter;
 use App\Models\NewsletterSegment;
 use App\Services\Mail\MailgunSenderCheck;
 use App\Services\Mailing\CampaignSender;
+use App\Services\Mailing\CampaignService;
 use App\Services\Mailing\SenderDomains;
+use Carbon\Carbon;
 use Closure;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -77,6 +81,8 @@ class NewsletterController extends Controller
         return Inertia::render('Staff/Newsletters/Edit', [
             'newsletter' => null,
             'channelOptions' => $this->channelOptions(null),
+            'domainOptions' => $this->domainOptions(),
+            'reservedLocalParts' => SenderDomains::RESERVED_LOCAL_PARTS,
         ]);
     }
 
@@ -110,6 +116,7 @@ class NewsletterController extends Controller
                 'reply_to' => $newsletter->reply_to,
                 'subscribe_on_signup' => $newsletter->subscribe_on_signup,
                 'sender_verification' => $this->verificationPayload($newsletter),
+                'send_blocks' => $this->sendBlocks($newsletter),
                 'channel' => $newsletter->channel?->value,
                 'show_on_home' => $newsletter->show_on_home,
                 'show_in_nav' => $newsletter->show_in_nav,
@@ -118,6 +125,8 @@ class NewsletterController extends Controller
                 'public_description' => $newsletter->public_description,
             ],
             'channelOptions' => $this->channelOptions($newsletter),
+            'domainOptions' => $this->domainOptions(),
+            'reservedLocalParts' => SenderDomains::RESERVED_LOCAL_PARTS,
             'segments' => $newsletter->segments()->with('alsoNewsletter')->get()->map(fn (NewsletterSegment $segment) => [
                 'id' => $segment->id,
                 'name' => $segment->name,
@@ -284,8 +293,8 @@ class NewsletterController extends Controller
             'slug' => ['nullable', 'string', 'max:120', $slugRule],
             'description' => ['nullable', 'string', 'max:1000'],
             'sender_name' => ['nullable', 'string', 'max:120'],
-            'sender_email' => ['nullable', 'string', 'email', 'max:255', $this->senderDomainRule()],
-            'reply_to' => ['nullable', 'string', 'email', 'max:255'],
+            'sender_email' => ['nullable', 'string', 'email', 'max:255', $this->addressRule($newsletter?->sender_email, SenderDomains::senderProblem(...))],
+            'reply_to' => ['nullable', 'string', 'email', 'max:255', $this->addressRule($newsletter?->reply_to, SenderDomains::replyToProblem(...))],
             'subscribe_on_signup' => ['sometimes', 'boolean'],
             'channel' => ['nullable', Rule::enum(Channel::class), $channelUnique],
             'show_on_home' => ['sometimes', 'boolean'],
@@ -323,15 +332,60 @@ class NewsletterController extends Controller
         ];
     }
 
-    private function senderDomainRule(): Closure
+    /**
+     * An unchanged stored address is accepted so other fields can still be
+     * edited; send-time checks block it if its domain is no longer approved.
+     *
+     * @param  Closure(string): ?string  $domainProblem
+     */
+    private function addressRule(?string $current, Closure $domainProblem): Closure
     {
-        return function (string $attribute, mixed $value, Closure $fail): void {
-            $domains = SenderDomains::allowed();
-            $domain = SenderDomains::domainOf((string) $value);
+        return function (string $attribute, mixed $value, Closure $fail) use ($current, $domainProblem): void {
+            $email = Str::lower(trim((string) $value));
+            if ($current !== null && $email === Str::lower($current)) {
+                return;
+            }
 
-            if (! in_array($domain, $domains, true)) {
-                $fail('The sender email must use an approved sending domain ('.implode(', ', $domains).').');
+            $problem = SenderDomains::localPartProblem($email) ?? $domainProblem($email);
+            if ($problem !== null) {
+                $fail($problem);
             }
         };
+    }
+
+    /**
+     * Enabled domains: all may be used for reply-to, verified ones for From.
+     *
+     * @return list<array{domain: string, status: string, can_send: bool}>
+     */
+    private function domainOptions(): array
+    {
+        return EmailSendingDomain::query()
+            ->enabled()
+            ->orderBy('domain')
+            ->get()
+            ->map(fn (EmailSendingDomain $domain) => [
+                'domain' => $domain->domain,
+                'status' => $domain->status->value,
+                'can_send' => $domain->isVerified(),
+            ])
+            ->all();
+    }
+
+    /**
+     * @return array{reasons: list<string>, last_blocked_at: string|null}
+     */
+    private function sendBlocks(Newsletter $newsletter): array
+    {
+        $lastBlocked = Campaign::query()
+            ->where('newsletter_id', $newsletter->id)
+            ->where('failure_reason', CampaignService::FAILURE_SENDER_UNVERIFIED)
+            ->latest('id')
+            ->value('created_at');
+
+        return [
+            'reasons' => $this->sender->domainProblems($newsletter),
+            'last_blocked_at' => $lastBlocked ? Carbon::parse($lastBlocked)->toIso8601String() : null,
+        ];
     }
 }

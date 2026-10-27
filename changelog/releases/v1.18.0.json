@@ -1,0 +1,26 @@
+{
+  "version": "v1.18.0",
+  "slug": "release-v1-18-0",
+  "released_at": "2026-10-27",
+  "previous_version": "v1.17.0",
+  "theme": "Approved sending domains",
+  "change_types": ["added"],
+  "topic_tags": ["internal-only", "compliance"],
+  "summary": "Admins manage the approved email sending domains, and newsletter From and reply-to addresses are limited to them both when saving and just before sending.",
+  "detailed_changes": [
+    "Approved sending domains are stored in the database, seeded with apesnews.org.uk and apes.org.uk (#474, #479).",
+    "A new admin page at Settings → Email sending domains lets admins add, check, disable, enable and remove domains, with a copyable SPF, DKIM, tracking, MX and DMARC record list (#475, #476).",
+    "Mailgun is only read (domain lookups); domains are added and verified in the Mailgun dashboard. A daily check refreshes each domain's status (#476).",
+    "The newsletter sender is now a name plus a dropdown of verified domains, and reply-to uses any enabled approved domain; reserved names such as postmaster are rejected (#477).",
+    "Live campaigns, test sends and queued recipients re-check the From and reply-to domains before sending, never fall back to another address, and blocked sends are logged and shown on the newsletter page (#478).",
+    "Domain changes and status changes are audited, and admins see a banner when a domain used as a From domain fails its check (#480)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /admin/settings/email-domains, /admin/settings, /staff/newsletters/{id}/edit",
+    "User groups affected: admins managing email settings; staff editing newsletter senders",
+    "Public impact: none directly; newsletters only send from verified, approved domains",
+    "Internal impact: email_sending_domains table, MailgunDomainService, SendingDomainChecker, mailing:check-sending-domains (daily)"
+  ],
+  "pr": 559
+}
