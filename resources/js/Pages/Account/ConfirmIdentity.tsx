@@ -118,7 +118,7 @@ export default function ConfirmIdentity({ method, status }: ConfirmIdentityProps
             >
                 {renderMethod(method, status === 'code-sent')}
                 <p className="mt-6 text-sm">
-                    <Link href="/account" className="text-teal-deep hover:underline">Cancel and return to your account</Link>
+                    <Link href="/account" className="text-link underline">Cancel and return to your account</Link>
                 </p>
             </AuthCard>
         </>

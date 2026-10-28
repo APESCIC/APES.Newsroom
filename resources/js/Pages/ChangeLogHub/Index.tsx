@@ -93,7 +93,7 @@ function ReleaseCard({
     return (
         <details
             id={release.slug}
-            className="glass-form-panel release-card overflow-hidden"
+            className="sg-card release-card overflow-hidden"
             open={open}
             data-tags={release.tags.join(' ')}
             onToggle={(event) => onToggle(release.slug, event.currentTarget.open)}
@@ -104,16 +104,16 @@ function ReleaseCard({
             </summary>
             <div className="release-body border-t border-border px-5 py-5 sm:px-6">
                 <div className="flex flex-wrap gap-2">
-                    <span className="rounded-control border border-border bg-brand-ink/5 px-2.5 py-1 text-xs font-semibold tracking-wide text-body uppercase">
+                    <span className="rounded-full border border-border bg-white/70 px-2.5 py-1 text-xs font-semibold tracking-wide text-body uppercase">
                         Version {release.version}
                     </span>
-                    <span className="rounded-control border border-border bg-brand-ink/5 px-2.5 py-1 text-xs font-semibold tracking-wide text-body uppercase">
+                    <span className="rounded-full border border-border bg-white/70 px-2.5 py-1 text-xs font-semibold tracking-wide text-body uppercase">
                         {release.channel_label}
                     </span>
                     {release.change_types.map((type) => (
                         <span
                             key={type}
-                            className="rounded-control bg-brand-teal/15 px-2.5 py-1 text-xs font-semibold tracking-wide text-body uppercase"
+                            className="rounded-full bg-sg-info-mist px-2.5 py-1 text-xs font-semibold tracking-wide text-sg-info uppercase"
                         >
                             {labelize(type)}
                         </span>
@@ -121,7 +121,7 @@ function ReleaseCard({
                     {release.topic_tags.map((tag) => (
                         <span
                             key={tag}
-                            className="rounded-control border border-border bg-brand-ink/5 px-2.5 py-1 text-xs font-semibold tracking-wide text-muted uppercase"
+                            className="rounded-full border border-border bg-white/70 px-2.5 py-1 text-xs font-semibold tracking-wide text-muted uppercase"
                         >
                             {labelize(tag)}
                         </span>
@@ -238,49 +238,49 @@ export default function ChangeLogHubIndex({
             </Head>
 
             <main id="main-content" className="mx-auto max-w-public px-5 py-10 sm:px-6">
-                <nav aria-label="Breadcrumb" className="text-sm text-on-glass-muted">
+                <nav aria-label="Breadcrumb" className="text-sm text-muted">
                     <ol className="flex flex-wrap items-center gap-2">
                         <li>
-                            <Link href="/" className="hover:text-on-glass">
+                            <Link href="/" className="text-link">
                                 Home
                             </Link>
                         </li>
                         <li aria-hidden="true">/</li>
-                        <li className="text-on-glass" aria-current="page">
+                        <li className="text-sg-ink" aria-current="page">
                             Change Log Hub
                         </li>
                     </ol>
                 </nav>
 
-                <header className="glass-hero mt-6 px-6 py-8 sm:px-8">
-                    <p className="eyebrow-on-glass">Release history</p>
-                    <h1 className="display-headline-on-glass mt-2">Change Log Hub</h1>
-                    <p className="mt-3 max-w-2xl text-on-glass-muted">{description}</p>
+                <header className="sg-card mt-6 px-6 py-8 sm:px-8">
+                    <p className="eyebrow">Release history</p>
+                    <h1 className="display-headline mt-2">Change Log Hub</h1>
+                    <p className="mt-3 max-w-2xl text-muted">{description}</p>
 
                     <div className="mt-5 flex flex-wrap gap-2">
                         {current && (
-                            <span className="rounded-control bg-white/15 px-3 py-1.5 text-xs font-semibold tracking-wide text-on-glass uppercase">
+                            <span className="rounded-full border border-white/85 bg-white/70 px-3 py-1.5 text-xs font-semibold tracking-wide text-sg-ink uppercase">
                                 Current version {current.version}
                             </span>
                         )}
                         {current?.version_type && (
-                            <span className="rounded-control bg-white/15 px-3 py-1.5 text-xs font-semibold tracking-wide text-on-glass uppercase">
+                            <span className="rounded-full border border-white/85 bg-white/70 px-3 py-1.5 text-xs font-semibold tracking-wide text-sg-ink uppercase">
                                 {current.version_type}
                             </span>
                         )}
                         {current?.theme && (
-                            <span className="rounded-control bg-brand-teal/25 px-3 py-1.5 text-xs font-semibold tracking-wide text-on-glass uppercase">
+                            <span className="rounded-full bg-sg-info-mist px-3 py-1.5 text-xs font-semibold tracking-wide text-sg-info uppercase">
                                 {current.theme}
                             </span>
                         )}
                     </div>
 
                     <div className="mt-6 flex flex-wrap gap-3">
-                        <button type="button" className="button-primary min-h-11 px-4" onClick={expandAll}>
+                        <button type="button" className="button-primary" onClick={expandAll}>
                             Expand all releases
                         </button>
                         {current && (
-                            <a href={`#${current.slug}`} className="button-glass inline-flex min-h-11 items-center px-4">
+                            <a href={`#${current.slug}`} className="sg-btn sg-btn-secondary">
                                 View current release
                             </a>
                         )}
@@ -310,10 +310,10 @@ export default function ChangeLogHubIndex({
                                     type="button"
                                     data-release-filter={filter.value}
                                     aria-pressed={active}
-                                    className={`min-h-11 rounded-control px-3 text-sm font-semibold transition-colors ${
+                                    className={`min-h-11 rounded-full px-4 text-sm font-semibold transition-colors ${
                                         active
-                                            ? 'bg-brand-teal text-brand-ink'
-                                            : 'bg-white/10 text-on-glass hover:bg-white/20'
+                                            ? 'bg-sg-teal text-white shadow-sg-primary'
+                                            : 'border border-white/85 bg-white/60 text-sg-ink hover:bg-white'
                                     }`}
                                     onClick={() => setActiveFilter(filter.value)}
                                 >
@@ -324,10 +324,10 @@ export default function ChangeLogHubIndex({
                     </div>
 
                     <div className="mt-4 flex flex-wrap gap-3">
-                        <button type="button" className="button-glass min-h-11 px-4" onClick={expandAll}>
+                        <button type="button" className="sg-btn sg-btn-secondary" onClick={expandAll}>
                             Expand all
                         </button>
-                        <button type="button" className="button-glass min-h-11 px-4" onClick={collapseAll}>
+                        <button type="button" className="sg-btn sg-btn-secondary" onClick={collapseAll}>
                             Collapse all
                         </button>
                     </div>
@@ -335,7 +335,7 @@ export default function ChangeLogHubIndex({
 
                 <section className="mt-8 flex flex-col gap-4" aria-label="Releases">
                     {visibleReleases.length === 0 ? (
-                        <p className="glass-form-panel px-5 py-8 text-center text-muted">
+                        <p className="form-panel px-5 py-8 text-center text-muted">
                             No releases match your search or filters.
                         </p>
                     ) : (

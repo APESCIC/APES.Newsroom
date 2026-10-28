@@ -26,7 +26,7 @@ export default function VerifyEmail({ status }: { status?: string }) {
                     </button>
                 </form>
                 <p className="mt-6 text-sm">
-                    <Link href="/logout" method="post" as="button" className="text-teal-deep hover:underline">
+                    <Link href="/logout" method="post" as="button" className="text-link underline">
                         Log out
                     </Link>
                 </p>

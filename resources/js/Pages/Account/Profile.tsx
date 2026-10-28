@@ -72,7 +72,7 @@ function ContactDetailsSection({ details, saved }: { details: ContactDetailsValu
     };
 
     return (
-        <section className="glass-form-panel mt-6" aria-labelledby="contact-details-heading">
+        <section className="form-panel mt-6" aria-labelledby="contact-details-heading">
             <h2 id="contact-details-heading" className="text-lg font-bold text-body">Contact details</h2>
             <p className="mt-1 text-sm text-muted">
                 Optional. Only you and APES administrators can see these. They are never shown on your public profile.
@@ -90,7 +90,7 @@ function ContactDetailsSection({ details, saved }: { details: ContactDetailsValu
 
 function PendingEmailNotice({ pending }: { pending: PendingEmail }) {
     return (
-        <div className="mt-4 rounded-control border border-warning bg-warning-mist p-3 text-sm text-body" role="status">
+        <div className="mt-4 rounded-sg-field border border-warning/40 bg-warning-mist p-3 text-sm text-body" role="status">
             <p>
                 Waiting for you to confirm <strong>{pending.email}</strong>. Your current email address stays in use until then.
             </p>
@@ -165,7 +165,7 @@ export default function Profile({
         <PublicLayout>
             <Head title="Your account" />
             <main id="main-content" className="mx-auto max-w-lg px-5 py-12 sm:px-6">
-                <div className="glass-form-panel">
+                <div className="form-panel">
                     <h1 className="text-2xl font-bold text-body">Your account</h1>
                     <p className="mt-1 text-sm text-muted">Manage your profile and data.</p>
 
@@ -173,7 +173,7 @@ export default function Profile({
                     {status === 'email-verified' && <p className="status-badge-success mt-4">Email verified.</p>}
 
                     {matched_mailing_notice && (
-                        <div className="mt-4 rounded-control border border-teal-deep bg-page-tint p-3 text-sm text-body" role="status">
+                        <div className="mt-4 rounded-sg-field border border-sg-teal/40 bg-sg-info-mist p-3 text-sm text-body" role="status">
                             <p className="font-semibold">We found your existing newsletter subscriptions</p>
                             <ul className="mt-2 list-disc pl-5">
                                 {matched_mailing_notice.newsletters.map((name) => (
@@ -181,7 +181,7 @@ export default function Profile({
                                 ))}
                             </ul>
                             <div className="mt-2 flex flex-wrap gap-3">
-                                <Link href="/account/mailing" className="text-teal-deep hover:underline">
+                                <Link href="/account/mailing" className="text-link underline">
                                     Manage preferences
                                 </Link>
                                 <button
@@ -231,15 +231,15 @@ export default function Profile({
 
                 <ContactDetailsSection details={contact_details} saved={status === 'contact-details-updated'} />
 
-                <div className="glass-form-panel mt-6">
+                <div className="form-panel mt-6">
                     <h2 className="text-lg font-bold text-body">Sign-in and security</h2>
                     <p className="mt-1 text-sm text-muted">Change your password and review where you are signed in.</p>
-                    <Link href="/account/security" className="mt-2 inline-block text-sm text-teal-deep hover:underline">
+                    <Link href="/account/security" className="mt-2 inline-block text-sm text-link underline">
                         Manage sign-in and security
                     </Link>
                 </div>
 
-                <div className="glass-form-panel mt-6">
+                <div className="form-panel mt-6">
                     <h2 className="text-lg font-bold text-body">Membership</h2>
                     <p className="mt-2 text-sm text-body">{membership.status_label}</p>
                     {membership.is_paying && membership.interval ? (
@@ -296,31 +296,31 @@ export default function Profile({
                     )}
                 </div>
 
-                <div className="glass-form-panel mt-6">
+                <div className="form-panel mt-6">
                     <h2 className="text-lg font-bold text-body">Public profile</h2>
-                    <Link href="/account/public-profile" className="mt-2 inline-block text-sm text-teal-deep hover:underline">
+                    <Link href="/account/public-profile" className="mt-2 inline-block text-sm text-link underline">
                         Edit public profile
                     </Link>
                 </div>
 
-                <div className="glass-form-panel mt-6">
+                <div className="form-panel mt-6">
                     <h2 className="text-lg font-bold text-body">Newsletters and mailing lists</h2>
                     <p className="mt-1 text-sm text-muted">
                         Confirm subscriptions separately; creating an account does not subscribe you automatically.
                     </p>
-                    <Link href="/account/mailing" className="mt-2 inline-block text-sm text-teal-deep hover:underline">
+                    <Link href="/account/mailing" className="mt-2 inline-block text-sm text-link underline">
                         Manage newsletter preferences
                     </Link>
                 </div>
 
-                <div className="glass-form-panel mt-6">
+                <div className="form-panel mt-6">
                     <h2 className="text-lg font-bold text-body">Your data</h2>
-                    <Link href="/account/export" className="mt-2 inline-block text-sm text-teal-deep hover:underline">
+                    <Link href="/account/export" className="mt-2 inline-block text-sm text-link underline">
                         Download account data (JSON)
                     </Link>
                 </div>
 
-                <div className="glass-form-panel mt-6">
+                <div className="form-panel mt-6">
                     <h2 className="text-lg font-bold text-danger">Danger zone</h2>
                     {can_delete_account ? (
                         <>
@@ -349,7 +349,7 @@ export default function Profile({
                 </div>
 
                 <p className="mt-6 text-sm">
-                    <Link href="/" className="link-on-glass hover:underline">Back to home</Link>
+                    <Link href="/" className="text-link hover:underline">Back to home</Link>
                 </p>
             </main>
         </PublicLayout>

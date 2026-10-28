@@ -26,7 +26,7 @@ export default function Signup({ lists, status }: { lists: ListOption[]; status?
         <PublicLayout>
             <Head title="Mailing lists" />
             <main id="main-content" className="mx-auto max-w-lg px-5 py-12 sm:px-6">
-                <div className="glass-form-panel">
+                <div className="form-panel">
                     <h1 className="text-2xl font-bold text-body">APES Newsroom mailing lists</h1>
                     <p className="mt-2 text-sm text-muted">
                         Choose which APES lists you want. Nothing is pre-selected. We will email you a confirmation link for

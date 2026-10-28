@@ -16,7 +16,7 @@ export default function SearchIndex({ query, results }: { query: string; results
         <PublicLayout>
             <Head title="Search" />
             <main id="main-content" className="mx-auto max-w-public px-5 py-12 sm:px-6">
-                <div className="glass-form-panel">
+                <div className="form-panel">
                     <h1 className="text-2xl font-bold text-body">Search</h1>
                     <form onSubmit={submit} className="mt-4 flex gap-2">
                         <label htmlFor="q" className="sr-only">
@@ -36,11 +36,11 @@ export default function SearchIndex({ query, results }: { query: string; results
                 </div>
                 <ul className="mt-8 space-y-4">
                     {results.map((r) => (
-                        <li key={r.slug} className="glass-story-card">
-                            <Link href={`/articles/${r.slug}`} className="text-lg font-bold text-on-glass hover:text-brand-teal hover:underline">
+                        <li key={r.slug} className="sg-card p-5">
+                            <Link href={`/articles/${r.slug}`} className="text-lg font-bold text-sg-ink hover:text-sg-teal hover:underline">
                                 {r.title}
                             </Link>
-                            {r.excerpt && <p className="mt-1 text-sm text-on-glass-muted">{r.excerpt}</p>}
+                            {r.excerpt && <p className="mt-1 text-sm text-muted">{r.excerpt}</p>}
                         </li>
                     ))}
                 </ul>

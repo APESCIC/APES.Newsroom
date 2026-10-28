@@ -8,7 +8,7 @@ export default function Privacy() {
         <PublicLayout>
             <Head title="Privacy notice" />
             <main id="main-content" className="mx-auto max-w-public px-5 py-12 sm:px-6">
-                <div className="glass-form-panel prose max-w-none">
+                <div className="form-panel prose max-w-none">
                 <h1>Privacy notice</h1>
                 <p>
                     APES Newsroom is operated by APES CIC. This draft notice explains how we process personal data for

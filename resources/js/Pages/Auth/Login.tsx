@@ -124,7 +124,7 @@ export default function Login({ staffLoginUrl, staffLoginLabel, rememberDays = 3
                     </div>
                 )}
                 {devTools && (
-                    <div className="mb-6 flex flex-col gap-2 rounded-control border border-warning bg-warning-mist p-3">
+                    <div className="mb-6 flex flex-col gap-2 rounded-sg-field border border-warning/40 bg-warning-mist p-3">
                         <p className="text-xs font-bold tracking-wide text-warning uppercase">Local role preview</p>
                         <div className="flex flex-wrap gap-1.5">
                             {DEV_ROLES.map((role) => (
@@ -185,11 +185,11 @@ export default function Login({ staffLoginUrl, staffLoginLabel, rememberDays = 3
                 )}
                 <p className="mt-6 flex flex-col gap-1 text-sm text-muted">
                     {magicLinksEnabled && (
-                        <Link href="/login/magic-link" className="text-teal-deep hover:underline">Email me a sign-in link instead</Link>
+                        <Link href="/login/magic-link" className="text-link underline">Email me a sign-in link instead</Link>
                     )}
-                    <Link href="/forgot-password" className="text-teal-deep hover:underline">Forgot your password?</Link>
+                    <Link href="/forgot-password" className="text-link underline">Forgot your password?</Link>
                     <span>
-                        Need an account? <Link href="/register" className="text-teal-deep hover:underline">Register</Link>
+                        Need an account? <Link href="/register" className="text-link underline">Register</Link>
                     </span>
                 </p>
             </AuthCard>

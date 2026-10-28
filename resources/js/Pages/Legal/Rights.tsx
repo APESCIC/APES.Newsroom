@@ -6,7 +6,7 @@ export default function Rights() {
         <PublicLayout>
             <Head title="Your data rights" />
             <main id="main-content" className="mx-auto max-w-public px-5 py-12 sm:px-6">
-                <div className="glass-form-panel prose max-w-none">
+                <div className="form-panel prose max-w-none">
                 <h1>Your data rights</h1>
                 <ul>
                     <li>

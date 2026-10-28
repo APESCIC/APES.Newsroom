@@ -1,6 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 
-export type Role = 'staff' | 'admin' | 'super_admin';
+export type Role = 'public' | 'staff' | 'admin' | 'super_admin';
 
 export type PanelPage = {
     name: string;
@@ -51,6 +51,26 @@ export const panelPages: PanelPage[] = [
     { name: 'admin-settings', path: '/admin/settings', role: 'admin' },
 ];
 
+export type PublicPage = {
+    name: string;
+    path: string;
+    /** Signed-in role; guests when unset. */
+    role?: Role;
+    status?: number;
+};
+
+/** Public Newsroom pages, as seeded by VisualRegressionSeeder. */
+export const publicPages: PublicPage[] = [
+    { name: 'public-home', path: '/' },
+    { name: 'public-channel', path: '/apes-shelter-rescue' },
+    { name: 'public-article', path: '/articles/rescued-tortoises-settle-into-their-new-enclosure' },
+    { name: 'public-search', path: '/search?q=tortoises' },
+    { name: 'public-signup', path: '/mailing/signup' },
+    { name: 'public-login', path: '/login' },
+    { name: 'public-account', path: '/account', role: 'public' },
+    { name: 'public-not-found', path: '/articles/no-such-story', status: 404 },
+];
+
 export async function loginAs(page: Page, role: Role): Promise<void> {
     await page.goto('/login');
     const xsrf = (await page.context().cookies()).find((cookie) => cookie.name === 'XSRF-TOKEN');
@@ -63,7 +83,7 @@ export async function loginAs(page: Page, role: Role): Promise<void> {
     expect(response.status(), 'dev login (APP_ENV must be local)').toBe(302);
 }
 
-/** Load a panel page and wait until fonts and editors have settled. */
+/** Load a panel or public page and wait until fonts and editors have settled. */
 export async function openPanelPage(page: Page, path: string, status = 200): Promise<void> {
     const response = await page.goto(path);
     expect(response?.status(), `GET ${path}`).toBe(status);

@@ -2,7 +2,7 @@ type LogoVariant = 'horizontal' | 'masthead' | 'footer' | 'square' | 'compact' |
 
 const logoFiles: Record<LogoVariant, { src: string; width: number; height: number }> = {
     horizontal: { src: '/brand/apes-logo-horizontal.png', width: 440, height: 250 },
-    masthead: { src: '/brand/apes-logo-masthead.png', width: 195, height: 145 },
+    masthead: { src: '/brand/apes-logo-masthead.png', width: 198, height: 144 },
     footer: { src: '/brand/apes-logo-footer-64.png', width: 64, height: 64 },
     square: { src: '/brand/apes-logo-square.png', width: 1024, height: 1024 },
     compact: { src: '/brand/apes-logo-compact.png', width: 512, height: 512 },

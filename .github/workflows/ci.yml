@@ -111,7 +111,7 @@ jobs:
           retention-days: 7
 
   e2e:
-    name: Panels (screenshots and accessibility)
+    name: Panels and public site (screenshots and accessibility)
     runs-on: ubuntu-latest
     env:
       APP_ENV: local
@@ -165,7 +165,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run Playwright
-        run: npx playwright test panels
+        run: npx playwright test panels public
 
       - name: Upload screenshots and report
         if: always()

@@ -71,18 +71,14 @@ function ChannelsMenu({ channels, currentPath }: { channels: PublicChannel[]; cu
                 aria-expanded={open}
                 aria-controls={panelId}
                 onClick={() => setOpen((value) => !value)}
-                className={`flex min-h-11 items-center gap-1 rounded-control px-3 text-sm font-semibold hover:bg-white/10 hover:text-white ${
-                    containsCurrent ? 'bg-white/10 text-white' : 'text-white/85'
-                }`}
+                data-active={containsCurrent ? 'true' : undefined}
+                className="public-nav-link gap-1"
             >
                 Channels
                 <LineIcon name="chevron-down" className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} />
             </button>
             {open && (
-                <div
-                    id={panelId}
-                    className="absolute left-0 z-30 mt-2 w-72 rounded-card border border-border bg-white py-2 text-body shadow-elevated"
-                >
+                <div id={panelId} className="sg-menu left-0 right-auto mt-2 w-72">
                     <ul>
                         {channels.map((channel) => {
                             const href = `/${channel.slug}`;
@@ -95,9 +91,7 @@ function ChannelsMenu({ channels, currentPath }: { channels: PublicChannel[]; cu
                                         href={href}
                                         aria-current={current ? 'page' : undefined}
                                         onClick={() => setOpen(false)}
-                                        className={`flex min-h-11 items-center gap-3 px-4 py-2 text-sm hover:bg-brand-mist ${
-                                            current ? 'font-bold text-brand-ink' : 'text-muted hover:text-body'
-                                        }`}
+                                        className={`sg-menu-item text-sm ${current ? 'font-bold text-sg-teal' : ''}`}
                                     >
                                         <LineIcon name={meta?.icon ?? 'document'} className={`h-5 w-5 shrink-0 ${meta?.textClass ?? 'text-teal-deep'}`} />
                                         {channel.label}
@@ -166,11 +160,11 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
     }, [menuOpen]);
 
     return (
-        <div className="public-gradient-shell text-on-glass">
+        <div className="public-shell">
             <a href="#main-content" className="skip-link">
                 Skip to main content
             </a>
-            <header className="glass-panel sticky top-0 z-40 border-b border-white/10">
+            <header className="public-header">
                 <div className="mx-auto flex h-16 max-w-public items-center justify-between gap-6 px-5 sm:px-6">
                     <Link href="/" className="inline-flex shrink-0 rounded-control py-1">
                         <ApesLogo variant="masthead" className="h-12 w-auto object-contain" />
@@ -183,9 +177,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                                     <Link
                                         href="/"
                                         aria-current={currentPath === '/' ? 'page' : undefined}
-                                        className={`flex min-h-11 items-center rounded-control px-3 text-sm font-semibold hover:bg-white/10 hover:text-white ${
-                                            currentPath === '/' ? 'text-white' : 'text-white/85'
-                                        }`}
+                                        className="public-nav-link"
                                     >
                                         Home
                                     </Link>
@@ -197,7 +189,8 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                                     <Link
                                         href="/search"
                                         aria-label="Search"
-                                        className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-white/85 hover:bg-white/10 hover:text-white"
+                                        aria-current={isCurrentPath(currentPath, '/search') ? 'page' : undefined}
+                                        className="public-nav-link min-w-11 justify-center px-0"
                                     >
                                         <LineIcon name="search" className="h-5 w-5" />
                                     </Link>
@@ -205,7 +198,6 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                             </ul>
                         </nav>
                         <AccountMenu
-                            tone="dark"
                             breakpoint="desktop"
                             onHiddenWhileFocused={focusMobileMenuTrigger}
                         />
@@ -214,7 +206,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                     <button
                         ref={menuTriggerRef}
                         type="button"
-                        className="icon-button border border-white/25 text-white lg:hidden"
+                        className="sg-icon-btn border border-[rgba(0,83,90,0.2)] bg-white/60 lg:hidden"
                         aria-label={menuOpen ? 'Close main menu' : 'Open main menu'}
                         aria-expanded={menuOpen}
                         aria-controls={menuId}
@@ -228,7 +220,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                     <div
                         ref={mobileMenuRef}
                         id={menuId}
-                        className="glass-panel max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain border-t border-white/10 px-5 py-4 lg:hidden"
+                        className="public-mobile-menu max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain px-5 py-4 lg:hidden"
                     >
                         <nav aria-label="Primary navigation">
                             <ul className="mx-auto flex max-w-public flex-col gap-1">
@@ -236,15 +228,15 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                                     <Link
                                         href="/"
                                         aria-current={currentPath === '/' ? 'page' : undefined}
-                                        className="flex min-h-11 items-center rounded-control px-3 text-sm font-semibold text-white aria-[current=page]:bg-white/10"
+                                        className="public-nav-link"
                                         onClick={() => setMenuOpen(false)}
                                     >
                                         Home
                                     </Link>
                                 </li>
                                 {channels.length > 0 && (
-                                    <li className="border-t border-white/10 pt-2">
-                                        <p id={mobileChannelsHeadingId} className="px-3 pb-1 text-xs font-bold tracking-wide text-white/60 uppercase">
+                                    <li className="border-t border-border pt-2">
+                                        <p id={mobileChannelsHeadingId} className="sg-nav-heading pb-1">
                                             Channels
                                         </p>
                                         <ul aria-labelledby={mobileChannelsHeadingId} className="flex flex-col gap-1">
@@ -257,10 +249,10 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                                                         <Link
                                                             href={href}
                                                             aria-current={isCurrentPath(currentPath, href) ? 'page' : undefined}
-                                                            className="flex min-h-11 items-center gap-3 rounded-control px-3 text-sm font-semibold text-white aria-[current=page]:bg-white/10"
+                                                            className="public-nav-link gap-3"
                                                             onClick={() => setMenuOpen(false)}
                                                         >
-                                                            <LineIcon name={meta?.icon ?? 'document'} className="h-4 w-4 shrink-0 text-white/70" />
+                                                            <LineIcon name={meta?.icon ?? 'document'} className={`h-4 w-4 shrink-0 ${meta?.textClass ?? 'text-sg-teal'}`} />
                                                             {channel.label}
                                                         </Link>
                                                     </li>
@@ -269,10 +261,11 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                                         </ul>
                                     </li>
                                 )}
-                                <li className={channels.length > 0 ? 'border-t border-white/10 pt-2' : undefined}>
+                                <li className={channels.length > 0 ? 'border-t border-border pt-2' : undefined}>
                                     <Link
                                         href="/search"
-                                        className="flex min-h-11 items-center gap-2 rounded-control px-3 text-sm font-semibold text-white"
+                                        aria-current={isCurrentPath(currentPath, '/search') ? 'page' : undefined}
+                                        className="public-nav-link"
                                         onClick={() => setMenuOpen(false)}
                                     >
                                         <LineIcon name="search" className="h-4 w-4" />
@@ -281,9 +274,8 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                                 </li>
                             </ul>
                         </nav>
-                        <div className="mx-auto mt-3 max-w-public border-t border-white/15 pt-4">
+                        <div className="mx-auto mt-3 max-w-public border-t border-border pt-4">
                             <AccountMenu
-                                tone="dark"
                                 breakpoint="mobile"
                                 onHiddenWhileFocused={focusFirstDesktopDestination}
                             />

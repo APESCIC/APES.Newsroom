@@ -16,11 +16,11 @@ export default function ChannelSection({ channel }: { channel: HomeChannel }) {
     return (
         <article className={`glass-channel ${channelTintClass(channel.slug)}`} aria-labelledby={headingId}>
             <div className="flex items-center gap-3">
-                <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-control bg-white/10 ${meta?.textClass ?? 'text-brand-teal'}`}>
+                <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${meta?.mediaClass ?? 'bg-sg-info-mist text-sg-teal'}`}>
                     <LineIcon name={meta?.icon ?? 'document'} className="h-7 w-7" />
                 </span>
-                <h3 id={headingId} className="text-xl font-bold text-on-glass">
-                    <Link href={`/${channel.slug}`} className="hover:text-brand-teal hover:underline">
+                <h3 id={headingId} className="text-xl font-bold text-sg-ink">
+                    <Link href={`/${channel.slug}`} className="hover:text-sg-teal hover:underline">
                         {channel.label}
                     </Link>
                 </h3>
@@ -32,11 +32,11 @@ export default function ChannelSection({ channel }: { channel: HomeChannel }) {
 
                         return (
                             <li key={post.slug}>
-                                <Link href={`/articles/${post.slug}`} className="text-sm leading-6 font-semibold text-on-glass hover:text-brand-teal hover:underline">
+                                <Link href={`/articles/${post.slug}`} className="text-sm leading-6 font-semibold text-sg-ink hover:text-sg-teal hover:underline">
                                     {post.title}
                                 </Link>
                                 {published && (
-                                    <time dateTime={post.published_at ?? undefined} className="block text-xs text-on-glass-muted">
+                                    <time dateTime={post.published_at ?? undefined} className="block text-xs text-muted">
                                         {published}
                                     </time>
                                 )}
@@ -45,14 +45,14 @@ export default function ChannelSection({ channel }: { channel: HomeChannel }) {
                     })}
                 </ul>
             ) : (
-                <p className="mt-4 text-sm leading-6 text-on-glass-muted">
+                <p className="mt-4 text-sm leading-6 text-muted">
                     {channel.description ?? `Stories from ${channel.label} are coming soon.`}
                 </p>
             )}
             <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-2 pt-5 text-sm font-semibold">
                 <Link
                     href={`/newsletters/${channel.signup_slug}/signup`}
-                    className="inline-flex min-h-11 items-center rounded-control border border-white/25 px-3 text-white hover:bg-white/10"
+                    className="sg-btn sg-btn-secondary"
                     aria-label={`Subscribe to ${channel.label}`}
                 >
                     Subscribe
@@ -60,7 +60,7 @@ export default function ChannelSection({ channel }: { channel: HomeChannel }) {
                 {channel.latest.length > 0 && (
                     <Link
                         href={`/${channel.slug}`}
-                        className="inline-flex min-h-11 items-center gap-1 text-on-glass-muted hover:text-white"
+                        className="text-link inline-flex min-h-11 items-center gap-1"
                         aria-label={`All stories from ${channel.label}`}
                     >
                         All stories

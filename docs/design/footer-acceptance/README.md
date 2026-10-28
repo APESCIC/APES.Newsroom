@@ -21,3 +21,23 @@ Automated coverage: `resources/js/__tests__/site-footer.test.tsx` and footer ass
 
 Shelter source: https://www.apesshelter.org.uk/ (footer markup also at `/includes/footer.html`).
 Newsroom shots rendered from the production CSS build of the SiteFooter structure for visual parity (deep-green glass panels, pill links, lower partner/social row, CIC fineprint).
+
+## v1.23.0: light glass footer (#583)
+
+Approved on 27 Oct 2026 under [#576](https://github.com/APESCIC/APES.Newsroom/issues/576):
+the footer deliberately departs from the Shelter-matched dark green panels
+above and uses the Soft glass palette. The structure, landmarks, link lists,
+44×44 targets and fineprint are unchanged, so the keyboard pass above still
+applies. Shelter parity now covers the layout only, not the colours.
+
+| Viewport | Newsroom (light glass) |
+|----------|------------------------|
+| Desktop | [newsroom-footer-light-desktop.png](./newsroom-footer-light-desktop.png) |
+| Mobile | [newsroom-footer-light-mobile.png](./newsroom-footer-light-mobile.png) |
+
+Panels are frosted white over the gradient wash, kickers and pill links are
+teal (`#006E70`) and turn solid teal with white text on hover and focus, and
+the fineprint uses the muted colour. The hard-coded `#f8f4df`, `#d9ece2` and
+white-alpha colours are replaced with tokens. Automated coverage: the footer
+landmark in `site-footer.test.tsx`, the footer in every `public.spec.ts`
+screenshot, and its frosted panels in the reduced-transparency check.
