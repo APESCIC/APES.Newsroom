@@ -19,7 +19,7 @@
 | `Errors/Show` | Public error page: frosted header, centred card, home and search buttons (#584) | 403, 404, 419, 500, 503 |
 | `WorkspaceLayout` | Glass Studio shell: teal gradient, frosted rail and task chrome, near-opaque canvas, measured skip-link offset and scrollable modal mobile drawer with contained focus, inert and scroll-locked background, and automatic close to the active desktop destination at the desktop breakpoint | staff, admin, wrapped task header, short viewport, breakpoint change |
 | `LineIcon` | First-party current-colour line icons without emoji dependencies | decorative |
-| `ApesLogo` | Unfiltered horizontal, masthead, footer, square, or compact APES artwork; the masthead uses a deterministic tight crop, the footer uses a 64px derivative, and square placement uses 384/768 WebP sources with PNG fallback | per placement, responsive |
+| `ApesLogo` | Unfiltered horizontal, masthead, footer, square, or compact APES artwork; the masthead is a transparent-background tight crop of the square artwork at 3x header height, the footer uses a 64px derivative, and square placement uses 384/768 WebP sources with PNG fallback | per placement, responsive |
 
 ## Staff posts
 
