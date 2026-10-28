@@ -90,6 +90,13 @@ export default function Index({ filters, users, roles }: { filters: UserFilters;
                                         {user.name}
                                     </Link>
                                     <p className="text-xs text-muted">{user.email}</p>
+                                    <Link
+                                        href={`/staff/people/users/${user.id}`}
+                                        className="text-xs font-medium text-teal-deep hover:underline"
+                                        aria-label={`Person page for ${user.name}`}
+                                    >
+                                        Person page
+                                    </Link>
                                     {user.locked && (
                                         <Badge tone="error" className="mt-1">
                                             Locked

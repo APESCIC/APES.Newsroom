@@ -22,6 +22,7 @@ type MemberRow = {
     membership_status: string;
     membership_label: string;
     is_paying: boolean;
+    is_comped: boolean;
     plan_name: string | null;
     plan_interval: string | null;
     recent_reads: RecentRead[];
@@ -78,8 +79,8 @@ export default function Index({ members, filters }: { members: PageMeta & { data
     return (
         <WorkspaceLayout area="Admin" active="members" title="Members" subtitle="Public members, their plan and recent signed-in reading">
             <p className="text-sm text-muted">
-                Search public members by name or email. Filter by free or paying status and review recent signed-in reading activity. To edit an account,
-                change its security or delete it, use{' '}
+                Search public members by name or email. Filter by free, paying or complimentary status and review recent signed-in reading activity.
+                Open a member to edit their details, membership and newsletters. To change account security or delete an account, use{' '}
                 <Link href="/admin/users" className="text-body underline">
                     Users
                 </Link>
@@ -97,6 +98,7 @@ export default function Index({ members, filters }: { members: PageMeta & { data
                         <option value="all">All</option>
                         <option value="free">Free</option>
                         <option value="paying">Paying</option>
+                        <option value="comped">Complimentary</option>
                     </select>
                 </label>
                 <button type="submit" className="sg-btn sg-btn-primary">
@@ -122,7 +124,9 @@ export default function Index({ members, filters }: { members: PageMeta & { data
                             primary: true,
                             cell: (member) => (
                                 <>
-                                    <p className="font-semibold text-body">{member.name}</p>
+                                    <Link href={`/staff/people/users/${member.id}`} className="font-semibold text-body underline-offset-2 hover:underline">
+                                        {member.name}
+                                    </Link>
                                     <p className="text-xs text-muted">{member.email}</p>
                                 </>
                             ),
@@ -130,7 +134,7 @@ export default function Index({ members, filters }: { members: PageMeta & { data
                         {
                             key: 'membership',
                             header: 'Membership',
-                            cell: (member) => <Badge tone={member.is_paying ? 'ok' : 'neutral'}>{member.membership_label}</Badge>,
+                            cell: (member) => <Badge tone={member.is_paying || member.is_comped ? 'ok' : 'neutral'}>{member.membership_label}</Badge>,
                         },
                         {
                             key: 'plan',

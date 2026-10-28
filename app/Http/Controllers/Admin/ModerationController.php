@@ -82,6 +82,7 @@ class ModerationController extends Controller
             ->withQueryString()
             ->through(fn (Profile $profile) => [
                 'id' => $profile->id,
+                'user_id' => $profile->user_id,
                 'display_name' => $profile->display_name,
                 'bio' => $profile->bio,
                 'user_name' => $profile->user->name,
@@ -117,6 +118,7 @@ class ModerationController extends Controller
             ->withQueryString()
             ->through(fn (Profile $profile) => [
                 'id' => $profile->id,
+                'user_id' => $profile->user_id,
                 'display_name' => $profile->display_name,
                 'user_name' => $profile->user->name,
                 'notes' => $profile->moderation_notes,

@@ -1,11 +1,13 @@
 import { Link, router } from '@inertiajs/react';
 import { FormEvent, useState, type KeyboardEvent } from 'react';
-import { UserRound } from 'lucide-react';
+import { Eraser, UserRound } from 'lucide-react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
+import ReasonActionButton from '../../../Components/Staff/ReasonActionButton';
 import Pagination from '../../../Components/Workspace/ui/Pagination';
 
 type PendingProfile = {
     id: number;
+    user_id: number;
     display_name: string | null;
     bio: string | null;
     user_name: string;
@@ -32,6 +34,7 @@ type Report = {
 
 type Suspended = {
     id: number;
+    user_id: number;
     display_name: string | null;
     user_name: string;
     notes: string | null;
@@ -47,6 +50,22 @@ type Page<T> = {
 
 function formatDate(value: string | null) {
     return value ? new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium' }).format(new Date(value)) : 'Date unavailable';
+}
+
+function ResetProfileFields({ userId, name }: { userId: number; name: string }) {
+    return (
+        <ReasonActionButton
+            label="Reset fields"
+            ariaLabel={`Reset fields for ${name}`}
+            icon={Eraser}
+            title={`Reset ${name}'s public profile?`}
+            description="Clears the display name, bio and avatar. The moderation status does not change."
+            confirmLabel="Reset fields"
+            destructive
+            url={`/staff/people/users/${userId}/profile/reset`}
+            data={{ return_to: 'moderation' }}
+        />
+    );
 }
 
 function EmptyQueue({ children }: { children: string }) {
@@ -247,6 +266,7 @@ export default function ModerationIndex({
                                                                 <button type="button" className="button-success" aria-label={`Approve profile for ${name}`} onClick={() => moderateProfile(profile.id, 'approved')}>Approve</button>
                                                                 <button type="button" className="button-danger" aria-label={`Reject profile for ${name}`} onClick={() => moderateProfile(profile.id, 'rejected')}>Reject</button>
                                                                 <button type="button" className="button-secondary" aria-label={`Suspend profile for ${name}`} onClick={() => moderateProfile(profile.id, 'suspended')}>Suspend</button>
+                                                                <ResetProfileFields userId={profile.user_id} name={name} />
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -274,6 +294,7 @@ export default function ModerationIndex({
                                                     <button type="button" className="button-success" aria-label={`Approve profile for ${name} on small screens`} onClick={() => moderateProfile(profile.id, 'approved')}>Approve</button>
                                                     <button type="button" className="button-danger" aria-label={`Reject profile for ${name} on small screens`} onClick={() => moderateProfile(profile.id, 'rejected')}>Reject</button>
                                                     <button type="button" className="button-secondary" aria-label={`Suspend profile for ${name} on small screens`} onClick={() => moderateProfile(profile.id, 'suspended')}>Suspend</button>
+                                                    <ResetProfileFields userId={profile.user_id} name={name} />
                                                 </div>
                                             </li>
                                         );
@@ -363,7 +384,10 @@ export default function ModerationIndex({
                                                 <h3 className="font-bold text-brand-ink">{name}</h3>
                                                 <p className="mt-1 text-sm text-muted">Account: {profile.user_name}</p>
                                                 {profile.notes && <p className="mt-4 rounded-control bg-page-tint p-4 text-sm leading-6">{profile.notes}</p>}
-                                                <button type="button" className="button-secondary mt-5" aria-label={`Lift suspension for ${name}`} onClick={() => moderateProfile(profile.id, 'private')}>Lift suspension</button>
+                                                <div className="mt-5 flex flex-wrap gap-2">
+                                                    <button type="button" className="button-secondary" aria-label={`Lift suspension for ${name}`} onClick={() => moderateProfile(profile.id, 'private')}>Lift suspension</button>
+                                                    <ResetProfileFields userId={profile.user_id} name={name} />
+                                                </div>
                                             </li>
                                         );
                                     })}

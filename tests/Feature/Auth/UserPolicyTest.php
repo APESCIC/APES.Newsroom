@@ -23,7 +23,7 @@ class UserPolicyTest extends TestCase
 
         return [
             'public' => [Role::Public, $none],
-            'staff' => [Role::Staff, $none],
+            'staff' => [Role::Staff, [...$none, 'view' => true, 'update' => true]],
             'admin' => [Role::Admin, ['viewAny' => true, 'view' => true, 'manageSecurity' => true, 'update' => true, 'resendVerification' => true, 'changeRole' => false, 'erase' => false]],
             'super admin' => [Role::SuperAdmin, ['viewAny' => true, 'view' => true, 'manageSecurity' => true, 'update' => true, 'resendVerification' => true, 'changeRole' => true, 'erase' => true]],
         ];
@@ -44,9 +44,21 @@ class UserPolicyTest extends TestCase
         }
     }
 
+    public function test_staff_only_view_and_edit_public_accounts(): void
+    {
+        $staff = User::factory()->staff()->create();
+        $otherStaff = User::factory()->staff()->create();
+        $admin = User::factory()->admin()->create();
+
+        foreach ([$otherStaff, $admin] as $target) {
+            $this->assertFalse($staff->can('view', $target), "staff view {$target->role->value}");
+            $this->assertFalse($staff->can('update', $target), "staff update {$target->role->value}");
+        }
+    }
+
     public function test_nobody_edits_or_erases_themselves(): void
     {
-        foreach ([Role::Admin, Role::SuperAdmin] as $role) {
+        foreach ([Role::Staff, Role::Admin, Role::SuperAdmin] as $role) {
             $actor = $this->userWithRole($role);
 
             foreach (['manageSecurity', 'update', 'resendVerification', 'changeRole', 'erase'] as $ability) {

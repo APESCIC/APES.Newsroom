@@ -15,8 +15,29 @@ Nav: **Staff → Subscribers** (next to Newsletters).
 
 - Shows contacts with `user_id` null: email, name if known (e.g. Ghost import), newsletters and statuses, signup date, latest consent source/action, and whether the address is suppressed.
 - Filters: search (email/name), newsletter, consent source. Paginated.
-- **Read-only** for subscription state — do not re-subscribe anyone from this page. Opted-out / suppressed rows are labelled clearly.
+- Opted-out / suppressed rows are labelled clearly. Each email opens the subscriber's person page.
 - **Export CSV** audits as `subscribers.exported`. Page views are not audited.
+
+## Editing a subscriber (v1.21.0, #569)
+
+The person page (`/staff/people/contacts/{id}`) lets staff:
+
+| Action | Rule |
+|--------|------|
+| Edit name and email | The email is re-keyed (`email_normalized` stays unique and cannot match an account). Active subscriptions go back to pending and a confirmation is sent to the new address. A suppression on the old address follows the contact. |
+| Unsubscribe from one newsletter | Takes effect immediately. |
+| Send a confirmation (resubscribe) | Only sends the double opt-in email; the subscription stays pending until the subscriber confirms it. Refused while the address is suppressed. |
+| Suppress / remove suppression | Removing a suppression does not resubscribe anyone. |
+| Delete | Admin+ only. Type the email to confirm; "also suppress" is on by default. Subscriptions are deleted; consent events are kept with the contact link cleared. |
+
+Contacts linked to an account open the account's person page instead: their
+name and email change through the account email-change flow, and their
+newsletter toggles are admin-only.
+
+Every change needs a reason (3-500 characters), recent re-authentication and
+is rate limited (`people-actions`). It writes an audit entry (reason and
+changed field names only) and a consent event with `source = staff` and
+evidence `{actor_id, reason}`.
 
 ## Signup matching
 

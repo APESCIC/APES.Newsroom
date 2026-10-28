@@ -1,7 +1,7 @@
 import { Link } from '@inertiajs/react';
-import { Pencil, Users } from 'lucide-react';
+import { Contact, Pencil, Users } from 'lucide-react';
 import type { ReactNode } from 'react';
-import type { ContactDetailsValues } from '../../../Components/Account/ContactDetailsFields';
+import ContactDetailsSummary from '../../../Components/Account/ContactDetailsSummary';
 import UserEraseControl from '../../../Components/Admin/UserEraseControl';
 import UserRoleControl from '../../../Components/Admin/UserRoleControl';
 import UserSecurityActions from '../../../Components/Admin/UserSecurityActions';
@@ -9,44 +9,6 @@ import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
 import Badge from '../../../Components/Workspace/ui/Badge';
 import PillButton from '../../../Components/Workspace/ui/PillButton';
 import { eventLabel, formatWhen, methodLabel, resultLabel, roleLabel, type UserDetail } from './types';
-
-function whatsappSummary(details: ContactDetailsValues): string | null {
-    if (details.whatsapp_same_as_mobile) return 'Same as mobile';
-    if (!details.whatsapp_value) return null;
-
-    return details.whatsapp_type === 'username' ? `@${details.whatsapp_value}` : details.whatsapp_value;
-}
-
-function ContactDetailsSummary({ details }: { details: ContactDetailsValues }) {
-    const address = [
-        details.address_line1,
-        details.address_line2,
-        details.address_town,
-        details.address_county,
-        details.address_postcode,
-        details.address_line1 || details.address_postcode ? details.address_country : null,
-    ].filter(Boolean);
-    const whatsapp = whatsappSummary(details);
-
-    return (
-        <dl className="grid gap-3 text-sm sm:grid-cols-3">
-            <div>
-                <dt className="text-muted">Postal address</dt>
-                <dd className="text-body">
-                    {address.length === 0 ? 'Not given' : address.map((line) => <span key={line} className="block">{line}</span>)}
-                </dd>
-            </div>
-            <div>
-                <dt className="text-muted">Mobile</dt>
-                <dd className="text-body">{details.mobile_number ?? 'Not given'}</dd>
-            </div>
-            <div>
-                <dt className="text-muted">WhatsApp</dt>
-                <dd className="text-body">{whatsapp ?? 'Not given'}</dd>
-            </div>
-        </dl>
-    );
-}
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
     return (
@@ -72,6 +34,9 @@ export default function Show({ user }: { user: UserDetail }) {
                 <>
                     <PillButton href="/admin/users" variant="secondary" icon={Users}>
                         All users
+                    </PillButton>
+                    <PillButton href={`/staff/people/users/${user.id}`} variant="secondary" icon={Contact}>
+                        Person page
                     </PillButton>
                     {user.can.update && (
                         <PillButton href={`/admin/users/${user.id}/edit`} icon={Pencil}>

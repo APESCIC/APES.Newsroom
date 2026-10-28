@@ -1,6 +1,7 @@
 import {
     BarChart3,
     ClipboardCheck,
+    Contact,
     FileStack,
     FileText,
     Globe,
@@ -39,6 +40,7 @@ export type WorkspaceActive =
     | 'pages'
     | 'media'
     | 'newsletters'
+    | 'people'
     | 'subscribers'
     | 'membership-plans'
     | 'offers'
@@ -90,6 +92,7 @@ export const navigation: Record<WorkspaceArea, NavGroup[]> = {
         {
             heading: 'Audience',
             items: [
+                { key: 'people', href: '/staff/people', label: 'People', icon: Contact, keywords: 'members accounts readers profiles edit' },
                 { key: 'newsletters', href: '/staff/newsletters', label: 'Newsletters', icon: Mail, keywords: 'email lists campaigns' },
                 { key: 'subscribers', href: '/staff/subscribers', label: 'Subscribers', icon: Users, keywords: 'mailing contacts export' },
             ],

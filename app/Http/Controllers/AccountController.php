@@ -49,7 +49,7 @@ class AccountController extends Controller
             ] : null,
             'membership' => [
                 'status' => $membership->status->value,
-                'status_label' => $membership->status->label(),
+                'status_label' => $membership->accessLabel(),
                 'is_paying' => $membership->isPaying(),
                 'interval' => $membership->interval,
                 'current_period_end' => $membership->current_period_end?->toIso8601String(),

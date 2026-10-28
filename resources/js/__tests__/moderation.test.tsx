@@ -20,7 +20,7 @@ describe('Glass Studio admin moderation workspace', () => {
 
         render(
             <ModerationIndex
-                profiles={[{ id: 2, display_name: 'Sam Keeper', bio: 'Wildlife carer', user_name: 'sam', updated_at: null }]}
+                profiles={[{ id: 2, user_id: 12, display_name: 'Sam Keeper', bio: 'Wildlife carer', user_name: 'sam', updated_at: null }]}
                 comments={[
                     {
                         id: 3,
@@ -32,7 +32,7 @@ describe('Glass Studio admin moderation workspace', () => {
                     },
                 ]}
                 reports={[{ id: 4, reason: 'Needs review', reportable_type: 'Comment', reportable_id: 3, reporter: 'member', created_at: null }]}
-                suspended={[{ id: 5, display_name: 'Taylor', user_name: 'taylor', notes: 'Review requested' }]}
+                suspended={[{ id: 5, user_id: 15, display_name: 'Taylor', user_name: 'taylor', notes: 'Review requested' }]}
             />,
         );
 

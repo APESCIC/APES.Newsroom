@@ -4,12 +4,15 @@ namespace Tests\Feature;
 
 use App\Enums\PostStatus;
 use App\Enums\Role;
+use App\Enums\SubscriptionStatus;
 use App\Models\ApiToken;
 use App\Models\AuditLog;
 use App\Models\Comment;
 use App\Models\ContentApiKey;
 use App\Models\EmailSendingDomain;
 use App\Models\ImportRun;
+use App\Models\MailingContact;
+use App\Models\MailingListSubscription;
 use App\Models\MediaAsset;
 use App\Models\MembershipPlan;
 use App\Models\ModerationReport;
@@ -122,6 +125,21 @@ class AuthzMatrixTest extends TestCase
         'staff.membership-plans.index' => Role::Staff,
         'staff.membership-plans.update' => Role::Staff,
         'staff.metrics.index' => Role::Staff,
+        'staff.people.index' => Role::Staff,
+        'staff.people.users.show' => Role::Staff,
+        'staff.people.users.update' => Role::Staff,
+        'staff.people.users.comp.store' => Role::Admin,
+        'staff.people.users.comp.destroy' => Role::Admin,
+        'staff.people.users.note.update' => Role::Admin,
+        'staff.people.users.profile.update' => Role::Staff,
+        'staff.people.users.profile.reset' => Role::Staff,
+        'staff.people.contacts.show' => Role::Staff,
+        'staff.people.contacts.update' => Role::Staff,
+        'staff.people.contacts.destroy' => Role::Admin,
+        'staff.people.contacts.suppress' => Role::Staff,
+        'staff.people.contacts.unsuppress' => Role::Staff,
+        'staff.people.contacts.subscriptions.unsubscribe' => Role::Staff,
+        'staff.people.contacts.newsletters.subscribe' => Role::Staff,
         'staff.subscribers.index' => Role::Staff,
         'staff.subscribers.export' => Role::Staff,
         'staff.newsletters.index' => Role::Staff,
@@ -270,7 +288,8 @@ class AuthzMatrixTest extends TestCase
 
         $this->actingAs($staff)->withRecentAuthentication()->get('/admin/members')->assertForbidden();
         $this->actingAs($staff)->withRecentAuthentication()->get('/admin/webhooks')->assertForbidden();
-        $this->actingAs($staff)->withRecentAuthentication()->get('/staff/members')->assertRedirect('/admin/members');
+        $this->actingAs($staff)->withRecentAuthentication()->get('/staff/members')->assertRedirect('/staff/people');
+        $this->actingAs($staff)->withRecentAuthentication()->get('/staff/people')->assertOk();
     }
 
     public function test_guest_is_redirected_from_admin_settings(): void
@@ -363,10 +382,17 @@ class AuthzMatrixTest extends TestCase
         $route = Route::getRoutes()->getByName($name);
         $parameters = [];
         $post = null;
+        $contact = null;
 
         foreach ($route->parameterNames() as $parameter) {
             $parameters[$parameter] = match ($parameter) {
                 'post' => $post = Post::factory()->create(['author_id' => $user->id]),
+                'contact' => $contact = MailingContact::factory()->create(),
+                'subscription' => MailingListSubscription::query()->create([
+                    'mailing_contact_id' => $contact->id,
+                    'newsletter_id' => Newsletter::query()->create(['name' => 'Matrix', 'slug' => 'matrix-'.Str::random(8)])->id,
+                    'status' => SubscriptionStatus::Confirmed,
+                ]),
                 'revision' => PostRevision::query()->create([
                     'post_id' => $post->id,
                     'editor_id' => $user->id,

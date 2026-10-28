@@ -195,6 +195,14 @@ class User extends Authenticatable implements HasPasskeys, MustVerifyEmail
     }
 
     /**
+     * @return HasOne<MailingContact, $this>
+     */
+    public function mailingContact(): HasOne
+    {
+        return $this->hasOne(MailingContact::class);
+    }
+
+    /**
      * Staff accounts authenticated via Cloudron OIDC are directory-verified.
      */
     public function hasVerifiedEmail(): bool

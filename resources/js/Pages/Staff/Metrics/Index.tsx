@@ -1,4 +1,4 @@
-import { Eye, MailOpen, MousePointerClick, PoundSterling, Send, UserCheck, Users, Wallet } from 'lucide-react';
+import { Eye, Gift, MailOpen, MousePointerClick, PoundSterling, Send, UserCheck, Users, Wallet } from 'lucide-react';
 import type { ReactNode } from 'react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
 import AdvancedDetails from '../../../Components/Workspace/ui/AdvancedDetails';
@@ -8,7 +8,7 @@ type Metrics = {
     web: { views_7d: number; views_30d: number; signed_in_share_7d: number };
     newsletters: { sent: number; opened: number; clicked: number; open_rate: number; click_rate: number };
     /** Only sent to admins (#357). */
-    subscriptions: { free: number; active: number; past_due: number; canceled: number; mrr_pence: number } | null;
+    subscriptions: { free: number; active: number; past_due: number; canceled: number; comped: number; mrr_pence: number } | null;
 };
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -46,6 +46,7 @@ export default function Index({ metrics }: { metrics: Metrics }) {
                     <StatGrid label="Subscriptions">
                         <StatTile label="Free members" value={subscriptions.free} icon={Users} />
                         <StatTile label="Active paid" value={subscriptions.active} icon={Wallet} />
+                        <StatTile label="Complimentary" value={subscriptions.comped} hint="Paid access granted by an admin" icon={Gift} />
                         <StatTile label="MRR (test mode)" value={mrr} hint="Sum of active plan amounts (yearly ÷ 12)" icon={PoundSterling} />
                     </StatGrid>
                 </AdvancedDetails>
