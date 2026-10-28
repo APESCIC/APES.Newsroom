@@ -1,0 +1,29 @@
+{
+  "version": "v1.23.0",
+  "slug": "release-v1-23-0",
+  "released_at": "2026-10-28",
+  "previous_version": "v1.22.0",
+  "theme": "Public site Soft glass colours",
+  "change_types": ["changed", "fixed"],
+  "topic_tags": ["public-facing", "accessibility"],
+  "summary": "The public Newsroom now uses the same light Soft glass colours as the staff and admin panels, with a frosted header, pill buttons, teal links and a light footer.",
+  "detailed_changes": [
+    "One set of Soft glass colours now serves the whole site, so the public pages and the staff and admin panels can no longer drift apart, and the public site switches to the Inter typeface (#577).",
+    "The public pages sit on the light frosted gradient with ink text and a frosted sticky header; the current page in the menu is a white pill with teal text, and the Channels menu and phone menu match (#578).",
+    "Buttons are teal pills, links are teal, and cards, forms and status badges use the frosted Soft glass style on the home, channel, article, search, archive, page, legal and Change Log Hub pages (#579).",
+    "Login, registration, your account, newsletter sign-up, preferences and unsubscribe pages use the new colours, and the subscription-confirmed and public profile pages now have the site header and footer (#580).",
+    "Article headings, links, quotes, tables, callouts and imported Ghost content read well on the light theme. Fixed: bulleted and numbered lists in articles show their bullets and numbers again (#581).",
+    "The six channel colours stay as accents on borders, badges and icons, and the Stream 4 APES accent is darker so it stands out clearly against the light background (#582).",
+    "The footer moves from dark green panels to light frosted panels with teal pills (#583).",
+    "Error pages such as 404 use the new look with links back to the home page and search, and phones colour their browser bar to match the site (#584).",
+    "Automated checks now cover the public pages: colour contrast for every text and button colour, accessibility scans, no sideways scrolling on phones, visible keyboard focus, solid panels for readers who ask for less transparency, and screenshot comparisons (#585)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /, /{channel}, /articles/{slug}, /search, /tags/{slug}, /authors/{id}, /archive/*, /pages/{slug}, /legal/*, /change-log-hub, /login, /register, /account/*, /mailing/*, /newsletters/{slug}/signup, /profiles/{id}, public error pages",
+    "User groups affected: all readers and members; staff and admins see no change in the panels",
+    "Public impact: new light colour scheme, typeface and footer on every public page",
+    "Internal impact: Soft glass tokens moved from .workspace-shell to the global theme, older public tokens aliased, dark on-glass classes removed, Instrument Sans dependency removed, Playwright public spec and contrast test added to CI"
+  ],
+  "pr": 0
+}

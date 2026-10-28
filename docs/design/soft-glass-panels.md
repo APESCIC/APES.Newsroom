@@ -1,11 +1,14 @@
 # Soft glass staff and admin panels (v1.20.0)
 
-> **Status:** Shipped in v1.20.0 under [#513](https://github.com/APESCIC/APES.Newsroom/issues/513).
+> **Status:** Shipped for the staff and admin panels in v1.20.0 under
+> [#513](https://github.com/APESCIC/APES.Newsroom/issues/513), and for the
+> public site in v1.23.0 under [#576](https://github.com/APESCIC/APES.Newsroom/issues/576).
 > Design 5 (Soft glass), chosen by Bambie on 26 Oct 2026. Replaces the
-> Direction B Glass Studio workspace chrome. The public site keeps Direction C.
+> Direction B Glass Studio workspace chrome and the dark public Direction C.
 
-Everything below is scoped to `.workspace-shell`, so public pages are
-unaffected.
+The tokens, surfaces, buttons, form fields, cards and badges below are global.
+The shell, sidebar and panel components are specific to `.workspace-shell`; the
+public site uses `.public-shell`, described in [tokens.md](tokens.md).
 
 ## Tokens
 
@@ -28,14 +31,16 @@ Defined in `resources/css/app.css` (`@theme`), usable as Tailwind utilities.
 | `--container-panel` | 70rem (1120px) | Content width on every page |
 | `--font-panel` | Inter Variable (self-hosted) | Panel type, 14px body, 28px titles |
 
-Surfaces are custom properties on `.workspace-shell` so fallbacks can swap them
-in one place: `--sg-surface` (cards, white 45%, blur 20px), `--sg-rail-surface`
+Surfaces are custom properties on `:root` so fallbacks can swap them in one
+place: `--sg-surface` (cards, white 45%, blur 20px), `--sg-rail-surface`
 (sidebar, white 35%, blur 24px), `--sg-surface-strong` (secondary buttons,
-pressed cards) and `--sg-edge` (1px white border).
+pressed cards), `--sg-header-surface` (public header) and `--sg-edge` (1px
+white border).
 
-Inside the shell the existing `--color-body`, `--color-muted`,
-`--color-border`, `--color-teal-deep` and status colours are remapped to the
-panel palette, so older `text-muted` / `border-border` utilities match.
+The older `--color-body`, `--color-muted`, `--color-border`,
+`--color-teal-deep`, `--color-brand-*` and status colours are aliases of the
+Soft glass palette everywhere, so older `text-muted` / `border-border`
+utilities match on both ends.
 
 ### Fallbacks
 
@@ -44,7 +49,8 @@ panel palette, so older `text-muted` / `border-border` utilities match.
 - `prefers-reduced-transparency: reduce`: the same solid surfaces and no blur.
 - `prefers-reduced-motion: reduce`: transitions are removed (global rule).
 
-Both fallbacks are checked in `tests/e2e/panels.spec.ts`.
+Both fallbacks are checked in `tests/e2e/panels.spec.ts` and
+`tests/e2e/public.spec.ts`.
 
 ## Shell (`WorkspaceLayout`)
 
@@ -108,10 +114,18 @@ Rules:
 ## Visual regression
 
 `tests/e2e/panels.spec.ts` takes a screenshot of every staff and admin page
-(plus the phone layout, drawer and command palette) against baselines in
-`tests/e2e/__screenshots__/linux`, runs axe, and checks there is no sideways
-scrolling at 375, 768 and 1440px. Data comes from
+(plus the phone layout, drawer and command palette), and
+`tests/e2e/public.spec.ts` does the same for the public home, channel,
+article, search, signup, login, account and 404 pages and the phone menu. Both
+compare against baselines in `tests/e2e/__screenshots__/linux`, run axe, and
+check there is no sideways scrolling at 375, 768 and 1440px. The public spec
+also checks visible keyboard focus, the skip link, reduced transparency and
+the channel accent borders. Data comes from
 `Database\Seeders\VisualRegressionSeeder` on a fresh SQLite database.
+
+Set `CAPTURE_DIR` (and optionally `CAPTURE_ONLY=public` or `panels`) and run
+`npx playwright test capture` to save desktop and phone screenshots for
+before-and-after evidence on a pull request.
 
 Run locally against a seeded app on port 8012:
 
@@ -122,6 +136,6 @@ npm run test:e2e
 ```
 
 Screenshots only match on Linux; on other systems run the axe and layout
-checks with `npx playwright test panels --grep-invert screenshot`. To refresh
+checks with `npx playwright test panels public --grep-invert screenshot`. To refresh
 baselines after an intended change, download the `playwright-results`
 artifact from CI and commit `tests/e2e/__screenshots__/linux`.

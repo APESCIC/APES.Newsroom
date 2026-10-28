@@ -9,7 +9,7 @@
         "lint": "eslint resources/js",
         "test:frontend": "vitest run",
         "test:frontend:watch": "vitest",
-        "test:e2e": "playwright test panels"
+        "test:e2e": "playwright test panels public"
     },
     "dependencies": {
         "@editorjs/delimiter": "^1.4.2",

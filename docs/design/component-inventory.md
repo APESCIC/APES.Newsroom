@@ -1,22 +1,22 @@
 # APES Newsroom — Component inventory
 
-> **Status:** Direction C (Glassmorphism Modern) public components under #55.
-> The staff and admin panels use the Soft glass shell and components from
-> v1.20.0 (#513), listed in [soft-glass-panels.md](soft-glass-panels.md); the
-> Direction B workspace rows below are historical. Supersedes Magazine Bold
-> Grid (#53).
+> **Status:** Public components use the Soft glass palette from v1.23.0
+> (#576); the staff and admin panels have used it since v1.20.0 (#513). Both
+> are listed in [soft-glass-panels.md](soft-glass-panels.md). The Direction B
+> workspace rows below are historical. Supersedes Magazine Bold Grid (#53).
 
 ## Direction A layout and content
 
 | Component | Description | States |
 | --- | --- | --- |
-| `PublicLayout` | Gradient shell with frosted glass sticky header, skip target, channels, Search, Account, page canvas and glass footer; mobile disclosure behaviour unchanged | guest, signed-in, mobile disclosure |
-| `SiteFooter` | Glass panel footer with 64px brand mark and legal/mailing links | default |
-| `DeskPanel` | Featured story in `.glass-hero` with white/teal typography | empty, populated |
-| `ChannelTrailTile` | Channel entry card with `.glass-channel` tinted glass overlay | default, focus |
-| `RecentStoryCard` | Glass story card with channel label, title, excerpt, hero image | default, missing metadata |
-| `AccountLayout` | Public gradient wrapper with centred `.glass-form-panel` | default, status messages |
-| `AuthCard` | Gradient shell with compact logo header and `.glass-form-panel` | login, register, password reset |
+| `PublicLayout` | `.public-shell` with a frosted sticky `.public-header`, skip target, pill nav links, Channels menu, Search, Account and the light footer; mobile disclosure behaviour unchanged | guest, signed-in, mobile disclosure |
+| `SiteFooter` | Light frosted panels with teal pills, 64px brand mark and legal/mailing links (#583) | default |
+| `DeskPanel` | Featured story in an `.sg-card` hero with ink headline and teal eyebrow | empty, populated |
+| `ChannelSection` | Channel card with `.glass-channel` frosted surface and accent border | default, focus |
+| `RecentStoryCard` | `.sg-card` story card with channel badge, title, excerpt, hero image | default, missing metadata |
+| `AccountLayout` | Public shell with a centred `.form-panel` | default, status messages |
+| `AuthCard` | Public shell with compact logo header and `.form-panel` | login, register, password reset |
+| `Errors/Show` | Public error page: frosted header, centred card, home and search buttons (#584) | 403, 404, 419, 500, 503 |
 | `WorkspaceLayout` | Glass Studio shell: teal gradient, frosted rail and task chrome, near-opaque canvas, measured skip-link offset and scrollable modal mobile drawer with contained focus, inert and scroll-locked background, and automatic close to the active desktop destination at the desktop breakpoint | staff, admin, wrapped task header, short viewport, breakpoint change |
 | `LineIcon` | First-party current-colour line icons without emoji dependencies | decorative |
 | `ApesLogo` | Unfiltered horizontal, masthead, footer, square, or compact APES artwork; the masthead uses a deterministic tight crop, the footer uses a 64px derivative, and square placement uses 384/768 WebP sources with PNG fallback | per placement, responsive |
