@@ -1,8 +1,7 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs';
-import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import css from '../../css/app.css?raw';
 
-const css = readFileSync(path.resolve(__dirname, '../../css/app.css'), 'utf8');
+const sources = import.meta.glob<string>(['../**/*.{ts,tsx}', '!../__tests__/**'], { query: '?raw', import: 'default', eager: true });
 
 type Rgb = [number, number, number];
 
@@ -110,17 +109,10 @@ describe('Soft glass contrast (WCAG AA)', () => {
         expect(contrast(accent, white)).toBeLessThan(4.5);
         expect(css).not.toMatch(/(^|[;{\s])color:\s*var\(--color-sg-accent\)/m);
 
-        const sources: string[] = [];
-        const walk = (dir: string) => {
-            for (const entry of readdirSync(dir)) {
-                const file = path.join(dir, entry);
-                if (statSync(file).isDirectory()) walk(file);
-                else if (/\.tsx?$/.test(entry) && !file.includes('__tests__')) sources.push(file);
-            }
-        };
-        walk(path.resolve(__dirname, '..'));
-
-        const offenders = sources.filter((file) => /\btext-sg-accent\b|text-\[#00C4CC\]/i.test(readFileSync(file, 'utf8')));
+        expect(Object.keys(sources).length).toBeGreaterThan(50);
+        const offenders = Object.entries(sources)
+            .filter(([, source]) => /\btext-sg-accent\b|text-\[#00C4CC\]/i.test(source))
+            .map(([file]) => file);
         expect(offenders).toEqual([]);
     });
 });
