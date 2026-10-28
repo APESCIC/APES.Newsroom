@@ -25,5 +25,5 @@
     "Public impact: new light colour scheme, typeface and footer on every public page",
     "Internal impact: Soft glass tokens moved from .workspace-shell to the global theme, older public tokens aliased, dark on-glass classes removed, Instrument Sans dependency removed, Playwright public spec and contrast test added to CI"
   ],
-  "pr": 0
+  "pr": 604
 }
