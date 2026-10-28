@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { Download, Users } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
@@ -94,7 +94,7 @@ export default function SubscribersIndex({
         <WorkspaceLayout
             area="Staff"
             active="subscribers"
-            title="Mailing-list subscribers"
+            title="Subscribers"
             subtitle="Contacts on newsletters who do not have a Newsroom account. Open a subscriber to edit them or change their subscriptions."
             actions={
                 <a href={exportHref} className="sg-btn sg-btn-secondary">
@@ -103,7 +103,6 @@ export default function SubscribersIndex({
                 </a>
             }
         >
-            <Head title="Mailing-list subscribers" />
 
             <form onSubmit={applyFilters} role="search" aria-label="Filter subscribers" className="sg-card grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-[1fr_14rem_12rem_auto] lg:items-end">
                 <label className="flex flex-col gap-1.5 text-sm font-semibold text-body">

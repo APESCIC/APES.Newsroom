@@ -1,8 +1,12 @@
-import { Head, Link } from '@inertiajs/react';
-import { Mail, Plus } from 'lucide-react';
+import { Link, router } from '@inertiajs/react';
+import { Archive, ArchiveRestore, ExternalLink, Mail, Pencil, Plus } from 'lucide-react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
+import { useConfirmedAction } from '../../../Components/Workspace/useConfirmedAction';
+import ActionMenu, { type MenuAction } from '../../../Components/Workspace/ui/ActionMenu';
 import Badge from '../../../Components/Workspace/ui/Badge';
 import EmptyState from '../../../Components/Workspace/ui/EmptyState';
+import ListSearch from '../../../Components/Workspace/ui/ListSearch';
+import Pagination, { type PageMeta } from '../../../Components/Workspace/ui/Pagination';
 import PillButton from '../../../Components/Workspace/ui/PillButton';
 import Tabs from '../../../Components/Workspace/ui/Tabs';
 
@@ -49,7 +53,61 @@ function StatusBadge({ status }: { status: NewsletterStatus }) {
     }
 }
 
-export default function NewslettersIndex({ newsletters, status }: { newsletters: NewsletterRow[]; status: StatusFilter }) {
+function listUrl(status: StatusFilter, q: string) {
+    const params = new URLSearchParams();
+    if (status !== 'all') params.set('status', status);
+    if (q) params.set('q', q);
+    const qs = params.toString();
+    return qs ? `/staff/newsletters?${qs}` : '/staff/newsletters';
+}
+
+export default function NewslettersIndex({
+    newsletters,
+    status,
+    filters = { q: '' },
+}: {
+    newsletters: PageMeta & { data: NewsletterRow[] };
+    status: StatusFilter;
+    filters?: { q: string };
+}) {
+    const { confirm, dialog } = useConfirmedAction();
+
+    const rowActions = (newsletter: NewsletterRow): MenuAction[] => [
+        {
+            label: 'Edit',
+            icon: Pencil,
+            href: `/staff/newsletters/${newsletter.id}/edit`,
+        },
+        ...(newsletter.status === 'active'
+            ? [
+                  {
+                      label: 'View signup page',
+                      icon: ExternalLink,
+                      href: `/newsletters/${newsletter.slug}/signup`,
+                  },
+                  {
+                      label: 'Archive',
+                      icon: Archive,
+                      tone: 'danger' as const,
+                      onSelect: () =>
+                          confirm({
+                              title: 'Archive this newsletter?',
+                              description: `“${newsletter.name}” will stop taking signups and cannot be sent to. Subscribers are kept, and you can restore it later.`,
+                              confirmLabel: 'Archive newsletter',
+                              method: 'post',
+                              url: `/staff/newsletters/${newsletter.id}/archive`,
+                          }),
+                  },
+              ]
+            : [
+                  {
+                      label: 'Restore',
+                      icon: ArchiveRestore,
+                      onSelect: () => router.post(`/staff/newsletters/${newsletter.id}/restore`, {}, { preserveScroll: true }),
+                  },
+              ]),
+    ];
+
     const newNewsletter = (
         <PillButton href="/staff/newsletters/new" icon={Plus}>
             New newsletter
@@ -64,57 +122,80 @@ export default function NewslettersIndex({ newsletters, status }: { newsletters:
             subtitle="Every newsletter members can subscribe to, including the three channel lists"
             actions={newNewsletter}
         >
-            <Head title="Newsletters" />
+            <ListSearch
+                path="/staff/newsletters"
+                label="Search newsletters"
+                placeholder="Name, slug or sender email"
+                initial={filters.q}
+                params={{ status: status === 'all' ? null : status }}
+            />
             <Tabs
                 label="Filter newsletters by status"
                 className="self-start"
                 items={FILTERS.map((filter) => ({
                     label: filter.label,
-                    href: filter.value === 'all' ? '/staff/newsletters' : `/staff/newsletters?status=${filter.value}`,
+                    href: listUrl(filter.value, filters.q),
                     active: status === filter.value,
                 }))}
             />
-            {newsletters.length === 0 ? (
-                <EmptyState icon={Mail} title="No newsletters here" description="Try another filter or create a newsletter." action={newNewsletter} />
+            {newsletters.data.length === 0 ? (
+                <EmptyState
+                    icon={Mail}
+                    title="No newsletters here"
+                    description="Try another filter or search, or create a newsletter."
+                    action={newNewsletter}
+                />
             ) : (
-                <ul className="sg-card divide-y divide-border">
-                    {newsletters.map((newsletter) => (
-                        <li key={newsletter.id} className="flex flex-col gap-3 px-5 py-4 md:flex-row md:items-center md:justify-between">
-                            <div className="min-w-0">
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <Link href={`/staff/newsletters/${newsletter.id}/edit`} className="font-semibold text-body hover:text-teal-deep hover:underline">
-                                        {newsletter.name}
-                                    </Link>
-                                    <StatusBadge status={newsletter.status} />
-                                    {newsletter.channel && newsletter.status === 'active' && (
-                                        <Badge tone="info">
-                                            Public channel #{newsletter.display_order}
-                                            {newsletter.show_on_home ? ' · home' : ''}
-                                            {newsletter.show_in_nav ? ' · menu' : ''}
-                                        </Badge>
-                                    )}
+                <>
+                    <ul className="sg-card divide-y divide-border" aria-label="Newsletters">
+                        {newsletters.data.map((newsletter) => (
+                            <li key={newsletter.id} className="flex flex-col gap-3 px-5 py-4 md:flex-row md:items-center md:justify-between">
+                                <div className="min-w-0">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <Link
+                                            href={`/staff/newsletters/${newsletter.id}/edit`}
+                                            className="font-semibold text-body hover:text-teal-deep hover:underline"
+                                        >
+                                            {newsletter.name}
+                                        </Link>
+                                        <StatusBadge status={newsletter.status} />
+                                        {newsletter.channel && newsletter.status === 'active' && (
+                                            <Badge tone="info">
+                                                Public channel #{newsletter.display_order}
+                                                {newsletter.show_on_home ? ' · home' : ''}
+                                                {newsletter.show_in_nav ? ' · menu' : ''}
+                                            </Badge>
+                                        )}
+                                    </div>
+                                    <p className="mt-1 text-sm break-words text-muted">
+                                        /{newsletter.slug}
+                                        {newsletter.legacy_list ? ` · channel list ${newsletter.legacy_list}` : ''}
+                                        {newsletter.sender_email
+                                            ? ` · from ${newsletter.sender_name ?? newsletter.sender_email} <${newsletter.sender_email}>`
+                                            : ' · no sender set'}
+                                        {newsletter.sender_email ? (newsletter.sender_verified ? ' · sender verified' : ' · sender not verified') : ''}
+                                    </p>
                                 </div>
-                                <p className="mt-1 text-sm break-words text-muted">
-                                    /{newsletter.slug}
-                                    {newsletter.legacy_list ? ` · channel list ${newsletter.legacy_list}` : ''}
-                                    {newsletter.sender_email ? ` · from ${newsletter.sender_name ?? newsletter.sender_email} <${newsletter.sender_email}>` : ' · no sender set'}
-                                    {newsletter.sender_email ? (newsletter.sender_verified ? ' · sender verified' : ' · sender not verified') : ''}
-                                </p>
-                            </div>
-                            <p className="shrink-0 text-sm text-body md:text-right">
-                                <span className="font-semibold">{newsletter.confirmed_count} confirmed</span>{' '}
-                                <span className="text-muted">
-                                    ({newsletter.account_confirmed_count} account · {newsletter.mailing_only_confirmed_count} mailing-only)
-                                </span>
-                                <br />
-                                <span className="text-muted">
-                                    {newsletter.pending_count} pending · {newsletter.unsubscribed_count} unsubscribed
-                                </span>
-                            </p>
-                        </li>
-                    ))}
-                </ul>
+                                <div className="flex shrink-0 items-center gap-3">
+                                    <p className="text-sm text-body md:text-right">
+                                        <span className="font-semibold">{newsletter.confirmed_count} confirmed</span>{' '}
+                                        <span className="text-muted">
+                                            ({newsletter.account_confirmed_count} account · {newsletter.mailing_only_confirmed_count} mailing-only)
+                                        </span>
+                                        <br />
+                                        <span className="text-muted">
+                                            {newsletter.pending_count} pending · {newsletter.unsubscribed_count} unsubscribed
+                                        </span>
+                                    </p>
+                                    <ActionMenu label={`Actions for ${newsletter.name}`} actions={rowActions(newsletter)} />
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                    <Pagination page={newsletters} label="Newsletters" />
+                </>
             )}
+            {dialog}
         </WorkspaceLayout>
     );
 }

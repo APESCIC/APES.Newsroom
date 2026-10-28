@@ -1,4 +1,3 @@
-import { Head } from '@inertiajs/react';
 import { Contact, ShieldCheck, Users } from 'lucide-react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
 import AccountCard from '../../../Components/People/AccountCard';
@@ -25,7 +24,6 @@ export default function Show({ person }: { person: Person }) {
                     </PillButton>
                 }
             >
-                <Head title={`${person.contact.email} · People`} />
                 <ContactCard person={person} />
                 <SubscriptionsCard mailing={person.mailing} canManage={person.can.manage_subscriptions} canSuppress={person.can.suppress} />
             </WorkspaceLayout>
@@ -53,7 +51,6 @@ export default function Show({ person }: { person: Person }) {
                 </>
             }
         >
-            <Head title={`${user.name} · People`} />
             <AccountCard person={person} />
             <MembershipCard person={person} />
             {person.mailing ? (

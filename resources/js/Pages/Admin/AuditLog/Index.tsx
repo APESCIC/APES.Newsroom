@@ -1,4 +1,3 @@
-import { Head } from '@inertiajs/react';
 import { Download, ScrollText } from 'lucide-react';
 import { useState } from 'react';
 import FilterBar from '../../../Components/Admin/FilterBar';
@@ -88,7 +87,6 @@ export default function Index({
                 </a>
             }
         >
-            <Head title="Audit log" />
             <FilterBar action="/admin/audit-log" values={values} label="Filter audit log">
                 <label className="text-sm font-semibold text-body">
                     Actor

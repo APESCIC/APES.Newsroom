@@ -1,4 +1,4 @@
-import { Head, router, useForm } from '@inertiajs/react';
+import { router, useForm } from '@inertiajs/react';
 import { Download, Upload } from 'lucide-react';
 import { FormEventHandler } from 'react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
@@ -32,7 +32,6 @@ export default function GhostMembersImport({ runs }: { runs: Run[] }) {
 
     return (
         <WorkspaceLayout area="Admin" active="members" title="Ghost members import" subtitle="Dry-run a Ghost Admin members export. No email is sent from import runs.">
-            <Head title="Ghost members import" />
             <p className="text-sm text-muted">
                 Upload a Ghost Admin members export for a dry run of contacts and opt-outs. Newsletter subscriptions are reconciled from Ghost&apos;s
                 per-newsletter exports with <code>php artisan ghost:reconcile-newsletters</code> (dry run first, then apply after sign-off).

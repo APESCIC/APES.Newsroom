@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Link, useForm } from '@inertiajs/react';
 import type { FormEventHandler } from 'react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
 
@@ -194,15 +194,14 @@ export default function SettingsIndex({ settings }: { settings: SettingDefinitio
 
     return (
         <WorkspaceLayout area="Admin" active="settings" title="Settings" subtitle="Site-wide configuration for the Newsroom.">
-            <Head title="Settings" />
             <p className="text-sm text-body">
                 Service keys and connection health for Mailgun, Stripe and other integrations live under{' '}
                 <Link href="/admin/settings/integrations" className="font-semibold underline">
-                    Integrations and keys
+                    Integrations &amp; keys
                 </Link>
                 . The domains newsletters may send from are managed under{' '}
                 <Link href="/admin/settings/email-domains" className="font-semibold underline">
-                    Email sending domains
+                    Sending domains
                 </Link>
                 .
             </p>

@@ -36,11 +36,18 @@ class PageController extends Controller
             $query->where('author_id', $request->user()->id);
         }
 
-        if ($status = $request->string('status')->toString()) {
+        $status = PostStatus::tryFrom($request->string('status')->toString())?->value;
+        if ($status !== null) {
             $query->where('status', $status);
         }
 
-        $pages = $query->latest('updated_at')->get()->map(fn (Page $page) => [
+        $q = trim((string) $request->query('q', ''));
+        if ($q !== '') {
+            $like = '%'.$q.'%';
+            $query->where(fn ($builder) => $builder->where('title', 'like', $like)->orWhere('slug', 'like', $like));
+        }
+
+        $pages = $query->latest('updated_at')->latest('id')->paginate(20)->withQueryString()->through(fn (Page $page) => [
             'id' => $page->id,
             'title' => $page->title,
             'slug' => $page->slug,
@@ -51,7 +58,8 @@ class PageController extends Controller
 
         return Inertia::render('Staff/Pages/Index', [
             'pages' => $pages,
-            'filterStatus' => $status ?: null,
+            'filterStatus' => $status,
+            'filters' => ['q' => $q],
         ]);
     }
 

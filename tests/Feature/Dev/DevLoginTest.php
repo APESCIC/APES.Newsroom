@@ -42,24 +42,24 @@ class DevLoginTest extends TestCase
                 'role' => Role::Public,
                 'redirect' => '/',
                 'allowed' => ['/'],
-                'forbidden' => ['/staff/posts', '/admin/moderation'],
+                'forbidden' => ['/staff', '/staff/posts', '/admin', '/admin/moderation'],
             ],
             'staff' => [
                 'role' => Role::Staff,
-                'redirect' => '/staff/posts',
-                'allowed' => ['/staff/posts'],
-                'forbidden' => ['/admin/moderation'],
+                'redirect' => '/staff',
+                'allowed' => ['/staff', '/staff/posts'],
+                'forbidden' => ['/admin', '/admin/moderation'],
             ],
             'admin' => [
                 'role' => Role::Admin,
-                'redirect' => '/admin/moderation',
-                'allowed' => ['/staff/posts', '/admin/moderation'],
+                'redirect' => '/admin',
+                'allowed' => ['/staff', '/staff/posts', '/admin', '/admin/moderation'],
                 'forbidden' => [],
             ],
             'super_admin' => [
                 'role' => Role::SuperAdmin,
-                'redirect' => '/admin/moderation',
-                'allowed' => ['/staff/posts', '/admin/moderation'],
+                'redirect' => '/admin',
+                'allowed' => ['/staff', '/staff/posts', '/admin', '/admin/moderation'],
                 'forbidden' => [],
             ],
         ];
@@ -88,7 +88,7 @@ class DevLoginTest extends TestCase
         $this->enableLocalDevRoutes();
         $this->seed(DemoUsersSeeder::class);
 
-        $this->post('/_dev/login/staff')->assertRedirect('/staff/posts');
+        $this->post('/_dev/login/staff')->assertRedirect('/staff');
         $this->assertAuthenticated();
 
         $this->post('/_dev/logout')->assertRedirect('/');

@@ -1,4 +1,4 @@
-import { Head, router, useForm } from '@inertiajs/react';
+import { router, useForm } from '@inertiajs/react';
 import { Mail } from 'lucide-react';
 import { FormEventHandler } from 'react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
@@ -177,6 +177,7 @@ export default function NewsletterEdit({
             area="Staff"
             active="newsletters"
             title={newsletter ? 'Edit newsletter' : 'New newsletter'}
+            documentTitle={newsletter ? `Edit: ${newsletter.name}` : undefined}
             subtitle={newsletter?.name}
             actions={
                 <PillButton href="/staff/newsletters" variant="secondary" icon={Mail}>
@@ -184,7 +185,6 @@ export default function NewsletterEdit({
                 </PillButton>
             }
         >
-            <Head title={newsletter ? newsletter.name : 'New newsletter'} />
             <form onSubmit={submit} className="sg-card space-y-4 p-5 sm:p-6">
                 <label className="block text-sm font-semibold" htmlFor="name">
                     Name

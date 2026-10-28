@@ -1,8 +1,9 @@
-import { Head, useForm } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import { Trash2, Webhook } from 'lucide-react';
 import { FormEvent, useState } from 'react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
 import ActionMenu from '../../../Components/Workspace/ui/ActionMenu';
+import AdvancedDetails from '../../../Components/Workspace/ui/AdvancedDetails';
 import Badge from '../../../Components/Workspace/ui/Badge';
 import ConfirmDialog from '../../../Components/Workspace/ui/ConfirmDialog';
 import EmptyState from '../../../Components/Workspace/ui/EmptyState';
@@ -76,7 +77,13 @@ function CreateForm({ availableEvents }: { availableEvents: string[] }) {
 
 function EndpointCard({ endpoint, availableEvents }: { endpoint: Endpoint; availableEvents: string[] }) {
     const [confirmDelete, setConfirmDelete] = useState(false);
-    const { data, setData, patch, processing, delete: destroy } = useForm({
+    const {
+        data,
+        setData,
+        patch,
+        processing,
+        delete: destroy,
+    } = useForm({
         name: endpoint.name,
         url: endpoint.url,
         events: endpoint.events,
@@ -155,13 +162,13 @@ export default function Index({
     revealedSecret?: { id: number; name: string; secret: string } | null;
 }) {
     return (
-        <WorkspaceLayout
-            area="Admin"
-            active="webhooks"
-            title="Webhooks"
-            subtitle="Outbound signed webhooks (HMAC-SHA256). Delivery is queued with retries and never blocks publish or membership flows."
-        >
-            <Head title="Webhooks" />
+        <WorkspaceLayout area="Admin" active="webhooks" title="Webhooks" subtitle="Notify other services when posts are published or memberships change.">
+            <AdvancedDetails summary="Signing and delivery">
+                <p>
+                    Each request is signed with HMAC-SHA256 using the endpoint&apos;s signing secret. Delivery is queued with retries and never blocks publish
+                    or membership flows.
+                </p>
+            </AdvancedDetails>
             {revealedSecret && (
                 <section className="sg-card flex flex-col gap-2 border-l-4 !border-l-[var(--color-sg-accent)] p-4" aria-label="Signing secret">
                     <p className="font-semibold text-body">

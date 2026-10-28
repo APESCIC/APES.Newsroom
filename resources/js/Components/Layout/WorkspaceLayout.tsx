@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { ChevronRight, ExternalLink, LogOut, Menu, Search, TriangleAlert, UserCircle, X } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import type { SharedPageProps } from '../../types/page';
@@ -41,7 +41,7 @@ function PanelSwitch({ area }: { area: WorkspaceArea }) {
     );
 }
 
-function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active: WorkspaceActive }) {
+function WorkspaceNavigation({ area, active }: { area: WorkspaceArea; active?: WorkspaceActive }) {
     const { auth } = usePage<SharedPageProps>().props;
     const headingId = useId();
 
@@ -104,7 +104,7 @@ function UserCard() {
     );
 }
 
-function Sidebar({ area, active, close }: { area: WorkspaceArea; active: WorkspaceActive; close?: () => void }) {
+function Sidebar({ area, active, close }: { area: WorkspaceArea; active?: WorkspaceActive; close?: () => void }) {
     return (
         <div className="sg-rail flex h-full flex-col overflow-y-auto overscroll-contain p-4" data-testid="workspace-sidebar">
             <div className="flex items-center justify-between gap-2">
@@ -122,8 +122,8 @@ function Sidebar({ area, active, close }: { area: WorkspaceArea; active: Workspa
     );
 }
 
-function Breadcrumbs({ area, active, title }: { area: WorkspaceArea; active: WorkspaceActive; title: string }) {
-    const section = findNavItem(area, active);
+function Breadcrumbs({ area, active, title }: { area: WorkspaceArea; active?: WorkspaceActive; title: string }) {
+    const section = active ? findNavItem(area, active) : undefined;
     const crumbs: { label: string; href?: string }[] = [{ label: area, href: areaHome(area) }];
     if (section && section.label !== title) crumbs.push({ label: section.label, href: section.href });
     crumbs.push({ label: title });
@@ -150,7 +150,7 @@ function Breadcrumbs({ area, active, title }: { area: WorkspaceArea; active: Wor
     );
 }
 
-function SendingDomainAlertBanner({ active }: { active: WorkspaceActive }) {
+function SendingDomainAlertBanner({ active }: { active?: WorkspaceActive }) {
     const { sendingDomainAlerts = [] } = usePage<SharedPageProps>().props;
     if (sendingDomainAlerts.length === 0) return null;
 
@@ -177,17 +177,24 @@ function SendingDomainAlertBanner({ active }: { active: WorkspaceActive }) {
     );
 }
 
+/**
+ * Panel page shell. Owns the document title as "{title} - {area}" (the app
+ * appends "- APES Newsroom"); pass `documentTitle` when the tab should differ
+ * from the visible heading (#355).
+ */
 export default function WorkspaceLayout({
     area,
     active,
     title,
+    documentTitle,
     subtitle,
     actions,
     children,
 }: {
     area: WorkspaceArea;
-    active: WorkspaceActive;
+    active?: WorkspaceActive;
     title: string;
+    documentTitle?: string;
     subtitle?: string;
     actions?: ReactNode;
     children: ReactNode;
@@ -245,6 +252,7 @@ export default function WorkspaceLayout({
 
     return (
         <div data-testid="workspace-shell" className="workspace-shell">
+            <Head title={`${documentTitle ?? title} - ${area}`} />
             <div data-testid="workspace-background" inert={overlayOpen ? true : undefined} aria-hidden={overlayOpen ? true : undefined}>
                 <a href="#main-content" className="skip-link">
                     Skip to main content

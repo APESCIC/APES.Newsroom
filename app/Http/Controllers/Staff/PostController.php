@@ -95,6 +95,7 @@ class PostController extends Controller
             ],
             'channels' => $this->channelFilterOptions(),
             'canReview' => $request->user()->can('review', Post::class),
+            'canPublish' => $request->user()->can('publish', Post::class),
         ]);
     }
 

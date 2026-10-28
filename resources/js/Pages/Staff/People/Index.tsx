@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { Contact } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
@@ -33,7 +33,6 @@ export default function Index({ people, filters }: { people: PageMeta & { data: 
 
     return (
         <WorkspaceLayout area="Staff" active="people" title="People" subtitle="Reader accounts, their membership, newsletters and public profile">
-            <Head title="People" />
             <p className="text-sm text-muted">
                 Open a person to view or edit their details. Mailing-list subscribers without an account are listed under{' '}
                 <Link href="/staff/subscribers" className="text-body underline">

@@ -27,7 +27,7 @@ export default function GlassCard({
     description?: ReactNode;
     actions?: ReactNode;
     children?: ReactNode;
-} & HTMLAttributes<HTMLElement>) {
+} & Omit<HTMLAttributes<HTMLElement>, 'title'>) {
     return (
         <Component className={`sg-card ${paddings[padding]} ${className}`.trim()} {...props}>
             {(title || actions) && (

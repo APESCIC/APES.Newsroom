@@ -1,4 +1,4 @@
-import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { router, useForm, usePage } from '@inertiajs/react';
 import { Settings } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import WorkspaceLayout from '../../../../Components/Layout/WorkspaceLayout';
@@ -354,7 +354,7 @@ export default function IntegrationsIndex({
         <WorkspaceLayout
             area="Admin"
             active="integrations"
-            title="Integrations"
+            title="Integrations & keys"
             subtitle="Service keys and connection health."
             actions={
                 <PillButton href="/admin/settings" variant="secondary" icon={Settings}>
@@ -362,7 +362,6 @@ export default function IntegrationsIndex({
                 </PillButton>
             }
         >
-            <Head title="Integrations" />
             <>
                 {otherErrors.length > 0 && (
                     <div role="alert" className="sg-card border-l-4 !border-l-[var(--color-sg-error)] px-4 py-3 text-sm text-danger">

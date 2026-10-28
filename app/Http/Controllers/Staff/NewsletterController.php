@@ -33,9 +33,15 @@ class NewsletterController extends Controller
             $status = 'all';
         }
 
+        $q = trim((string) $request->query('q', ''));
+
         $newsletters = Newsletter::query()
             ->when($status === Newsletter::STATUS_ACTIVE, fn ($query) => $query->active())
             ->when($status === Newsletter::STATUS_ARCHIVED, fn ($query) => $query->archived())
+            ->when($q !== '', fn ($query) => $query->where(fn ($builder) => $builder
+                ->where('name', 'like', '%'.$q.'%')
+                ->orWhere('slug', 'like', '%'.$q.'%')
+                ->orWhere('sender_email', 'like', '%'.$q.'%')))
             ->withCount([
                 'subscriptions as confirmed_count' => fn ($query) => $query->where('status', SubscriptionStatus::Confirmed),
                 'subscriptions as pending_count' => fn ($query) => $query->where('status', SubscriptionStatus::Pending),
@@ -48,8 +54,10 @@ class NewsletterController extends Controller
                     ->whereHas('contact', fn ($contact) => $contact->whereNull('user_id')),
             ])
             ->orderBy('name')
-            ->get()
-            ->map(fn (Newsletter $newsletter) => [
+            ->orderBy('id')
+            ->paginate(20)
+            ->withQueryString()
+            ->through(fn (Newsletter $newsletter) => [
                 'id' => $newsletter->id,
                 'name' => $newsletter->name,
                 'slug' => $newsletter->slug,
@@ -73,6 +81,7 @@ class NewsletterController extends Controller
         return Inertia::render('Staff/Newsletters/Index', [
             'newsletters' => $newsletters,
             'status' => $status,
+            'filters' => ['q' => $q],
         ]);
     }
 

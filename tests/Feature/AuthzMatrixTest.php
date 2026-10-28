@@ -55,6 +55,8 @@ class AuthzMatrixTest extends TestCase
         'admin.content-api-keys.index' => Role::Admin,
         'admin.content-api-keys.store' => Role::Admin,
         'admin.content-api-keys.destroy' => Role::Admin,
+        'admin.dashboard' => Role::Admin,
+        'admin.fallback' => Role::Admin,
         'admin.imports.ghost-content' => Role::Staff,
         'admin.imports.ghost-content.upload' => Role::Staff,
         'admin.imports.ghost-content.confirm' => Role::Staff,
@@ -105,6 +107,8 @@ class AuthzMatrixTest extends TestCase
         'admin.webhooks.destroy' => Role::Admin,
         'staff.ai.status' => Role::Staff,
         'staff.ai.suggest' => Role::Staff,
+        'staff.dashboard' => Role::Staff,
+        'staff.fallback' => Role::Staff,
         'staff.media.by-url' => Role::Staff,
         'staff.media.destroy' => Role::Staff,
         'staff.media.hero.upload' => Role::Staff,
@@ -449,6 +453,7 @@ class AuthzMatrixTest extends TestCase
                     'discount_type' => 'percent',
                     'discount_value' => 10,
                 ]),
+                'fallbackPlaceholder' => 'no-such-page',
             };
         }
 

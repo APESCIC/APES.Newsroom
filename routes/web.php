@@ -14,6 +14,7 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Admin\ApiTokenController as AdminApiTokenController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\ContentApiKeyController as AdminContentApiKeyController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\EmailSendingDomainController as AdminEmailSendingDomainController;
 use App\Http\Controllers\Admin\GhostContentImportController;
 use App\Http\Controllers\Admin\GhostMembersImportController;
@@ -42,6 +43,7 @@ use App\Http\Controllers\Mailing\PreferenceController;
 use App\Http\Controllers\Mailing\SignupController;
 use App\Http\Controllers\Mailing\UnsubscribeController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\PanelNotFoundController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReactionController;
 use App\Http\Controllers\ReportController;
@@ -50,6 +52,7 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\Staff\AiAssistController as StaffAiAssistController;
 use App\Http\Controllers\Staff\CampaignController as StaffCampaignController;
+use App\Http\Controllers\Staff\DashboardController as StaffDashboardController;
 use App\Http\Controllers\Staff\MailingContactController as StaffMailingContactController;
 use App\Http\Controllers\Staff\MediaController as StaffMediaController;
 use App\Http\Controllers\Staff\MediaLibraryController as StaffMediaLibraryController;
@@ -183,6 +186,7 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Admin->value])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
+        Route::get('/', AdminDashboardController::class)->name('dashboard');
         Route::get('/moderation', [ModerationController::class, 'index'])->name('moderation.index');
         Route::post('/moderation/profiles/{profile}', [ModerationController::class, 'moderateProfile'])->name('moderation.profiles');
         Route::post('/moderation/comments/{comment}', [ModerationController::class, 'moderateComment'])->name('moderation.comments');
@@ -265,6 +269,8 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Admin->value])
             Route::patch('/webhooks/{webhook}', [AdminWebhookController::class, 'update'])->name('webhooks.update');
             Route::delete('/webhooks/{webhook}', [AdminWebhookController::class, 'destroy'])->name('webhooks.destroy');
         });
+
+        Route::fallback(PanelNotFoundController::class)->name('fallback');
     });
 
 Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
@@ -281,6 +287,7 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
     ->prefix('staff')
     ->name('staff.')
     ->group(function () {
+        Route::get('/', StaffDashboardController::class)->name('dashboard');
         Route::get('/posts', [StaffPostController::class, 'index'])->name('posts.index');
         Route::get('/posts/review', [StaffPostController::class, 'reviewQueue'])->name('posts.review');
         Route::get('/posts/new', [StaffPostController::class, 'create'])->name('posts.create');
@@ -372,6 +379,8 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
         Route::post('/media/unsplash/select', [StaffMediaController::class, 'unsplashSelect'])->name('media.unsplash.select');
         Route::get('/ai/status', [StaffAiAssistController::class, 'status'])->name('ai.status');
         Route::post('/ai/suggest', StaffAiAssistController::class)->name('ai.suggest');
+
+        Route::fallback(PanelNotFoundController::class)->name('fallback');
     });
 
 require __DIR__.'/auth.php';

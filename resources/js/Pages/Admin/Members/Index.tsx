@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { IdCard } from 'lucide-react';
 import { FormEvent, useState } from 'react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
@@ -78,7 +78,6 @@ export default function Index({ members, filters }: { members: PageMeta & { data
 
     return (
         <WorkspaceLayout area="Admin" active="members" title="Members" subtitle="Public members, their plan and recent signed-in reading">
-            <Head title="Members" />
             <p className="text-sm text-muted">
                 Search public members by name or email. Filter by free, paying or complimentary status and review recent signed-in reading activity.
                 Open a member to edit their details, membership and newsletters. To change account security or delete an account, use{' '}

@@ -1,4 +1,4 @@
-import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { router, useForm, usePage } from '@inertiajs/react';
 import { Image as ImageIcon, Search, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
@@ -70,7 +70,6 @@ export default function MediaIndex({ assets, search }: { assets: PageMeta & { da
 
     return (
         <WorkspaceLayout area="Staff" active="media" title="Media library" subtitle="Uploaded hero images you can reuse">
-            <Head title="Media library" />
             <form
                 role="search"
                 className="sg-card flex flex-col gap-2 p-4 sm:flex-row"

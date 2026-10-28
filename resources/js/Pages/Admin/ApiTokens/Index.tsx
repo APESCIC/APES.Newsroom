@@ -1,4 +1,4 @@
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { useForm, usePage } from '@inertiajs/react';
 import { KeyRound } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import ReasonConfirmDialog from '../../../Components/Admin/ReasonConfirmDialog';
@@ -131,8 +131,7 @@ export default function Index({
     const revokeForm = useForm({});
 
     return (
-        <WorkspaceLayout area="Admin" active="api-tokens" title="Admin API tokens" subtitle="Bearer tokens for the Admin API">
-            <Head title="Admin API tokens" />
+        <WorkspaceLayout area="Admin" active="api-tokens" title="API tokens" subtitle="Bearer tokens for the Admin API">
             {created && (
                 <section className="sg-card flex flex-col gap-2 border-l-4 !border-l-[var(--color-sg-accent)] p-4" aria-label="New token">
                     <p className="font-semibold text-body">Token "{created.name}" created. Copy it now: it will not be shown again.</p>

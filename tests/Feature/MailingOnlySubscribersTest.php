@@ -131,7 +131,7 @@ class MailingOnlySubscribersTest extends TestCase
             ->get('/staff/newsletters')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->where('newsletters', fn ($rows) => collect($rows)->firstWhere('slug', 'apes-times')['account_confirmed_count'] === 1
+                ->where('newsletters.data', fn ($rows) => collect($rows)->firstWhere('slug', 'apes-times')['account_confirmed_count'] === 1
                     && collect($rows)->firstWhere('slug', 'apes-times')['mailing_only_confirmed_count'] === 1
                     && collect($rows)->firstWhere('slug', 'apes-times')['confirmed_count'] === 2));
     }
