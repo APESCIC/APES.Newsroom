@@ -139,7 +139,7 @@ test.describe('shell', () => {
             for (const sheet of Array.from(document.styleSheets)) {
                 for (const rule of Array.from(sheet.cssRules)) {
                     if (!(rule instanceof CSSSupportsRule) || !rule.conditionText.includes('not') || !rule.conditionText.includes('backdrop-filter')) continue;
-                    const shell = Array.from(rule.cssRules).find((inner): inner is CSSStyleRule => inner instanceof CSSStyleRule && inner.selectorText === '.workspace-shell');
+                    const shell = Array.from(rule.cssRules).find((inner): inner is CSSStyleRule => inner instanceof CSSStyleRule && inner.selectorText === ':root');
                     const probe = document.createElement('div');
                     probe.style.backgroundColor = shell?.style.getPropertyValue('--sg-surface').trim() ?? '';
                     document.body.append(probe);

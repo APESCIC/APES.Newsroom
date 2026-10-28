@@ -75,7 +75,7 @@ export default function Register({ newsletters = [] }: { newsletters?: SignupNew
                     </button>
                 </form>
                 <p className="mt-6 text-sm text-muted">
-                    Already have an account? <Link href="/login" className="text-teal-deep hover:underline">Log in</Link>
+                    Already have an account? <Link href="/login" className="text-link underline">Log in</Link>
                 </p>
             </AuthCard>
         </>

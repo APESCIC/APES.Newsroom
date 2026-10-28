@@ -66,7 +66,7 @@ function SessionsSection({ sessions }: { sessions: AccountSession[] }) {
             {errors?.session && <p className="mt-2 text-sm text-danger">{errors.session}</p>}
             <ul className="mt-4 flex flex-col gap-3">
                 {sessions.map((session) => (
-                    <li key={session.id} className="flex flex-wrap items-start justify-between gap-3 rounded-control border border-border p-3">
+                    <li key={session.id} className="flex flex-wrap items-start justify-between gap-3 rounded-sg-field border border-border bg-white/50 p-3">
                         <div>
                             <p className="text-sm font-bold text-body">
                                 {describeDevice(session)}

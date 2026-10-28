@@ -29,23 +29,23 @@ function ArchiveShell({
         <PublicLayout>
             <Head title={title} />
             <main id="main-content" className="mx-auto max-w-public px-5 py-12 sm:px-6">
-                <h1 className="text-2xl font-bold text-on-glass">{heading}</h1>
+                <h1 className="text-2xl font-bold text-sg-ink">{heading}</h1>
                 {posts.data.length === 0 ? (
-                    <p className="mt-6 text-on-glass-muted">No published stories in this archive.</p>
+                    <p className="mt-6 text-muted">No published stories in this archive.</p>
                 ) : (
                     <ul className="mt-6 space-y-4">
                         {posts.data.map((post) => (
-                            <li key={post.slug} className="glass-story-card">
-                                <p className="text-xs font-bold tracking-wide text-brand-teal uppercase">{post.channel}</p>
-                                <Link href={`/articles/${post.slug}`} className="text-lg font-bold text-on-glass hover:text-brand-teal hover:underline">
+                            <li key={post.slug} className="sg-card p-5">
+                                <p className="text-xs font-bold tracking-wide text-sg-teal uppercase">{post.channel}</p>
+                                <Link href={`/articles/${post.slug}`} className="text-lg font-bold text-sg-ink hover:text-sg-teal hover:underline">
                                     {post.title}
                                 </Link>
-                                {post.excerpt && <p className="mt-1 text-sm text-on-glass-muted">{post.excerpt}</p>}
+                                {post.excerpt && <p className="mt-1 text-sm text-muted">{post.excerpt}</p>}
                             </li>
                         ))}
                     </ul>
                 )}
-                <nav className="mt-8 flex flex-wrap gap-2 text-sm text-on-glass" aria-label="Pagination">
+                <nav className="mt-8 flex flex-wrap gap-2 text-sm text-sg-ink" aria-label="Pagination">
                     {posts.links.map((link, index) =>
                         link.url ? (
                             <Link

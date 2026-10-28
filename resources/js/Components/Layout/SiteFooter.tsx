@@ -19,11 +19,9 @@ import type { SharedPageProps } from '../../types/page';
 import ApesLogo from '../Brand/ApesLogo';
 import ProtectedEmail from './ProtectedEmail';
 
-const contactLinkClassName =
-    'inline-flex min-h-11 min-w-11 items-center text-on-glass-muted hover:text-on-glass';
+const contactLinkClassName = 'inline-flex min-h-11 min-w-11 items-center text-link';
 
-const fineprintLinkClassName =
-    'inline-flex min-h-11 items-center text-on-glass hover:underline';
+const fineprintLinkClassName = 'inline-flex min-h-11 items-center text-link';
 
 function FooterPillLink({ item }: { item: FooterNavItem }) {
     const className = 'site-footer-pill-link';
@@ -186,8 +184,8 @@ export default function SiteFooter() {
                         <Link href="/" aria-label="APES Newsroom home" className="mt-3 inline-flex w-fit rounded-control">
                             <ApesLogo variant="footer" alt="" className="h-16 w-16 object-contain" />
                         </Link>
-                        <p className="mt-3 text-sm text-on-glass-muted">{SITE_FOOTER_BRAND_BLURB}</p>
-                        <div className="mt-4 text-sm not-italic text-on-glass-muted">
+                        <p className="mt-3 text-sm text-muted">{SITE_FOOTER_BRAND_BLURB}</p>
+                        <div className="mt-4 text-sm not-italic text-muted">
                             <address className="not-italic">{ORG_POSTAL_ADDRESS}</address>
                             <p className="mt-1">
                                 <a href={`tel:${ORG_PHONE_TEL}`} className={contactLinkClassName}>

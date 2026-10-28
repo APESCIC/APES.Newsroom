@@ -42,7 +42,7 @@ export default function PageShow({
             </Head>
             <article className="mx-auto max-w-3xl px-4 py-10">
                 {preview && (
-                    <p className="mb-4 rounded-control border border-warning bg-warning-mist px-3 py-2 text-sm text-warning">
+                    <p className="mb-4 rounded-sg-field border border-warning/40 bg-warning-mist px-3 py-2 text-sm text-warning">
                         Preview — not publicly published.
                     </p>
                 )}
@@ -65,7 +65,7 @@ export default function PageShow({
                     </figure>
                 )}
                 {page.gated ? (
-                    <div className="glass-form-panel mt-8" role="status">
+                    <div className="form-panel mt-8" role="status">
                         <p className="text-body">
                             {page.gate?.reason === 'paid'
                                 ? 'This page is for paid members.'

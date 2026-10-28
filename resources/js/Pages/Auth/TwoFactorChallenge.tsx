@@ -109,11 +109,11 @@ export default function TwoFactorChallenge({ has_passkeys = false }: { has_passk
                     </button>
                 </form>
                 {has_passkeys && supportsPasskeys && <PasskeyOption />}
-                <button type="button" onClick={switchMode} className="mt-4 text-sm text-teal-deep hover:underline">
+                <button type="button" onClick={switchMode} className="mt-4 text-sm text-link underline">
                     {usingRecoveryCode ? 'Use your authenticator app instead' : 'Use a recovery code instead'}
                 </button>
                 <p className="mt-6 text-sm text-muted">
-                    <Link href="/login" className="text-teal-deep hover:underline">Cancel and start again</Link>
+                    <Link href="/login" className="text-link underline">Cancel and start again</Link>
                 </p>
             </AuthCard>
         </>

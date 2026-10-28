@@ -147,11 +147,11 @@ export default function ArticleShow({
                 <script type="application/ld+json">{JSON.stringify(articleStructuredData(article, canonicalUrl))}</script>
             </Head>
             {preview && (
-                <div className="bg-amber-100 px-4 py-2 text-center text-sm text-amber-900">Preview — not indexed</div>
+                <div className="bg-sg-warn-mist px-4 py-2 text-center text-sm font-semibold text-sg-warn">Preview — not indexed</div>
             )}
             <main id="main-content" className="mx-auto max-w-3xl px-5 py-12 sm:px-6">
-                <div className="glass-form-panel">
-                    <span className={`inline-flex rounded-control px-2 py-1 text-[0.625rem] font-bold tracking-wide uppercase ${channelMeta(article.channel_slug)?.badgeClass ?? 'bg-brand-mist text-teal-deep'}`}>
+                <div className="form-panel bg-(--sg-surface-strong) sm:p-8">
+                    <span className={`inline-flex rounded-full px-2.5 py-1 text-[0.625rem] font-bold tracking-wide uppercase ${channelMeta(article.channel_slug)?.badgeClass ?? 'bg-sg-info-mist text-sg-info'}`}>
                         {article.channel}
                     </span>
                     <article>
@@ -159,7 +159,7 @@ export default function ArticleShow({
                         <p className="mt-2 text-sm text-muted">
                             By{' '}
                             {article.author_id ? (
-                                <Link href={`/authors/${article.author_id}`} className="text-teal-deep hover:underline">
+                                <Link href={`/authors/${article.author_id}`} className="text-link underline">
                                     {article.author}
                                 </Link>
                             ) : (
@@ -171,7 +171,7 @@ export default function ArticleShow({
                                     ·{' '}
                                     <Link
                                         href={`/archive/${new Date(article.published_at).getUTCFullYear()}`}
-                                        className="text-teal-deep hover:underline"
+                                        className="text-link underline"
                                     >
                                         {new Date(article.published_at).toLocaleDateString('en-GB')}
                                     </Link>
@@ -185,7 +185,7 @@ export default function ArticleShow({
                                     const slug = typeof tag === 'string' ? tag.toLowerCase().replace(/\s+/g, '-') : tag.slug;
                                     return (
                                         <li key={slug}>
-                                            <Link href={`/tags/${slug}`} className="rounded-control border border-border px-2 py-0.5 text-teal-deep hover:underline">
+                                            <Link href={`/tags/${slug}`} className="inline-flex rounded-full border border-white/85 bg-white/70 px-2.5 py-0.5 font-semibold text-sg-teal hover:underline">
                                                 {name}
                                             </Link>
                                         </li>
@@ -195,7 +195,7 @@ export default function ArticleShow({
                         )}
                         <ArticleHero article={article} />
                         {article.gated ? (
-                            <div className="glass-form-panel mt-8" role="status">
+                            <div className="form-panel mt-8" role="status">
                                 <p className="text-body">
                                     {article.gate?.reason === 'paid'
                                         ? 'This article is for paid members.'
@@ -230,7 +230,7 @@ export default function ArticleShow({
                                             disabled={!canEngage}
                                             onClick={() => toggleReaction(type)}
                                             aria-pressed={active}
-                                            className={`min-h-11 rounded-control border px-3 py-1.5 text-sm ${active ? 'border-apes-primary bg-apes-mist text-apes-primary' : 'border-border text-body'}`}
+                                            className={`min-h-11 rounded-full border px-4 py-1.5 text-sm font-semibold ${active ? 'border-sg-teal bg-sg-info-mist text-sg-teal' : 'border-white/85 bg-white/70 text-body'}`}
                                         >
                                             {label} <span className="tabular-nums">({count})</span>
                                         </button>
@@ -239,7 +239,7 @@ export default function ArticleShow({
                             </div>
                             {!canEngage && (
                                 <p className="mt-2 text-sm text-muted">
-                                    <Link href="/login" className="text-teal-deep hover:underline">
+                                    <Link href="/login" className="text-link underline">
                                         Sign in
                                     </Link>{' '}
                                     with a verified account to react.
@@ -311,7 +311,7 @@ export default function ArticleShow({
                                 </form>
                             ) : (
                                 <p className="mt-4 text-sm text-muted">
-                                    <Link href="/login" className="text-teal-deep hover:underline">
+                                    <Link href="/login" className="text-link underline">
                                         Sign in
                                     </Link>{' '}
                                     with a verified account to comment.

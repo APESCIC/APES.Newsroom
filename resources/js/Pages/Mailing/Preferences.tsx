@@ -62,7 +62,7 @@ export default function Preferences({
                 )}
 
                 {matched_mailing_notice && (
-                    <div className="mt-4 rounded-control border border-teal-deep bg-page-tint p-3 text-sm text-body" role="status">
+                    <div className="mt-4 rounded-sg-field border border-sg-teal/40 bg-sg-info-mist p-3 text-sm text-body" role="status">
                         <p className="font-semibold">We found your existing newsletter subscriptions</p>
                         <ul className="mt-2 list-disc pl-5">
                             {matched_mailing_notice.newsletters.map((name) => (

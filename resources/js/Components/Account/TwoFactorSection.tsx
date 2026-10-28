@@ -31,7 +31,7 @@ function downloadRecoveryCodes(codes: string[]): void {
 
 export function RecoveryCodesPanel({ codes }: { codes: string[] }) {
     return (
-        <div className="mt-4 rounded-control border border-border p-4" role="region" aria-labelledby="recovery-codes-heading">
+        <div className="mt-4 rounded-sg-field border border-border bg-white/50 p-4" role="region" aria-labelledby="recovery-codes-heading">
             <h3 id="recovery-codes-heading" className="text-base font-bold text-body">Save your recovery codes</h3>
             <p className="mt-1 text-sm text-muted">
                 Use one of these if you lose your authenticator app. Each code works once. This is the only time they are shown.

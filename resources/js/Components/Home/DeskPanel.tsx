@@ -31,9 +31,9 @@ export default function DeskPanel({ featured }: { featured?: PostCard }) {
         return (
             <section className="flex min-h-80 items-center">
                 <div>
-                    <p className="eyebrow-on-glass">Featured story</p>
-                    <h1 className="display-headline-on-glass mt-3">News from across APES</h1>
-                    <p className="mt-4 max-w-xl text-on-glass-muted">No published stories yet. Please check back soon.</p>
+                    <p className="eyebrow">Featured story</p>
+                    <h1 className="display-headline mt-3">News from across APES</h1>
+                    <p className="mt-4 max-w-xl text-muted">No published stories yet. Please check back soon.</p>
                 </div>
             </section>
         );
@@ -44,16 +44,16 @@ export default function DeskPanel({ featured }: { featured?: PostCard }) {
 
     return (
         <article className="max-w-[45rem]">
-            <p className={`eyebrow-on-glass flex items-center gap-2 ${meta?.textClass ?? ''}`}>
+            <p className={`eyebrow flex items-center gap-2 ${meta?.textClass ?? ''}`}>
                 <LineIcon name={meta?.icon ?? 'document'} className="h-4 w-4" />
                 {featured.channel}
             </p>
-            <h1 className="display-headline-on-glass mt-4">
-                <Link href={`/articles/${featured.slug}`} className="hover:text-brand-teal hover:underline">
+            <h1 className="display-headline mt-4">
+                <Link href={`/articles/${featured.slug}`} className="hover:text-sg-teal hover:underline">
                     {featured.title}
                 </Link>
             </h1>
-            {featured.excerpt && <p className="mt-6 text-lg leading-8 text-on-glass-muted">{featured.excerpt}</p>}
+            {featured.excerpt && <p className="mt-6 text-lg leading-8 text-muted">{featured.excerpt}</p>}
             <div className="mt-8 flex flex-col gap-6 sm:flex-row sm:items-center">
                 <Link
                     href={`/articles/${featured.slug}`}
@@ -63,12 +63,12 @@ export default function DeskPanel({ featured }: { featured?: PostCard }) {
                     Read the story
                 </Link>
                 <div className="flex items-center gap-3">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/10 text-brand-teal">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full border border-white/85 bg-white/70 text-sg-teal">
                         <LineIcon name="user" className="h-5 w-5" />
                     </span>
-                    <p className="text-sm font-bold text-on-glass">
+                    <p className="text-sm font-bold text-sg-ink">
                         {featured.author}
-                        {published && <span className="mt-1 block text-xs font-normal text-on-glass-muted">{published}</span>}
+                        {published && <span className="mt-1 block text-xs font-normal text-muted">{published}</span>}
                     </p>
                 </div>
             </div>

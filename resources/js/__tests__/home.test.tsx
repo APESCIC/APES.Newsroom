@@ -116,8 +116,9 @@ describe('Direction C public homepage', () => {
             />,
         );
 
-        expect(document.querySelector('.public-gradient-shell')).toBeInTheDocument();
-        expect(document.querySelector('.glass-hero')).toBeInTheDocument();
+        expect(document.querySelector('.public-shell')).toBeInTheDocument();
+        expect(document.querySelector('.public-header')).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Home' })).toHaveClass('public-nav-link');
 
         expect(screen.getByRole('img', { name: 'APES Newsroom' })).toHaveAttribute(
             'src',
@@ -139,7 +140,7 @@ describe('Direction C public homepage', () => {
         expect(channelsButton).toHaveAttribute('aria-expanded', 'false');
         expect(channelsButton).toHaveFocus();
 
-        expect(screen.getByRole('heading', { name: 'Wildlife corridor project reaches a new milestone' })).toHaveClass('display-headline-on-glass');
+        expect(screen.getByRole('heading', { name: 'Wildlife corridor project reaches a new milestone' })).toHaveClass('display-headline');
         expect(document.querySelector('.editorial-rule')).not.toBeInTheDocument();
         const channelsRegion = screen.getByRole('region', { name: 'APES newsroom channels' });
         expect(within(channelsRegion).getAllByRole('article')).toHaveLength(6);

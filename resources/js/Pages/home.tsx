@@ -9,15 +9,15 @@ import ResponsiveHeroImage from '../Components/Media/ResponsiveHeroImage';
 function FeaturedHeroImage({ featured }: { featured: PostCard }) {
     if (!featured.hero_image) {
         return (
-            <aside className="mx-auto w-full max-w-sm rounded-feature border border-white/15 bg-white/5 p-8">
+            <aside className="sg-card mx-auto w-full max-w-sm p-8">
                 <ApesLogo
                     variant="square"
                     alt="Association for the Protection of Exotic Species"
                     className="h-auto w-full object-contain"
                 />
-                <div className="mt-8 border-t border-white/15 pt-6 text-center">
-                    <h2 className="text-sm font-bold text-on-glass">Our mission</h2>
-                    <p className="mt-2 text-xs leading-6 text-on-glass-muted">
+                <div className="mt-8 border-t border-border pt-6 text-center">
+                    <h2 className="text-sm font-bold text-sg-ink">Our mission</h2>
+                    <p className="mt-2 text-xs leading-6 text-muted">
                         Securing a sustainable future for wildlife and communities through science, rescue, and compassionate care.
                     </p>
                 </div>
@@ -26,7 +26,7 @@ function FeaturedHeroImage({ featured }: { featured: PostCard }) {
     }
 
     return (
-        <figure className="overflow-hidden rounded-feature border border-white/15">
+        <figure className="overflow-hidden rounded-sg-card border border-white/85 shadow-sg-card">
             <ResponsiveHeroImage
                 image={featured}
                 alt={featured.hero_image_alt ?? featured.title}
@@ -40,15 +40,15 @@ function FeaturedHeroImage({ featured }: { featured: PostCard }) {
 
 function MissionFallback() {
     return (
-        <aside className="mx-auto w-full max-w-sm rounded-feature border border-white/15 bg-white/5 p-8">
+        <aside className="sg-card mx-auto w-full max-w-sm p-8">
             <ApesLogo
                 variant="square"
                 alt="Association for the Protection of Exotic Species"
                 className="h-auto w-full object-contain"
             />
-            <div className="mt-8 border-t border-white/15 pt-6 text-center">
-                <h2 className="text-sm font-bold text-on-glass">Our mission</h2>
-                <p className="mt-2 text-xs leading-6 text-on-glass-muted">
+            <div className="mt-8 border-t border-border pt-6 text-center">
+                <h2 className="text-sm font-bold text-sg-ink">Our mission</h2>
+                <p className="mt-2 text-xs leading-6 text-muted">
                     Securing a sustainable future for wildlife and communities through science, rescue, and compassionate care.
                 </p>
             </div>
@@ -70,7 +70,7 @@ export default function Home({
             <Head title="Home" />
             <main id="main-content">
                 <section className="px-5 py-12 sm:px-6 md:py-16">
-                    <div className="glass-hero mx-auto max-w-public">
+                    <div className="sg-card mx-auto max-w-public p-8 md:p-12">
                         <div className="grid items-center gap-12 md:grid-cols-2">
                             <DeskPanel featured={featured} />
                             {featured ? <FeaturedHeroImage featured={featured} /> : <MissionFallback />}
@@ -93,7 +93,7 @@ export default function Home({
 
                 <section className="px-5 py-12 sm:px-6" aria-labelledby="recent-heading">
                     <div className="mx-auto max-w-public">
-                        <h2 id="recent-heading" className="text-2xl font-bold text-on-glass">Recent stories</h2>
+                        <h2 id="recent-heading" className="text-2xl font-bold text-sg-ink">Recent stories</h2>
                         {recent.length > 0 ? (
                             <div className="mt-8 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
                                 {recent.map((post) => (
@@ -101,7 +101,7 @@ export default function Home({
                                 ))}
                             </div>
                         ) : (
-                            <p className="glass-panel mt-6 rounded-card p-6 text-on-glass-muted">
+                            <p className="sg-card mt-6 p-6 text-muted">
                                 No additional stories are published yet.
                             </p>
                         )}

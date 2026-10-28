@@ -6,7 +6,7 @@ export default function Cookies() {
         <PublicLayout>
             <Head title="Cookie notice" />
             <main id="main-content" className="mx-auto max-w-public px-5 py-12 sm:px-6">
-                <div className="glass-form-panel prose max-w-none">
+                <div className="form-panel prose max-w-none">
                 <h1>Cookie notice</h1>
                 <p>
                     We use essential cookies and similar storage required to sign you in, protect forms (CSRF), and keep

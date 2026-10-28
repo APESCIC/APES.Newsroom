@@ -34,7 +34,7 @@ export default function Edit({ user }: { user: EditableUser }) {
             }
         >
             <form className="flex flex-col gap-6" onSubmit={submit}>
-                <section className="glass-form-panel flex flex-col gap-4" aria-label="Account">
+                <section className="form-panel flex flex-col gap-4" aria-label="Account">
                     <h2 className="text-lg font-bold text-body">Account</h2>
                     {user.sso_managed && (
                         <p className="text-sm text-muted">Name and email come from Cloudron SSO and update when the user signs in.</p>
@@ -74,7 +74,7 @@ export default function Edit({ user }: { user: EditableUser }) {
                     </div>
                 </section>
 
-                <section className="glass-form-panel flex flex-col gap-4" aria-label="Contact details">
+                <section className="form-panel flex flex-col gap-4" aria-label="Contact details">
                     <h2 className="text-lg font-bold text-body">Contact details</h2>
                     <p className="text-sm text-muted">Private. Only the account holder and administrators can see these.</p>
                     <ContactDetailsFields
@@ -84,7 +84,7 @@ export default function Edit({ user }: { user: EditableUser }) {
                     />
                 </section>
 
-                <section className="glass-form-panel flex flex-col gap-3" aria-label="Reason">
+                <section className="form-panel flex flex-col gap-3" aria-label="Reason">
                     <label htmlFor="reason" className="text-sm font-bold text-body">
                         Reason (recorded in the audit log)
                     </label>

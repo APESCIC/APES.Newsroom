@@ -51,18 +51,18 @@ export default function ChannelShow({
             </Head>
             <main id="main-content">
                 <div className="px-5 py-12 sm:px-6">
-                    <div className={`glass-panel mx-auto max-w-public rounded-card p-8 ${channelTintClass(channel.slug)}`}>
-                        <p className="eyebrow-on-glass flex items-center gap-2">
+                    <div className={`sg-card mx-auto max-w-public p-8 ${channelTintClass(channel.slug)}`}>
+                        <p className={`eyebrow flex items-center gap-2 ${meta?.textClass ?? ''}`}>
                             <LineIcon name={meta?.icon ?? 'document'} className="h-4 w-4" />
                             Channel
                         </p>
-                        <h1 className="mt-2 text-2xl font-bold text-on-glass sm:text-3xl">{channel.label}</h1>
-                        {channel.description && <p className="mt-2 max-w-2xl text-on-glass-muted">{channel.description}</p>}
+                        <h1 className="mt-2 text-2xl font-bold text-sg-ink sm:text-3xl">{channel.label}</h1>
+                        {channel.description && <p className="mt-2 max-w-2xl text-muted">{channel.description}</p>}
                         <div className="mt-6 flex flex-wrap items-center gap-3">
                             <Link href={signupHref} className="button-primary">
                                 Subscribe to {channel.label}
                             </Link>
-                            <a href={`/${channel.slug}/rss.xml`} className="text-sm font-semibold text-on-glass-muted hover:text-white hover:underline">
+                            <a href={`/${channel.slug}/rss.xml`} className="text-link inline-flex min-h-11 items-center text-sm">
                                 RSS feed
                             </a>
                         </div>
@@ -70,15 +70,15 @@ export default function ChannelShow({
                 </div>
                 <div className="mx-auto max-w-public px-5 pb-12 sm:px-6">
                     {posts.data.length === 0 ? (
-                        <p className="glass-panel rounded-card p-6 text-on-glass-muted">
+                        <p className="sg-card p-6 text-muted">
                             No published stories in {channel.label} yet. Subscribe to hear when the first one is out.
                         </p>
                     ) : (
                         <ul className="grid gap-8 md:grid-cols-2">
                             {posts.data.map((post) => (
-                                <li key={post.slug} className="glass-story-card">
+                                <li key={post.slug} className="sg-card p-5">
                                     {post.hero_image && (
-                                        <div className="mb-4 aspect-video overflow-hidden rounded-control border border-white/15">
+                                        <div className="mb-4 aspect-video overflow-hidden rounded-sg-field border border-white/85">
                                             <ResponsiveHeroImage
                                                 image={post}
                                                 sizes="(min-width: 48rem) 34rem, 100vw"
@@ -86,13 +86,13 @@ export default function ChannelShow({
                                             />
                                         </div>
                                     )}
-                                    <h2 className="text-lg font-bold text-on-glass">
-                                        <Link href={`/articles/${post.slug}`} className="hover:text-brand-teal hover:underline">
+                                    <h2 className="text-lg font-bold text-sg-ink">
+                                        <Link href={`/articles/${post.slug}`} className="hover:text-sg-teal hover:underline">
                                             {post.title}
                                         </Link>
                                     </h2>
-                                    {post.excerpt && <p className="mt-2 text-sm leading-6 text-on-glass-muted">{post.excerpt}</p>}
-                                    <p className="mt-3 text-xs font-semibold text-on-glass-muted">{post.author}</p>
+                                    {post.excerpt && <p className="mt-2 text-sm leading-6 text-muted">{post.excerpt}</p>}
+                                    <p className="mt-3 text-xs font-semibold text-muted">{post.author}</p>
                                 </li>
                             ))}
                         </ul>
