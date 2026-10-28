@@ -11,13 +11,15 @@ for (const panelPage of panelPages) {
         });
 
         test('matches the Soft glass screenshot', async ({ page }) => {
-            await openPanelPage(page, panelPage.path);
+            await openPanelPage(page, panelPage.path, panelPage.status);
             await fitViewportToPage(page);
-            await expect(page).toHaveScreenshot(`${panelPage.name}.png`);
+            await expect(page).toHaveScreenshot(`${panelPage.name}.png`, {
+                mask: (panelPage.mask ?? []).map((selector) => page.locator(selector)),
+            });
         });
 
         test('has no serious or critical accessibility violations', async ({ page }) => {
-            await openPanelPage(page, panelPage.path);
+            await openPanelPage(page, panelPage.path, panelPage.status);
             const results = await new AxeBuilder({ page })
                 .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
                 .exclude('[aria-label="Local role preview"]')
@@ -32,7 +34,7 @@ for (const panelPage of panelPages) {
         for (const width of [375, 768, 1440]) {
             test(`does not scroll sideways at ${width}px`, async ({ page }) => {
                 await page.setViewportSize({ width, height: 900 });
-                await openPanelPage(page, panelPage.path);
+                await openPanelPage(page, panelPage.path, panelPage.status);
                 const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 
                 expect(overflow).toBeLessThanOrEqual(0);
@@ -81,6 +83,41 @@ test.describe('shell', () => {
         const options = page.getByRole('dialog', { name: 'Search and run commands' }).getByRole('option');
         await expect(options.first()).toBeVisible();
         expect(await options.allTextContents()).not.toContainEqual(expect.stringContaining('Admin ·'));
+    });
+
+    test('the skip link moves keyboard focus to the main content', async ({ page }) => {
+        await loginAs(page, 'staff');
+        await openPanelPage(page, '/staff');
+
+        await page.keyboard.press('Tab');
+        const skipLink = page.getByRole('link', { name: 'Skip to main content' });
+        await expect(skipLink).toBeFocused();
+        await page.keyboard.press('Enter');
+        await expect(page.locator('#main-content')).toBeFocused();
+    });
+
+    test('row actions open from the keyboard and the confirm dialog returns focus', async ({ page }) => {
+        await loginAs(page, 'admin');
+        await openPanelPage(page, '/staff/pages');
+
+        const trigger = page.getByRole('button', { name: /^Actions for / }).first();
+        await trigger.focus();
+        await page.keyboard.press('Enter');
+        const menu = page.getByRole('menu');
+        await expect(menu.getByRole('menuitem').first()).toBeFocused();
+
+        await menu.getByRole('menuitem', { name: 'Delete' }).focus();
+        await page.keyboard.press('Enter');
+        const dialog = page.getByRole('alertdialog', { name: 'Delete this page?' });
+        await expect(dialog.getByRole('button', { name: 'Cancel' })).toBeFocused();
+
+        await page.keyboard.press('Tab');
+        await page.keyboard.press('Tab');
+        await expect(dialog.getByRole('button', { name: 'Cancel' })).toBeFocused();
+
+        await page.keyboard.press('Escape');
+        await expect(dialog).toBeHidden();
+        await expect(trigger).toBeFocused();
     });
 
     test('readers who ask for less transparency get solid panels', async ({ page }) => {

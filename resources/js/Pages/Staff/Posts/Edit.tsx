@@ -1,4 +1,4 @@
-import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { router, useForm, usePage } from '@inertiajs/react';
 import { Eye, FileText, Mail, Trash2 } from 'lucide-react';
 import { FormEventHandler, useCallback, useEffect, useRef, useState } from 'react';
 import type { OutputData } from '@editorjs/editorjs';
@@ -374,6 +374,7 @@ export default function PostEdit({
             area="Staff"
             active="posts"
             title={isNew ? 'New draft' : 'Edit post'}
+            documentTitle={isNew ? undefined : `Edit: ${post.title}`}
             subtitle={isNew ? 'Compose editorial content' : post.title}
             actions={
                 <>
@@ -393,7 +394,6 @@ export default function PostEdit({
                 </>
             }
         >
-            <Head title={isNew ? 'New post' : `Edit: ${post.title}`} />
             <>
                 {post?.review_notes && (
                     <p className="sg-card border-l-4 !border-l-[var(--color-sg-warn)] px-4 py-3 text-sm text-body">

@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import { Pencil, Users } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { ContactDetailsValues } from '../../../Components/Account/ContactDetailsFields';
@@ -81,7 +81,6 @@ export default function Show({ user }: { user: UserDetail }) {
                 </>
             }
         >
-            <Head title={`${user.name} · Users`} />
             <>
                 <Section title="Account access">
                     {user.lock ? (

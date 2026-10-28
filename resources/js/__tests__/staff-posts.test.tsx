@@ -2,7 +2,7 @@ import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import PostsIndex from '../Pages/Staff/Posts/Index';
-import { setMockPage } from '../test/inertia';
+import { getInertiaMock, setMockPage } from '../test/inertia';
 
 const posts = [
     {
@@ -62,6 +62,8 @@ describe('Soft glass staff posts workspace', () => {
         render(<PostsIndex posts={page(posts)} filterStatus={null} canReview />);
 
         const nav = screen.getByRole('navigation', { name: 'Staff workspace' });
+        expect(within(nav).getAllByRole('link')[0]).toHaveAccessibleName('Dashboard');
+        expect(within(nav).getByRole('link', { name: 'Dashboard' })).toHaveAttribute('href', '/staff');
         expect(within(nav).getByText('Content')).toBeInTheDocument();
         expect(within(nav).getByText('Audience')).toBeInTheDocument();
         expect(within(nav).getByText('Commerce')).toBeInTheDocument();
@@ -71,10 +73,11 @@ describe('Soft glass staff posts workspace', () => {
 
         const panelSwitch = screen.getByRole('navigation', { name: 'Switch panel' });
         expect(within(panelSwitch).getByRole('link', { name: 'Staff' })).toHaveAttribute('aria-current', 'true');
-        expect(within(panelSwitch).getByRole('link', { name: 'Admin' })).toHaveAttribute('href', '/admin/users');
+        expect(within(panelSwitch).getByRole('link', { name: 'Admin' })).toHaveAttribute('href', '/admin');
 
         const breadcrumb = screen.getByRole('navigation', { name: 'Breadcrumb' });
-        expect(within(breadcrumb).getByRole('link', { name: 'Staff' })).toHaveAttribute('href', '/staff/posts');
+        expect(within(breadcrumb).getByRole('link', { name: 'Staff' })).toHaveAttribute('href', '/staff');
+        expect(document.querySelector('title')).toHaveTextContent('Posts - Staff');
         expect(within(breadcrumb).getByText('Posts')).toHaveAttribute('aria-current', 'page');
 
         expect(screen.getByRole('heading', { level: 1, name: 'Posts' })).toBeInTheDocument();
@@ -98,6 +101,44 @@ describe('Soft glass staff posts workspace', () => {
         const filters = screen.getByRole('navigation', { name: 'Post status filters' });
         expect(within(filters).getByRole('link', { name: 'All' })).toHaveAttribute('aria-current', 'page');
         expect(within(filters).getByRole('link', { name: 'Drafts' })).toHaveAttribute('href', '/staff/posts?status=draft');
+    });
+
+    it('puts row actions in a menu and confirms before deleting', async () => {
+        const user = userEvent.setup();
+        render(<PostsIndex posts={page(posts)} filterStatus={null} canReview canPublish />);
+
+        expect(screen.queryByRole('button', { name: /^Delete/ })).not.toBeInTheDocument();
+
+        const trigger = screen.getByRole('button', { name: 'Actions for Shelter adoption update' });
+        await user.click(trigger);
+        const menu = screen.getByRole('menu', { name: 'Actions for Shelter adoption update' });
+        expect(within(menu).getByRole('menuitem', { name: 'Edit' })).toHaveAttribute('href', '/staff/posts/10/edit');
+        expect(within(menu).getByRole('menuitem', { name: 'View on site' })).toHaveAttribute('href', '/articles/shelter-adoption-update');
+        expect(within(menu).getByRole('menuitem', { name: 'Unpublish' })).toBeInTheDocument();
+
+        await user.click(within(menu).getByRole('menuitem', { name: 'Delete' }));
+        const dialog = screen.getByRole('alertdialog', { name: 'Delete this post?' });
+        expect(getInertiaMock().delete).not.toHaveBeenCalled();
+        expect(within(dialog).getByRole('button', { name: 'Cancel' })).toHaveFocus();
+
+        await user.keyboard('{Escape}');
+        expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+        expect(trigger).toHaveFocus();
+
+        await user.click(trigger);
+        await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
+        await user.click(screen.getByRole('button', { name: 'Delete post' }));
+        expect(getInertiaMock().delete).toHaveBeenCalledWith('/staff/posts/10', expect.objectContaining({ preserveScroll: true }));
+    });
+
+    it('hides unpublish from staff who cannot publish', async () => {
+        const user = userEvent.setup();
+        render(<PostsIndex posts={page(posts)} filterStatus={null} canReview={false} canPublish={false} />);
+
+        await user.click(screen.getByRole('button', { name: 'Actions for Shelter adoption update' }));
+        const menu = screen.getByRole('menu', { name: 'Actions for Shelter adoption update' });
+        expect(within(menu).queryByRole('menuitem', { name: 'Unpublish' })).not.toBeInTheDocument();
+        expect(within(menu).getByRole('menuitem', { name: 'Delete' })).toBeInTheDocument();
     });
 
     it('opens the navigation drawer as an accessible modal on small screens', async () => {

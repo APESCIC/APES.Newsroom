@@ -12,6 +12,7 @@ use App\Http\Middleware\RequireRecentAuthentication;
 use App\Http\Middleware\ResolveRedirects;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\TrackUserSession;
+use App\Support\PanelErrorPage;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -96,13 +97,21 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             $status = $response->getStatusCode();
-            if (! in_array($status, [404, 410, 429, 500, 503], true)) {
+            if (! in_array($status, [403, 404, 410, 429, 500, 503], true)) {
                 return $response;
+            }
+
+            $panel = PanelErrorPage::for($request, $status);
+            if ($panel !== null) {
+                return Inertia::render('Errors/Panel', $panel)
+                    ->toResponse($request)
+                    ->setStatusCode($status);
             }
 
             return Inertia::render('Errors/Show', [
                 'status' => $status,
                 'title' => match ($status) {
+                    403 => 'You do not have access',
                     404 => 'Page not found',
                     410 => 'Gone',
                     429 => 'Too many requests',
@@ -110,6 +119,7 @@ return Application::configure(basePath: dirname(__DIR__))
                     default => 'Something went wrong',
                 },
                 'message' => match ($status) {
+                    403 => 'Your account does not have permission to open this page.',
                     404 => 'We could not find that page in the APES Newsroom.',
                     410 => 'This content has been permanently removed.',
                     429 => 'Please wait a moment and try again.',

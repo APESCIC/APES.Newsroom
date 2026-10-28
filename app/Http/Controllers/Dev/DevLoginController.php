@@ -20,15 +20,15 @@ class DevLoginController extends Controller
         ],
         'staff' => [
             'email' => 'staff@apes.local',
-            'redirect' => '/staff/posts',
+            'redirect' => '/staff',
         ],
         'admin' => [
             'email' => 'admin@apes.local',
-            'redirect' => '/admin/moderation',
+            'redirect' => '/admin',
         ],
         'super_admin' => [
             'email' => 'superadmin@apes.local',
-            'redirect' => '/admin/moderation',
+            'redirect' => '/admin',
         ],
     ];
 

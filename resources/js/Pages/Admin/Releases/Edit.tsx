@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
 
@@ -88,7 +88,6 @@ export default function ReleaseEdit({
                 </Link>
             }
         >
-            <Head title={editing ? 'Edit release' : 'New release'} />
             <form onSubmit={submit} className="sg-card flex flex-col gap-6 p-5 sm:p-6">
                 <div className="grid gap-4 sm:grid-cols-2">
                     <div>

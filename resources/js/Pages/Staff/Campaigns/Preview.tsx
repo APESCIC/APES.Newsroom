@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import { ArrowLeft, Send } from 'lucide-react';
 import { FormEventHandler } from 'react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
@@ -38,6 +38,7 @@ export default function CampaignPreview({
             area="Staff"
             active="posts"
             title="Campaign preview"
+            documentTitle={`Campaign preview: ${post.title}`}
             subtitle={post.title}
             actions={
                 <PillButton href={`/staff/posts/${post.id}/edit`} variant="secondary" icon={ArrowLeft}>
@@ -45,7 +46,6 @@ export default function CampaignPreview({
                 </PillButton>
             }
         >
-            <Head title={`Campaign preview: ${post.title}`} />
             {status === 'test-send-queued' && (
                 <p role="status" className="sg-card px-4 py-3 text-sm font-medium text-success">
                     Test send queued. It cannot trigger a live campaign.

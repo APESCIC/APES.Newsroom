@@ -152,19 +152,27 @@ class NewsletterAdminTest extends TestCase
         $this->actingAs($staff)->get('/staff/newsletters')
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Staff/Newsletters/Index')
-                ->has('newsletters', 7)
-                ->where('newsletters', fn ($rows) => collect($rows)->firstWhere('slug', 'apes-times')['confirmed_count'] === 2
+                ->has('newsletters.data', 7)
+                ->where('newsletters.total', 7)
+                ->where('newsletters.data', fn ($rows) => collect($rows)->firstWhere('slug', 'apes-times')['confirmed_count'] === 2
                     && collect($rows)->firstWhere('slug', 'apes-times')['pending_count'] === 1
                     && collect($rows)->firstWhere('slug', 'apes-times')['unsubscribed_count'] === 1));
 
         $this->actingAs($staff)->get('/staff/newsletters?status=archived')
             ->assertInertia(fn (Assert $page) => $page
                 ->where('status', 'archived')
-                ->has('newsletters', 1)
-                ->where('newsletters.0.status', 'archived'));
+                ->has('newsletters.data', 1)
+                ->where('newsletters.data.0.status', 'archived'));
 
         $this->actingAs($staff)->get('/staff/newsletters?status=active')
-            ->assertInertia(fn (Assert $page) => $page->has('newsletters', 6));
+            ->assertInertia(fn (Assert $page) => $page->has('newsletters.data', 6));
+
+        $this->actingAs($staff)->get('/staff/newsletters?status=all&q=old')
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('filters.q', 'old')
+                ->has('newsletters.data', 1)
+                ->where('newsletters.data.0.slug', 'old-list')
+                ->where('newsletters.next_page_url', null));
     }
 
     public function test_archived_newsletters_are_not_sendable_or_offered_as_segments(): void

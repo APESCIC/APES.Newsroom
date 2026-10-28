@@ -6,6 +6,10 @@ export type PanelPage = {
     name: string;
     path: string;
     role: Role;
+    /** Expected HTTP status; panel error pages are 403 or 404. */
+    status?: number;
+    /** Selectors hidden in screenshots because their content changes every run. */
+    mask?: string[];
 };
 
 /**
@@ -14,6 +18,9 @@ export type PanelPage = {
  * the seeded day.
  */
 export const panelPages: PanelPage[] = [
+    { name: 'staff-dashboard', path: '/staff', role: 'staff' },
+    { name: 'staff-dashboard-admin', path: '/staff', role: 'admin' },
+    { name: 'staff-not-found', path: '/staff/no-such-page', role: 'staff', status: 404 },
     { name: 'staff-posts', path: '/staff/posts', role: 'staff' },
     { name: 'staff-post-new', path: '/staff/posts/new', role: 'staff' },
     { name: 'staff-post-edit', path: '/staff/posts/1/edit', role: 'admin' },
@@ -25,6 +32,8 @@ export const panelPages: PanelPage[] = [
     { name: 'staff-plans', path: '/staff/membership-plans', role: 'staff' },
     { name: 'staff-offers', path: '/staff/offers', role: 'staff' },
     { name: 'staff-metrics', path: '/staff/metrics', role: 'staff' },
+    { name: 'admin-dashboard', path: '/admin', role: 'admin', mask: ['[aria-label="Recent audit events"]'] },
+    { name: 'admin-forbidden-for-staff', path: '/admin', role: 'staff', status: 403 },
     { name: 'admin-users', path: '/admin/users', role: 'admin' },
     { name: 'admin-user-show', path: '/admin/users/1', role: 'admin' },
     { name: 'admin-moderation', path: '/admin/moderation', role: 'admin' },
@@ -52,9 +61,9 @@ export async function loginAs(page: Page, role: Role): Promise<void> {
 }
 
 /** Load a panel page and wait until fonts and editors have settled. */
-export async function openPanelPage(page: Page, path: string): Promise<void> {
+export async function openPanelPage(page: Page, path: string, status = 200): Promise<void> {
     const response = await page.goto(path);
-    expect(response?.status(), `GET ${path}`).toBe(200);
+    expect(response?.status(), `GET ${path}`).toBe(status);
     await page.waitForLoadState('networkidle');
     await page.addStyleTag({ content: '[aria-label="Local role preview"] { display: none !important; }' });
     await page.evaluate(() => document.fonts.ready);

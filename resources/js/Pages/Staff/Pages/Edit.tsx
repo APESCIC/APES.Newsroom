@@ -1,4 +1,4 @@
-import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { router, useForm, usePage } from '@inertiajs/react';
 import { ExternalLink, Eye, FileStack, Trash2 } from 'lucide-react';
 import { FormEventHandler, useEffect, useRef, useState } from 'react';
 import type { OutputData } from '@editorjs/editorjs';
@@ -138,6 +138,7 @@ export default function PagesEdit({ page, heroUpload }: { page: PageData | null;
             area="Staff"
             active="pages"
             title={page ? 'Edit page' : 'New page'}
+            documentTitle={page ? `Edit: ${page.title}` : undefined}
             subtitle={page ? page.title : 'Pages stay out of news lists and RSS'}
             actions={
                 <>
@@ -158,7 +159,6 @@ export default function PagesEdit({ page, heroUpload }: { page: PageData | null;
                 </>
             }
         >
-            <Head title={page ? `Edit: ${page.title}` : 'New page'} />
 
             {errors.conflict && (
                 <p className="sg-card border-l-4 !border-l-[var(--color-sg-error)] px-4 py-3 text-sm text-danger" role="alert">

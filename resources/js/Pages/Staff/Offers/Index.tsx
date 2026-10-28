@@ -1,6 +1,7 @@
-import { Head, useForm } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import { Tag } from 'lucide-react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
+import AdvancedDetails from '../../../Components/Workspace/ui/AdvancedDetails';
 import Badge from '../../../Components/Workspace/ui/Badge';
 import EmptyState from '../../../Components/Workspace/ui/EmptyState';
 import { FormSection } from '../../../Components/Workspace/ui/FormField';
@@ -71,7 +72,12 @@ function CreateOfferForm() {
                     </label>
                     <label className="text-sm font-semibold text-body">
                         Starts
-                        <input type="datetime-local" className="form-input mt-1.5" value={data.starts_at} onChange={(e) => setData('starts_at', e.target.value)} />
+                        <input
+                            type="datetime-local"
+                            className="form-input mt-1.5"
+                            value={data.starts_at}
+                            onChange={(e) => setData('starts_at', e.target.value)}
+                        />
                     </label>
                     <label className="text-sm font-semibold text-body">
                         Ends
@@ -79,7 +85,12 @@ function CreateOfferForm() {
                     </label>
                     <label className="text-sm font-semibold text-body">
                         Max redemptions
-                        <input type="number" className="form-input mt-1.5" value={data.max_redemptions} onChange={(e) => setData('max_redemptions', e.target.value)} />
+                        <input
+                            type="number"
+                            className="form-input mt-1.5"
+                            value={data.max_redemptions}
+                            onChange={(e) => setData('max_redemptions', e.target.value)}
+                        />
                     </label>
                 </div>
                 <button type="submit" className="sg-btn sg-btn-primary self-start" disabled={processing}>
@@ -138,15 +149,14 @@ function OfferRowForm({ offer }: { offer: OfferRow }) {
     );
 }
 
-export default function Index({ offers }: { offers: OfferRow[] }) {
+export default function Index({ offers, canManageStripe = false }: { offers: OfferRow[]; canManageStripe?: boolean }) {
     return (
-        <WorkspaceLayout
-            area="Staff"
-            active="offers"
-            title="Offers"
-            subtitle="Time-bound or usage-limited promo codes applied at membership checkout. Stripe test-mode coupons are created when billing keys are configured."
-        >
-            <Head title="Offers" />
+        <WorkspaceLayout area="Staff" active="offers" title="Offers" subtitle="Time-bound or usage-limited promo codes applied at membership checkout.">
+            {canManageStripe && (
+                <AdvancedDetails summary="Stripe billing">
+                    <p>Stripe test-mode coupons are created for each offer when billing keys are configured under Integrations &amp; keys.</p>
+                </AdvancedDetails>
+            )}
             <CreateOfferForm />
             {offers.length === 0 ? (
                 <EmptyState icon={Tag} title="No offers yet" description="Create a code above to offer a membership discount." />

@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import { useState } from 'react';
 import FilterBar from '../../../Components/Admin/FilterBar';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
@@ -16,7 +16,6 @@ export default function Index({ filters, users, roles }: { filters: UserFilters;
 
     return (
         <WorkspaceLayout area="Admin" active="users" title="Users" subtitle="Find accounts and review their security">
-            <Head title="Users" />
             <p className="text-sm text-muted">
                 Every account, with sign-in, security and contact details. For membership plans and reading activity of public readers, see{' '}
                 <Link href="/admin/members" className="text-body underline">
