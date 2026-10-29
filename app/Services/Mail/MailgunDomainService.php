@@ -196,7 +196,7 @@ class MailgunDomainService
 
     /**
      * DMARC for a From domain, falling back to the approved parent domain's
-     * policy as receivers do for a subdomain such as news.myapes.me.uk.
+     * policy as receivers do for a subdomain such as mail.apespetcare.org.uk.
      */
     public function dmarcRecordFor(string $fromDomain, string $approvedDomain): ?string
     {

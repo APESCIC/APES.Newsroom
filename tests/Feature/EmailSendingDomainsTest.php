@@ -149,8 +149,8 @@ class EmailSendingDomainsTest extends TestCase
                 ->where('domains.1.in_use.0.uses', ['from'])
                 ->has('domains.1.addresses', 6)
                 ->where('domains.4.domain', 'myapes.me.uk')
-                ->where('domains.4.mailgun_domain', 'news.myapes.me.uk')
-                ->where('domains.4.addresses.0.address', 'news@news.myapes.me.uk')
+                ->where('domains.4.mailgun_domain', 'myapes.me.uk')
+                ->where('domains.4.addresses.0.address', 'news@myapes.me.uk')
                 ->where('testRecipient', $admin->email));
     }
 
@@ -434,7 +434,7 @@ class EmailSendingDomainsTest extends TestCase
         $this->assertSame(SendingDomainStatus::Failed, $this->domain('apesnews.org.uk')->status);
         $this->assertSame(SendingDomainStatus::Disabled, $this->domain('apes.org.uk')->status);
         Http::assertSentCount(4);
-        Http::assertSent(fn (Request $request) => $request->url() === 'https://api.eu.mailgun.net/v4/domains/news.myapes.me.uk');
+        Http::assertSent(fn (Request $request) => $request->url() === 'https://api.eu.mailgun.net/v4/domains/myapes.me.uk');
         Http::assertNotSent(fn (Request $request) => str_ends_with($request->url(), '/apes.org.uk'));
         $this->assertMailgunReadOnly();
     }
