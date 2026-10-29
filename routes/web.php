@@ -214,6 +214,18 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Admin->value])
                 Route::post('/{emailSendingDomain}/disable', [AdminEmailSendingDomainController::class, 'disable'])->whereNumber('emailSendingDomain')->name('disable');
                 Route::post('/{emailSendingDomain}/enable', [AdminEmailSendingDomainController::class, 'enable'])->whereNumber('emailSendingDomain')->name('enable');
                 Route::delete('/{emailSendingDomain}', [AdminEmailSendingDomainController::class, 'destroy'])->whereNumber('emailSendingDomain')->name('destroy');
+                Route::put('/default-reply-to', [AdminEmailSendingDomainController::class, 'updateDefaultReplyTo'])->name('default-reply-to');
+                Route::post('/{emailSendingDomain}/addresses', [AdminEmailSendingDomainController::class, 'storeAddress'])
+                    ->whereNumber('emailSendingDomain')
+                    ->middleware('throttle:20,1')
+                    ->name('addresses.store');
+                Route::put('/addresses/{emailSenderAddress}', [AdminEmailSendingDomainController::class, 'updateAddress'])->whereNumber('emailSenderAddress')->name('addresses.update');
+                Route::post('/addresses/{emailSenderAddress}/disable', [AdminEmailSendingDomainController::class, 'disableAddress'])->whereNumber('emailSenderAddress')->name('addresses.disable');
+                Route::post('/addresses/{emailSenderAddress}/enable', [AdminEmailSendingDomainController::class, 'enableAddress'])->whereNumber('emailSenderAddress')->name('addresses.enable');
+                Route::middleware('throttle:sending-domain-test')->group(function () {
+                    Route::post('/{emailSendingDomain}/test', [AdminEmailSendingDomainController::class, 'testDomain'])->whereNumber('emailSendingDomain')->name('test');
+                    Route::post('/addresses/{emailSenderAddress}/test', [AdminEmailSendingDomainController::class, 'testAddress'])->whereNumber('emailSenderAddress')->name('addresses.test');
+                });
             });
         });
         Route::prefix('/settings/integrations')->name('settings.integrations.')->group(function () {

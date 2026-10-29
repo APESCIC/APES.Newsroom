@@ -6,6 +6,10 @@ import ActionMenu, { type MenuAction } from '../../../../Components/Workspace/ui
 import Badge, { type BadgeTone } from '../../../../Components/Workspace/ui/Badge';
 import ConfirmDialog from '../../../../Components/Workspace/ui/ConfirmDialog';
 import PillButton from '../../../../Components/Workspace/ui/PillButton';
+import DefaultReplyToForm from '../../../../Components/Admin/EmailDomains/DefaultReplyToForm';
+import SenderAddresses from '../../../../Components/Admin/EmailDomains/SenderAddresses';
+import TestSendPanel from '../../../../Components/Admin/EmailDomains/TestSendPanel';
+import type { PurposeOption, SenderAddress, TestResult } from '../../../../Components/Admin/EmailDomains/types';
 import type { SharedPageProps } from '../../../../types/page';
 
 export type SendingDomainStatus = 'pending' | 'verified' | 'failed' | 'disabled';
@@ -41,9 +45,13 @@ export type SendingDomain = {
     last_check: LastCheck | null;
     last_checked_at: string | null;
     verified_at: string | null;
+    last_test: TestResult | null;
     created_by: string | null;
     in_use: NewsletterUse[];
+    addresses: SenderAddress[];
 };
+
+type TestContext = { purposes: PurposeOption[]; testRecipient: string; offerTestAddressId: number | null };
 
 function formatTime(iso: string | null): string {
     if (!iso) return 'Never';
@@ -171,7 +179,7 @@ function RecordsTable({ check }: { check: LastCheck }) {
     );
 }
 
-function DomainCard({ domain }: { domain: SendingDomain }) {
+function DomainCard({ domain, context }: { domain: SendingDomain; context: TestContext }) {
     const [busy, setBusy] = useState(false);
     const [confirming, setConfirming] = useState<'disable' | 'remove' | null>(null);
     const headingId = `email-domain-${domain.id}-heading`;
@@ -251,6 +259,15 @@ function DomainCard({ domain }: { domain: SendingDomain }) {
                 </details>
             )}
 
+            <SenderAddresses
+                domainId={domain.id}
+                domain={domain.domain}
+                addresses={domain.addresses}
+                purposes={context.purposes}
+                testRecipient={context.testRecipient}
+                offerTestAddressId={context.offerTestAddressId}
+            />
+
             <div className="flex flex-wrap gap-2">
                 {domain.status !== 'disabled' && (
                     <button type="button" className="sg-btn sg-btn-secondary sg-btn-sm" disabled={busy} onClick={recheck}>
@@ -263,6 +280,14 @@ function DomainCard({ domain }: { domain: SendingDomain }) {
                     </button>
                 )}
             </div>
+            {domain.status !== 'disabled' && (
+                <TestSendPanel
+                    url={`/admin/settings/email-domains/${domain.id}/test`}
+                    subject={domain.domain}
+                    recipient={context.testRecipient}
+                    lastTest={domain.last_test}
+                />
+            )}
             {inUse && <p className="text-xs text-muted">A domain in use cannot be removed. Change those newsletters first, or disable the domain.</p>}
             <ConfirmDialog
                 open={confirming === 'disable'}
@@ -306,7 +331,8 @@ function AddDomainForm() {
                 Add a domain
             </h2>
             <p className="text-sm text-muted">
-                Add the domain in the Mailgun dashboard first. This page only reads from Mailgun: it looks the domain up and shows the DNS records it needs.
+                Add the domain in the Mailgun dashboard first. This page never changes Mailgun: it looks the domain up, shows the DNS records it needs and can
+                send test emails through it.
             </p>
             <label htmlFor="email-domain-domain" className="text-sm font-semibold text-body">
                 Domain
@@ -360,13 +386,22 @@ export default function EmailDomainsIndex({
     domains,
     mailgunConfigured,
     configuredMailgunDomain,
+    defaultReplyTo = null,
+    testRecipient = '',
+    offerTestAddressId = null,
+    purposes = [],
 }: {
     domains: SendingDomain[];
     mailgunConfigured: boolean;
     configuredMailgunDomain: string | null;
+    defaultReplyTo?: string | null;
+    testRecipient?: string;
+    offerTestAddressId?: number | null;
+    purposes?: PurposeOption[];
 }) {
     const { errors } = usePage<SharedPageProps>().props;
     const removeError = errors?.remove;
+    const context: TestContext = { purposes, testRecipient, offerTestAddressId };
 
     return (
         <WorkspaceLayout
@@ -391,18 +426,21 @@ export default function EmailDomainsIndex({
                         How these are used
                     </h2>
                     <p>
-                        A newsletter From address must use an enabled domain that Mailgun has verified (active, with SPF, DKIM and DMARC passing). A reply-to
-                        address only needs an enabled domain. Sends are re-checked against this list just before they go out.
+                        A newsletter From address must be on a domain&apos;s list of From addresses, and the domain must be enabled and verified by Mailgun
+                        (active, with SPF, DKIM and DMARC passing). Each newsletter sends through its From domain&apos;s own Mailgun domain. A reply-to address
+                        only needs an enabled domain. Sends are re-checked against this list just before they go out. System and account emails always
+                        send from apesnews.org.uk.
                     </p>
                     <p className="text-muted">
                         {mailgunConfigured
                             ? `Mailgun is configured${configuredMailgunDomain ? ` with sending domain ${configuredMailgunDomain}` : ''}. Domains are re-checked every day.`
-                            : 'The Mailgun API key is not configured under Integrations, so domains cannot be checked.'}
+                            : 'The Mailgun API key is not configured under Integrations, so domains cannot be checked and test emails cannot be sent.'}
                     </p>
                 </section>
                 {domains.map((domain) => (
-                    <DomainCard key={domain.id} domain={domain} />
+                    <DomainCard key={domain.id} domain={domain} context={context} />
                 ))}
+                <DefaultReplyToForm value={defaultReplyTo} />
                 <AddDomainForm />
             </>
         </WorkspaceLayout>
