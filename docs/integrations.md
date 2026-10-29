@@ -17,6 +17,10 @@ the server environment (Cloudron-injected or needed before the app boots).
 | Mailgun | API key | `MAILGUN_API_KEY` | `services.mailgun.secret` | `MailgunDomainService` (domain lookups for `MailgunSenderCheck` and [email sending domains](email-sending-domains.md)) and `MailgunApiTransport` (newsletter and test-email sends through each domain's Mailgun domain) | Admin-managed |
 | Mailgun | Sending domain | `MAILGUN_DOMAIN` | `services.mailgun.domain` | `MailgunDomainService` | Admin-managed |
 | Mailgun | API endpoint | `MAILGUN_ENDPOINT` | `services.mailgun.endpoint` | `MailgunDomainService` | Admin-managed |
+| Mailgun | Webhook signing key | `MAILGUN_WEBHOOK_SIGNING_KEY` | `services.mailgun.webhook_signing_key` | `MailgunWebhookController` (verifies `/webhooks/mailgun`) | Admin-managed |
+| Mailgun | Webhook management key | `MAILGUN_MANAGEMENT_KEY` | `services.mailgun.management_key` | `MailgunWebhookManager` (registers webhooks, sets tracking) | Admin-managed |
+| Custom SMTP | Host, port, encryption, username | `CUSTOM_SMTP_*` | `mail.mailers.custom-smtp.*` | `MailTransports` ([mail sending](mail-sending.md)) | Admin-managed |
+| Custom SMTP | Password | `CUSTOM_SMTP_PASSWORD` | `mail.mailers.custom-smtp.password` | `MailTransports` | Admin-managed |
 | Stripe | Secret key | `STRIPE_SECRET` | `services.stripe.secret` | `StripeBillingClient` binding, `AccountController` | Admin-managed |
 | Stripe | Publishable key | `STRIPE_PUBLISHABLE` | `services.stripe.publishable` | Not read by code yet | Admin-managed |
 | Stripe | Webhook signing secret | `STRIPE_WEBHOOK_SECRET` | `services.stripe.webhook_secret` | `StripeApiBillingClient::constructWebhookEvent` | Admin-managed |
@@ -39,9 +43,10 @@ Notes:
   price ids live on each membership plan.
 - `POSTMARK_API_KEY`, `RESEND_API_KEY` and `AWS_*` are Laravel defaults
   that nothing uses.
-- There is no Mailgun webhook signing key: the Newsroom does not receive
-  Mailgun webhooks. Newsletters send through the Mailgun HTTP API and system
-  mail through Cloudron SMTP (see [email sending domains](email-sending-domains.md)).
+- Which transport sends system mail and newsletters is chosen under
+  [mail sending](mail-sending.md). Mailgun webhooks need the signing key; the
+  management key is only used to register webhooks and change tracking, and
+  should be a Developer-role key separate from the sending key.
 - `APP_KEY` encrypts the stored integration keys. Rotating it needs the old
   key in `APP_PREVIOUS_KEYS`, or every stored key must be re-entered.
 
@@ -92,6 +97,7 @@ the server instead (see [`deployment.md`](deployment.md)).
 | OpenAI | Lists models with the API key; warns if AI assist is turned off |
 | Slack | Calls `auth.test` with the bot token; warns if no channel is set |
 | Cloudron SSO | Fetches the OIDC discovery document (no key is sent) |
+| Custom SMTP | Connects, negotiates TLS and signs in without sending; warns that ZeptoMail is for system mail only |
 
 Checks time out after 5 seconds and never send email, create charges or
 change anything at the provider. Results show pass, warning or fail with a

@@ -16,6 +16,7 @@ Draft retention periods for operators. Confirm with legal before cutover.
 | Email change requests | 7 days after the 60-minute link expires (`SECURITY_MAGIC_LINK_RETENTION_DAYS`) | Delete — `newsroom:purge-security-data`; removed with the account on deletion |
 | Session and device records | 90 days after last use or sign-out (`SECURITY_SESSION_RECORD_RETENTION_DAYS`) | Delete — `newsroom:purge-security-data`; removed with the account on deletion |
 | Integration check results | 30 days (`SECURITY_INTEGRATION_CHECK_RETENTION_DAYS`) | Delete — `newsroom:purge-security-data` |
+| Mail delivery and engagement events (`mail_events`) | 24 months (`SECURITY_MAIL_EVENT_RETENTION_MONTHS`) | Delete — `newsroom:purge-security-data` |
 | Two-factor secret and recovery codes | Until 2FA is turned off or the account is deleted | Cleared when 2FA is turned off; removed with the account |
 | Passkeys | Until the member removes them or deletes the account | Delete; cascade with the account |
 | Import runs / reports | 24 months | Delete files + DB rows |

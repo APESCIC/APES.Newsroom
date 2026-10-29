@@ -1,0 +1,29 @@
+{
+  "version": "v1.25.0",
+  "slug": "release-v1-25-0",
+  "released_at": "2026-10-29",
+  "previous_version": "v1.24.0",
+  "theme": "Mail sending options",
+  "change_types": ["added", "changed", "fixed", "security"],
+  "topic_tags": ["internal-only", "compliance", "public-facing"],
+  "summary": "Super admins choose how system mail and newsletters are sent, Mailgun bounces and complaints now stop mail to those addresses, and readers decide whether we track opens and clicks.",
+  "detailed_changes": [
+    "Admin → Settings → Mail sending lets super admins choose Cloudron SMTP, the Mailgun API or a custom SMTP server for system mail and for newsletters, with an optional fallback for system mail only. Changes apply without a redeploy, and unset settings keep today's setup (#608, #610).",
+    "Custom SMTP credentials are stored encrypted under Integrations and never shown again. The docs cover generic SMTP, Mailgun SMTP and ZeptoMail, which is refused for newsletters because it is transactional-only (#609).",
+    "Admins can check each transport's connection without sending, or send a real test email, and see what each transport supports. Only super admins can change the setup, after confirming their identity, and every change and test is audit-logged without secrets (#611, #612, #613, #614).",
+    "If the newsletter transport fails during a send, the send pauses instead of failing, admins are emailed once, and an admin resumes it from the campaign page. A refused message fails only that recipient, and short outages are retried first (#610, #627).",
+    "A signed Mailgun webhook stores delivery, bounce, complaint, unsubscribe, open and click events once each for 24 months. Bounces, spam complaints, provider unsubscribes and three temporary failures on separate sends within 30 days stop mail to the address, and a daily job imports Mailgun's own suppression lists (#615, #616, #617, #618, #620).",
+    "Staff see why an address is blocked and its last delivery problem on the person and subscriber pages. Super admins register, repair and remove the webhooks and set open and click tracking for each sending domain with a separate Mailgun management key (#619, #621, #622).",
+    "Open tracking is now off unless a reader turns it on, and click tracking can be turned off, in mailing preferences. The privacy and cookie notices explain both, and staff see indicative open rates, clicks and top links for each email and newsletter (#622, #623, #624).",
+    "Fixes from a review of v1.24.0: newsletter confirmation emails go through the newsletter's Mailgun domain, test-email limits only count tests an admin may send, queued sends re-check the From and reply-to they will use, strict DMARC is enforced, and the sending-domain page refreshes after a test and keeps keyboard focus (#627).",
+    "Build and test tooling updated (Vite, Vitest, undici, qs) to clear security advisories (#628). Automated tests cover every transport, webhook signatures and replays, suppression rules, the suppression sync, webhook management, tracking consent and stats, with no real network calls (#625)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /admin/settings/mail-sending, /admin/settings/email-domains, /admin/settings/integrations, /staff/posts/{post}/campaign, /staff/metrics, /staff/people, /staff/subscribers, /mailing/preferences, /account/mailing, /legal/privacy, /legal/cookies, /webhooks/mailgun",
+    "User groups affected: super admins (mail sending, webhooks, tracking), admins (tests, resuming paused sends), staff (delivery status and stats), newsletter readers (tracking choices)",
+    "Public impact: open tracking is opt-in and click tracking can be turned off; the privacy and cookie notices are updated",
+    "Internal impact: new mail_events table and Mailgun webhook endpoint, campaign pause status, mail settings and keys, daily mailing:sync-mailgun-suppressions command, docs/mail-sending.md"
+  ],
+  "pr": 629
+}
