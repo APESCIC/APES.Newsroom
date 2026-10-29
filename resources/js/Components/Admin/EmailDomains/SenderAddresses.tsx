@@ -1,5 +1,5 @@
 import { router, useForm } from '@inertiajs/react';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import Badge from '../../Workspace/ui/Badge';
 import TestSendPanel from './TestSendPanel';
 import type { PurposeOption, SenderAddress, SenderAddressPurpose } from './types';
@@ -13,17 +13,26 @@ function AddressFields({
     form,
     purposes,
     placeholder,
+    autoFocus = false,
 }: {
     idPrefix: string;
     form: ReturnType<typeof useForm<{ address: string; purpose: SenderAddressPurpose; label: string }>>;
     purposes: PurposeOption[];
     placeholder: string;
+    autoFocus?: boolean;
 }) {
+    const addressRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (autoFocus) addressRef.current?.focus();
+    }, [autoFocus]);
+
     return (
         <div className="grid gap-2 sm:grid-cols-3">
             <label htmlFor={`${idPrefix}-address`} className="text-sm font-semibold text-body">
                 Address
                 <input
+                    ref={addressRef}
                     id={`${idPrefix}-address`}
                     type="email"
                     className="form-input mt-1 w-full"
@@ -42,6 +51,8 @@ function AddressFields({
                     id={`${idPrefix}-purpose`}
                     className="form-input mt-1 w-full"
                     value={form.data.purpose}
+                    aria-invalid={form.errors.purpose ? true : undefined}
+                    aria-describedby={form.errors.purpose ? `${idPrefix}-purpose-error` : undefined}
                     onChange={(event) => form.setData('purpose', event.target.value as SenderAddressPurpose)}
                 >
                     {purposes.map((option) => (
@@ -60,9 +71,22 @@ function AddressFields({
                     {form.errors.address}
                 </p>
             )}
+            {form.errors.purpose && (
+                <p id={`${idPrefix}-purpose-error`} className="text-sm text-danger sm:col-span-3">
+                    {form.errors.purpose}
+                </p>
+            )}
             {form.errors.label && <p className="text-sm text-danger sm:col-span-3">{form.errors.label}</p>}
         </div>
     );
+}
+
+/** Why an address cannot be tested right now, or null when it can. */
+export function addressTestBlocker(address: SenderAddress, domainDisabled: boolean, mailgunConfigured: boolean): string | null {
+    if (domainDisabled) return 'Enable the domain to send test emails from this address.';
+    if (!address.enabled) return 'Enable this address to send a test email from it.';
+    if (!mailgunConfigured) return 'Test emails need the Mailgun API key under Integrations.';
+    return null;
 }
 
 function AddressRow({
@@ -70,20 +94,42 @@ function AddressRow({
     purposes,
     testRecipient,
     offerTest,
+    testBlocker,
 }: {
     address: SenderAddress;
     purposes: PurposeOption[];
     testRecipient: string;
     offerTest: boolean;
+    testBlocker: string | null;
 }) {
     const [editing, setEditing] = useState(false);
     const [busy, setBusy] = useState(false);
+    const editRef = useRef<HTMLButtonElement>(null);
+    const returnFocus = useRef(false);
     const form = useForm({ address: address.address, purpose: address.purpose, label: address.label ?? '' });
     const base = `/admin/settings/email-domains/addresses/${address.id}`;
 
+    useEffect(() => {
+        if (!editing && returnFocus.current) {
+            editRef.current?.focus();
+            returnFocus.current = false;
+        }
+    }, [editing]);
+
+    const close = () => {
+        returnFocus.current = true;
+        setEditing(false);
+    };
+
     const save = (event: FormEvent) => {
         event.preventDefault();
-        form.put(base, { preserveScroll: true, onSuccess: () => setEditing(false) });
+        form.put(base, {
+            preserveScroll: true,
+            onSuccess: () => {
+                form.setDefaults();
+                close();
+            },
+        });
     };
 
     const toggle = () => {
@@ -95,7 +141,7 @@ function AddressRow({
         <li className="flex flex-col gap-2 border-t border-border py-3">
             {editing ? (
                 <form onSubmit={save} className="flex flex-col gap-2" aria-label={`Edit ${address.address}`}>
-                    <AddressFields idPrefix={`sender-address-${address.id}`} form={form} purposes={purposes} placeholder={address.address} />
+                    <AddressFields idPrefix={`sender-address-${address.id}`} form={form} purposes={purposes} placeholder={address.address} autoFocus />
                     <div className="flex flex-wrap gap-2">
                         <button type="submit" className="sg-btn sg-btn-primary sg-btn-sm" disabled={form.processing}>
                             Save address
@@ -106,7 +152,7 @@ function AddressRow({
                             onClick={() => {
                                 form.reset();
                                 form.clearErrors();
-                                setEditing(false);
+                                close();
                             }}
                         >
                             Cancel
@@ -124,7 +170,7 @@ function AddressRow({
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                         <Badge tone={address.enabled ? 'ok' : 'neutral'}>{address.enabled ? 'Enabled' : 'Disabled'}</Badge>
-                        <button type="button" className="sg-btn sg-btn-secondary sg-btn-sm" onClick={() => setEditing(true)} aria-label={`Edit ${address.address}`}>
+                        <button ref={editRef} type="button" className="sg-btn sg-btn-secondary sg-btn-sm" onClick={() => setEditing(true)} aria-label={`Edit ${address.address}`}>
                             Edit
                         </button>
                         <button
@@ -139,7 +185,14 @@ function AddressRow({
                     </div>
                 </div>
             )}
-            <TestSendPanel url={`${base}/test`} subject={address.address} recipient={testRecipient} lastTest={address.last_test} initiallyOpen={offerTest} />
+            <TestSendPanel
+                url={`${base}/test`}
+                subject={address.address}
+                recipient={testRecipient}
+                lastTest={address.last_test}
+                initiallyOpen={offerTest}
+                disabledReason={testBlocker}
+            />
         </li>
     );
 }
@@ -169,6 +222,8 @@ export default function SenderAddresses({
     purposes,
     testRecipient,
     offerTestAddressId,
+    domainDisabled = false,
+    mailgunConfigured = true,
 }: {
     domainId: number;
     domain: string;
@@ -176,6 +231,8 @@ export default function SenderAddresses({
     purposes: PurposeOption[];
     testRecipient: string;
     offerTestAddressId: number | null;
+    domainDisabled?: boolean;
+    mailgunConfigured?: boolean;
 }) {
     const headingId = `sender-addresses-${domainId}-heading`;
 
@@ -189,7 +246,14 @@ export default function SenderAddresses({
             ) : (
                 <ul className="mt-1">
                     {addresses.map((address) => (
-                        <AddressRow key={address.id} address={address} purposes={purposes} testRecipient={testRecipient} offerTest={address.id === offerTestAddressId} />
+                        <AddressRow
+                            key={address.id}
+                            address={address}
+                            purposes={purposes}
+                            testRecipient={testRecipient}
+                            offerTest={address.id === offerTestAddressId}
+                            testBlocker={addressTestBlocker(address, domainDisabled, mailgunConfigured)}
+                        />
                     ))}
                 </ul>
             )}

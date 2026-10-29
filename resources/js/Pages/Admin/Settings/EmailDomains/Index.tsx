@@ -51,7 +51,7 @@ export type SendingDomain = {
     addresses: SenderAddress[];
 };
 
-type TestContext = { purposes: PurposeOption[]; testRecipient: string; offerTestAddressId: number | null };
+type TestContext = { purposes: PurposeOption[]; testRecipient: string; offerTestAddressId: number | null; mailgunConfigured: boolean };
 
 function formatTime(iso: string | null): string {
     if (!iso) return 'Never';
@@ -266,6 +266,8 @@ function DomainCard({ domain, context }: { domain: SendingDomain; context: TestC
                 purposes={context.purposes}
                 testRecipient={context.testRecipient}
                 offerTestAddressId={context.offerTestAddressId}
+                domainDisabled={domain.status === 'disabled'}
+                mailgunConfigured={context.mailgunConfigured}
             />
 
             <div className="flex flex-wrap gap-2">
@@ -286,6 +288,7 @@ function DomainCard({ domain, context }: { domain: SendingDomain; context: TestC
                     subject={domain.domain}
                     recipient={context.testRecipient}
                     lastTest={domain.last_test}
+                    disabledReason={context.mailgunConfigured ? null : 'Test emails need the Mailgun API key under Integrations.'}
                 />
             )}
             {inUse && <p className="text-xs text-muted">A domain in use cannot be removed. Change those newsletters first, or disable the domain.</p>}
@@ -387,6 +390,7 @@ export default function EmailDomainsIndex({
     mailgunConfigured,
     configuredMailgunDomain,
     defaultReplyTo = null,
+    defaultReplyToProblem = null,
     testRecipient = '',
     offerTestAddressId = null,
     purposes = [],
@@ -395,13 +399,14 @@ export default function EmailDomainsIndex({
     mailgunConfigured: boolean;
     configuredMailgunDomain: string | null;
     defaultReplyTo?: string | null;
+    defaultReplyToProblem?: string | null;
     testRecipient?: string;
     offerTestAddressId?: number | null;
     purposes?: PurposeOption[];
 }) {
     const { errors } = usePage<SharedPageProps>().props;
     const removeError = errors?.remove;
-    const context: TestContext = { purposes, testRecipient, offerTestAddressId };
+    const context: TestContext = { purposes, testRecipient, offerTestAddressId, mailgunConfigured };
 
     return (
         <WorkspaceLayout
@@ -440,7 +445,7 @@ export default function EmailDomainsIndex({
                 {domains.map((domain) => (
                     <DomainCard key={domain.id} domain={domain} context={context} />
                 ))}
-                <DefaultReplyToForm value={defaultReplyTo} />
+                <DefaultReplyToForm value={defaultReplyTo} problem={defaultReplyToProblem} />
                 <AddDomainForm />
             </>
         </WorkspaceLayout>
