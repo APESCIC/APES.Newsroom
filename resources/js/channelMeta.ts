@@ -63,8 +63,8 @@ export const channelMetaBySlug: Record<string, ChannelMeta> = {
         badgeClass: 'bg-times-mist text-times-text',
         mediaClass: 'bg-times-mist text-times-accent',
     },
-    'myapes-portal': {
-        label: 'MyAPES Portal',
+    myapes: {
+        label: 'MyAPES',
         description: 'Updates about the MyAPES member portal.',
         accent: 'portal',
         icon: 'portal',
@@ -95,7 +95,8 @@ const slugAliases: Record<string, string> = {
     'pet-care-clinic': 'apes-pet-care-clinic',
     apes_pet_care_clinic: 'apes-pet-care-clinic',
     apes_times: 'apes-times',
-    myapes_portal: 'myapes-portal',
+    myapes_portal: 'myapes',
+    'myapes-portal': 'myapes',
     stream_4_apes: 'stream-4-apes',
 };
 

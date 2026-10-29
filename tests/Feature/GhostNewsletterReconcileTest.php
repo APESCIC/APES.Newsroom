@@ -153,7 +153,7 @@ class GhostNewsletterReconcileTest extends TestCase
         $this->assertSame(['alice@example.com'], $this->confirmedEmails('apes-times'));
         $this->assertSame(['bob@example.com'], $this->confirmedEmails('apes-shelter-rescue'));
         $this->assertSame([], $this->confirmedEmails('apes-pet-care-clinic'));
-        $this->assertSame(['alice@example.com'], $this->confirmedEmails('myapes-portal'));
+        $this->assertSame(['alice@example.com'], $this->confirmedEmails('myapes'));
         $this->assertSame([], $this->confirmedEmails('stream-4-apes'));
         $this->assertNull(MailingContact::query()->where('email', 'frank@example.com')->first(), 'subscribed member on no mapped newsletter gets nothing');
 

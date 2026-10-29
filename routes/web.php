@@ -99,6 +99,7 @@ Route::get('/articles/{slug}', [ArticleController::class, 'show'])->name('articl
 Route::get('/pages/{slug}', [PageController::class, 'show'])->name('pages.show');
 Route::get('/profiles/{profile}', [ProfileController::class, 'show'])->name('profiles.show');
 
+Route::permanentRedirect('/newsletters/myapes-portal/signup', '/newsletters/myapes/signup');
 Route::get('/newsletters/{slug}/signup', [NewsletterSignupController::class, 'show'])->name('newsletters.signup');
 Route::post('/newsletters/{slug}/signup', [NewsletterSignupController::class, 'store'])
     ->middleware('throttle:mailing-signup')
@@ -116,6 +117,8 @@ Route::get('/mailing/unsubscribe', [UnsubscribeController::class, 'show'])->name
 Route::post('/mailing/unsubscribe', [UnsubscribeController::class, 'store'])->name('mailing.unsubscribe.store');
 Route::post('/mailing/unsubscribe/one-click', [UnsubscribeController::class, 'oneClick'])->name('mailing.unsubscribe.one-click');
 
+Route::permanentRedirect('/myapes-portal', '/myapes');
+Route::permanentRedirect('/myapes-portal/rss.xml', '/myapes/rss.xml');
 Route::get('/{channel}/rss.xml', [ChannelRssController::class, 'show'])
     ->where('channel', Channel::routePattern())
     ->name('channels.rss');

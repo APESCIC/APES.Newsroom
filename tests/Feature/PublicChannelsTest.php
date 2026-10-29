@@ -82,12 +82,25 @@ class PublicChannelsTest extends TestCase
     {
         $this->newsletter(Channel::MyapesPortal)->update(['archived_at' => now()]);
 
-        $this->get('/myapes-portal')->assertNotFound();
-        $this->get('/myapes-portal/rss.xml')->assertNotFound();
-        $this->get('/sitemap.xml')->assertOk()->assertDontSee(url('/myapes-portal'), false);
+        $this->get('/myapes')->assertNotFound();
+        $this->get('/myapes/rss.xml')->assertNotFound();
+        $this->get('/sitemap.xml')->assertOk()->assertDontSee(url('/myapes'), false);
         $this->get('/')->assertInertia(fn (Assert $page) => $page
-            ->where('channels', fn ($channels) => ! collect($channels)->pluck('slug')->contains('myapes-portal'))
-            ->where('publicChannels', fn ($channels) => ! collect($channels)->pluck('slug')->contains('myapes-portal')));
+            ->where('channels', fn ($channels) => ! collect($channels)->pluck('slug')->contains('myapes'))
+            ->where('publicChannels', fn ($channels) => ! collect($channels)->pluck('slug')->contains('myapes')));
+    }
+
+    public function test_the_myapes_channel_is_at_myapes_and_old_portal_urls_redirect(): void
+    {
+        $this->get('/myapes')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->component('Channels/Show')
+            ->where('channel.label', 'MyAPES'));
+        $this->get('/myapes/rss.xml')->assertOk();
+
+        $this->get('/myapes-portal')->assertStatus(301)->assertRedirect('/myapes');
+        $this->get('/myapes-portal/rss.xml')->assertStatus(301)->assertRedirect('/myapes/rss.xml');
+        $this->get('/newsletters/myapes-portal/signup')->assertStatus(301)->assertRedirect('/newsletters/myapes/signup');
+        $this->get('/newsletters/myapes/signup')->assertOk();
     }
 
     public function test_legacy_ghost_redirects_do_not_shadow_public_channels(): void

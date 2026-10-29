@@ -18,7 +18,7 @@ enum Channel: string
             self::ApesShelterRescue => 'APES Shelter & Rescue',
             self::ApesPetCareClinic => 'APES Pet Care Clinic',
             self::ApesTimes => 'APES Times',
-            self::MyapesPortal => 'MyAPES Portal',
+            self::MyapesPortal => 'MyAPES',
             self::Stream4Apes => 'Stream 4 APES',
         };
     }
@@ -30,7 +30,7 @@ enum Channel: string
             self::ApesShelterRescue => 'apes-shelter-rescue',
             self::ApesPetCareClinic => 'apes-pet-care-clinic',
             self::ApesTimes => 'apes-times',
-            self::MyapesPortal => 'myapes-portal',
+            self::MyapesPortal => 'myapes',
             self::Stream4Apes => 'stream-4-apes',
         };
     }

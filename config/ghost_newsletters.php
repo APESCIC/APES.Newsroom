@@ -63,7 +63,7 @@ return [
             'ghost_id' => '673205debd626800014bd314',
             'ghost_slug' => 'myapes-portal-newsroom',
             'ghost_name' => 'MyAPES Portal',
-            'newsroom_slug' => 'myapes-portal',
+            'newsroom_slug' => 'myapes',
             'status' => 'active',
             'expected' => 8,
         ],
