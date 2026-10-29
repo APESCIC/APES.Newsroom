@@ -35,6 +35,10 @@ authorized operations even when following this document.
 Keep `APP_KEY` stable. Two-factor secrets and webhook signing secrets are
 encrypted with it, so rotating it makes them unreadable: members would need to
 set up two-factor again and every webhook secret would need rotating.
+`deploy/cloudron-activate.sh` only generates a key when the shared `.env` has
+none. Before v1.25.3 it regenerated the key on every deploy, so anything stored
+encrypted before 29 Oct 2026 (only the Mailgun keys under Integrations) had to
+be entered again.
 
 Activating a release is a symlink swap (`deploy/cloudron-activate.sh`), so
 it is atomic from Apache's point of view. Rolling back

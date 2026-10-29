@@ -80,9 +80,15 @@ if [ -f "${CURRENT_LINK}" ] || [ -L "${CURRENT_LINK}" ]; then
     readlink "${CURRENT_LINK}" > "${PREVIOUS_FILE}" || true
 fi
 
-echo "==> Generating APP_KEY if this is a first-ever deploy"
-"${WWW_DATA_PHP[@]}" "${RELEASE_DIR}/artisan" key:generate --force --no-interaction \
-    --ansi 2>&1 | grep -v 'Application key set' || true
+# Never regenerate an existing key: every encrypted column, stored
+# integration key and session is tied to it.
+if grep -Eq '^APP_KEY=base64:.+' "${SHARED_DIR}/.env"; then
+    echo "==> Keeping the existing APP_KEY"
+else
+    echo "==> First deploy: generating APP_KEY"
+    "${WWW_DATA_PHP[@]}" "${RELEASE_DIR}/artisan" key:generate --force --no-interaction \
+        --ansi 2>&1 | grep -v 'Application key set' || true
+fi
 
 # Fail closed: if Cloudron MySQL is provisioned, www-data artisan must see
 # mysql — otherwise migrate would write to sqlite and leave MySQL empty.
