@@ -56,9 +56,19 @@ return new class extends Migration
         $this->addExistingNewsletterSenders($now);
     }
 
+    /**
+     * Only rows this migration seeded (no creator, seeded Mailgun domain) are
+     * removed; a domain an admin added before this ran is kept.
+     */
     public function down(): void
     {
-        DB::table('email_sending_domains')->whereIn('domain', array_keys(self::DOMAINS))->delete();
+        foreach (self::DOMAINS as $domain => $definition) {
+            DB::table('email_sending_domains')
+                ->where('domain', $domain)
+                ->where('mailgun_domain', $definition['mailgun_domain'])
+                ->whereNull('created_by')
+                ->delete();
+        }
     }
 
     /**

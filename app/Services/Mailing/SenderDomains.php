@@ -2,6 +2,7 @@
 
 namespace App\Services\Mailing;
 
+use App\Enums\SenderAddressPurpose;
 use App\Enums\SendingDomainStatus;
 use App\Models\EmailSenderAddress;
 use App\Models\EmailSendingDomain;
@@ -87,6 +88,7 @@ class SenderDomains
         return match (true) {
             $address === null => "{$normalized} is not an allowed From address. An admin can add it under Settings → Email sending domains.",
             ! $address->enabled => "{$normalized} has been disabled as a From address by an admin.",
+            $address->purpose !== SenderAddressPurpose::News => "{$normalized} is a no-reply address. Choose a newsletter From address.",
             default => null,
         };
     }

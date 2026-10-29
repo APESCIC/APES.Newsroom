@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'post_id', 'newsletter_id', 'created_by', 'idempotency_key', 'lists', 'snapshot', 'status',
-    'failure_reason', 'is_test', 'test_recipient', 'queued_at', 'completed_at',
+    'failure_reason', 'is_test', 'test_recipient', 'queued_at', 'completed_at', 'paused_at', 'pause_reason',
 ])]
 class Campaign extends Model
 {
@@ -23,6 +23,7 @@ class Campaign extends Model
             'is_test' => 'boolean',
             'queued_at' => 'datetime',
             'completed_at' => 'datetime',
+            'paused_at' => 'datetime',
         ];
     }
 

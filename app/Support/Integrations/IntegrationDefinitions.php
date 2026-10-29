@@ -36,12 +36,12 @@ final class IntegrationDefinitions
         return [
             self::MAILGUN => [
                 'label' => 'Mailgun',
-                'description' => 'Read-only checks that newsletter sender domains can send. Mail itself goes through Cloudron SMTP.',
+                'description' => 'Sending-domain checks and, when chosen under Mail sending, newsletter and system mail through the Mailgun API.',
                 'managed' => true,
                 'keys' => [
                     'api_key' => [
                         'label' => 'API key',
-                        'help' => 'A Mailgun private API key with read access to domains.',
+                        'help' => 'A Mailgun sending API key that can read domains and send through them.',
                         'config' => 'services.mailgun.secret',
                         'sensitive' => true,
                         'rules' => ['string', 'min:8', 'max:255'],

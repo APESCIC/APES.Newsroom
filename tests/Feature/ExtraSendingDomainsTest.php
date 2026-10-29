@@ -17,6 +17,7 @@ use App\Models\MailingListSubscription;
 use App\Models\Newsletter;
 use App\Models\Post;
 use App\Models\User;
+use App\Notifications\NewsletterSenderMessage;
 use App\Services\Mail\DnsTxtResolver;
 use App\Services\Mail\MailgunDomainService;
 use App\Services\Mail\MailgunSenderCheck;
@@ -27,6 +28,7 @@ use App\Services\Mailing\DefaultReplyTo;
 use App\Services\Mailing\SenderDomains;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -381,10 +383,135 @@ class ExtraSendingDomainsTest extends TestCase
         $this->actingAs($second)->withRecentAuthentication()
             ->postJson("/admin/settings/email-domains/addresses/{$address->id}/test")
             ->assertStatus(429)
-            ->assertJson(['message' => 'This domain has reached its limit of test emails for today. Please try again tomorrow.']);
+            ->assertJson(['message' => 'This domain has reached its limit of 2 test emails in 24 hours. You can send another in 1 day.']);
 
         $other = $this->domain('apespetcare.org.uk');
         $this->actingAs($second)->withRecentAuthentication()->postJson("/admin/settings/email-domains/{$other->id}/test")->assertOk();
+    }
+
+    public function test_refused_test_requests_do_not_use_up_the_daily_limit(): void
+    {
+        $this->fakeMailgun();
+        config(['mailing.test_send.per_domain_per_day' => 1]);
+        $domain = $this->domain('apespetcare.org.uk');
+        $staff = User::factory()->staff()->create();
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)->postJson("/admin/settings/email-domains/{$domain->id}/test")->assertStatus(423);
+        for ($i = 0; $i < 3; $i++) {
+            $this->actingAs($staff)->withRecentAuthentication()->postJson("/admin/settings/email-domains/{$domain->id}/test")->assertForbidden();
+        }
+        $this->actingAs($admin)->withRecentAuthentication()
+            ->postJson("/admin/settings/email-domains/{$domain->id}/test", ['extra_recipient' => 'not-an-email'])
+            ->assertStatus(422);
+
+        $this->actingAs($admin)->withRecentAuthentication()->postJson("/admin/settings/email-domains/{$domain->id}/test")->assertOk();
+    }
+
+    public function test_disabled_domains_and_addresses_cannot_be_tested(): void
+    {
+        $this->fakeMailgun();
+        $admin = User::factory()->admin()->create();
+        $address = $this->address('news@apesshelter.org.uk');
+        $address->update(['enabled' => false]);
+
+        $this->actingAs($admin)->withRecentAuthentication()
+            ->postJson("/admin/settings/email-domains/addresses/{$address->id}/test")
+            ->assertStatus(422)
+            ->assertJson(['message' => 'news@apesshelter.org.uk is disabled. Enable it before sending a test.']);
+
+        $domain = $this->domain('apespetcare.org.uk');
+        $domain->update(['status' => SendingDomainStatus::Disabled]);
+        $this->actingAs($admin)->withRecentAuthentication()
+            ->postJson("/admin/settings/email-domains/{$domain->id}/test")
+            ->assertStatus(422)
+            ->assertJson(['message' => 'apespetcare.org.uk is disabled. Enable it before sending a test.']);
+
+        Http::assertNothingSent();
+    }
+
+    public function test_confirmation_emails_from_a_new_domain_go_through_its_mailgun_domain(): void
+    {
+        $this->fakeMailgun();
+        $this->markSendingDomainVerified('apespetcare.org.uk');
+        $newsletter = Newsletter::query()->whereNotNull('sender_email')->firstOrFail();
+        $newsletter->forceFill(['sender_email' => 'news@apespetcare.org.uk', 'reply_to' => null])->save();
+        $this->markSenderVerified($newsletter);
+        $this->assertTrue(app(CampaignSender::class)->isVerified($newsletter->fresh()));
+
+        $message = NewsletterSenderMessage::apply(new MailMessage, $newsletter->fresh());
+
+        $this->assertSame('mailgun-api', $message->mailer);
+        $this->assertSame('news@apespetcare.org.uk', $message->from[0]);
+
+        config(['mailing.newsletter_transport' => 'smtp']);
+        $this->assertNull(NewsletterSenderMessage::apply(new MailMessage, $newsletter->fresh())->mailer);
+    }
+
+    public function test_strict_dmarc_requires_the_from_domain_to_be_the_mailgun_domain(): void
+    {
+        $this->fakeMailgun();
+        $this->app->instance(DnsTxtResolver::class, new class extends DnsTxtResolver
+        {
+            public function txt(string $host): array
+            {
+                return $host === '_dmarc.myapes.me.uk' ? ['v=DMARC1; p=quarantine; adkim=s; aspf=s'] : [];
+            }
+        });
+        $portal = Newsletter::query()->where('slug', 'myapes-portal')->firstOrFail();
+
+        $portal->forceFill(['sender_email' => 'news@myapes.me.uk'])->save();
+        $root = app(MailgunSenderCheck::class)->check($portal);
+        $this->assertSame(MailgunSenderCheck::UNVERIFIED, $root['status']);
+        $this->assertFalse($root['checks']['dmarc']);
+        $this->assertStringContainsString('must end with @news.myapes.me.uk', $root['message']);
+
+        $portal->forceFill(['sender_email' => 'news@news.myapes.me.uk'])->save();
+        $this->assertSame(CampaignSender::VERIFIED, app(MailgunSenderCheck::class)->check($portal)['status']);
+    }
+
+    public function test_renaming_a_from_address_in_use_is_blocked(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $portal = Newsletter::query()->where('slug', 'myapes-portal')->firstOrFail();
+        $portal->forceFill(['sender_email' => 'news@news.myapes.me.uk'])->save();
+        $address = $this->address('news@news.myapes.me.uk');
+
+        $this->actingAs($admin)->withRecentAuthentication()
+            ->put("/admin/settings/email-domains/addresses/{$address->id}", ['address' => 'hello@news.myapes.me.uk', 'purpose' => 'news'])
+            ->assertSessionHasErrors('address');
+        $this->assertSame('news@news.myapes.me.uk', $address->fresh()->address);
+
+        $this->actingAs($admin)->withRecentAuthentication()
+            ->put("/admin/settings/email-domains/addresses/{$address->id}", ['address' => 'news@news.myapes.me.uk', 'purpose' => 'news', 'label' => 'Portal'])
+            ->assertSessionHasNoErrors();
+        $this->assertSame('Portal', $address->fresh()->label);
+    }
+
+    public function test_mailgun_domains_must_be_unique_and_no_reply_addresses_are_not_newsletter_senders(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $this->actingAs($admin)->withRecentAuthentication()
+            ->post('/admin/settings/email-domains', ['domain' => 'example.org.uk', 'mailgun_domain' => 'mail.apespetcare.org.uk'])
+            ->assertSessionHasErrors(['mailgun_domain' => 'That Mailgun domain is already used by another sending domain.']);
+        $this->actingAs($admin)->withRecentAuthentication()
+            ->post('/admin/settings/email-domains', ['domain' => 'mail.apesshelter.org.uk'])
+            ->assertSessionHasErrors('domain');
+
+        $this->assertStringContainsString('is a no-reply address', (string) SenderDomains::senderAddressProblem('noreply@apespetcare.org.uk'));
+        $this->assertNull(SenderDomains::senderAddressProblem('news@apespetcare.org.uk'));
+    }
+
+    public function test_seed_migration_rollback_keeps_domains_an_admin_added(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $this->domain('apesshelter.org.uk')->forceFill(['created_by' => $admin->id])->save();
+
+        $migration = require database_path('migrations/2026_11_01_100100_seed_extra_sending_domains.php');
+        $migration->down();
+
+        $this->assertFalse(EmailSendingDomain::query()->where('domain', 'apespetcare.org.uk')->exists());
+        $this->assertTrue(EmailSendingDomain::query()->where('domain', 'apesshelter.org.uk')->exists());
     }
 
     public function test_admin_adds_edits_disables_and_enables_from_addresses_with_audit(): void

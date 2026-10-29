@@ -139,6 +139,41 @@ class MailgunDomainService
     }
 
     /**
+     * Whether a DMARC record asks for strict DKIM or SPF alignment, where the
+     * From domain must equal the signing (Mailgun) domain exactly.
+     */
+    public static function strictAlignment(?string $record): bool
+    {
+        if ($record === null) {
+            return false;
+        }
+
+        foreach (explode(';', Str::lower($record)) as $tag) {
+            [$name, $value] = array_pad(array_map('trim', explode('=', $tag, 2)), 2, '');
+            if (in_array($name, ['adkim', 'aspf'], true) && $value === 's') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Why a From domain would fail DMARC alignment when sent through a
+     * Mailgun domain under strict alignment, or null when it aligns.
+     */
+    public function alignmentProblem(string $fromDomain, string $approvedDomain, string $mailgunDomain): ?string
+    {
+        if ($fromDomain === $mailgunDomain) {
+            return null;
+        }
+
+        return self::strictAlignment($this->dmarcRecordFor($fromDomain, $approvedDomain))
+            ? "DMARC on {$approvedDomain} needs strict alignment, so the From address must end with @{$mailgunDomain}."
+            : null;
+    }
+
+    /**
      * @param  array<string, mixed>  $record
      * @return array{purpose: string, type: string, name: string, value: string, valid: bool}
      */

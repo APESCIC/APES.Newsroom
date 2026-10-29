@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable([
-    'campaign_id', 'email', 'status', 'attempts', 'idempotency_key',
+    'campaign_id', 'email', 'status', 'attempts', 'idempotency_key', 'provider_message_id',
     'last_error', 'accepted_at', 'opened_at', 'clicked_at', 'failed_at',
 ])]
 class CampaignRecipient extends Model

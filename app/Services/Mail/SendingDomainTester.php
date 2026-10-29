@@ -9,6 +9,7 @@ use App\Models\EmailSendingDomain;
 use App\Models\User;
 use App\Services\Audit\AuditLogger;
 use App\Services\Mailing\DefaultReplyTo;
+use App\Services\Mailing\SenderDomains;
 use Illuminate\Http\Request;
 use Illuminate\Mail\SentMessage;
 use Illuminate\Support\Facades\Mail;
@@ -38,9 +39,12 @@ class SendingDomainTester
         $check = $this->checker->check($domain, $actor);
         $domain->refresh();
 
-        $warning = $domain->isVerified()
-            ? null
-            : "{$domain->domain} is not verified ({$domain->status->label()}). The test was still attempted, but it may be refused or fail DMARC.";
+        $warning = implode(' ', array_filter([
+            $domain->isVerified()
+                ? null
+                : "{$domain->domain} is not verified ({$domain->status->label()}). The test was still attempted, but it may be refused or fail DMARC.",
+            $this->mailgun->alignmentProblem(SenderDomains::domainOf($from), $domain->domain, $mailgunDomain),
+        ])) ?: null;
 
         [$messageId, $error] = $this->deliver($domain, $from, $mailgunDomain, $recipients, $actor);
 

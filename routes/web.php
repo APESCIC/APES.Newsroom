@@ -222,10 +222,8 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Admin->value])
                 Route::put('/addresses/{emailSenderAddress}', [AdminEmailSendingDomainController::class, 'updateAddress'])->whereNumber('emailSenderAddress')->name('addresses.update');
                 Route::post('/addresses/{emailSenderAddress}/disable', [AdminEmailSendingDomainController::class, 'disableAddress'])->whereNumber('emailSenderAddress')->name('addresses.disable');
                 Route::post('/addresses/{emailSenderAddress}/enable', [AdminEmailSendingDomainController::class, 'enableAddress'])->whereNumber('emailSenderAddress')->name('addresses.enable');
-                Route::middleware('throttle:sending-domain-test')->group(function () {
-                    Route::post('/{emailSendingDomain}/test', [AdminEmailSendingDomainController::class, 'testDomain'])->whereNumber('emailSendingDomain')->name('test');
-                    Route::post('/addresses/{emailSenderAddress}/test', [AdminEmailSendingDomainController::class, 'testAddress'])->whereNumber('emailSenderAddress')->name('addresses.test');
-                });
+                Route::post('/{emailSendingDomain}/test', [AdminEmailSendingDomainController::class, 'testDomain'])->whereNumber('emailSendingDomain')->name('test');
+                Route::post('/addresses/{emailSenderAddress}/test', [AdminEmailSendingDomainController::class, 'testAddress'])->whereNumber('emailSenderAddress')->name('addresses.test');
             });
         });
         Route::prefix('/settings/integrations')->name('settings.integrations.')->group(function () {
@@ -316,6 +314,7 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
         Route::get('/posts/{post}/preview', [StaffPostController::class, 'preview'])->name('posts.preview');
         Route::get('/posts/{post}/campaign', [StaffCampaignController::class, 'preview'])->name('posts.campaign.preview');
         Route::post('/posts/{post}/campaign/test-send', [StaffCampaignController::class, 'testSend'])->name('posts.campaign.test');
+        Route::post('/posts/{post}/campaign/resume', [StaffCampaignController::class, 'resume'])->middleware(['auth.recent', 'throttle:10,1'])->name('posts.campaign.resume');
 
         Route::get('/metrics', StaffMetricsController::class)->name('metrics.index');
         Route::permanentRedirect('/members', '/staff/people')->name('members.legacy');

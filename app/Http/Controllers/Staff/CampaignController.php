@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Staff;
 
+use App\Enums\CampaignStatus;
 use App\Http\Controllers\Controller;
+use App\Models\Campaign;
 use App\Models\Post;
 use App\Services\Mailing\CampaignService;
 use Illuminate\Http\RedirectResponse;
@@ -42,6 +44,29 @@ class CampaignController extends Controller
         $this->campaigns->createTestSend($post, $request->user(), $validated['email']);
 
         return back()->with('status', 'test-send-queued');
+    }
+
+    /**
+     * Restart a live send that paused because its transport failed.
+     */
+    public function resume(Request $request, Post $post): RedirectResponse
+    {
+        Gate::authorize('access-admin-area');
+
+        $campaign = Campaign::query()
+            ->where('post_id', $post->id)
+            ->where('is_test', false)
+            ->where('status', CampaignStatus::Paused->value)
+            ->latest('id')
+            ->first();
+
+        if ($campaign === null) {
+            return back()->withErrors(['resume' => 'There is no paused send for this post.']);
+        }
+
+        $remaining = $this->campaigns->resume($campaign, $request->user(), $request);
+
+        return back()->with('status', "Resumed sending to {$remaining} remaining recipients.");
     }
 
     private function authorizeAdmin(): void

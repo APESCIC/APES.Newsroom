@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\Newsletter;
 use App\Services\Mailing\CampaignSender;
+use App\Services\Mailing\SenderDomains;
 use Illuminate\Notifications\Messages\MailMessage;
 
 class NewsletterSenderMessage
@@ -13,6 +14,11 @@ class NewsletterSenderMessage
         $identity = app(CampaignSender::class)->verifiedIdentity($newsletter);
         if (! $identity) {
             return $message;
+        }
+
+        $mailer = SenderDomains::newsletterMailer();
+        if ($mailer !== null) {
+            $message->mailer($mailer);
         }
 
         $message->from($identity['address'], $identity['name']);

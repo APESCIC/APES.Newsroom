@@ -9,6 +9,8 @@ use App\Http\Controllers\Mailing\CampaignTrackingController;
 use App\Mail\CampaignPostSummaryMail;
 use App\Models\Campaign;
 use App\Models\CampaignRecipient;
+use App\Services\Mail\MailMessageRefused;
+use App\Services\Mail\MailTransportUnavailable;
 use App\Services\Mailing\CampaignSender;
 use App\Services\Mailing\CampaignService;
 use App\Services\Mailing\ConsentService;
@@ -16,16 +18,26 @@ use App\Services\Mailing\SenderDomains;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Mail\SentMessage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Throwable;
 
+/**
+ * Sends one campaign email. A refusal of this one message fails only this
+ * recipient; a transport that cannot send pauses the whole campaign (never
+ * switching transport) so an admin can fix it and resume.
+ */
 class SendCampaignRecipientJob implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
 
     public int $tries = 3;
+
+    /** @var list<int> */
+    public array $backoff = [30, 120];
 
     public int $uniqueFor = 3600;
 
@@ -49,13 +61,18 @@ class SendCampaignRecipientJob implements ShouldBeUnique, ShouldQueue
         }
 
         $campaign = $recipient->campaign;
+        if ($campaign->status === CampaignStatus::Paused) {
+            return;
+        }
+
         $recipient->increment('attempts');
 
-        if ($campaign->newsletter_id !== null && ! $sender->isVerified($campaign->newsletter)) {
+        $senderProblems = $this->senderProblems($campaign, $sender);
+        if ($senderProblems !== []) {
             Log::warning('Campaign send blocked: sender not verified or sending domain not approved.', [
                 'campaign_id' => $campaign->id,
                 'newsletter_id' => $campaign->newsletter_id,
-                'reasons' => $campaign->newsletter ? $sender->domainProblems($campaign->newsletter) : [],
+                'reasons' => $senderProblems,
             ]);
             $recipient->update([
                 'status' => CampaignRecipientStatus::Skipped,
@@ -107,32 +124,91 @@ class SendCampaignRecipientJob implements ShouldBeUnique, ShouldQueue
             ? $readMore
             : CampaignTrackingController::clickUrl($recipient, $readMore);
 
-        Mail::mailer(SenderDomains::newsletterMailer())->to($recipient->email)->send(new CampaignPostSummaryMail(
-            snapshot: $campaign->snapshot,
-            unsubscribeUrl: $unsubscribePageUrl,
-            preferencesUrl: $preferencesUrl,
-            listUnsubscribeUrl: $oneClickUnsubscribeUrl,
-            isTest: $campaign->is_test,
-            openPixelUrl: $openPixelUrl,
-            trackedReadMoreUrl: $trackedReadMoreUrl,
-        ));
+        try {
+            $sent = Mail::mailer(SenderDomains::newsletterMailer())->to($recipient->email)->send(new CampaignPostSummaryMail(
+                snapshot: $campaign->snapshot,
+                unsubscribeUrl: $unsubscribePageUrl,
+                preferencesUrl: $preferencesUrl,
+                listUnsubscribeUrl: $oneClickUnsubscribeUrl,
+                isTest: $campaign->is_test,
+                openPixelUrl: $openPixelUrl,
+                trackedReadMoreUrl: $trackedReadMoreUrl,
+            ));
+        } catch (MailMessageRefused $exception) {
+            $this->markFailed($recipient, $exception);
+
+            return;
+        } catch (MailTransportUnavailable $exception) {
+            if (! $exception->permanent) {
+                throw $exception;
+            }
+
+            $this->pause($recipient, $exception);
+
+            return;
+        }
 
         $recipient->update([
             'status' => CampaignRecipientStatus::Accepted,
             'accepted_at' => now(),
             'last_error' => null,
+            'provider_message_id' => $sent instanceof SentMessage ? trim((string) $sent->getMessageId(), '<> ') ?: null : null,
         ]);
 
         $this->maybeComplete($campaign->id);
     }
 
+    /**
+     * Retries are used up. A transport that kept failing pauses the campaign;
+     * anything else fails this recipient.
+     */
     public function failed(?Throwable $exception): void
     {
-        $recipient = CampaignRecipient::query()->find($this->recipientId);
+        $recipient = CampaignRecipient::query()->with('campaign')->find($this->recipientId);
         if (! $recipient) {
             return;
         }
 
+        if ($exception instanceof TransportExceptionInterface && ! $exception instanceof MailMessageRefused && $recipient->campaign) {
+            $this->pause($recipient, $exception);
+
+            return;
+        }
+
+        $this->markFailed($recipient, $exception);
+    }
+
+    /**
+     * Problems with the From and reply-to the email will actually use (the
+     * campaign snapshot), as well as the newsletter's current verification.
+     *
+     * @return list<string>
+     */
+    private function senderProblems(Campaign $campaign, CampaignSender $sender): array
+    {
+        $problems = [];
+        if ($campaign->newsletter_id !== null && ! $sender->isVerified($campaign->newsletter)) {
+            $problems = $campaign->newsletter ? $sender->domainProblems($campaign->newsletter) : [];
+            $problems = $problems === [] ? ['The newsletter sender is not verified.'] : $problems;
+        }
+
+        $snapshotSender = is_array($campaign->snapshot['sender'] ?? null) ? $campaign->snapshot['sender'] : [];
+
+        return array_values(array_unique(array_filter([
+            ...$problems,
+            SenderDomains::senderProblem(isset($snapshotSender['address']) ? (string) $snapshotSender['address'] : null),
+            SenderDomains::replyToProblem(isset($snapshotSender['reply_to']) ? (string) $snapshotSender['reply_to'] : null),
+        ])));
+    }
+
+    private function pause(CampaignRecipient $recipient, Throwable $exception): void
+    {
+        $recipient->update(['last_error' => $exception->getMessage()]);
+        app(CampaignService::class)->pause($recipient->campaign, $exception->getMessage());
+    }
+
+    private function markFailed(CampaignRecipient $recipient, ?Throwable $exception): void
+    {
         $recipient->update([
             'status' => CampaignRecipientStatus::Failed,
             'failed_at' => now(),
@@ -150,7 +226,7 @@ class SendCampaignRecipientJob implements ShouldBeUnique, ShouldQueue
             ->exists();
 
         if (! $pending) {
-            Campaign::query()->whereKey($campaignId)->update([
+            Campaign::query()->whereKey($campaignId)->where('status', '!=', CampaignStatus::Paused->value)->update([
                 'status' => CampaignStatus::Completed,
                 'completed_at' => now(),
             ]);
