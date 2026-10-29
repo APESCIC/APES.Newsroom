@@ -273,7 +273,7 @@ class NewsletterSenderTest extends TestCase
         $this->actingAs($staff)->patch("/staff/newsletters/{$times->id}", [
             'name' => $times->name,
             'sender_name' => 'APES Times',
-            'sender_email' => 'news@apesnews.org.uk',
+            'sender_email' => 'myapes@apesnews.org.uk',
             'reply_to' => 'info@apes.org.uk',
             'subscribe_on_signup' => true,
         ])->assertSessionHasNoErrors();

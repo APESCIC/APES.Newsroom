@@ -8,6 +8,7 @@ use App\Enums\PostStatus;
 use App\Enums\SendingDomainStatus;
 use App\Models\AuditLog;
 use App\Models\Campaign;
+use App\Models\EmailSenderAddress;
 use App\Models\EmailSendingDomain;
 use App\Models\Newsletter;
 use App\Models\Post;
@@ -92,7 +93,7 @@ class EmailSendingDomainsTest extends TestCase
 
     public function test_confirmed_domains_are_seeded_and_existing_senders_pass_once_verified(): void
     {
-        $this->assertSame(['apes.org.uk', 'apesnews.org.uk'], SenderDomains::allowed());
+        $this->assertSame(['apes.org.uk', 'apesnews.org.uk', 'apespetcare.org.uk', 'apesshelter.org.uk', 'myapes.me.uk'], SenderDomains::allowed());
         $this->assertSame(SendingDomainStatus::Pending, $this->domain('apesnews.org.uk')->status);
 
         $this->markSendingDomainVerified('apesnews.org.uk');
@@ -141,11 +142,16 @@ class EmailSendingDomainsTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Admin/Settings/EmailDomains/Index')
-                ->has('domains', 2)
+                ->has('domains', 5)
                 ->where('domains.0.domain', 'apes.org.uk')
                 ->where('domains.0.in_use.0.uses', ['reply_to'])
                 ->where('domains.1.domain', 'apesnews.org.uk')
-                ->where('domains.1.in_use.0.uses', ['from']));
+                ->where('domains.1.in_use.0.uses', ['from'])
+                ->has('domains.1.addresses', 6)
+                ->where('domains.4.domain', 'myapes.me.uk')
+                ->where('domains.4.mailgun_domain', 'news.myapes.me.uk')
+                ->where('domains.4.addresses.0.address', 'news@news.myapes.me.uk')
+                ->where('testRecipient', $admin->email));
     }
 
     public function test_adding_a_domain_validates_audits_and_only_reads_mailgun(): void
@@ -299,8 +305,16 @@ class EmailSendingDomainsTest extends TestCase
 
         $this->markSendingDomainVerified('apesnews.org.uk');
         $update(['sender_email' => 'postmaster@apesnews.org.uk'])->assertSessionHasErrors('sender_email');
+        $update(['sender_email' => 'news@apesnews.org.uk'])
+            ->assertSessionHasErrors(['sender_email' => 'news@apesnews.org.uk is not an allowed From address. An admin can add it under Settings → Email sending domains.']);
+
+        $this->domain('apesnews.org.uk')->addresses()->create(['address' => 'news@apesnews.org.uk', 'purpose' => 'news']);
         $update(['sender_email' => 'news@apesnews.org.uk'])->assertSessionHasNoErrors();
         $this->assertSame('news@apesnews.org.uk', $times->fresh()->sender_email);
+
+        EmailSenderAddress::query()->where('address', 'myapes@apesnews.org.uk')->update(['enabled' => false]);
+        $update(['sender_email' => 'myapes@apesnews.org.uk'])
+            ->assertSessionHasErrors(['sender_email' => 'myapes@apesnews.org.uk has been disabled as a From address by an admin.']);
     }
 
     public function test_reply_to_needs_an_enabled_approved_domain(): void
@@ -346,7 +360,14 @@ class EmailSendingDomainsTest extends TestCase
         $this->actingAs($staff)->get("/staff/newsletters/{$times->id}/edit")
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->where('domainOptions', [['domain' => 'apes.org.uk', 'status' => 'pending', 'can_send' => false]])
+                ->where('domainOptions', [
+                    ['domain' => 'apes.org.uk', 'status' => 'pending', 'can_send' => false],
+                    ['domain' => 'apespetcare.org.uk', 'status' => 'pending', 'can_send' => false],
+                    ['domain' => 'apesshelter.org.uk', 'status' => 'pending', 'can_send' => false],
+                    ['domain' => 'myapes.me.uk', 'status' => 'pending', 'can_send' => false],
+                ])
+                ->where('senderOptions.0', ['address' => 'news@apespetcare.org.uk', 'label' => null, 'domain' => 'apespetcare.org.uk', 'can_send' => false])
+                ->where('senderOptions', fn ($options) => collect($options)->every(fn ($option) => ! str_ends_with($option['address'], '@apesnews.org.uk')))
                 ->where('newsletter.sender_verification.verified', false)
                 ->where('newsletter.send_blocks.reasons', ['The sender domain apesnews.org.uk has been disabled by an admin.']));
     }
@@ -412,7 +433,9 @@ class EmailSendingDomainsTest extends TestCase
 
         $this->assertSame(SendingDomainStatus::Failed, $this->domain('apesnews.org.uk')->status);
         $this->assertSame(SendingDomainStatus::Disabled, $this->domain('apes.org.uk')->status);
-        Http::assertSentCount(1);
+        Http::assertSentCount(4);
+        Http::assertSent(fn (Request $request) => $request->url() === 'https://api.eu.mailgun.net/v4/domains/news.myapes.me.uk');
+        Http::assertNotSent(fn (Request $request) => str_ends_with($request->url(), '/apes.org.uk'));
         $this->assertMailgunReadOnly();
     }
 

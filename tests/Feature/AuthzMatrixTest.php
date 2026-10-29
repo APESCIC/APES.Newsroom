@@ -9,6 +9,7 @@ use App\Models\ApiToken;
 use App\Models\AuditLog;
 use App\Models\Comment;
 use App\Models\ContentApiKey;
+use App\Models\EmailSenderAddress;
 use App\Models\EmailSendingDomain;
 use App\Models\ImportRun;
 use App\Models\MailingContact;
@@ -101,6 +102,13 @@ class AuthzMatrixTest extends TestCase
         'admin.settings.email-domains.disable' => Role::Admin,
         'admin.settings.email-domains.enable' => Role::Admin,
         'admin.settings.email-domains.destroy' => Role::Admin,
+        'admin.settings.email-domains.test' => Role::Admin,
+        'admin.settings.email-domains.default-reply-to' => Role::Admin,
+        'admin.settings.email-domains.addresses.store' => Role::Admin,
+        'admin.settings.email-domains.addresses.update' => Role::Admin,
+        'admin.settings.email-domains.addresses.disable' => Role::Admin,
+        'admin.settings.email-domains.addresses.enable' => Role::Admin,
+        'admin.settings.email-domains.addresses.test' => Role::Admin,
         'admin.webhooks.index' => Role::Admin,
         'admin.webhooks.store' => Role::Admin,
         'admin.webhooks.update' => Role::Admin,
@@ -431,6 +439,7 @@ class AuthzMatrixTest extends TestCase
                 ]),
                 'plan' => MembershipPlan::query()->firstOrFail(),
                 'emailSendingDomain' => EmailSendingDomain::query()->create(['domain' => 'matrix-'.Str::lower(Str::random(8)).'.example.org']),
+                'emailSenderAddress' => EmailSenderAddress::query()->firstOrFail(),
                 'asset' => MediaAsset::query()->create([
                     'uuid' => (string) Str::uuid(),
                     'disk' => 'public',
