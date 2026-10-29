@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Newsletter;
+use App\Services\Mail\MailTransports;
 use App\Services\Mailing\CampaignSender;
 use App\Services\Mailing\SenderDomains;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -15,6 +16,7 @@ class NewsletterSenderMessage
         if (! $identity) {
             return $message;
         }
+        $identity = app(MailTransports::class)->newsletterIdentity($identity);
 
         $mailer = SenderDomains::newsletterMailer();
         if ($mailer !== null) {

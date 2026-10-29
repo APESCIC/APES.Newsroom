@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Services\Mail\MailTransports;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
@@ -38,10 +39,15 @@ class CampaignPostSummaryMail extends Mailable
         if (! $sender || blank($sender['address'] ?? null)) {
             return new Envelope(subject: $subject);
         }
+        $sender = app(MailTransports::class)->newsletterIdentity([
+            'address' => (string) $sender['address'],
+            'name' => filled($sender['name'] ?? null) ? (string) $sender['name'] : null,
+            'reply_to' => filled($sender['reply_to'] ?? null) ? (string) $sender['reply_to'] : null,
+        ]);
 
         return new Envelope(
-            from: new Address((string) $sender['address'], filled($sender['name'] ?? null) ? (string) $sender['name'] : null),
-            replyTo: filled($sender['reply_to'] ?? null) ? [new Address((string) $sender['reply_to'])] : [],
+            from: new Address($sender['address'], $sender['name']),
+            replyTo: $sender['reply_to'] !== null ? [new Address($sender['reply_to'])] : [],
             subject: $subject,
         );
     }

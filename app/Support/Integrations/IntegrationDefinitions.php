@@ -23,6 +23,8 @@ final class IntegrationDefinitions
 
     public const CLOUDRON_OIDC = 'cloudron_oidc';
 
+    public const CUSTOM_SMTP = 'custom_smtp';
+
     /**
      * @return array<string, array{
      *     label: string,
@@ -59,6 +61,20 @@ final class IntegrationDefinitions
                         'config' => 'services.mailgun.endpoint',
                         'sensitive' => false,
                         'rules' => ['string', 'in:api.eu.mailgun.net,api.mailgun.net'],
+                    ],
+                    'webhook_signing_key' => [
+                        'label' => 'Webhook signing key',
+                        'help' => 'The account-wide HTTP webhook signing key from Mailgun → Sending → Webhooks. Used to check that bounce, complaint and tracking events really come from Mailgun.',
+                        'config' => 'services.mailgun.webhook_signing_key',
+                        'sensitive' => true,
+                        'rules' => ['string', 'min:16', 'max:255', 'regex:/^[A-Za-z0-9-]+$/'],
+                    ],
+                    'management_key' => [
+                        'label' => 'Webhook management key',
+                        'help' => 'A Developer-role Mailgun API key, used only to register, repair and remove webhooks and change tracking settings. If your plan has no role keys, use the main account key and rotate it regularly.',
+                        'config' => 'services.mailgun.management_key',
+                        'sensitive' => true,
+                        'rules' => ['string', 'min:8', 'max:255'],
                     ],
                 ],
             ],
@@ -136,6 +152,48 @@ final class IntegrationDefinitions
                         'config' => 'services.slack.notifications.channel',
                         'sensitive' => false,
                         'rules' => ['string', 'max:80', 'regex:/^#?[A-Za-z0-9._-]+$/'],
+                    ],
+                ],
+            ],
+            self::CUSTOM_SMTP => [
+                'label' => 'Custom SMTP',
+                'description' => 'An SMTP server of your choice for system mail or newsletters, chosen under Mail sending.',
+                'managed' => true,
+                'keys' => [
+                    'host' => [
+                        'label' => 'Host',
+                        'help' => 'For example smtp.eu.mailgun.org or smtp.zeptomail.eu.',
+                        'config' => 'mail.mailers.custom-smtp.host',
+                        'sensitive' => false,
+                        'rules' => ['string', 'max:253', 'regex:/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i'],
+                    ],
+                    'port' => [
+                        'label' => 'Port',
+                        'help' => '587 for STARTTLS, 465 for SMTPS.',
+                        'config' => 'mail.mailers.custom-smtp.port',
+                        'sensitive' => false,
+                        'rules' => ['string', 'regex:/^[1-9][0-9]{0,4}$/'],
+                    ],
+                    'scheme' => [
+                        'label' => 'Encryption',
+                        'help' => 'smtp (STARTTLS, usually port 587) or smtps (TLS from the start, usually port 465).',
+                        'config' => 'mail.mailers.custom-smtp.scheme',
+                        'sensitive' => false,
+                        'rules' => ['string', 'in:smtp,smtps'],
+                    ],
+                    'username' => [
+                        'label' => 'Username',
+                        'help' => 'For ZeptoMail this is emailapikey.',
+                        'config' => 'mail.mailers.custom-smtp.username',
+                        'sensitive' => false,
+                        'rules' => ['string', 'max:255'],
+                    ],
+                    'password' => [
+                        'label' => 'Password',
+                        'help' => 'The SMTP password or token (for ZeptoMail, the Send Mail Token). Never shown again after saving.',
+                        'config' => 'mail.mailers.custom-smtp.password',
+                        'sensitive' => true,
+                        'rules' => ['string', 'min:8', 'max:1024'],
                     ],
                 ],
             ],

@@ -14,6 +14,14 @@ class UpdateSettingsRequest extends FormRequest
     }
 
     /**
+     * The settings page this request saves; null is the main Settings page.
+     */
+    protected function settingsPage(): ?string
+    {
+        return null;
+    }
+
+    /**
      * Setting keys contain dots, so the form posts them nested under
      * `settings` (e.g. settings[editor][driver]) and rules use the same path.
      *
@@ -23,7 +31,7 @@ class UpdateSettingsRequest extends FormRequest
     {
         $rules = ['settings' => ['required', 'array']];
 
-        foreach (array_keys(SettingDefinitions::all()) as $key) {
+        foreach (array_keys(SettingDefinitions::forPage($this->settingsPage())) as $key) {
             foreach (SettingDefinitions::rules($key) as $suffix => $keyRules) {
                 $rules['settings.'.$key.$suffix] = $keyRules;
             }
@@ -39,7 +47,7 @@ class UpdateSettingsRequest extends FormRequest
     {
         $attributes = [];
 
-        foreach (SettingDefinitions::all() as $key => $definition) {
+        foreach (SettingDefinitions::forPage($this->settingsPage()) as $key => $definition) {
             $attributes['settings.'.$key] = strtolower($definition['label']);
         }
 
@@ -56,7 +64,7 @@ class UpdateSettingsRequest extends FormRequest
         $validated = $this->validated();
         $values = [];
 
-        foreach (array_keys(SettingDefinitions::all()) as $key) {
+        foreach (array_keys(SettingDefinitions::forPage($this->settingsPage())) as $key) {
             if (Arr::has($validated, 'settings.'.$key)) {
                 $values[$key] = SettingDefinitions::cast($key, Arr::get($validated, 'settings.'.$key));
             }

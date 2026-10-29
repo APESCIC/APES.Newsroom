@@ -7,6 +7,7 @@ use App\Enums\SendingDomainStatus;
 use App\Models\EmailSenderAddress;
 use App\Models\EmailSendingDomain;
 use App\Services\Mail\MailgunDomainService;
+use App\Services\Mail\MailTransports;
 use Illuminate\Support\Str;
 
 /**
@@ -160,15 +161,11 @@ class SenderDomains
     }
 
     /**
-     * The mailer newsletters use: the per-domain Mailgun API mailer when
-     * Mailgun is configured and enabled for newsletters, else the default.
+     * The mailer newsletters use (Admin → Settings → Mail sending); null is
+     * the default mailer.
      */
     public static function newsletterMailer(): ?string
     {
-        if (config('mailing.newsletter_transport') !== 'mailgun') {
-            return null;
-        }
-
-        return app(MailgunDomainService::class)->isConfigured() ? 'mailgun-api' : null;
+        return app(MailTransports::class)->newsletterMailer();
     }
 }

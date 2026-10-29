@@ -90,7 +90,11 @@ class CloudronEnvironmentServiceProvider extends ServiceProvider
             return;
         }
 
+        // The environment default; Admin → Settings → Mail sending can choose
+        // another system transport at runtime (App\Services\Mail\MailTransports).
         Config::set('mail.default', 'smtp');
+        Config::set('mail.environment_default', 'smtp');
+        Config::set('mail.cloudron_forces_from', true);
         Config::set('mail.mailers.smtp.host', $this->cloudronEnv('CLOUDRON_MAIL_SMTP_SERVER'));
         Config::set('mail.mailers.smtp.port', $this->cloudronEnv('CLOUDRON_MAIL_SMTP_PORT'));
         Config::set('mail.mailers.smtp.username', $this->cloudronEnv('CLOUDRON_MAIL_SMTP_USERNAME'));

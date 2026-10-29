@@ -10,6 +10,7 @@ use App\Services\Auth\RecentAuthentication;
 use App\Services\Integrations\IntegrationSecrets;
 use App\Services\Mail\MailgunApiTransport;
 use App\Services\Mail\MailgunDomainService;
+use App\Services\Mail\MailTransports;
 use App\Services\Membership\FakeStripeBillingClient;
 use App\Services\Membership\StripeApiBillingClient;
 use App\Services\Membership\StripeBillingClient;
@@ -22,6 +23,7 @@ use Illuminate\Contracts\Validation\UncompromisedVerifier;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Http\Request;
+use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -104,6 +106,8 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Mail::extend('mailgun-api', fn () => $this->app->make(MailgunApiTransport::class));
+        $this->app->resolving('mail.manager', fn () => $this->app->make(MailTransports::class)->applySystemMailer());
+        Event::listen(JobProcessing::class, fn () => $this->app->make(MailTransports::class)->applySystemMailer($this->app->make('mail.manager')));
 
         RateLimiter::for('admin-user-actions', function (Request $request) {
             $target = $request->route('user');

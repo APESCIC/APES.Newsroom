@@ -23,6 +23,16 @@ class SettingsRepository
         return $definition['default'];
     }
 
+    /**
+     * Whether a valid value has been saved, as opposed to using the default.
+     */
+    public function isStored(string $key): bool
+    {
+        $stored = $this->stored();
+
+        return array_key_exists($key, $stored) && SettingDefinitions::accepts($key, $stored[$key]);
+    }
+
     public function set(string $key, mixed $value): void
     {
         if (! SettingDefinitions::accepts($key, $value)) {

@@ -57,6 +57,25 @@ return [
             'transport' => 'mailgun-api',
         ],
 
+        // Filled at runtime from Admin → Settings → Integrations (Custom SMTP).
+        'custom-smtp' => [
+            'transport' => 'smtp',
+            'scheme' => env('CUSTOM_SMTP_SCHEME', 'smtp'),
+            'host' => env('CUSTOM_SMTP_HOST'),
+            'port' => env('CUSTOM_SMTP_PORT', 587),
+            'username' => env('CUSTOM_SMTP_USERNAME'),
+            'password' => env('CUSTOM_SMTP_PASSWORD'),
+            'timeout' => 20,
+            'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
+        ],
+
+        // System mail with the fallback chosen under Mail sending.
+        'system-failover' => [
+            'transport' => 'failover',
+            'mailers' => ['smtp'],
+            'retry_after' => 60,
+        ],
+
         'postmark' => [
             'transport' => 'postmark',
             // 'message_stream_id' => env('POSTMARK_MESSAGE_STREAM_ID'),

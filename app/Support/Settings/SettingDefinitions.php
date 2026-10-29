@@ -14,6 +14,7 @@ use InvalidArgumentException;
  *
  * @phpstan-type Definition array{
  *     section: string,
+ *     page?: string,
  *     label: string,
  *     help: string,
  *     type: 'enum'|'int'|'bool'|'multi_enum',
@@ -40,8 +41,43 @@ final class SettingDefinitions
 
     public const TWO_FACTOR_REQUIRED_ROLES = 'security.two_factor.required_roles';
 
+    public const MAIL_SYSTEM_TRANSPORT = 'mail.system_transport';
+
+    public const MAIL_NEWSLETTER_TRANSPORT = 'mail.newsletter_transport';
+
+    public const MAIL_SYSTEM_FALLBACK = 'mail.system_fallback';
+
+    public const MAIL_SOFT_BOUNCE_LIMIT = 'mail.soft_bounce.limit';
+
+    public const MAIL_SOFT_BOUNCE_WINDOW = 'mail.soft_bounce.window_days';
+
+    /** Settings shown on Admin → Settings → Mail sending, changed by super admins only. */
+    public const PAGE_MAIL_SENDING = 'mail-sending';
+
     /** Passwords shorter than this are never allowed, whatever the setting says. */
     public const PASSWORD_MIN_LENGTH_FLOOR = 12;
+
+    /**
+     * @return array<string, string>
+     */
+    public static function transportOptions(): array
+    {
+        return [
+            'cloudron_smtp' => 'Cloudron SMTP',
+            'mailgun_api' => 'Mailgun API',
+            'custom_smtp' => 'Custom SMTP',
+        ];
+    }
+
+    /**
+     * Definitions for one settings page; null is the main Settings page.
+     *
+     * @return array<string, Definition>
+     */
+    public static function forPage(?string $page): array
+    {
+        return array_filter(self::all(), fn (array $definition) => ($definition['page'] ?? null) === $page);
+    }
 
     /**
      * @return array<string, Definition>
@@ -101,6 +137,55 @@ final class SettingDefinitions
                 'type' => 'multi_enum',
                 'default' => [],
                 'options' => collect(Role::cases())->mapWithKeys(fn (Role $role) => [$role->value => ucwords(str_replace('_', ' ', $role->value))])->all(),
+            ],
+            self::MAIL_SYSTEM_TRANSPORT => [
+                'section' => 'Mail sending',
+                'page' => self::PAGE_MAIL_SENDING,
+                'label' => 'System and account mail',
+                'help' => 'Sign-in links, password resets, receipts and admin alerts.',
+                'type' => 'enum',
+                'default' => 'cloudron_smtp',
+                'options' => self::transportOptions(),
+            ],
+            self::MAIL_NEWSLETTER_TRANSPORT => [
+                'section' => 'Mail sending',
+                'page' => self::PAGE_MAIL_SENDING,
+                'label' => 'Newsletters',
+                'help' => 'Campaign emails and newsletter confirmation emails. Newsletters never switch transport: if this one fails, the send pauses and admins are emailed.',
+                'type' => 'enum',
+                'default' => config('mailing.newsletter_transport') === 'smtp' ? 'cloudron_smtp' : 'mailgun_api',
+                'options' => self::transportOptions(),
+            ],
+            self::MAIL_SYSTEM_FALLBACK => [
+                'section' => 'Mail sending',
+                'page' => self::PAGE_MAIL_SENDING,
+                'label' => 'Fallback for system mail',
+                'help' => 'Tried when the system mail transport fails. Newsletters never use a fallback.',
+                'type' => 'enum',
+                'default' => 'none',
+                'options' => ['none' => 'No fallback', ...self::transportOptions()],
+            ],
+            self::MAIL_SOFT_BOUNCE_LIMIT => [
+                'section' => 'Mail sending',
+                'page' => self::PAGE_MAIL_SENDING,
+                'label' => 'Temporary failures before an address is blocked',
+                'help' => 'Counted on separate sends within the window below. A successful delivery resets the count.',
+                'type' => 'int',
+                'default' => 3,
+                'min' => 2,
+                'max' => 10,
+                'unit' => 'failures',
+            ],
+            self::MAIL_SOFT_BOUNCE_WINDOW => [
+                'section' => 'Mail sending',
+                'page' => self::PAGE_MAIL_SENDING,
+                'label' => 'Temporary failure window',
+                'help' => 'Only temporary failures in this many days count towards blocking an address.',
+                'type' => 'int',
+                'default' => 30,
+                'min' => 7,
+                'max' => 90,
+                'unit' => 'days',
             ],
         ];
     }
