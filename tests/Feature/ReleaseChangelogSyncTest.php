@@ -133,7 +133,7 @@ class ReleaseChangelogSyncTest extends TestCase
         $this->assertGreaterThanOrEqual(60, Release::query()->count());
 
         $current = Release::query()->where('is_current', true)->firstOrFail();
-        $this->assertSame('v1.25.1', $current->version);
+        $this->assertSame('v1.25.2', $current->version);
         $this->assertSame(ReleaseChannel::Beta, $current->channel);
     }
 

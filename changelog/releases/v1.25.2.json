@@ -1,0 +1,21 @@
+{
+  "version": "v1.25.2",
+  "slug": "release-v1-25-2",
+  "released_at": "2026-10-29",
+  "previous_version": "v1.25.1",
+  "theme": "Pet Care and Shelter sending domains",
+  "change_types": ["changed"],
+  "topic_tags": ["internal-only"],
+  "summary": "APES Pet Care Clinic and APES Shelter & Rescue newsletters can now send through the Mailgun domains those organisations already use.",
+  "detailed_changes": [
+    "The apespetcare.org.uk and apesshelter.org.uk sending domains now use their existing Mailgun domains (the root domains, already set up with their DNS) instead of new mail. subdomains. Both go back to pending until the next check confirms them, and their From addresses are unchanged (#596, #597)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /admin/settings/email-domains",
+    "User groups affected: admins (sending domains)",
+    "Public impact: none",
+    "Internal impact: one data migration (Mailgun domain for two sending domains), docs/email-sending-domains.md runbook"
+  ],
+  "pr": 632
+}

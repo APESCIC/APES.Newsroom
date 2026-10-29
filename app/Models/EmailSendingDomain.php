@@ -72,7 +72,7 @@ class EmailSendingDomain extends Model
 
     /**
      * Address suffixes on this domain: the domain itself and, when set, its
-     * Mailgun domain (news@mail.apespetcare.org.uk belongs to apespetcare.org.uk).
+     * Mailgun domain (news@mg.example.org.uk belongs to example.org.uk).
      *
      * @return list<string>
      */
