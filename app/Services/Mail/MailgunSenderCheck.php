@@ -67,8 +67,9 @@ class MailgunSenderCheck
             return [...$base, 'status' => self::UNVERIFIED, 'message' => 'No sender email is set.'];
         }
 
-        $senderDomain = SenderDomains::domainOf($senderEmail);
-        if (! in_array($senderDomain, SenderDomains::allowed(), true)) {
+        $approved = SenderDomains::find($senderEmail);
+        $senderDomain = $approved?->domain ?? SenderDomains::domainOf($senderEmail);
+        if ($approved === null || ! $approved->isEnabled()) {
             return [...$base, 'status' => self::UNVERIFIED, 'domain' => $senderDomain, 'message' => 'The sender domain is not an approved sending domain.'];
         }
 
@@ -76,18 +77,14 @@ class MailgunSenderCheck
             return [...$base, 'status' => self::UNKNOWN, 'domain' => $senderDomain, 'message' => 'The Mailgun API is not configured, so the sender cannot be checked.'];
         }
 
-        $mailgunDomain = $this->mailgun->configuredDomain() ?? $senderDomain;
-        if ($mailgunDomain !== $senderDomain && ! Str::endsWith($mailgunDomain, '.'.$senderDomain)) {
-            return [...$base, 'status' => self::UNVERIFIED, 'domain' => $senderDomain, 'mailgun_domain' => $mailgunDomain, 'message' => 'The sender domain does not match the Mailgun sending domain.'];
-        }
-
+        $mailgunDomain = $this->mailgun->mailgunDomainFor($approved->domain, $approved->mailgun_domain);
         $mailgun = $this->mailgun->lookup($mailgunDomain);
 
         $checks = [
             'mailgun_state' => $mailgun['state'] ?? null,
             'spf' => $mailgun['spf'] ?? false,
             'dkim' => $mailgun['dkim'] ?? false,
-            'dmarc' => $this->mailgun->dmarcRecord($senderDomain) !== null,
+            'dmarc' => $this->mailgun->dmarcRecordFor(SenderDomains::domainOf($senderEmail), $approved->domain) !== null,
         ];
 
         if (isset($mailgun['error'])) {

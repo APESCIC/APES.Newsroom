@@ -38,6 +38,61 @@ type ChannelOption = { value: string; label: string; slug: string; taken_by: str
 
 type DomainOption = { domain: string; status: string; can_send: boolean };
 
+type SenderOption = { address: string; label: string | null; domain: string; can_send: boolean };
+
+function SenderSelect({
+    value,
+    options,
+    reservedLocalParts,
+    error,
+    onChange,
+}: {
+    value: string;
+    options: SenderOption[];
+    reservedLocalParts: string[];
+    error?: string;
+    onChange: (value: string) => void;
+}) {
+    const listed = options.some((option) => option.address === value);
+    const helpId = 'sender_email-help';
+    const errorId = 'sender_email-error';
+
+    return (
+        <div>
+            <label className="block text-sm font-semibold" htmlFor="sender_email">
+                Sender email
+                <select
+                    id="sender_email"
+                    className="form-input mt-1"
+                    value={value}
+                    aria-describedby={error ? `${helpId} ${errorId}` : helpId}
+                    aria-invalid={error ? true : undefined}
+                    onChange={(e) => onChange(e.target.value)}
+                >
+                    <option value="">Choose a sender</option>
+                    {value !== '' && !listed && <option value={value}>{value} (not on the allowed list)</option>}
+                    {options.map((option) => (
+                        <option key={option.address} value={option.address} disabled={!option.can_send && option.address !== value}>
+                            {option.address}
+                            {option.label ? ` · ${option.label}` : ''}
+                            {option.can_send ? '' : ' (domain not verified)'}
+                        </option>
+                    ))}
+                </select>
+            </label>
+            <p id={helpId} className="mt-1 text-xs text-muted">
+                Choose from the From addresses an admin has allowed under Settings → Email sending domains. Only addresses on domains Mailgun has
+                verified can be chosen.{reservedLocalParts.length > 0 ? ` Reserved names (${reservedLocalParts.join(', ')}) are never allowed.` : ''}
+            </p>
+            {error && (
+                <p id={errorId} className="text-sm text-danger">
+                    {error}
+                </p>
+            )}
+        </div>
+    );
+}
+
 function splitAddress(address: string | null | undefined): { local: string; domain: string } {
     if (!address || !address.includes('@')) return { local: address ?? '', domain: '' };
     const at = address.lastIndexOf('@');
@@ -124,6 +179,8 @@ export default function NewsletterEdit({
     otherNewsletters = [],
     channelOptions = [],
     domainOptions = [],
+    senderOptions = [],
+    defaultReplyTo = null,
     reservedLocalParts = [],
 }: {
     newsletter: NewsletterData | null;
@@ -131,19 +188,18 @@ export default function NewsletterEdit({
     otherNewsletters?: Array<{ id: number; name: string }>;
     channelOptions?: ChannelOption[];
     domainOptions?: DomainOption[];
+    senderOptions?: SenderOption[];
+    defaultReplyTo?: string | null;
     reservedLocalParts?: string[];
 }) {
-    const sender = splitAddress(newsletter?.sender_email);
     const replyTo = splitAddress(newsletter?.reply_to);
-    const sendDomains = domainOptions.filter((option) => option.can_send).map((option) => option.domain);
     const replyDomains = domainOptions.map((option) => option.domain);
     const form = useForm({
         name: newsletter?.name ?? '',
         slug: newsletter?.slug ?? '',
         description: newsletter?.description ?? '',
         sender_name: newsletter?.sender_name ?? '',
-        sender_local: sender.local,
-        sender_domain: sender.domain,
+        sender_email: newsletter?.sender_email ?? '',
         reply_local: replyTo.local,
         reply_domain: replyTo.domain,
         subscribe_on_signup: newsletter?.subscribe_on_signup ?? false,
@@ -160,9 +216,8 @@ export default function NewsletterEdit({
 
     const submit: FormEventHandler = (event) => {
         event.preventDefault();
-        form.transform(({ sender_local, sender_domain, reply_local, reply_domain, ...data }) => ({
+        form.transform(({ reply_local, reply_domain, ...data }) => ({
             ...data,
-            sender_email: joinAddress(sender_local, sender_domain),
             reply_to: joinAddress(reply_local, reply_domain),
         }));
         if (newsletter) {
@@ -220,17 +275,12 @@ export default function NewsletterEdit({
                         <input id="sender_name" className="form-input mt-1" value={form.data.sender_name} onChange={(e) => form.setData('sender_name', e.target.value)} />
                     </label>
                     {form.errors.sender_name && <p className="text-sm text-danger">{form.errors.sender_name}</p>}
-                    <AddressPicker
-                        id="sender_email"
-                        label="Sender email"
-                        local={form.data.sender_local}
-                        domain={form.data.sender_domain}
-                        domains={sendDomains}
-                        unavailableNote="not verified for sending"
-                        help={`Only approved domains that Mailgun has verified are listed. ${reservedLocalParts.length > 0 ? `Reserved names (${reservedLocalParts.join(', ')}) cannot be used.` : ''}`}
+                    <SenderSelect
+                        value={form.data.sender_email}
+                        options={senderOptions}
+                        reservedLocalParts={reservedLocalParts}
                         error={addressErrors.sender_email}
-                        onLocalChange={(value) => form.setData('sender_local', value)}
-                        onDomainChange={(value) => form.setData('sender_domain', value)}
+                        onChange={(value) => form.setData('sender_email', value)}
                     />
                     <AddressPicker
                         id="reply_to"
@@ -239,7 +289,7 @@ export default function NewsletterEdit({
                         domain={form.data.reply_domain}
                         domains={replyDomains}
                         unavailableNote="not approved"
-                        help="Any enabled approved domain can be used for replies."
+                        help={`Any enabled approved domain can be used for replies.${defaultReplyTo ? ` Leave blank to use the default reply-to, ${defaultReplyTo}.` : ''}`}
                         error={addressErrors.reply_to}
                         onLocalChange={(value) => form.setData('reply_local', value)}
                         onDomainChange={(value) => form.setData('reply_domain', value)}

@@ -6,12 +6,14 @@ use App\Enums\Channel;
 use App\Enums\SubscriptionStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Campaign;
+use App\Models\EmailSenderAddress;
 use App\Models\EmailSendingDomain;
 use App\Models\Newsletter;
 use App\Models\NewsletterSegment;
 use App\Services\Mail\MailgunSenderCheck;
 use App\Services\Mailing\CampaignSender;
 use App\Services\Mailing\CampaignService;
+use App\Services\Mailing\DefaultReplyTo;
 use App\Services\Mailing\SenderDomains;
 use Carbon\Carbon;
 use Closure;
@@ -91,6 +93,8 @@ class NewsletterController extends Controller
             'newsletter' => null,
             'channelOptions' => $this->channelOptions(null),
             'domainOptions' => $this->domainOptions(),
+            'senderOptions' => $this->senderOptions(),
+            'defaultReplyTo' => DefaultReplyTo::usable(),
             'reservedLocalParts' => SenderDomains::RESERVED_LOCAL_PARTS,
         ]);
     }
@@ -135,6 +139,8 @@ class NewsletterController extends Controller
             ],
             'channelOptions' => $this->channelOptions($newsletter),
             'domainOptions' => $this->domainOptions(),
+            'senderOptions' => $this->senderOptions(),
+            'defaultReplyTo' => DefaultReplyTo::usable(),
             'reservedLocalParts' => SenderDomains::RESERVED_LOCAL_PARTS,
             'segments' => $newsletter->segments()->with('alsoNewsletter')->get()->map(fn (NewsletterSegment $segment) => [
                 'id' => $segment->id,
@@ -302,7 +308,10 @@ class NewsletterController extends Controller
             'slug' => ['nullable', 'string', 'max:120', $slugRule],
             'description' => ['nullable', 'string', 'max:1000'],
             'sender_name' => ['nullable', 'string', 'max:120'],
-            'sender_email' => ['nullable', 'string', 'email', 'max:255', $this->addressRule($newsletter?->sender_email, SenderDomains::senderProblem(...))],
+            'sender_email' => ['nullable', 'string', 'email', 'max:255', $this->addressRule(
+                $newsletter?->sender_email,
+                fn (string $email) => SenderDomains::senderProblem($email) ?? SenderDomains::senderAddressProblem($email),
+            )],
             'reply_to' => ['nullable', 'string', 'email', 'max:255', $this->addressRule($newsletter?->reply_to, SenderDomains::replyToProblem(...))],
             'subscribe_on_signup' => ['sometimes', 'boolean'],
             'channel' => ['nullable', Rule::enum(Channel::class), $channelUnique],
@@ -377,6 +386,29 @@ class NewsletterController extends Controller
                 'domain' => $domain->domain,
                 'status' => $domain->status->value,
                 'can_send' => $domain->isVerified(),
+            ])
+            ->all();
+    }
+
+    /**
+     * Allowed From addresses on enabled domains; only those on verified
+     * domains can be chosen.
+     *
+     * @return list<array{address: string, label: string|null, domain: string, can_send: bool}>
+     */
+    private function senderOptions(): array
+    {
+        return EmailSenderAddress::query()
+            ->enabled()
+            ->whereHas('domain', fn ($query) => $query->enabled())
+            ->with('domain')
+            ->orderBy('address')
+            ->get()
+            ->map(fn (EmailSenderAddress $address) => [
+                'address' => $address->address,
+                'label' => $address->label,
+                'domain' => $address->domain->domain,
+                'can_send' => $address->canSend(),
             ])
             ->all();
     }

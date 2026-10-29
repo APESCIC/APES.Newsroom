@@ -14,7 +14,8 @@ return [
     |
     */
 
-    // Read-only sender verification. Mail is still sent through Cloudron SMTP.
+    // Sender verification, plus newsletter sends through the Mailgun HTTP API
+    // (config/mailing.php newsletter_transport). System mail uses Cloudron SMTP.
     'mailgun' => [
         'domain' => env('MAILGUN_DOMAIN'),
         'secret' => env('MAILGUN_API_KEY'),
