@@ -10,6 +10,7 @@ use App\Models\EmailSendingDomain;
 use App\Models\Newsletter;
 use App\Services\Audit\AuditLogger;
 use App\Services\Mail\MailgunDomainService;
+use App\Services\Mail\MailTransports;
 use App\Services\Mail\SendingDomainChecker;
 use App\Services\Mail\SendingDomainTester;
 use App\Services\Mail\TestSendThrottle;
@@ -59,6 +60,9 @@ class EmailSendingDomainController extends Controller
                 'last_test' => $domain->last_test_result,
                 'created_by' => $domain->creator?->name,
                 'in_use' => $domain->newslettersUsing(),
+                'track_opens' => $domain->track_opens,
+                'track_clicks' => $domain->track_clicks,
+                'webhooks' => $domain->webhooks,
                 'addresses' => $domain->addresses->map(fn (EmailSenderAddress $address) => [
                     'id' => $address->id,
                     'address' => $address->address,
@@ -72,6 +76,7 @@ class EmailSendingDomainController extends Controller
         return Inertia::render('Admin/Settings/EmailDomains/Index', [
             'domains' => $domains,
             'mailgunConfigured' => $mailgun->isConfigured(),
+            'newslettersOnMailgun' => app(MailTransports::class)->effectiveNewsletterTransport() === MailTransports::MAILGUN_API,
             'configuredMailgunDomain' => $mailgun->configuredDomain(),
             'dmarcRecommendation' => SendingDomainChecker::dmarcRecommendation(),
             'alerts' => $alerts->failing(),
@@ -79,6 +84,7 @@ class EmailSendingDomainController extends Controller
             'defaultReplyToProblem' => filled(DefaultReplyTo::get()) ? SenderDomains::replyToProblem((string) DefaultReplyTo::get()) : null,
             'testRecipient' => $request->user()->email,
             'offerTestAddressId' => $request->session()->get('offer_test_address'),
+            'webhookManagement' => MailgunDomainWebhooksController::managementStatus($request),
             'purposes' => collect(SenderAddressPurpose::cases())->map(fn (SenderAddressPurpose $purpose) => [
                 'value' => $purpose->value,
                 'label' => $purpose->label(),

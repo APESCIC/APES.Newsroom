@@ -1,6 +1,6 @@
 import { BellOff, BellRing, MailMinus, MailPlus, ShieldOff, ShieldPlus } from 'lucide-react';
 import { formatWhen } from '../../Pages/Admin/Users/types';
-import { consentLabel, subscriptionLabel, type Mailing, type SubscriptionRow } from '../../Pages/Staff/People/types';
+import { consentLabel, deliveryStatusText, subscriptionLabel, type Mailing, type SubscriptionRow } from '../../Pages/Staff/People/types';
 import ReasonActionButton from '../Staff/ReasonActionButton';
 import Badge, { type BadgeTone } from '../Workspace/ui/Badge';
 import GlassCard from '../Workspace/ui/GlassCard';
@@ -60,6 +60,7 @@ export default function SubscriptionsCard({ mailing, canManage, canSuppress }: {
             <p className="mb-3 text-sm">
                 {mailing.suppressed ? <Badge tone="error">Suppressed: no newsletters are sent</Badge> : <Badge tone="ok">Not suppressed</Badge>}
             </p>
+            {mailing.delivery_status && <p className="mb-3 text-sm text-body">{deliveryStatusText(mailing.delivery_status)}</p>}
             <ul className="divide-y divide-border" aria-label="Newsletter subscriptions">
                 {mailing.subscriptions.map((row) => (
                     <li key={`${row.newsletter_id ?? 'orphan'}-${row.subscription_id ?? 'none'}`} className="flex flex-wrap items-center justify-between gap-3 py-3">

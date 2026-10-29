@@ -229,6 +229,30 @@ class CampaignService
     }
 
     /**
+     * The post's live campaign status and delivery counts for staff, or null
+     * when it has not been emailed.
+     *
+     * @return array{id: int, status: string, pause_reason: string|null, paused_at: string|null, queued_at: string|null, completed_at: string|null, stats: array<string, mixed>}|null
+     */
+    public function liveSummary(Post $post): ?array
+    {
+        $campaign = Campaign::query()->where('post_id', $post->id)->where('is_test', false)->latest('id')->first();
+        if ($campaign === null) {
+            return null;
+        }
+
+        return [
+            'id' => $campaign->id,
+            'status' => $campaign->status->value,
+            'pause_reason' => $campaign->pause_reason,
+            'paused_at' => $campaign->paused_at?->toIso8601String(),
+            'queued_at' => $campaign->queued_at?->toIso8601String(),
+            'completed_at' => $campaign->completed_at?->toIso8601String(),
+            'stats' => app(CampaignStats::class)->forCampaign($campaign),
+        ];
+    }
+
+    /**
      * Stop a send because its transport failed. Recipients still queued stay
      * queued so a resume sends to them; admins are emailed once per pause.
      */

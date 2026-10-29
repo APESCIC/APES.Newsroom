@@ -19,11 +19,28 @@ export type ConsentEventRow = {
     created_at: string | null;
 };
 
+export type DeliveryStatus = {
+    reason: string;
+    label: string;
+    source: string | null;
+    since: string | null;
+    last_event: { type: 'bounce' | 'temporary_failure' | 'complained' | 'unsubscribed'; at: string | null; reason: string | null } | null;
+};
+
+/** One line describing why an address is blocked, for staff views. */
+export function deliveryStatusText(status: DeliveryStatus): string {
+    const since = status.since ? ` since ${new Date(status.since).toLocaleDateString('en-GB', { dateStyle: 'medium' })}` : '';
+    const event = status.last_event;
+    const detail = event?.reason ? `. Last problem: ${event.reason}` : '';
+    return `${status.label}${since}${detail}`;
+}
+
 export type Mailing = {
     contact_id: number;
     email: string;
     linked: boolean;
     suppressed: boolean;
+    delivery_status?: DeliveryStatus | null;
     subscriptions: SubscriptionRow[];
     consent_history: ConsentEventRow[];
 };
@@ -97,6 +114,10 @@ const CONSENT_LABELS: Record<string, string> = {
     suppressed: 'Suppressed',
     unsuppressed: 'Suppression removed',
     contact_updated: 'Contact details changed',
+    open_tracking_consented: 'Allowed open tracking',
+    open_tracking_withdrawn: 'Stopped open tracking',
+    click_tracking_opted_out: 'Turned off click tracking',
+    click_tracking_opted_in: 'Allowed click tracking',
 };
 
 export function consentLabel(action: string): string {

@@ -28,6 +28,15 @@ class SendingDomainTestMail extends Mailable
         );
     }
 
+    /**
+     * An admin's display name with Markdown syntax removed, so it cannot
+     * turn into links or formatting in the email.
+     */
+    public static function plainName(string $name): string
+    {
+        return trim(str_replace(['[', ']', '(', ')', '*', '_', '`', '<', '>', '#', '!'], '', $name));
+    }
+
     public function content(): Content
     {
         return new Content(
@@ -35,7 +44,7 @@ class SendingDomainTestMail extends Mailable
             with: [
                 'fromAddress' => $this->fromAddress,
                 'mailgunDomain' => $this->mailgunDomain,
-                'requestedBy' => $this->requestedBy,
+                'requestedBy' => self::plainName($this->requestedBy),
                 'sentAt' => now()->timezone('Europe/London')->format('j M Y, H:i'),
             ],
         );

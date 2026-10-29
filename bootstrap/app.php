@@ -55,6 +55,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->validateCsrfTokens(except: [
             'stripe/webhook',
+            'webhooks/mailgun',
         ]);
 
         // Cloudron terminates TLS and proxies requests from a single,

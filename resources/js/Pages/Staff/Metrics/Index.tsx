@@ -11,6 +11,26 @@ type Metrics = {
     subscriptions: { free: number; active: number; past_due: number; canceled: number; comped: number; mrr_pence: number } | null;
 };
 
+export type NewsletterBreakdown = {
+    newsletter: string;
+    campaigns: number;
+    sent: number;
+    opened: number;
+    clicked: number;
+    open_rate: number;
+    click_rate: number;
+};
+
+const SUPPRESSION_LABELS: Record<string, string> = {
+    bounced: 'Bounced',
+    complained: 'Marked as spam',
+    unsubscribed_mailgun: 'Unsubscribed through the email provider',
+    repeated_soft_bounce: 'Repeated temporary failures',
+};
+
+export const OPEN_RATE_NOTE =
+    'Open rates are indicative: they only count readers who allowed open tracking, and Apple Mail Privacy Protection opens some messages automatically.';
+
 function Section({ title, children }: { title: string; children: ReactNode }) {
     return (
         <section aria-label={title} className="flex flex-col gap-3">
@@ -20,9 +40,18 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
     );
 }
 
-export default function Index({ metrics }: { metrics: Metrics }) {
+export default function Index({
+    metrics,
+    newsletterBreakdown = [],
+    deliverySuppressions = {},
+}: {
+    metrics: Metrics;
+    newsletterBreakdown?: NewsletterBreakdown[];
+    deliverySuppressions?: Record<string, number>;
+}) {
     const subscriptions = metrics.subscriptions;
     const mrr = subscriptions ? new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(subscriptions.mrr_pence / 100) : null;
+    const suppressionEntries = Object.entries(deliverySuppressions);
 
     return (
         <WorkspaceLayout
@@ -38,9 +67,72 @@ export default function Index({ metrics }: { metrics: Metrics }) {
             </Section>
             <Section title="Newsletters">
                 <StatTile label="Accepted sends" value={metrics.newsletters.sent} icon={Send} />
-                <StatTile label="Opens" value={metrics.newsletters.opened} hint={`${metrics.newsletters.open_rate}% open rate`} icon={MailOpen} />
+                <StatTile label="Opens" value={metrics.newsletters.opened} hint={`${metrics.newsletters.open_rate}% open rate (indicative)`} icon={MailOpen} />
                 <StatTile label="Clicks" value={metrics.newsletters.clicked} hint={`${metrics.newsletters.click_rate}% click rate`} icon={MousePointerClick} />
             </Section>
+            <p className="text-sm text-muted">{OPEN_RATE_NOTE}</p>
+            {newsletterBreakdown.length > 0 && (
+                <section aria-labelledby="metrics-by-newsletter-heading" className="sg-card flex flex-col gap-3 p-5 sm:p-6">
+                    <h2 id="metrics-by-newsletter-heading" className="text-lg font-semibold text-body">
+                        By newsletter
+                    </h2>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
+                            <caption className="sr-only">Sends, opens and clicks for each newsletter</caption>
+                            <thead>
+                                <tr className="text-muted">
+                                    <th scope="col" className="py-1 pr-3 font-semibold">
+                                        Newsletter
+                                    </th>
+                                    <th scope="col" className="py-1 pr-3 font-semibold">
+                                        Emails
+                                    </th>
+                                    <th scope="col" className="py-1 pr-3 font-semibold">
+                                        Sent
+                                    </th>
+                                    <th scope="col" className="py-1 pr-3 font-semibold">
+                                        Opens (indicative)
+                                    </th>
+                                    <th scope="col" className="py-1 font-semibold">
+                                        Clicks
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {newsletterBreakdown.map((row) => (
+                                    <tr key={row.newsletter} className="border-t border-border">
+                                        <th scope="row" className="py-2 pr-3 font-semibold text-body">
+                                            {row.newsletter}
+                                        </th>
+                                        <td className="py-2 pr-3">{row.campaigns}</td>
+                                        <td className="py-2 pr-3">{row.sent}</td>
+                                        <td className="py-2 pr-3">
+                                            {row.opened} ({row.open_rate}%)
+                                        </td>
+                                        <td className="py-2">
+                                            {row.clicked} ({row.click_rate}%)
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            )}
+            {suppressionEntries.length > 0 && (
+                <section aria-labelledby="metrics-suppressions-heading" className="sg-card flex flex-col gap-2 p-5 text-sm sm:p-6">
+                    <h2 id="metrics-suppressions-heading" className="text-lg font-semibold text-body">
+                        Addresses blocked by delivery problems
+                    </h2>
+                    <ul className="list-disc pl-5 text-body">
+                        {suppressionEntries.map(([reason, total]) => (
+                            <li key={reason}>
+                                {SUPPRESSION_LABELS[reason] ?? reason}: {total}
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+            )}
             {subscriptions && (
                 <AdvancedDetails summary="Membership revenue">
                     <StatGrid label="Subscriptions">

@@ -6,7 +6,9 @@ use App\Enums\CampaignStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Campaign;
 use App\Models\Post;
+use App\Services\Mail\MailTransports;
 use App\Services\Mailing\CampaignService;
+use App\Support\Settings\SettingDefinitions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -30,6 +32,9 @@ class CampaignController extends Controller
                 'mailing_lists' => $post->mailing_lists ?? [],
             ],
             'snapshot' => $this->campaigns->previewPayload($post),
+            'liveCampaign' => $this->campaigns->liveSummary($post),
+            'newsletterTransport' => SettingDefinitions::transportOptions()[app(MailTransports::class)->effectiveNewsletterTransport()] ?? null,
+            'canResume' => $request->user()->can('access-admin-area'),
         ]);
     }
 

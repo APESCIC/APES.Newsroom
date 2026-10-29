@@ -3,7 +3,7 @@ import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import Badge from '../../Workspace/ui/Badge';
 import type { TestResult } from './types';
 
-function xsrfToken(): string {
+export function xsrfToken(): string {
     return decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? '');
 }
 

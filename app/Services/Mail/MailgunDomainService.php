@@ -7,6 +7,7 @@ use App\Support\Integrations\IntegrationDefinitions;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 /**
  * Read-only Mailgun domain lookups. Only GET /v4/domains/{domain} is called:
@@ -107,6 +108,75 @@ class MailgunDomainService
             'dkim' => $txtValid('DKIM'),
             'records' => $records,
         ];
+    }
+
+    /**
+     * Every entry on one of a Mailgun domain's suppression lists (bounces,
+     * complaints or unsubscribes), following Mailgun's paging. Read-only.
+     *
+     * @return list<array<string, mixed>>
+     *
+     * @throws RuntimeException when Mailgun cannot be read.
+     */
+    public function suppressionList(string $mailgunDomain, string $list, int $maxPages = 50): array
+    {
+        if (! in_array($list, ['bounces', 'complaints', 'unsubscribes'], true)) {
+            throw new RuntimeException("Unknown Mailgun suppression list [{$list}].");
+        }
+
+        $endpoint = trim($this->secrets->get(IntegrationDefinitions::MAILGUN, 'endpoint') ?? 'api.eu.mailgun.net', '/');
+        $url = 'https://'.$endpoint.'/v3/'.rawurlencode($mailgunDomain).'/'.$list.'?limit=1000';
+        $items = [];
+
+        for ($page = 0; $page < $maxPages && $url !== null; $page++) {
+            try {
+                $response = Http::withBasicAuth('api', (string) $this->secrets->get(IntegrationDefinitions::MAILGUN, 'api_key'))
+                    ->acceptJson()
+                    ->timeout(20)
+                    ->get($url);
+            } catch (ConnectionException) {
+                throw new RuntimeException('Could not reach the Mailgun API.');
+            }
+
+            if ($response->status() === 404) {
+                return $items;
+            }
+            if (! $response->successful()) {
+                throw new RuntimeException("Mailgun returned HTTP {$response->status()} for the {$list} list of {$mailgunDomain}.");
+            }
+
+            $pageItems = (array) $response->json('items', []);
+            array_push($items, ...array_values(array_filter($pageItems, 'is_array')));
+
+            $next = (string) $response->json('paging.next', '');
+            $url = $pageItems === [] || $next === '' || $next === $url || ! Str::startsWith($next, 'https://'.$endpoint.'/') ? null : $next;
+        }
+
+        return $items;
+    }
+
+    /**
+     * Whether the API key is accepted (lists one domain); null when it is,
+     * otherwise the reason.
+     */
+    public function ping(): ?string
+    {
+        if (! $this->isConfigured()) {
+            return 'The Mailgun API key is not configured under Integrations.';
+        }
+
+        $endpoint = trim($this->secrets->get(IntegrationDefinitions::MAILGUN, 'endpoint') ?? 'api.eu.mailgun.net', '/');
+
+        try {
+            $response = Http::withBasicAuth('api', (string) $this->secrets->get(IntegrationDefinitions::MAILGUN, 'api_key'))
+                ->acceptJson()
+                ->timeout(10)
+                ->get('https://'.$endpoint.'/v4/domains', ['limit' => 1]);
+        } catch (ConnectionException) {
+            return 'Could not reach the Mailgun API.';
+        }
+
+        return $response->successful() ? null : 'Mailgun refused the API key (HTTP '.$response->status().').';
     }
 
     /**

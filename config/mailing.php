@@ -31,18 +31,24 @@ return [
     | Newsletter transport
     |--------------------------------------------------------------------------
     |
-    | "mailgun" sends newsletters and sending-domain test emails through the
-    | Mailgun HTTP API, using each From domain's own Mailgun domain, whenever
-    | the Mailgun API key is configured. "smtp" keeps newsletters on the
-    | default mailer (Cloudron SMTP). System and account mail always use the
-    | default mailer.
+    | The starting newsletter transport until a super admin chooses one under
+    | Admin → Settings → Mail sending: "mailgun" (the Mailgun HTTP API, using
+    | each From domain's own Mailgun domain, once its API key is set) or
+    | "smtp" (the environment mailer, Cloudron SMTP on Cloudron).
     |
     */
     'newsletter_transport' => env('MAILING_NEWSLETTER_TRANSPORT', 'mailgun'),
 
     /*
     |--------------------------------------------------------------------------
-    | Sending-domain test emails
+    | Mailgun webhooks
+    |--------------------------------------------------------------------------
+    */
+    'webhook_per_minute' => (int) env('MAILING_WEBHOOK_PER_MINUTE', 600),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Test emails (sending domains and Mail sending)
     |--------------------------------------------------------------------------
     */
     'test_send' => [

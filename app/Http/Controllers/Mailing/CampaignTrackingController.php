@@ -4,22 +4,26 @@ namespace App\Http\Controllers\Mailing;
 
 use App\Http\Controllers\Controller;
 use App\Models\CampaignRecipient;
+use App\Models\MailEvent;
+use App\Services\Mail\MailEventRecorder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\URL;
 
+/**
+ * The Newsroom's own open pixel and click links, used only when the reader
+ * allowed tracking and the send did not go through Mailgun tracking.
+ */
 class CampaignTrackingController extends Controller
 {
-    public function open(Request $request, CampaignRecipient $recipient): Response
+    public function open(Request $request, CampaignRecipient $recipient, MailEventRecorder $recorder): Response
     {
         if (! $request->hasValidSignature()) {
             abort(403);
         }
 
-        if ($recipient->opened_at === null) {
-            $recipient->forceFill(['opened_at' => now()])->save();
-        }
+        $recorder->record($this->event($recipient, MailEvent::OPENED, 'newsroom:open:'.$recipient->id));
 
         $gif = base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7');
 
@@ -29,7 +33,7 @@ class CampaignTrackingController extends Controller
         ]);
     }
 
-    public function click(Request $request, CampaignRecipient $recipient): RedirectResponse
+    public function click(Request $request, CampaignRecipient $recipient, MailEventRecorder $recorder): RedirectResponse
     {
         if (! $request->hasValidSignature()) {
             abort(403);
@@ -41,12 +45,10 @@ class CampaignTrackingController extends Controller
             $target = url('/');
         }
 
-        if ($recipient->clicked_at === null) {
-            $recipient->forceFill([
-                'clicked_at' => now(),
-                'opened_at' => $recipient->opened_at ?? now(),
-            ])->save();
-        }
+        $recorder->record([
+            ...$this->event($recipient, MailEvent::CLICKED, 'newsroom:click:'.$recipient->id.':'.hash('sha256', $target)),
+            'url' => mb_substr($target, 0, 2000),
+        ]);
 
         return redirect()->away($target);
     }
@@ -67,5 +69,21 @@ class CampaignTrackingController extends Controller
             now()->addDays(30),
             ['recipient' => $recipient->id, 'u' => $target],
         );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function event(CampaignRecipient $recipient, string $type, string $eventId): array
+    {
+        return [
+            'event_id' => $eventId,
+            'source' => MailEvent::SOURCE_NEWSROOM,
+            'type' => $type,
+            'recipient' => strtolower($recipient->email),
+            'campaign_recipient_id' => $recipient->id,
+            'provider_message_id' => $recipient->provider_message_id,
+            'occurred_at' => now(),
+        ];
     }
 }

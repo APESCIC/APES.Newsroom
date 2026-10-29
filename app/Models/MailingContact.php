@@ -18,6 +18,14 @@ class MailingContact extends Model
     /** @use HasFactory<MailingContactFactory> */
     use HasFactory, Notifiable;
 
+    protected function casts(): array
+    {
+        return [
+            'open_tracking_consented_at' => 'datetime',
+            'click_tracking_opted_out_at' => 'datetime',
+        ];
+    }
+
     protected static function booted(): void
     {
         static::saving(function (MailingContact $contact): void {

@@ -28,6 +28,7 @@ class PreferenceController extends Controller
             'email' => $email,
             'lists' => array_values($this->consent->preferenceStateForEmail($email)),
             'newsletters' => $this->consent->extraNewsletterStateForEmail($email),
+            'tracking' => $this->consent->trackingPreferences($email),
             'signed' => true,
         ]);
     }
@@ -41,6 +42,7 @@ class PreferenceController extends Controller
             'email' => $email,
             'lists' => array_values($this->consent->preferenceStateForEmail($email)),
             'newsletters' => $this->consent->extraNewsletterStateForEmail($email),
+            'tracking' => $this->consent->trackingPreferences($email),
             'signed' => false,
             'matched_mailing_notice' => $this->matchedMailingNotice($user),
         ]);
@@ -82,6 +84,8 @@ class PreferenceController extends Controller
             'lists.*' => [Rule::enum(MailingList::class)],
             'newsletter_ids' => ['array'],
             'newsletter_ids.*' => ['integer', 'exists:newsletters,id'],
+            'track_opens' => ['sometimes', 'boolean'],
+            'track_clicks' => ['sometimes', 'boolean'],
         ]);
 
         $selected = $validated['lists'] ?? [];
@@ -117,6 +121,7 @@ class PreferenceController extends Controller
             $request->ip(),
             $request->userAgent(),
         );
+        $this->saveTracking($request, $email, 'signed_preferences');
 
         return back()->with('status', 'preferences-updated');
     }
@@ -131,6 +136,8 @@ class PreferenceController extends Controller
         $validatedNewsletters = $request->validate([
             'newsletter_ids' => ['array'],
             'newsletter_ids.*' => ['integer', 'exists:newsletters,id'],
+            'track_opens' => ['sometimes', 'boolean'],
+            'track_clicks' => ['sometimes', 'boolean'],
         ]);
 
         $this->consent->syncAccountPreferences(
@@ -146,7 +153,29 @@ class PreferenceController extends Controller
             $request->ip(),
             $request->userAgent(),
         );
+        $this->saveTracking($request, strtolower($request->user()->email), 'account_preferences');
 
         return back()->with('status', 'preferences-updated');
+    }
+
+    private function saveTracking(Request $request, string $email, string $source): void
+    {
+        if (! $request->has('track_opens') && ! $request->has('track_clicks')) {
+            return;
+        }
+
+        $current = $this->consent->trackingPreferences($email);
+        if ($current === null) {
+            return;
+        }
+
+        $this->consent->setTrackingPreferences(
+            $email,
+            $request->has('track_opens') ? $request->boolean('track_opens') : $current['opens'],
+            $request->has('track_clicks') ? $request->boolean('track_clicks') : $current['clicks'],
+            $source,
+            $request->ip(),
+            $request->userAgent(),
+        );
     }
 }

@@ -1,4 +1,4 @@
-import { router, useForm, usePage } from '@inertiajs/react';
+import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { Ban, Settings, Trash2 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import WorkspaceLayout from '../../../../Components/Layout/WorkspaceLayout';
@@ -9,6 +9,7 @@ import PillButton from '../../../../Components/Workspace/ui/PillButton';
 import DefaultReplyToForm from '../../../../Components/Admin/EmailDomains/DefaultReplyToForm';
 import SenderAddresses from '../../../../Components/Admin/EmailDomains/SenderAddresses';
 import TestSendPanel from '../../../../Components/Admin/EmailDomains/TestSendPanel';
+import WebhooksPanel, { type WebhookManagement, type WebhookStatus } from '../../../../Components/Admin/EmailDomains/WebhooksPanel';
 import type { PurposeOption, SenderAddress, TestResult } from '../../../../Components/Admin/EmailDomains/types';
 import type { SharedPageProps } from '../../../../types/page';
 
@@ -48,10 +49,21 @@ export type SendingDomain = {
     last_test: TestResult | null;
     created_by: string | null;
     in_use: NewsletterUse[];
+    track_opens?: boolean;
+    track_clicks?: boolean;
+    webhooks?: WebhookStatus | null;
     addresses: SenderAddress[];
 };
 
-type TestContext = { purposes: PurposeOption[]; testRecipient: string; offerTestAddressId: number | null; mailgunConfigured: boolean };
+type TestContext = {
+    purposes: PurposeOption[];
+    testRecipient: string;
+    offerTestAddressId: number | null;
+    mailgunConfigured: boolean;
+    webhookManagement: WebhookManagement;
+};
+
+const NO_WEBHOOK_MANAGEMENT: WebhookManagement = { configured: false, signing_key_configured: false, uses_sending_key: false, rotate_due: false, can_manage: false, callback_url: '' };
 
 function formatTime(iso: string | null): string {
     if (!iso) return 'Never';
@@ -291,6 +303,16 @@ function DomainCard({ domain, context }: { domain: SendingDomain; context: TestC
                     disabledReason={context.mailgunConfigured ? null : 'Test emails need the Mailgun API key under Integrations.'}
                 />
             )}
+            {domain.status !== 'disabled' && (
+                <WebhooksPanel
+                    domainId={domain.id}
+                    domain={domain.domain}
+                    status={domain.webhooks ?? null}
+                    trackOpens={domain.track_opens ?? true}
+                    trackClicks={domain.track_clicks ?? true}
+                    management={context.webhookManagement}
+                />
+            )}
             {inUse && <p className="text-xs text-muted">A domain in use cannot be removed. Change those newsletters first, or disable the domain.</p>}
             <ConfirmDialog
                 open={confirming === 'disable'}
@@ -388,25 +410,29 @@ function AddDomainForm() {
 export default function EmailDomainsIndex({
     domains,
     mailgunConfigured,
+    newslettersOnMailgun = true,
     configuredMailgunDomain,
     defaultReplyTo = null,
     defaultReplyToProblem = null,
     testRecipient = '',
     offerTestAddressId = null,
     purposes = [],
+    webhookManagement = NO_WEBHOOK_MANAGEMENT,
 }: {
     domains: SendingDomain[];
     mailgunConfigured: boolean;
+    newslettersOnMailgun?: boolean;
     configuredMailgunDomain: string | null;
     defaultReplyTo?: string | null;
     defaultReplyToProblem?: string | null;
     testRecipient?: string;
     offerTestAddressId?: number | null;
     purposes?: PurposeOption[];
+    webhookManagement?: WebhookManagement;
 }) {
     const { errors } = usePage<SharedPageProps>().props;
-    const removeError = errors?.remove;
-    const context: TestContext = { purposes, testRecipient, offerTestAddressId, mailgunConfigured };
+    const removeError = errors?.remove ?? errors?.webhooks;
+    const context: TestContext = { purposes, testRecipient, offerTestAddressId, mailgunConfigured, webhookManagement };
 
     return (
         <WorkspaceLayout
@@ -432,10 +458,19 @@ export default function EmailDomainsIndex({
                     </h2>
                     <p>
                         A newsletter From address must be on a domain&apos;s list of From addresses, and the domain must be enabled and verified by Mailgun
-                        (active, with SPF, DKIM and DMARC passing). Each newsletter sends through its From domain&apos;s own Mailgun domain. A reply-to address
-                        only needs an enabled domain. Sends are re-checked against this list just before they go out. System and account emails always
-                        send from apesnews.org.uk.
+                        (active, with SPF, DKIM and DMARC passing). Each newsletter, and its confirmation emails, send through its From domain&apos;s own
+                        Mailgun domain. A reply-to address only needs an enabled domain. Sends are re-checked against this list just before they go out.
+                        System and account emails send from apesnews.org.uk.
                     </p>
+                    {!newslettersOnMailgun && (
+                        <p className="text-warning">
+                            Newsletters are not using the Mailgun API right now (see{' '}
+                            <Link href="/admin/settings/mail-sending" className="font-semibold underline">
+                                Mail sending
+                            </Link>
+                            ), so per-domain sending, bounce handling and Mailgun tracking do not apply. Domain checks still show whether each domain is ready.
+                        </p>
+                    )}
                     <p className="text-muted">
                         {mailgunConfigured
                             ? `Mailgun is configured${configuredMailgunDomain ? ` with sending domain ${configuredMailgunDomain}` : ''}. Domains are re-checked every day.`

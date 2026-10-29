@@ -23,6 +23,9 @@ class ConsentService
 {
     public const WORDING_VERSION = 'v1';
 
+    /** The choice wording shown in mailing preferences, kept as consent evidence. */
+    public const TRACKING_WORDING = 'Tell us when you open our emails (a tracking pixel). Let us count clicks on links in our emails.';
+
     /**
      * @param  list<string>  $lists
      * @param  array<string, mixed>  $evidence  extra evidence recorded on each consent event
@@ -572,6 +575,81 @@ class ConsentService
                     $userAgent,
                 );
             }
+        }
+    }
+
+    /**
+     * Stop all mail to an address because of a delivery event (bounce,
+     * complaint, provider unsubscribe, repeated temporary failures).
+     * Returns false when it was already suppressed; the first reason stays.
+     *
+     * @param  array<string, mixed>  $evidence
+     */
+    public function suppress(string $email, string $reason, string $source, ?string $notes = null, array $evidence = []): bool
+    {
+        $email = Str::lower(trim($email));
+        $suppression = Suppression::query()->firstOrCreate(['email' => $email], [
+            'reason' => $reason,
+            'source' => $source,
+            'notes' => $notes !== null ? Str::limit($notes, 1000) : null,
+        ]);
+
+        if (! $suppression->wasRecentlyCreated) {
+            return false;
+        }
+
+        $contact = MailingContact::query()->where('email', $email)->first();
+        if ($contact !== null) {
+            $this->recordEvent($contact, null, ConsentAction::Suppressed, $source, ['reason' => $reason, ...$evidence]);
+        }
+
+        return true;
+    }
+
+    /**
+     * The reader's tracking choices: open tracking is opt-in, click tracking
+     * is on unless they opt out. Null when the address has no contact yet.
+     *
+     * @return array{opens: bool, clicks: bool}|null
+     */
+    public function trackingPreferences(string $email): ?array
+    {
+        $contact = MailingContact::query()->where('email', Str::lower(trim($email)))->first();
+
+        return $contact === null ? null : [
+            'opens' => $contact->open_tracking_consented_at !== null,
+            'clicks' => $contact->click_tracking_opted_out_at === null,
+        ];
+    }
+
+    /**
+     * Save the reader's tracking choices, recording each change in their
+     * consent history.
+     */
+    public function setTrackingPreferences(string $email, bool $opens, bool $clicks, string $source, ?string $ip = null, ?string $userAgent = null): void
+    {
+        $contact = MailingContact::query()->where('email', Str::lower(trim($email)))->first();
+        if ($contact === null) {
+            return;
+        }
+
+        $wasOpens = $contact->open_tracking_consented_at !== null;
+        $wasClicks = $contact->click_tracking_opted_out_at === null;
+        if ($wasOpens === $opens && $wasClicks === $clicks) {
+            return;
+        }
+
+        $contact->forceFill([
+            'open_tracking_consented_at' => $opens ? ($contact->open_tracking_consented_at ?? now()) : null,
+            'click_tracking_opted_out_at' => $clicks ? null : ($contact->click_tracking_opted_out_at ?? now()),
+        ])->save();
+
+        $evidence = ['wording' => self::TRACKING_WORDING];
+        if ($wasOpens !== $opens) {
+            $this->recordEvent($contact, null, $opens ? ConsentAction::OpenTrackingConsented : ConsentAction::OpenTrackingWithdrawn, $source, $evidence, $ip, $userAgent);
+        }
+        if ($wasClicks !== $clicks) {
+            $this->recordEvent($contact, null, $clicks ? ConsentAction::ClickTrackingOptedIn : ConsentAction::ClickTrackingOptedOut, $source, $evidence, $ip, $userAgent);
         }
     }
 

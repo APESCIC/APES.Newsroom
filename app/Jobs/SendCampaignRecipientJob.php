@@ -15,6 +15,7 @@ use App\Services\Mailing\CampaignSender;
 use App\Services\Mailing\CampaignService;
 use App\Services\Mailing\ConsentService;
 use App\Services\Mailing\SenderDomains;
+use App\Services\Mailing\TrackingPolicy;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -48,8 +49,9 @@ class SendCampaignRecipientJob implements ShouldBeUnique, ShouldQueue
         return 'campaign-recipient-'.$this->recipientId;
     }
 
-    public function handle(ConsentService $consent, CampaignSender $sender): void
+    public function handle(ConsentService $consent, CampaignSender $sender, ?TrackingPolicy $policy = null): void
     {
+        $policy ??= app(TrackingPolicy::class);
         $recipient = CampaignRecipient::query()->with('campaign.newsletter')->find($this->recipientId);
 
         if (! $recipient || ! $recipient->campaign) {
@@ -119,10 +121,12 @@ class SendCampaignRecipientJob implements ShouldBeUnique, ShouldQueue
         $preferencesUrl = $this->signedPreferencesUrl($recipient->email);
 
         $readMore = (string) ($campaign->snapshot['read_more_url'] ?? url('/'));
-        $openPixelUrl = $campaign->is_test ? null : CampaignTrackingController::openUrl($recipient);
-        $trackedReadMoreUrl = $campaign->is_test
-            ? $readMore
-            : CampaignTrackingController::clickUrl($recipient, $readMore);
+        $tracking = $campaign->is_test
+            ? ['opens' => false, 'clicks' => false, 'provider' => 'newsroom']
+            : $policy->forRecipient($recipient->email, $campaign->snapshot['sender']['address'] ?? null);
+        $ownTracking = $tracking['provider'] === 'newsroom';
+        $openPixelUrl = $ownTracking && $tracking['opens'] ? CampaignTrackingController::openUrl($recipient) : null;
+        $trackedReadMoreUrl = $ownTracking && $tracking['clicks'] ? CampaignTrackingController::clickUrl($recipient, $readMore) : $readMore;
 
         try {
             $sent = Mail::mailer(SenderDomains::newsletterMailer())->to($recipient->email)->send(new CampaignPostSummaryMail(
@@ -133,6 +137,9 @@ class SendCampaignRecipientJob implements ShouldBeUnique, ShouldQueue
                 isTest: $campaign->is_test,
                 openPixelUrl: $openPixelUrl,
                 trackedReadMoreUrl: $trackedReadMoreUrl,
+                providerTrackOpens: ! $ownTracking && $tracking['opens'],
+                providerTrackClicks: ! $ownTracking && $tracking['clicks'],
+                campaignRecipientId: $recipient->id,
             ));
         } catch (MailMessageRefused $exception) {
             $this->markFailed($recipient, $exception);

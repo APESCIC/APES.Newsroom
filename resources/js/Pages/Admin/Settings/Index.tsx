@@ -25,7 +25,7 @@ type SettingValue = SettingDefinition['value'];
 
 type SettingValues = Record<string, SettingValue>;
 
-function nestByDots(values: SettingValues): Record<string, unknown> {
+export function nestByDots(values: SettingValues): Record<string, unknown> {
     const nested: Record<string, unknown> = {};
 
     for (const [key, value] of Object.entries(values)) {
@@ -41,7 +41,7 @@ function nestByDots(values: SettingValues): Record<string, unknown> {
     return nested;
 }
 
-function inputId(key: string, suffix: string): string {
+export function inputId(key: string, suffix: string): string {
     return `setting-${key.replace(/\./g, '-')}-${suffix}`;
 }
 
@@ -53,7 +53,7 @@ function ErrorText({ id, error }: { id: string; error?: string }) {
     ) : null;
 }
 
-function SettingField({
+export function SettingField({
     setting,
     value,
     error,
@@ -202,6 +202,10 @@ export default function SettingsIndex({ settings }: { settings: SettingDefinitio
                 . The domains newsletters may send from are managed under{' '}
                 <Link href="/admin/settings/email-domains" className="font-semibold underline">
                     Sending domains
+                </Link>
+                , and which transport sends system mail and newsletters under{' '}
+                <Link href="/admin/settings/mail-sending" className="font-semibold underline">
+                    Mail sending
                 </Link>
                 .
             </p>

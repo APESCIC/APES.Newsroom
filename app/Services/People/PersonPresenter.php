@@ -13,6 +13,7 @@ use App\Models\Profile;
 use App\Models\Suppression;
 use App\Models\User;
 use App\Services\Admin\AdminUserPresenter;
+use App\Services\Mailing\DeliveryStatus;
 
 /**
  * Allow-listed payloads for the staff person page (#568): one view of an
@@ -157,6 +158,7 @@ class PersonPresenter
             'email' => $contact->email,
             'linked' => ! $contact->isMailingOnly(),
             'suppressed' => Suppression::query()->where('email', $contact->email_normalized)->exists(),
+            'delivery_status' => app(DeliveryStatus::class)->forEmail((string) $contact->email_normalized),
             'subscriptions' => $rows->concat($orphans)->values()->all(),
             'consent_history' => ConsentEvent::query()
                 ->where('mailing_contact_id', $contact->id)

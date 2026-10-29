@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Services\Mail\MailgunApiTransport;
 use App\Services\Mail\MailTransports;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -26,6 +27,9 @@ class CampaignPostSummaryMail extends Mailable
         public readonly bool $isTest = false,
         public readonly ?string $openPixelUrl = null,
         public readonly ?string $trackedReadMoreUrl = null,
+        public readonly bool $providerTrackOpens = false,
+        public readonly bool $providerTrackClicks = false,
+        public readonly ?int $campaignRecipientId = null,
     ) {}
 
     public function envelope(): Envelope
@@ -70,10 +74,13 @@ class CampaignPostSummaryMail extends Mailable
     public function headers(): Headers
     {
         return new Headers(
-            text: [
+            text: array_filter([
                 'List-Unsubscribe' => '<'.$this->listUnsubscribeUrl.'>',
                 'List-Unsubscribe-Post' => 'List-Unsubscribe=One-Click',
-            ],
+                MailgunApiTransport::TRACK_OPENS_HEADER => $this->providerTrackOpens ? 'yes' : 'no',
+                MailgunApiTransport::TRACK_CLICKS_HEADER => $this->providerTrackClicks ? 'yes' : 'no',
+                'X-Mailgun-Variables' => $this->campaignRecipientId !== null ? json_encode(['campaign_recipient_id' => $this->campaignRecipientId]) : null,
+            ]),
         );
     }
 }

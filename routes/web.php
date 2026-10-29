@@ -19,6 +19,8 @@ use App\Http\Controllers\Admin\EmailSendingDomainController as AdminEmailSending
 use App\Http\Controllers\Admin\GhostContentImportController;
 use App\Http\Controllers\Admin\GhostMembersImportController;
 use App\Http\Controllers\Admin\IntegrationController as AdminIntegrationController;
+use App\Http\Controllers\Admin\MailgunDomainWebhooksController as AdminMailgunDomainWebhooksController;
+use App\Http\Controllers\Admin\MailSendingController as AdminMailSendingController;
 use App\Http\Controllers\Admin\MemberController as AdminMemberController;
 use App\Http\Controllers\Admin\ModerationController;
 use App\Http\Controllers\Admin\ReleaseController as AdminReleaseController;
@@ -36,6 +38,7 @@ use App\Http\Controllers\CommentController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LegalController;
+use App\Http\Controllers\MailgunWebhookController;
 use App\Http\Controllers\Mailing\CampaignTrackingController;
 use App\Http\Controllers\Mailing\ConfirmController;
 use App\Http\Controllers\Mailing\NewsletterSignupController;
@@ -80,6 +83,7 @@ Route::get('/change-log-hub', ChangeLogHubController::class)->name('change-log-h
 
 Route::get('/health', HealthController::class)->name('health');
 Route::post('/stripe/webhook', StripeWebhookController::class)->name('stripe.webhook');
+Route::post('/webhooks/mailgun', MailgunWebhookController::class)->middleware('throttle:mailgun-webhook')->name('webhooks.mailgun');
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 Route::get('/rss.xml', [RssController::class, 'index'])->name('rss');
 
@@ -203,6 +207,13 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Admin->value])
         Route::get('/imports/ghost-members/{run}/report', [GhostMembersImportController::class, 'report'])->name('imports.ghost-members.report');
         Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
         Route::put('/settings', [SettingsController::class, 'update'])->middleware('auth.recent')->name('settings.update');
+        Route::prefix('/settings/mail-sending')->name('settings.mail-sending.')->group(function () {
+            Route::get('/', [AdminMailSendingController::class, 'index'])->name('index');
+            Route::post('/test', [AdminMailSendingController::class, 'test'])->middleware('auth.recent')->name('test');
+            Route::put('/', [AdminMailSendingController::class, 'update'])
+                ->middleware(['role:'.Role::SuperAdmin->value, 'auth.recent:300'])
+                ->name('update');
+        });
         Route::prefix('/settings/email-domains')->name('settings.email-domains.')->group(function () {
             Route::get('/', [AdminEmailSendingDomainController::class, 'index'])->name('index');
             Route::post('/{emailSendingDomain}/recheck', [AdminEmailSendingDomainController::class, 'recheck'])
@@ -223,6 +234,16 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Admin->value])
                 Route::post('/addresses/{emailSenderAddress}/disable', [AdminEmailSendingDomainController::class, 'disableAddress'])->whereNumber('emailSenderAddress')->name('addresses.disable');
                 Route::post('/addresses/{emailSenderAddress}/enable', [AdminEmailSendingDomainController::class, 'enableAddress'])->whereNumber('emailSenderAddress')->name('addresses.enable');
                 Route::post('/{emailSendingDomain}/test', [AdminEmailSendingDomainController::class, 'testDomain'])->whereNumber('emailSendingDomain')->name('test');
+                Route::post('/{emailSendingDomain}/webhooks/refresh', [AdminMailgunDomainWebhooksController::class, 'refresh'])
+                    ->whereNumber('emailSendingDomain')
+                    ->middleware('throttle:10,1')
+                    ->name('webhooks.refresh');
+                Route::middleware(['role:'.Role::SuperAdmin->value, 'auth.recent:300', 'throttle:10,1'])->group(function () {
+                    Route::post('/{emailSendingDomain}/webhooks/register', [AdminMailgunDomainWebhooksController::class, 'register'])->whereNumber('emailSendingDomain')->name('webhooks.register');
+                    Route::post('/{emailSendingDomain}/webhooks/repair', [AdminMailgunDomainWebhooksController::class, 'repair'])->whereNumber('emailSendingDomain')->name('webhooks.repair');
+                    Route::delete('/{emailSendingDomain}/webhooks', [AdminMailgunDomainWebhooksController::class, 'remove'])->whereNumber('emailSendingDomain')->name('webhooks.remove');
+                    Route::put('/{emailSendingDomain}/tracking', [AdminMailgunDomainWebhooksController::class, 'tracking'])->whereNumber('emailSendingDomain')->name('tracking');
+                });
                 Route::post('/addresses/{emailSenderAddress}/test', [AdminEmailSendingDomainController::class, 'testAddress'])->whereNumber('emailSenderAddress')->name('addresses.test');
             });
         });

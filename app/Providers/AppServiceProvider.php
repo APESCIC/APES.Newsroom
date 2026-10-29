@@ -129,6 +129,8 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        RateLimiter::for('mailgun-webhook', fn (Request $request) => Limit::perMinute(max(1, (int) config('mailing.webhook_per_minute', 600)))->by('mailgun-webhook:'.$request->ip()));
+
         RateLimiter::for('contact-details', fn (Request $request) => Limit::perMinute(10)->by('contact-details:'.$request->user()?->id));
 
         $this->configureAuthRateLimits();
