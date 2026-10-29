@@ -50,8 +50,21 @@ class UpdateMailSendingSettingsRequest extends UpdateSettingsRequest
                     },
                 ];
 
+                $current = [
+                    SettingDefinitions::MAIL_SYSTEM_TRANSPORT => $transports->systemTransport(),
+                    SettingDefinitions::MAIL_NEWSLETTER_TRANSPORT => $transports->newsletterTransport(),
+                    SettingDefinitions::MAIL_SYSTEM_FALLBACK => $transports->systemFallback(),
+                ];
+                $chosen = [
+                    SettingDefinitions::MAIL_SYSTEM_TRANSPORT => $system,
+                    SettingDefinitions::MAIL_NEWSLETTER_TRANSPORT => $newsletters,
+                    SettingDefinitions::MAIL_SYSTEM_FALLBACK => $fallback,
+                ];
+                $systemChanged = $system !== $current[SettingDefinitions::MAIL_SYSTEM_TRANSPORT];
+
                 foreach ($checks as $key => $problem) {
-                    if ($problem !== null) {
+                    $changed = $chosen[$key] !== $current[$key] || ($key === SettingDefinitions::MAIL_SYSTEM_FALLBACK && $systemChanged);
+                    if ($problem !== null && $changed) {
                         $validator->errors()->add('settings.'.$key, $problem);
                     }
                 }
