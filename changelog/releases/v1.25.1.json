@@ -1,0 +1,22 @@
+{
+  "version": "v1.25.1",
+  "slug": "release-v1-25-1",
+  "released_at": "2026-10-29",
+  "previous_version": "v1.25.0",
+  "theme": "MyAPES newsletter and sending domain",
+  "change_types": ["changed"],
+  "topic_tags": ["public-facing", "internal-only"],
+  "summary": "MyAPES Portal is now MyAPES at /myapes, and it is set up to send from news@myapes.me.uk.",
+  "detailed_changes": [
+    "The MyAPES Portal newsletter and channel are renamed MyAPES. The channel page and feed move to /myapes and /myapes/rss.xml, and the old /myapes-portal links, feed and signup page redirect permanently, so existing bookmarks and subscriptions keep working (#630).",
+    "The myapes.me.uk sending domain now uses myapes.me.uk itself as its Mailgun domain, so the MyAPES newsletter can send from news@myapes.me.uk and still pass the domain's strict DMARC checks. The domain goes back to pending until Mailgun and DNS are verified, and its mail for MyAPES Account is unchanged (#598)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /myapes, /myapes/rss.xml, /myapes-portal (redirect), /newsletters/myapes/signup, /admin/settings/email-domains, /staff/newsletters",
+    "User groups affected: readers of the MyAPES newsletter, admins (sending domains), staff (newsletters)",
+    "Public impact: the MyAPES channel has a new name and address; old links redirect",
+    "Internal impact: two data migrations (newsletter rename, myapes.me.uk Mailgun domain), docs/email-sending-domains.md runbook"
+  ],
+  "pr": 631
+}
