@@ -43,7 +43,7 @@ Confirmation emails use the newsletter sender once it is verified, and the globa
 
 ## Public channels
 
-The six channels are APES CIC, APES Shelter & Rescue, APES Pet Care Clinic, APES Times, MyAPES Portal and Stream 4 APES. Channel slugs are fixed in `App\Enums\Channel`; adding a seventh channel needs a code change. Which channels show, where, in what order and with what wording comes from each newsletter's **Public channel** settings at `/staff/newsletters/{id}/edit`.
+The six channels are APES CIC, APES Shelter & Rescue, APES Pet Care Clinic, APES Times, MyAPES (`/myapes`, formerly MyAPES Portal at `/myapes-portal`, which redirects) and Stream 4 APES. Channel slugs are fixed in `App\Enums\Channel`; adding a seventh channel needs a code change. Which channels show, where, in what order and with what wording comes from each newsletter's **Public channel** settings at `/staff/newsletters/{id}/edit`.
 
 - A channel is public only while its linked newsletter is active. Archiving the newsletter removes its channel page, menu entry, home section, feed and sitemap entry.
 - The newsletter slug is locked while a channel is linked, because the channel's subscribe button links to `/newsletters/{slug}/signup`. Unlink the channel to change it.
@@ -56,7 +56,7 @@ php artisan ghost:backfill-post-channels path/to/ghost-content.json --dry-run
 php artisan ghost:backfill-post-channels path/to/ghost-content.json --force
 ```
 
-It reads the same export shapes as `ghost:import-content`. It only moves posts that belong to APES Times, MyAPES Portal or Stream 4 APES, lists every change with whether it matched by Ghost newsletter or by title or slug, and never sends email. Add `--newsletter-only` to skip title and slug matches. The cutover export on live is `/app/data/shared/imports/cutover/content.json`; run artisan there through `deploy/cloudron-www-data.sh` (see [`docs/deployment.md`](deployment.md)).
+It reads the same export shapes as `ghost:import-content`. It only moves posts that belong to APES Times, MyAPES or Stream 4 APES, lists every change with whether it matched by Ghost newsletter or by title or slug, and never sends email. Add `--newsletter-only` to skip title and slug matches. The cutover export on live is `/app/data/shared/imports/cutover/content.json`; run artisan there through `deploy/cloudron-www-data.sh` (see [`docs/deployment.md`](deployment.md)).
 
 ## Signup default
 

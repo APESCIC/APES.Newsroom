@@ -58,6 +58,27 @@ class ExtraSendingDomainsTest extends TestCase
     }
 
     /**
+     * A domain whose Mailgun domain is a subdomain and whose only From address
+     * is on that subdomain, as strict DMARC requires.
+     */
+    private function subdomainFixture(): EmailSendingDomain
+    {
+        $domain = EmailSendingDomain::query()->create([
+            'domain' => 'example.net',
+            'mailgun_domain' => 'news.example.net',
+            'status' => SendingDomainStatus::Pending,
+        ]);
+        $domain->addresses()->create(['address' => 'news@news.example.net', 'purpose' => 'news']);
+
+        return $domain;
+    }
+
+    private function myapesNewsletter(): Newsletter
+    {
+        return Newsletter::query()->where('slug', 'myapes')->firstOrFail();
+    }
+
+    /**
      * Fakes the Mailgun API: domain lookups report active with valid records,
      * and messages.mime accepts or refuses the message.
      */
@@ -105,33 +126,61 @@ class ExtraSendingDomainsTest extends TestCase
     {
         $this->assertSame('mail.apespetcare.org.uk', $this->domain('apespetcare.org.uk')->mailgun_domain);
         $this->assertSame('mail.apesshelter.org.uk', $this->domain('apesshelter.org.uk')->mailgun_domain);
-        $this->assertSame('news.myapes.me.uk', $this->domain('myapes.me.uk')->mailgun_domain);
+        $this->assertSame('myapes.me.uk', $this->domain('myapes.me.uk')->mailgun_domain);
         foreach (['apespetcare.org.uk', 'apesshelter.org.uk', 'myapes.me.uk'] as $name) {
             $this->assertSame(SendingDomainStatus::Pending, $this->domain($name)->status);
         }
 
-        $this->assertSame(['news@news.myapes.me.uk'], $this->domain('myapes.me.uk')->addresses->pluck('address')->all());
+        $this->assertSame(['news@myapes.me.uk'], $this->domain('myapes.me.uk')->addresses->pluck('address')->all());
         $this->assertSame(['news@apespetcare.org.uk', 'noreply@apespetcare.org.uk'], $this->domain('apespetcare.org.uk')->addresses->pluck('address')->all());
         $this->assertSame(
             Newsletter::query()->whereNotNull('sender_email')->orderBy('sender_email')->pluck('sender_email')->all(),
             $this->domain('apesnews.org.uk')->addresses->pluck('address')->all(),
         );
 
-        $migration = require database_path('migrations/2026_11_01_100100_seed_extra_sending_domains.php');
-        $migration->up();
+        $seed = require database_path('migrations/2026_11_01_100100_seed_extra_sending_domains.php');
+        $root = require database_path('migrations/2026_11_03_100000_move_myapes_to_root_mailgun_domain.php');
+        $seed->up();
+        $root->up();
         $this->assertSame(5, EmailSendingDomain::query()->count());
         $this->assertSame(11, EmailSenderAddress::query()->count());
+        $this->assertFalse(EmailSenderAddress::query()->where('address', 'news@news.myapes.me.uk')->exists());
+    }
+
+    public function test_myapes_moves_to_its_root_mailgun_domain_and_back(): void
+    {
+        $domain = $this->domain('myapes.me.uk');
+        $domain->forceFill(['status' => SendingDomainStatus::Verified, 'verified_at' => now()])->save();
+        $migration = require database_path('migrations/2026_11_03_100000_move_myapes_to_root_mailgun_domain.php');
+
+        $migration->down();
+        $this->assertSame('news.myapes.me.uk', $domain->fresh()->mailgun_domain);
+        $this->assertSame(SendingDomainStatus::Pending, $domain->fresh()->status);
+        $this->assertNull($domain->fresh()->verified_at);
+        $this->assertSame(['news@news.myapes.me.uk'], $domain->fresh()->addresses->pluck('address')->all());
+
+        $this->myapesNewsletter()->forceFill(['sender_email' => 'news@news.myapes.me.uk'])->save();
+        $migration->up();
+        $this->assertSame('myapes.me.uk', $domain->fresh()->mailgun_domain);
+        $this->assertSame(['news@myapes.me.uk', 'news@news.myapes.me.uk'], $domain->fresh()->addresses->pluck('address')->all());
+
+        $admin = User::factory()->admin()->create();
+        $domain->fresh()->forceFill(['created_by' => $admin->id])->save();
+        $migration->down();
+        $this->assertSame('myapes.me.uk', $domain->fresh()->mailgun_domain);
     }
 
     public function test_each_from_domain_sends_through_its_own_mailgun_domain(): void
     {
         $this->fakeMailgun();
+        $this->subdomainFixture();
 
         $routes = [
             'app@apesnews.org.uk' => 'apesnews.org.uk',
             'news@apespetcare.org.uk' => 'mail.apespetcare.org.uk',
             'noreply@apesshelter.org.uk' => 'mail.apesshelter.org.uk',
-            'news@news.myapes.me.uk' => 'news.myapes.me.uk',
+            'news@myapes.me.uk' => 'myapes.me.uk',
+            'news@news.example.net' => 'news.example.net',
         ];
 
         foreach ($routes as $from => $mailgunDomain) {
@@ -140,8 +189,8 @@ class ExtraSendingDomainsTest extends TestCase
             $this->assertMessageSentThrough($mailgunDomain);
         }
 
-        Http::assertSentCount(4);
-        Http::assertSent(fn (Request $request) => str_contains($request->url(), '/v3/news.myapes.me.uk/')
+        Http::assertSentCount(5);
+        Http::assertSent(fn (Request $request) => str_contains($request->url(), '/v3/myapes.me.uk/')
             && collect($request->data())->contains(fn ($part) => ($part['name'] ?? null) === 'to' && $part['contents'] === 'reader@example.com'));
     }
 
@@ -219,17 +268,31 @@ class ExtraSendingDomainsTest extends TestCase
     public function test_sender_check_verifies_a_subdomain_from_address_through_its_mailgun_domain(): void
     {
         $this->fakeMailgun();
-        $this->markSendingDomainVerified('apesnews.org.uk');
-        $portal = Newsletter::query()->where('slug', 'myapes-portal')->firstOrFail();
-        $portal->forceFill(['sender_email' => 'news@news.myapes.me.uk'])->save();
+        $this->subdomainFixture();
+        $newsletter = $this->myapesNewsletter();
+        $newsletter->forceFill(['sender_email' => 'news@news.example.net'])->save();
 
-        $result = app(MailgunSenderCheck::class)->check($portal);
+        $result = app(MailgunSenderCheck::class)->check($newsletter);
+
+        $this->assertSame(CampaignSender::VERIFIED, $result['status']);
+        $this->assertSame('example.net', $result['domain']);
+        $this->assertSame('news.example.net', $result['mailgun_domain']);
+        $this->assertTrue($result['checks']['dmarc']);
+        Http::assertSent(fn (Request $request) => $request->url() === 'https://api.eu.mailgun.net/v4/domains/news.example.net');
+    }
+
+    public function test_sender_check_verifies_the_myapes_root_address_through_the_root_mailgun_domain(): void
+    {
+        $this->fakeMailgun();
+        $newsletter = $this->myapesNewsletter();
+        $newsletter->forceFill(['sender_email' => 'news@myapes.me.uk'])->save();
+
+        $result = app(MailgunSenderCheck::class)->check($newsletter);
 
         $this->assertSame(CampaignSender::VERIFIED, $result['status']);
         $this->assertSame('myapes.me.uk', $result['domain']);
-        $this->assertSame('news.myapes.me.uk', $result['mailgun_domain']);
-        $this->assertTrue($result['checks']['dmarc']);
-        Http::assertSent(fn (Request $request) => $request->url() === 'https://api.eu.mailgun.net/v4/domains/news.myapes.me.uk');
+        $this->assertSame('myapes.me.uk', $result['mailgun_domain']);
+        Http::assertSent(fn (Request $request) => $request->url() === 'https://api.eu.mailgun.net/v4/domains/myapes.me.uk');
     }
 
     public function test_admin_sends_a_test_email_and_sees_the_message_id_and_live_checks(): void
@@ -298,10 +361,10 @@ class ExtraSendingDomainsTest extends TestCase
         $response = $this->actingAs($admin)->withRecentAuthentication()
             ->postJson("/admin/settings/email-domains/{$domain->id}/test")
             ->assertOk()
-            ->assertJson(['ok' => true, 'from' => 'news@news.myapes.me.uk', 'status' => 'failed']);
+            ->assertJson(['ok' => true, 'from' => 'news@myapes.me.uk', 'status' => 'failed']);
 
         $this->assertStringContainsString('is not verified', $response->json('warning'));
-        $this->assertMessageSentThrough('news.myapes.me.uk');
+        $this->assertMessageSentThrough('myapes.me.uk');
     }
 
     public function test_test_send_reports_missing_mailgun_configuration_without_sending(): void
@@ -451,41 +514,44 @@ class ExtraSendingDomainsTest extends TestCase
     public function test_strict_dmarc_requires_the_from_domain_to_be_the_mailgun_domain(): void
     {
         $this->fakeMailgun();
+        $this->subdomainFixture();
         $this->app->instance(DnsTxtResolver::class, new class extends DnsTxtResolver
         {
             public function txt(string $host): array
             {
-                return $host === '_dmarc.myapes.me.uk' ? ['v=DMARC1; p=quarantine; adkim=s; aspf=s'] : [];
+                return in_array($host, ['_dmarc.example.net', '_dmarc.myapes.me.uk'], true) ? ['v=DMARC1; p=quarantine; adkim=s; aspf=s'] : [];
             }
         });
-        $portal = Newsletter::query()->where('slug', 'myapes-portal')->firstOrFail();
+        $newsletter = $this->myapesNewsletter();
 
-        $portal->forceFill(['sender_email' => 'news@myapes.me.uk'])->save();
-        $root = app(MailgunSenderCheck::class)->check($portal);
+        $newsletter->forceFill(['sender_email' => 'news@example.net'])->save();
+        $root = app(MailgunSenderCheck::class)->check($newsletter);
         $this->assertSame(MailgunSenderCheck::UNVERIFIED, $root['status']);
         $this->assertFalse($root['checks']['dmarc']);
-        $this->assertStringContainsString('must end with @news.myapes.me.uk', $root['message']);
+        $this->assertStringContainsString('must end with @news.example.net', $root['message']);
 
-        $portal->forceFill(['sender_email' => 'news@news.myapes.me.uk'])->save();
-        $this->assertSame(CampaignSender::VERIFIED, app(MailgunSenderCheck::class)->check($portal)['status']);
+        $newsletter->forceFill(['sender_email' => 'news@news.example.net'])->save();
+        $this->assertSame(CampaignSender::VERIFIED, app(MailgunSenderCheck::class)->check($newsletter)['status']);
+
+        $newsletter->forceFill(['sender_email' => 'news@myapes.me.uk'])->save();
+        $this->assertSame(CampaignSender::VERIFIED, app(MailgunSenderCheck::class)->check($newsletter)['status']);
     }
 
     public function test_renaming_a_from_address_in_use_is_blocked(): void
     {
         $admin = User::factory()->admin()->create();
-        $portal = Newsletter::query()->where('slug', 'myapes-portal')->firstOrFail();
-        $portal->forceFill(['sender_email' => 'news@news.myapes.me.uk'])->save();
-        $address = $this->address('news@news.myapes.me.uk');
+        $this->myapesNewsletter()->forceFill(['sender_email' => 'news@myapes.me.uk'])->save();
+        $address = $this->address('news@myapes.me.uk');
 
         $this->actingAs($admin)->withRecentAuthentication()
-            ->put("/admin/settings/email-domains/addresses/{$address->id}", ['address' => 'hello@news.myapes.me.uk', 'purpose' => 'news'])
+            ->put("/admin/settings/email-domains/addresses/{$address->id}", ['address' => 'hello@myapes.me.uk', 'purpose' => 'news'])
             ->assertSessionHasErrors('address');
-        $this->assertSame('news@news.myapes.me.uk', $address->fresh()->address);
+        $this->assertSame('news@myapes.me.uk', $address->fresh()->address);
 
         $this->actingAs($admin)->withRecentAuthentication()
-            ->put("/admin/settings/email-domains/addresses/{$address->id}", ['address' => 'news@news.myapes.me.uk', 'purpose' => 'news', 'label' => 'Portal'])
+            ->put("/admin/settings/email-domains/addresses/{$address->id}", ['address' => 'news@myapes.me.uk', 'purpose' => 'news', 'label' => 'MyAPES'])
             ->assertSessionHasNoErrors();
-        $this->assertSame('Portal', $address->fresh()->label);
+        $this->assertSame('MyAPES', $address->fresh()->label);
     }
 
     public function test_mailgun_domains_must_be_unique_and_no_reply_addresses_are_not_newsletter_senders(): void
@@ -520,24 +586,25 @@ class ExtraSendingDomainsTest extends TestCase
         $domain = $this->domain('myapes.me.uk');
         $post = fn (array $data) => $this->actingAs($admin)->withRecentAuthentication()->post("/admin/settings/email-domains/{$domain->id}/addresses", $data);
 
-        $post(['address' => 'news@example.com', 'purpose' => 'news'])->assertSessionHasErrors(['address' => 'The address must end with @myapes.me.uk or @news.myapes.me.uk.']);
-        $post(['address' => 'postmaster@news.myapes.me.uk', 'purpose' => 'news'])->assertSessionHasErrors('address');
-        $post(['address' => 'news@news.myapes.me.uk', 'purpose' => 'news'])->assertSessionHasErrors(['address' => 'That address is already on the list.']);
-        $post(['address' => 'desk@news.myapes.me.uk', 'purpose' => 'spam'])->assertSessionHasErrors('purpose');
+        $post(['address' => 'news@example.com', 'purpose' => 'news'])->assertSessionHasErrors(['address' => 'The address must end with @myapes.me.uk.']);
+        $post(['address' => 'news@news.myapes.me.uk', 'purpose' => 'news'])->assertSessionHasErrors('address');
+        $post(['address' => 'postmaster@myapes.me.uk', 'purpose' => 'news'])->assertSessionHasErrors('address');
+        $post(['address' => 'news@myapes.me.uk', 'purpose' => 'news'])->assertSessionHasErrors(['address' => 'That address is already on the list.']);
+        $post(['address' => 'desk@myapes.me.uk', 'purpose' => 'spam'])->assertSessionHasErrors('purpose');
 
-        $post(['address' => ' Updates@News.MyAPES.me.uk ', 'purpose' => 'noreply', 'label' => 'Account updates'])
+        $post(['address' => ' Updates@MyAPES.me.uk ', 'purpose' => 'noreply', 'label' => 'Account updates'])
             ->assertSessionHasNoErrors()
             ->assertSessionHas('offer_test_address');
 
-        $address = $this->address('updates@news.myapes.me.uk');
+        $address = $this->address('updates@myapes.me.uk');
         $this->assertSame($admin->id, $address->created_by);
-        $this->assertSame(['domain' => 'myapes.me.uk', 'address' => 'updates@news.myapes.me.uk', 'purpose' => 'noreply'], array_intersect_key(
+        $this->assertSame(['domain' => 'myapes.me.uk', 'address' => 'updates@myapes.me.uk', 'purpose' => 'noreply'], array_intersect_key(
             AuditLog::query()->where('action', 'email_sender_address.added')->firstOrFail()->payload,
             array_flip(['address', 'purpose', 'domain']),
         ));
 
         $this->actingAs($admin)->withRecentAuthentication()
-            ->put("/admin/settings/email-domains/addresses/{$address->id}", ['address' => 'updates@news.myapes.me.uk', 'purpose' => 'news', 'label' => ''])
+            ->put("/admin/settings/email-domains/addresses/{$address->id}", ['address' => 'updates@myapes.me.uk', 'purpose' => 'news', 'label' => ''])
             ->assertSessionHasNoErrors();
         $updated = AuditLog::query()->where('action', 'email_sender_address.updated')->firstOrFail();
         $this->assertSame([
@@ -553,7 +620,7 @@ class ExtraSendingDomainsTest extends TestCase
         $this->assertSame(1, AuditLog::query()->where('action', 'email_sender_address.enabled')->count());
 
         $this->actingAs($admin)->get('/admin/settings/email-domains')
-            ->assertInertia(fn (Assert $page) => $page->where('domains.4.addresses.1.address', 'updates@news.myapes.me.uk'));
+            ->assertInertia(fn (Assert $page) => $page->where('domains.4.addresses.1.address', 'updates@myapes.me.uk'));
     }
 
     public function test_default_reply_to_must_be_on_an_enabled_domain_and_fills_in_for_newsletters(): void

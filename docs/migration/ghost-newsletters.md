@@ -19,7 +19,7 @@ active newsletters come from the Ghost Content API
 | `apes-times.csv` | APES Times | `apes-times` | `apes-times` | active | 9 |
 | `shelter-rescue.csv` | APES Shelter & Rescue | `shelter-rescue` | `apes-shelter-rescue` | active | 15 |
 | `pet-care-clinic.csv` | APES Pet Care Clinic | `apes-pet-care-clinic` | `apes-pet-care-clinic` | active | 15 |
-| `myapes-portal.csv` | MyAPES Portal | `myapes-portal-newsroom` | `myapes-portal` | active | 8 |
+| `myapes-portal.csv` | MyAPES Portal | `myapes-portal-newsroom` | `myapes` (renamed from `myapes-portal` in v1.25.1) | active | 8 |
 | `stream-4-apes.csv` | Stream 4 APES | `stream-4-apes` | `stream-4-apes` | active | 6 |
 
 ### Decision on archived newsletters

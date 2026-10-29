@@ -11,7 +11,7 @@
 | `/apes-shelter-rescue` | Shelter & Rescue channel | Distinct accent, same layout system |
 | `/apes-pet-care-clinic` | Pet Care Clinic channel | Distinct accent, same layout system |
 | `/apes-times` | APES Times channel | Distinct accent, same layout system |
-| `/myapes-portal` | MyAPES Portal channel | Distinct accent, same layout system |
+| `/myapes` | MyAPES channel (`/myapes-portal` redirects here) | Distinct accent, same layout system |
 | `/stream-4-apes` | Stream 4 APES channel | Distinct accent, same layout system |
 | `/{channel}/rss.xml` | Channel RSS feed | One per public channel |
 | `/articles/{slug}` | Article | Long-form reading, SEO, comments/reactions counts |
@@ -80,7 +80,7 @@ Home
 │   ├── Shelter & Rescue
 │   ├── Pet Care Clinic
 │   ├── APES Times
-│   ├── MyAPES Portal
+│   ├── MyAPES
 │   └── Stream 4 APES
 ├── Search
 ├── About APES (static, optional v1)

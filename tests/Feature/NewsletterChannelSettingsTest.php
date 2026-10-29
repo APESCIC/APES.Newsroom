@@ -34,7 +34,7 @@ class NewsletterChannelSettingsTest extends TestCase
             'apes-shelter-rescue' => Channel::ApesShelterRescue,
             'apes-pet-care-clinic' => Channel::ApesPetCareClinic,
             'apes-times' => Channel::ApesTimes,
-            'myapes-portal' => Channel::MyapesPortal,
+            'myapes' => Channel::MyapesPortal,
             'stream-4-apes' => Channel::Stream4Apes,
         ];
 
@@ -174,7 +174,7 @@ class NewsletterChannelSettingsTest extends TestCase
     public function test_post_editor_lists_active_channels_and_keeps_the_current_one(): void
     {
         $staff = User::factory()->staff()->create();
-        $this->newsletter('myapes-portal')->update(['archived_at' => now()]);
+        $this->newsletter('myapes')->update(['archived_at' => now()]);
 
         $this->actingAs($staff)->get('/staff/posts/new')
             ->assertInertia(fn (Assert $page) => $page

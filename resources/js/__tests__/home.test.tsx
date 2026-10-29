@@ -29,7 +29,7 @@ const publicChannels = [
         description: 'News and features from APES Times.',
         signup_slug: 'apes-times',
     },
-    { value: 'myapes_portal', slug: 'myapes-portal', label: 'MyAPES Portal', description: null, signup_slug: 'myapes-portal' },
+    { value: 'myapes_portal', slug: 'myapes', label: 'MyAPES', description: null, signup_slug: 'myapes' },
     { value: 'stream_4_apes', slug: 'stream-4-apes', label: 'Stream 4 APES', description: null, signup_slug: 'stream-4-apes' },
 ];
 
@@ -213,7 +213,7 @@ describe('Direction C public homepage', () => {
         const mobileNavigation = screen.getAllByRole('navigation', { name: 'Primary navigation' })[1];
         const mobileChannels = within(mobileNavigation).getByRole('list', { name: 'Channels' });
         expect(within(mobileChannels).getAllByRole('link')).toHaveLength(6);
-        expect(within(mobileChannels).getByRole('link', { name: 'MyAPES Portal' })).toHaveAttribute('href', '/myapes-portal');
+        expect(within(mobileChannels).getByRole('link', { name: 'MyAPES' })).toHaveAttribute('href', '/myapes');
         within(mobileNavigation).getByRole('link', { name: 'APES CIC' }).focus();
         await user.keyboard('{Escape}');
         expect(menuButton).toHaveAttribute('aria-expanded', 'false');

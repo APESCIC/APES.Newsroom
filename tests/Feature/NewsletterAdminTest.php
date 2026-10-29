@@ -46,7 +46,7 @@ class NewsletterAdminTest extends TestCase
             'apes-times' => ['APES Times', 'times@apesnews.org.uk', 'apes-times'],
             'apes-shelter-rescue' => ['APES Shelter & Rescue', 'shelterandrescue@apesnews.org.uk', 'shelter-rescue'],
             'apes-pet-care-clinic' => ['APES Pet Care Clinic', 'noreply@apesnews.org.uk', 'apes-pet-care-clinic'],
-            'myapes-portal' => ['MyAPES Portal', 'myapes@apesnews.org.uk', 'myapes-portal-newsroom'],
+            'myapes' => ['MyAPES', 'myapes@apesnews.org.uk', 'myapes-portal-newsroom'],
             'stream-4-apes' => ['Stream 4 APES', 'stream4apes@apesnews.org.uk', 'stream-4-apes'],
         ];
 
@@ -63,6 +63,24 @@ class NewsletterAdminTest extends TestCase
         foreach (['pet-shop-newsroom', 'mailing-list', 'animal-therapy-waiting-list'] as $slug) {
             $this->assertFalse(Newsletter::query()->where('slug', $slug)->exists(), $slug);
         }
+    }
+
+    public function test_myapes_rename_migration_keeps_wording_staff_changed(): void
+    {
+        $migration = require database_path('migrations/2026_11_03_100100_rename_myapes_portal_newsletter.php');
+        $newsletter = Newsletter::query()->where('slug', 'myapes')->firstOrFail();
+        $this->assertSame('MyAPES', $newsletter->name);
+
+        $migration->down();
+        $newsletter->refresh();
+        $this->assertSame(['myapes-portal', 'MyAPES Portal', 'MyAPES Portal'], [$newsletter->slug, $newsletter->name, $newsletter->sender_name]);
+
+        $newsletter->forceFill(['sender_name' => 'MyAPES Members'])->save();
+        $migration->up();
+        $migration->up();
+        $newsletter->refresh();
+        $this->assertSame(['myapes', 'MyAPES', 'MyAPES Members'], [$newsletter->slug, $newsletter->name, $newsletter->sender_name]);
+        $this->assertSame('myapes-portal-newsroom', $newsletter->ghost_slug);
     }
 
     public function test_delete_migration_removes_unused_archived_ghost_newsletters_only(): void
@@ -91,7 +109,10 @@ class NewsletterAdminTest extends TestCase
         Newsletter::query()->where('slug', 'apes-times')->update(['sender_name' => 'Edited by staff']);
 
         $migration = require database_path('migrations/2026_10_26_100000_add_sender_and_signup_fields_to_newsletters.php');
+        $rename = require database_path('migrations/2026_11_03_100100_rename_myapes_portal_newsletter.php');
+        $rename->down();
         $migration->up();
+        $rename->up();
 
         $this->assertSame(6, Newsletter::query()->count());
         $this->assertSame('Edited by staff', Newsletter::query()->where('slug', 'apes-times')->value('sender_name'));
