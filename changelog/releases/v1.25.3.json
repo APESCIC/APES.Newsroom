@@ -1,0 +1,22 @@
+{
+  "version": "v1.25.3",
+  "slug": "release-v1-25-3",
+  "released_at": "2026-10-29",
+  "previous_version": "v1.25.2",
+  "theme": "Keys kept across updates",
+  "change_types": ["fixed", "security"],
+  "topic_tags": ["internal-only"],
+  "summary": "Keys saved under Integrations now survive website updates, and saving a key no longer fails after an update.",
+  "detailed_changes": [
+    "Each website update was replacing the site's encryption key, so keys saved under Admin → Settings → Integrations could no longer be read afterwards and everyone was signed out. Updates now keep the existing key (#637).",
+    "Saving a replacement for a key that could no longer be read showed an error page. It now replaces the old value (#637)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /admin/settings/integrations",
+    "User groups affected: super admins (integration keys); everyone stays signed in across updates",
+    "Public impact: none",
+    "Internal impact: deploy/cloudron-activate.sh, IntegrationSecrets; the Mailgun keys under Integrations need entering once more"
+  ],
+  "pr": 638
+}
