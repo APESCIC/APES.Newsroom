@@ -7,10 +7,13 @@ use App\Enums\SendingDomainStatus;
 use App\Http\Controllers\Controller;
 use App\Models\EmailSenderAddress;
 use App\Models\EmailSendingDomain;
+use App\Models\Newsletter;
 use App\Services\Audit\AuditLogger;
 use App\Services\Mail\MailgunDomainService;
+use App\Services\Mail\MailTransports;
 use App\Services\Mail\SendingDomainChecker;
 use App\Services\Mail\SendingDomainTester;
+use App\Services\Mail\TestSendThrottle;
 use App\Services\Mailing\DefaultReplyTo;
 use App\Services\Mailing\SenderDomains;
 use App\Services\Mailing\SendingDomainAlerts;
@@ -57,6 +60,9 @@ class EmailSendingDomainController extends Controller
                 'last_test' => $domain->last_test_result,
                 'created_by' => $domain->creator?->name,
                 'in_use' => $domain->newslettersUsing(),
+                'track_opens' => $domain->track_opens,
+                'track_clicks' => $domain->track_clicks,
+                'webhooks' => $domain->webhooks,
                 'addresses' => $domain->addresses->map(fn (EmailSenderAddress $address) => [
                     'id' => $address->id,
                     'address' => $address->address,
@@ -70,12 +76,15 @@ class EmailSendingDomainController extends Controller
         return Inertia::render('Admin/Settings/EmailDomains/Index', [
             'domains' => $domains,
             'mailgunConfigured' => $mailgun->isConfigured(),
+            'newslettersOnMailgun' => app(MailTransports::class)->effectiveNewsletterTransport() === MailTransports::MAILGUN_API,
             'configuredMailgunDomain' => $mailgun->configuredDomain(),
             'dmarcRecommendation' => SendingDomainChecker::dmarcRecommendation(),
             'alerts' => $alerts->failing(),
             'defaultReplyTo' => DefaultReplyTo::get(),
+            'defaultReplyToProblem' => filled(DefaultReplyTo::get()) ? SenderDomains::replyToProblem((string) DefaultReplyTo::get()) : null,
             'testRecipient' => $request->user()->email,
             'offerTestAddressId' => $request->session()->get('offer_test_address'),
+            'webhookManagement' => MailgunDomainWebhooksController::managementStatus($request),
             'purposes' => collect(SenderAddressPurpose::cases())->map(fn (SenderAddressPurpose $purpose) => [
                 'value' => $purpose->value,
                 'label' => $purpose->label(),
@@ -108,6 +117,16 @@ class EmailSendingDomainController extends Controller
     {
         $domain = $emailSenderAddress->domain;
         $validated = $this->validatedAddress($request, $domain, $emailSenderAddress);
+
+        if ($validated['address'] !== $emailSenderAddress->address) {
+            $inUse = Newsletter::query()->whereRaw('LOWER(sender_email) = ?', [$emailSenderAddress->address])->orderBy('name')->pluck('name');
+            if ($inUse->isNotEmpty()) {
+                return back()->withErrors([
+                    'address' => "{$emailSenderAddress->address} is the From address of ".$inUse->implode(', ')
+                        .'. Change those newsletters first, or add the new address alongside it.',
+                ]);
+            }
+        }
 
         $before = $emailSenderAddress->only(['address', 'purpose', 'label']);
         $emailSenderAddress->update($validated);
@@ -175,18 +194,14 @@ class EmailSendingDomainController extends Controller
         return back()->with('status', $next === null ? 'Removed the default reply-to address.' : "Default reply-to set to {$next}.");
     }
 
-    public function testDomain(Request $request, EmailSendingDomain $emailSendingDomain, SendingDomainTester $tester): JsonResponse
+    public function testDomain(Request $request, EmailSendingDomain $emailSendingDomain, SendingDomainTester $tester, TestSendThrottle $throttle): JsonResponse
     {
-        $extra = $this->validatedExtraRecipient($request);
-
-        return response()->json($tester->send($emailSendingDomain, null, $request->user(), $extra, $request));
+        return $this->sendTest($request, $emailSendingDomain, null, $tester, $throttle);
     }
 
-    public function testAddress(Request $request, EmailSenderAddress $emailSenderAddress, SendingDomainTester $tester): JsonResponse
+    public function testAddress(Request $request, EmailSenderAddress $emailSenderAddress, SendingDomainTester $tester, TestSendThrottle $throttle): JsonResponse
     {
-        $extra = $this->validatedExtraRecipient($request);
-
-        return response()->json($tester->send($emailSenderAddress->domain, $emailSenderAddress, $request->user(), $extra, $request));
+        return $this->sendTest($request, $emailSenderAddress->domain, $emailSenderAddress, $tester, $throttle);
     }
 
     public function store(Request $request): RedirectResponse
@@ -197,13 +212,18 @@ class EmailSendingDomainController extends Controller
         ]);
 
         $validated = $request->validate([
-            'domain' => ['required', 'string', 'max:253', 'regex:'.self::HOSTNAME_PATTERN, Rule::unique('email_sending_domains', 'domain')],
+            'domain' => ['required', 'string', 'max:253', 'regex:'.self::HOSTNAME_PATTERN, Rule::unique('email_sending_domains', 'domain'), Rule::unique('email_sending_domains', 'mailgun_domain')],
             'label' => ['nullable', 'string', 'max:120'],
-            'mailgun_domain' => ['nullable', 'string', 'max:253', 'regex:'.self::HOSTNAME_PATTERN],
+            'mailgun_domain' => [
+                'nullable', 'string', 'max:253', 'regex:'.self::HOSTNAME_PATTERN,
+                Rule::unique('email_sending_domains', 'mailgun_domain'),
+                Rule::unique('email_sending_domains', 'domain'),
+            ],
         ], [
             'domain.regex' => 'Enter a domain name such as example.org.uk, without @ or https://.',
             'domain.unique' => 'That domain is already on the list.',
             'mailgun_domain.regex' => 'Enter the Mailgun domain name, such as mg.example.org.uk.',
+            'mailgun_domain.unique' => 'That Mailgun domain is already used by another sending domain.',
         ]);
 
         $domain = EmailSendingDomain::query()->create([
@@ -336,6 +356,27 @@ class EmailSendingDomainController extends Controller
         ], $request);
 
         return back()->with('status', ($enabled ? 'Enabled ' : 'Disabled ').$address->address.'.');
+    }
+
+    private function sendTest(Request $request, EmailSendingDomain $domain, ?EmailSenderAddress $address, SendingDomainTester $tester, TestSendThrottle $throttle): JsonResponse
+    {
+        $extra = $this->validatedExtraRecipient($request);
+
+        $refusal = match (true) {
+            ! $domain->isEnabled() => "{$domain->domain} is disabled. Enable it before sending a test.",
+            $address !== null && ! $address->enabled => "{$address->address} is disabled. Enable it before sending a test.",
+            default => null,
+        };
+        if ($refusal !== null) {
+            return response()->json(['message' => $refusal], 422);
+        }
+
+        $limited = $throttle->attempt($request->user(), 'domain:'.$domain->id);
+        if ($limited !== null) {
+            return response()->json(['message' => $limited], 429);
+        }
+
+        return response()->json($tester->send($domain, $address, $request->user(), $extra, $request));
     }
 
     private function validatedExtraRecipient(Request $request): ?string

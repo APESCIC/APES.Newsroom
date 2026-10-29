@@ -2,7 +2,8 @@ import { useForm } from '@inertiajs/react';
 import { ArrowLeft, Send } from 'lucide-react';
 import { FormEventHandler } from 'react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
-import Badge from '../../../Components/Workspace/ui/Badge';
+import Badge, { type BadgeTone } from '../../../Components/Workspace/ui/Badge';
+import { OPEN_RATE_NOTE } from '../Metrics/Index';
 import { FormSection } from '../../../Components/Workspace/ui/FormField';
 import PillButton from '../../../Components/Workspace/ui/PillButton';
 
@@ -17,14 +18,143 @@ type Snapshot = {
     sender_verified: boolean;
 };
 
+export type CampaignStatus = 'draft' | 'queued' | 'sending' | 'paused' | 'completed' | 'failed' | 'cancelled';
+
+export type LiveCampaign = {
+    id: number;
+    status: CampaignStatus;
+    pause_reason: string | null;
+    paused_at: string | null;
+    queued_at: string | null;
+    completed_at: string | null;
+    stats: {
+        recipients: number;
+        sent: number;
+        failed: number;
+        skipped: number;
+        queued: number;
+        opened: number;
+        clicked: number;
+        open_rate: number;
+        click_rate: number;
+        bounced: number;
+        complained: number;
+        top_links: { url: string; clicks: number }[];
+    };
+};
+
+export function campaignStatusLabel(status: CampaignStatus): { label: string; tone: BadgeTone } {
+    switch (status) {
+        case 'draft':
+            return { label: 'Draft', tone: 'neutral' };
+        case 'queued':
+            return { label: 'Queued', tone: 'info' };
+        case 'sending':
+            return { label: 'Sending', tone: 'info' };
+        case 'paused':
+            return { label: 'Paused', tone: 'warning' };
+        case 'completed':
+            return { label: 'Sent', tone: 'ok' };
+        case 'failed':
+            return { label: 'Not sent', tone: 'error' };
+        case 'cancelled':
+            return { label: 'Cancelled', tone: 'neutral' };
+        default: {
+            const exhaustive: never = status;
+            return exhaustive;
+        }
+    }
+}
+
+function LiveCampaignCard({ postId, campaign, canResume, transport }: { postId: number; campaign: LiveCampaign; canResume: boolean; transport: string | null }) {
+    const resume = useForm({});
+    const { label, tone } = campaignStatusLabel(campaign.status);
+    const stats = campaign.stats;
+
+    return (
+        <section aria-labelledby="live-campaign-heading" className="sg-card flex flex-col gap-4 p-5 sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 id="live-campaign-heading" className="text-base font-semibold text-body">
+                    Live send
+                </h2>
+                <Badge tone={tone}>{label}</Badge>
+            </div>
+            {campaign.status === 'paused' && (
+                <div role="alert" className="flex flex-col gap-2 rounded-xl border border-border bg-white/50 p-3 text-sm">
+                    <p className="font-semibold text-body">
+                        Sending paused because the newsletter mail transport{transport ? ` (${transport})` : ''} failed. {stats.queued} recipients are
+                        still waiting.
+                    </p>
+                    {campaign.pause_reason && <p className="text-body">{campaign.pause_reason}</p>}
+                    {canResume ? (
+                        <button
+                            type="button"
+                            className="sg-btn sg-btn-primary sg-btn-sm self-start"
+                            disabled={resume.processing}
+                            onClick={() => resume.post(`/staff/posts/${postId}/campaign/resume`, { preserveScroll: true })}
+                        >
+                            Resume sending
+                        </button>
+                    ) : (
+                        <p className="text-muted">An admin can resume it once the transport is fixed.</p>
+                    )}
+                </div>
+            )}
+            <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+                <div>
+                    <dt className="text-muted">Sent</dt>
+                    <dd className="text-lg font-semibold text-body">{stats.sent}</dd>
+                </div>
+                <div>
+                    <dt className="text-muted">Opens (indicative)</dt>
+                    <dd className="text-lg font-semibold text-body">
+                        {stats.opened} <span className="text-sm font-normal text-muted">({stats.open_rate}%)</span>
+                    </dd>
+                </div>
+                <div>
+                    <dt className="text-muted">Clicks</dt>
+                    <dd className="text-lg font-semibold text-body">
+                        {stats.clicked} <span className="text-sm font-normal text-muted">({stats.click_rate}%)</span>
+                    </dd>
+                </div>
+                <div>
+                    <dt className="text-muted">Bounced or spam</dt>
+                    <dd className="text-lg font-semibold text-body">{stats.bounced + stats.complained}</dd>
+                </div>
+            </dl>
+            <p className="text-xs text-muted">
+                {stats.failed} failed, {stats.skipped} skipped (unsubscribed, suppressed or no consent), {stats.queued} waiting. {OPEN_RATE_NOTE}
+            </p>
+            {stats.top_links.length > 0 && (
+                <div className="text-sm">
+                    <h3 className="font-semibold text-body">Top links</h3>
+                    <ol className="mt-1 list-decimal pl-5 text-body">
+                        {stats.top_links.map((link) => (
+                            <li key={link.url} className="break-all">
+                                {link.url} <span className="text-muted">({link.clicks} readers)</span>
+                            </li>
+                        ))}
+                    </ol>
+                </div>
+            )}
+        </section>
+    );
+}
+
 export default function CampaignPreview({
     post,
     snapshot,
     status,
+    liveCampaign = null,
+    newsletterTransport = null,
+    canResume = false,
 }: {
     post: { id: number; title: string; status: string; email_on_publish: boolean; mailing_lists: string[] };
     snapshot: Snapshot;
     status?: string;
+    liveCampaign?: LiveCampaign | null;
+    newsletterTransport?: string | null;
+    canResume?: boolean;
 }) {
     const { data, setData, post: submit, processing, errors } = useForm({ email: '' });
 
@@ -58,9 +188,12 @@ export default function CampaignPreview({
                     {snapshot.sender
                         ? `From: ${snapshot.sender.name ? `${snapshot.sender.name} <${snapshot.sender.address}>` : snapshot.sender.address}${snapshot.sender.reply_to ? ` · Reply-to: ${snapshot.sender.reply_to}` : ''}`
                         : 'No newsletter sender is set.'}
-                    {snapshot.sender_verified ? '' : ' Sender not verified in Mailgun yet, so sending is blocked.'}
+                    {snapshot.sender_verified ? '' : ' Sender not verified yet, so sending is blocked.'}
                 </span>
             </div>
+
+            {liveCampaign && <LiveCampaignCard postId={post.id} campaign={liveCampaign} canResume={canResume} transport={newsletterTransport} />}
+            {newsletterTransport && <p className="text-xs text-muted">Newsletters currently send through {newsletterTransport}.</p>}
 
             <article aria-label="Email preview" className="sg-card mx-auto w-full max-w-2xl p-6 sm:p-8">
                 <p className="text-sm text-muted">

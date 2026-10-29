@@ -31,6 +31,7 @@ const inertiaMock = {
     patch: vi.fn(),
     delete: vi.fn(),
     visit: vi.fn(),
+    reload: vi.fn(),
     visits: [] as MockVisit[],
 };
 
@@ -42,6 +43,7 @@ export function setMockPage(props: SharedPageProps) {
     inertiaMock.patch.mockReset();
     inertiaMock.delete.mockReset();
     inertiaMock.visit.mockReset();
+    inertiaMock.reload.mockReset();
     inertiaMock.visits = [];
 }
 

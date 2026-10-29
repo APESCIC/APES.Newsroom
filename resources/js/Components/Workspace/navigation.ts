@@ -17,6 +17,7 @@ import {
     Plug,
     Rocket,
     ScrollText,
+    Send,
     Settings,
     ShieldCheck,
     SquarePen,
@@ -51,6 +52,7 @@ export type WorkspaceActive =
     | 'settings'
     | 'integrations'
     | 'email-domains'
+    | 'mail-sending'
     | 'audit-log'
     | 'users'
     | 'api-tokens'
@@ -130,6 +132,7 @@ export const navigation: Record<WorkspaceArea, NavGroup[]> = {
                 { key: 'content-api-keys', href: '/admin/content-api-keys', label: 'Content API keys', icon: KeySquare, keywords: 'public api read' },
                 { key: 'integrations', href: '/admin/settings/integrations', label: 'Integrations & keys', icon: Plug, keywords: 'mailgun stripe unsplash openai slack health' },
                 { key: 'email-domains', href: '/admin/settings/email-domains', label: 'Sending domains', icon: MailCheck, keywords: 'email dns dkim spf' },
+                { key: 'mail-sending', href: '/admin/settings/mail-sending', label: 'Mail sending', icon: Send, keywords: 'smtp mailgun transport bounce tracking' },
             ],
         },
         {

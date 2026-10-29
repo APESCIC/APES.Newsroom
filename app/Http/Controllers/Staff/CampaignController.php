@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers\Staff;
 
+use App\Enums\CampaignStatus;
 use App\Http\Controllers\Controller;
+use App\Models\Campaign;
 use App\Models\Post;
+use App\Services\Mail\MailTransports;
 use App\Services\Mailing\CampaignService;
+use App\Support\Settings\SettingDefinitions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -28,6 +32,9 @@ class CampaignController extends Controller
                 'mailing_lists' => $post->mailing_lists ?? [],
             ],
             'snapshot' => $this->campaigns->previewPayload($post),
+            'liveCampaign' => $this->campaigns->liveSummary($post),
+            'newsletterTransport' => SettingDefinitions::transportOptions()[app(MailTransports::class)->effectiveNewsletterTransport()] ?? null,
+            'canResume' => $request->user()->can('access-admin-area'),
         ]);
     }
 
@@ -42,6 +49,29 @@ class CampaignController extends Controller
         $this->campaigns->createTestSend($post, $request->user(), $validated['email']);
 
         return back()->with('status', 'test-send-queued');
+    }
+
+    /**
+     * Restart a live send that paused because its transport failed.
+     */
+    public function resume(Request $request, Post $post): RedirectResponse
+    {
+        Gate::authorize('access-admin-area');
+
+        $campaign = Campaign::query()
+            ->where('post_id', $post->id)
+            ->where('is_test', false)
+            ->where('status', CampaignStatus::Paused->value)
+            ->latest('id')
+            ->first();
+
+        if ($campaign === null) {
+            return back()->withErrors(['resume' => 'There is no paused send for this post.']);
+        }
+
+        $remaining = $this->campaigns->resume($campaign, $request->user(), $request);
+
+        return back()->with('status', "Resumed sending to {$remaining} remaining recipients.");
     }
 
     private function authorizeAdmin(): void

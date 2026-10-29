@@ -14,12 +14,14 @@ return [
     |
     */
 
-    // Sender verification, plus newsletter sends through the Mailgun HTTP API
-    // (config/mailing.php newsletter_transport). System mail uses Cloudron SMTP.
+    // Sender verification, sends through the Mailgun HTTP API when chosen under
+    // Admin → Settings → Mail sending, and signed webhooks for delivery events.
     'mailgun' => [
         'domain' => env('MAILGUN_DOMAIN'),
         'secret' => env('MAILGUN_API_KEY'),
         'endpoint' => env('MAILGUN_ENDPOINT', 'api.eu.mailgun.net'),
+        'webhook_signing_key' => env('MAILGUN_WEBHOOK_SIGNING_KEY'),
+        'management_key' => env('MAILGUN_MANAGEMENT_KEY'),
     ],
 
     'postmark' => [

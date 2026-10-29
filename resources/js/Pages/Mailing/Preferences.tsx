@@ -5,6 +5,7 @@ import AccountLayout from '../../Components/Layout/AccountLayout';
 type ListState = { list: string; label: string; purpose: string; status: string | null };
 type NewsletterState = { id: number; name: string; description: string | null; status: string | null };
 type MatchedMailingNotice = { newsletters: string[] };
+type TrackingChoices = { opens: boolean; clicks: boolean };
 
 export default function Preferences({
     email,
@@ -13,6 +14,7 @@ export default function Preferences({
     signed,
     status,
     matched_mailing_notice = null,
+    tracking = null,
 }: {
     email: string;
     lists: ListState[];
@@ -20,13 +22,15 @@ export default function Preferences({
     signed: boolean;
     status?: string;
     matched_mailing_notice?: MatchedMailingNotice | null;
+    tracking?: TrackingChoices | null;
 }) {
     const initial = lists.filter((l) => l.status === 'confirmed' || l.status === 'pending').map((l) => l.list);
     const initialNewsletters = newsletters.filter((n) => n.status === 'confirmed' || n.status === 'pending').map((n) => n.id);
 
-    const { data, setData, post, processing, errors } = useForm<{ lists: string[]; newsletter_ids: number[] }>({
+    const { data, setData, post, processing, errors } = useForm<{ lists: string[]; newsletter_ids: number[]; track_opens?: boolean; track_clicks?: boolean }>({
         lists: initial,
         newsletter_ids: initialNewsletters,
+        ...(tracking ? { track_opens: tracking.opens, track_clicks: tracking.clicks } : {}),
     });
 
     const toggleList = (value: string) => {
@@ -118,6 +122,32 @@ export default function Preferences({
                                     </span>
                                 </label>
                             ))}
+                        </fieldset>
+                    )}
+                    {tracking && (
+                        <fieldset className="flex flex-col gap-3" aria-describedby="tracking-help">
+                            <legend className="text-sm font-bold text-body">Email tracking</legend>
+                            <p id="tracking-help" className="text-sm text-muted">
+                                These choices apply to every newsletter we send you. See the{' '}
+                                <a href="/legal/privacy" className="underline">
+                                    privacy notice
+                                </a>{' '}
+                                for what is collected and how long it is kept.
+                            </p>
+                            <label className="flex gap-3 text-sm">
+                                <input type="checkbox" checked={data.track_opens === true} onChange={(e) => setData('track_opens', e.target.checked)} />
+                                <span>
+                                    <span className="font-bold text-body">Tell us when you open our emails</span>
+                                    <span className="block text-muted">Adds a tiny image to each email. Off unless you turn it on.</span>
+                                </span>
+                            </label>
+                            <label className="flex gap-3 text-sm">
+                                <input type="checkbox" checked={data.track_clicks === true} onChange={(e) => setData('track_clicks', e.target.checked)} />
+                                <span>
+                                    <span className="font-bold text-body">Let us count clicks on links in our emails</span>
+                                    <span className="block text-muted">Links pass through a counting address first. Turn this off to get plain links.</span>
+                                </span>
+                            </label>
                         </fieldset>
                     )}
                     <button type="submit" disabled={processing} className="button-primary w-fit">

@@ -46,6 +46,34 @@ export default function Privacy() {
                         its reason are recorded in our audit log without the values themselves.
                     </li>
                 </ul>
+                <h2>Newsletter emails, delivery and tracking</h2>
+                <p>
+                    Newsletters are sent through an email service provider, Mailgun (Sinch), from its EU region, or through
+                    our own mail server. The provider tells us whether each email was delivered, bounced or was marked as
+                    spam, and when you unsubscribe through your email app.
+                </p>
+                <ul>
+                    <li>
+                        <strong>Delivery problems:</strong> if an email to you bounces permanently, is reported as spam, or fails
+                        temporarily several times in a row, we stop sending newsletters to that address so we do not keep
+                        mailing an address that cannot or does not want to receive them. Our lawful basis is our legitimate
+                        interest in sending mail responsibly. Staff can lift the block if you ask.
+                    </li>
+                    <li>
+                        <strong>Open tracking:</strong> off unless you turn it on in your{' '}
+                        <Link href="/account/mailing">mailing preferences</Link>. When on, each email contains a tiny image
+                        that tells us when it is opened. Our lawful basis is your consent, which you can withdraw at any time.
+                    </li>
+                    <li>
+                        <strong>Click tracking:</strong> on unless you turn it off in your mailing preferences. Links in our
+                        emails pass through a counting address so we can see which stories readers follow. Our lawful basis is
+                        our legitimate interest in understanding which content is useful; turning it off gives you plain links.
+                    </li>
+                    <li>
+                        <strong>Retention:</strong> delivery, open and click events are kept for 24 months and then deleted
+                        automatically. Staff see totals per newsletter and email, and the delivery status of an address.
+                    </li>
+                </ul>
                 <h2>Your rights</h2>
                 <p>
                     See the <Link href="/legal/rights">rights page</Link> for access, export, correction, erasure, and

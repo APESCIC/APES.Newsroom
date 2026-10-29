@@ -5,6 +5,7 @@ namespace App\Services\Health;
 use App\Models\IntegrationCheckResult;
 use App\Models\User;
 use App\Services\Health\Checks\CloudronOidcCheck;
+use App\Services\Health\Checks\CustomSmtpCheck;
 use App\Services\Health\Checks\MailgunCheck;
 use App\Services\Health\Checks\OpenAiCheck;
 use App\Services\Health\Checks\SlackCheck;
@@ -28,6 +29,7 @@ class HealthCheckRunner
         OpenAiCheck::class,
         SlackCheck::class,
         CloudronOidcCheck::class,
+        CustomSmtpCheck::class,
     ];
 
     public function __construct(private readonly Container $container) {}

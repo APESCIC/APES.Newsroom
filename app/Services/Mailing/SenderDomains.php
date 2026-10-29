@@ -2,10 +2,12 @@
 
 namespace App\Services\Mailing;
 
+use App\Enums\SenderAddressPurpose;
 use App\Enums\SendingDomainStatus;
 use App\Models\EmailSenderAddress;
 use App\Models\EmailSendingDomain;
 use App\Services\Mail\MailgunDomainService;
+use App\Services\Mail\MailTransports;
 use Illuminate\Support\Str;
 
 /**
@@ -87,6 +89,7 @@ class SenderDomains
         return match (true) {
             $address === null => "{$normalized} is not an allowed From address. An admin can add it under Settings → Email sending domains.",
             ! $address->enabled => "{$normalized} has been disabled as a From address by an admin.",
+            $address->purpose !== SenderAddressPurpose::News => "{$normalized} is a no-reply address. Choose a newsletter From address.",
             default => null,
         };
     }
@@ -158,15 +161,11 @@ class SenderDomains
     }
 
     /**
-     * The mailer newsletters use: the per-domain Mailgun API mailer when
-     * Mailgun is configured and enabled for newsletters, else the default.
+     * The mailer newsletters use (Admin → Settings → Mail sending); null is
+     * the default mailer.
      */
     public static function newsletterMailer(): ?string
     {
-        if (config('mailing.newsletter_transport') !== 'mailgun') {
-            return null;
-        }
-
-        return app(MailgunDomainService::class)->isConfigured() ? 'mailgun-api' : null;
+        return app(MailTransports::class)->newsletterMailer();
     }
 }

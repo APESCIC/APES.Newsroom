@@ -40,20 +40,23 @@ type DomainOption = { domain: string; status: string; can_send: boolean };
 
 type SenderOption = { address: string; label: string | null; domain: string; can_send: boolean };
 
-function SenderSelect({
+export function SenderSelect({
     value,
+    original,
     options,
     reservedLocalParts,
     error,
     onChange,
 }: {
     value: string;
+    original: string;
     options: SenderOption[];
     reservedLocalParts: string[];
     error?: string;
     onChange: (value: string) => void;
 }) {
-    const listed = options.some((option) => option.address === value);
+    const savedAddress = original.toLowerCase();
+    const listed = options.some((option) => option.address === savedAddress);
     const helpId = 'sender_email-help';
     const errorId = 'sender_email-error';
 
@@ -64,15 +67,15 @@ function SenderSelect({
                 <select
                     id="sender_email"
                     className="form-input mt-1"
-                    value={value}
+                    value={value.toLowerCase()}
                     aria-describedby={error ? `${helpId} ${errorId}` : helpId}
                     aria-invalid={error ? true : undefined}
                     onChange={(e) => onChange(e.target.value)}
                 >
                     <option value="">Choose a sender</option>
-                    {value !== '' && !listed && <option value={value}>{value} (not on the allowed list)</option>}
+                    {savedAddress !== '' && !listed && <option value={savedAddress}>{savedAddress} (current, no longer on the allowed list)</option>}
                     {options.map((option) => (
-                        <option key={option.address} value={option.address} disabled={!option.can_send && option.address !== value}>
+                        <option key={option.address} value={option.address} disabled={!option.can_send && option.address !== savedAddress}>
                             {option.address}
                             {option.label ? ` · ${option.label}` : ''}
                             {option.can_send ? '' : ' (domain not verified)'}
@@ -277,6 +280,7 @@ export default function NewsletterEdit({
                     {form.errors.sender_name && <p className="text-sm text-danger">{form.errors.sender_name}</p>}
                     <SenderSelect
                         value={form.data.sender_email}
+                        original={newsletter?.sender_email ?? ''}
                         options={senderOptions}
                         reservedLocalParts={reservedLocalParts}
                         error={addressErrors.sender_email}

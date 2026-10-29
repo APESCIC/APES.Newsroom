@@ -24,7 +24,7 @@ class AdminSettingsTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Admin/Settings/Index')
-                ->has('settings', count(SettingDefinitions::all()))
+                ->has('settings', count(SettingDefinitions::forPage(null)))
                 ->where('settings.0.key', SettingDefinitions::EDITOR_DRIVER)
                 ->where('settings.0.section', 'Editor')
                 ->where('settings.0.type', 'enum')

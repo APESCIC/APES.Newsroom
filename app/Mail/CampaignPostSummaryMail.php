@@ -2,6 +2,8 @@
 
 namespace App\Mail;
 
+use App\Services\Mail\MailgunApiTransport;
+use App\Services\Mail\MailTransports;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
@@ -25,6 +27,9 @@ class CampaignPostSummaryMail extends Mailable
         public readonly bool $isTest = false,
         public readonly ?string $openPixelUrl = null,
         public readonly ?string $trackedReadMoreUrl = null,
+        public readonly bool $providerTrackOpens = false,
+        public readonly bool $providerTrackClicks = false,
+        public readonly ?int $campaignRecipientId = null,
     ) {}
 
     public function envelope(): Envelope
@@ -38,10 +43,15 @@ class CampaignPostSummaryMail extends Mailable
         if (! $sender || blank($sender['address'] ?? null)) {
             return new Envelope(subject: $subject);
         }
+        $sender = app(MailTransports::class)->newsletterIdentity([
+            'address' => (string) $sender['address'],
+            'name' => filled($sender['name'] ?? null) ? (string) $sender['name'] : null,
+            'reply_to' => filled($sender['reply_to'] ?? null) ? (string) $sender['reply_to'] : null,
+        ]);
 
         return new Envelope(
-            from: new Address((string) $sender['address'], filled($sender['name'] ?? null) ? (string) $sender['name'] : null),
-            replyTo: filled($sender['reply_to'] ?? null) ? [new Address((string) $sender['reply_to'])] : [],
+            from: new Address($sender['address'], $sender['name']),
+            replyTo: $sender['reply_to'] !== null ? [new Address($sender['reply_to'])] : [],
             subject: $subject,
         );
     }
@@ -64,10 +74,13 @@ class CampaignPostSummaryMail extends Mailable
     public function headers(): Headers
     {
         return new Headers(
-            text: [
+            text: array_filter([
                 'List-Unsubscribe' => '<'.$this->listUnsubscribeUrl.'>',
                 'List-Unsubscribe-Post' => 'List-Unsubscribe=One-Click',
-            ],
+                MailgunApiTransport::TRACK_OPENS_HEADER => $this->providerTrackOpens ? 'yes' : 'no',
+                MailgunApiTransport::TRACK_CLICKS_HEADER => $this->providerTrackClicks ? 'yes' : 'no',
+                'X-Mailgun-Variables' => $this->campaignRecipientId !== null ? json_encode(['campaign_recipient_id' => $this->campaignRecipientId]) : null,
+            ]),
         );
     }
 }

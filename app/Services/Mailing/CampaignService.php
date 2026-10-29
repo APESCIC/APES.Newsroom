@@ -5,6 +5,7 @@ namespace App\Services\Mailing;
 use App\Enums\CampaignRecipientStatus;
 use App\Enums\CampaignStatus;
 use App\Enums\MailingList;
+use App\Enums\Role;
 use App\Jobs\SendCampaignRecipientJob;
 use App\Models\Campaign;
 use App\Models\CampaignRecipient;
@@ -12,9 +13,12 @@ use App\Models\Newsletter;
 use App\Models\NewsletterSegment;
 use App\Models\Post;
 use App\Models\User;
+use App\Notifications\CampaignPausedNotification;
 use App\Services\Audit\AuditLogger;
 use App\Services\EditorJs\BlockRenderer;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -222,6 +226,90 @@ class CampaignService
             ...$this->buildSnapshot($post, $senderNewsletter),
             'sender_verified' => $this->sender->isVerified($senderNewsletter),
         ];
+    }
+
+    /**
+     * The post's live campaign status and delivery counts for staff, or null
+     * when it has not been emailed.
+     *
+     * @return array{id: int, status: string, pause_reason: string|null, paused_at: string|null, queued_at: string|null, completed_at: string|null, stats: array<string, mixed>}|null
+     */
+    public function liveSummary(Post $post): ?array
+    {
+        $campaign = Campaign::query()->where('post_id', $post->id)->where('is_test', false)->latest('id')->first();
+        if ($campaign === null) {
+            return null;
+        }
+
+        return [
+            'id' => $campaign->id,
+            'status' => $campaign->status->value,
+            'pause_reason' => $campaign->pause_reason,
+            'paused_at' => $campaign->paused_at?->toIso8601String(),
+            'queued_at' => $campaign->queued_at?->toIso8601String(),
+            'completed_at' => $campaign->completed_at?->toIso8601String(),
+            'stats' => app(CampaignStats::class)->forCampaign($campaign),
+        ];
+    }
+
+    /**
+     * Stop a send because its transport failed. Recipients still queued stay
+     * queued so a resume sends to them; admins are emailed once per pause.
+     */
+    public function pause(Campaign $campaign, string $reason): bool
+    {
+        $paused = Campaign::query()
+            ->whereKey($campaign->id)
+            ->whereIn('status', [CampaignStatus::Queued->value, CampaignStatus::Sending->value])
+            ->update(['status' => CampaignStatus::Paused, 'paused_at' => now(), 'pause_reason' => Str::limit($reason, 1000)]);
+
+        if ($paused === 0) {
+            return false;
+        }
+
+        $remaining = $campaign->recipients()->where('status', CampaignRecipientStatus::Queued)->count();
+        $this->audit->record(null, 'campaign.paused', $campaign, [
+            'post_id' => $campaign->post_id,
+            'reason' => Str::limit($reason, 500),
+            'remaining' => $remaining,
+        ]);
+
+        $admins = User::query()
+            ->whereIn('role', [Role::Admin->value, Role::SuperAdmin->value])
+            ->whereNull('locked_at')
+            ->get();
+        if ($admins->isNotEmpty()) {
+            Notification::send($admins, new CampaignPausedNotification(
+                $campaign->id,
+                (string) ($campaign->snapshot['title'] ?? 'Newsletter'),
+                $reason,
+                $remaining,
+                $campaign->post_id,
+            ));
+        }
+
+        return true;
+    }
+
+    /**
+     * Restart a paused send for the recipients still queued.
+     */
+    public function resume(Campaign $campaign, User $actor, ?Request $request = null): int
+    {
+        if ($campaign->status !== CampaignStatus::Paused) {
+            return 0;
+        }
+
+        $campaign->update(['status' => CampaignStatus::Sending, 'paused_at' => null, 'pause_reason' => null]);
+        $remaining = $campaign->recipients()->where('status', CampaignRecipientStatus::Queued)->count();
+        $this->audit->record($actor, 'campaign.resumed', $campaign, [
+            'post_id' => $campaign->post_id,
+            'remaining' => $remaining,
+        ], $request);
+
+        $this->dispatchRecipients($campaign);
+
+        return $remaining;
     }
 
     private function recordBlockedSend(?Newsletter $newsletter, Post $post, User $actor, string $kind): void

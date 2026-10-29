@@ -11,4 +11,8 @@ enum ConsentAction: string
     case Suppressed = 'suppressed';
     case Unsuppressed = 'unsuppressed';
     case ContactUpdated = 'contact_updated';
+    case OpenTrackingConsented = 'open_tracking_consented';
+    case OpenTrackingWithdrawn = 'open_tracking_withdrawn';
+    case ClickTrackingOptedOut = 'click_tracking_opted_out';
+    case ClickTrackingOptedIn = 'click_tracking_opted_in';
 }

@@ -6,7 +6,6 @@ use App\Enums\SubscriptionStatus;
 use App\Models\ConsentEvent;
 use App\Models\MailingContact;
 use App\Models\Newsletter;
-use App\Models\Suppression;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -20,6 +19,7 @@ class SubscriberListService
      *     name: string|null,
      *     signed_up_at: string,
      *     suppressed: bool,
+     *     delivery_status: array<string, mixed>|null,
      *     source: string|null,
      *     consent_action: string|null,
      *     subscriptions: list<array{newsletter: string, status: string, opted_out: bool}>
@@ -64,10 +64,7 @@ class SubscriberListService
         $page = $query->paginate($perPage)->withQueryString();
 
         $emails = $page->getCollection()->pluck('email_normalized')->all();
-        $suppressions = Suppression::query()
-            ->whereIn('email', $emails)
-            ->pluck('email')
-            ->flip();
+        $suppressions = collect(app(DeliveryStatus::class)->forEmails(array_values(array_filter($emails, 'is_string'))));
 
         $contactIds = $page->getCollection()->pluck('id')->all();
         $latestConsent = $this->latestConsentByContact($contactIds);
@@ -101,6 +98,7 @@ class SubscriberListService
                 'name' => $contact->name,
                 'signed_up_at' => $contact->created_at?->toIso8601String() ?? '',
                 'suppressed' => $suppressed,
+                'delivery_status' => $suppressions->get($contact->email_normalized),
                 'source' => $consent['source'] ?? null,
                 'consent_action' => $consent['action'] ?? null,
                 'subscriptions' => $subscriptions,

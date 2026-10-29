@@ -4,13 +4,13 @@ namespace App\Providers;
 
 use App\Enums\Role;
 use App\Http\Middleware\EnsureAuthEpoch;
-use App\Models\EmailSenderAddress;
 use App\Models\User;
 use App\Services\Auth\PendingTwoFactorLogin;
 use App\Services\Auth\RecentAuthentication;
 use App\Services\Integrations\IntegrationSecrets;
 use App\Services\Mail\MailgunApiTransport;
 use App\Services\Mail\MailgunDomainService;
+use App\Services\Mail\MailTransports;
 use App\Services\Membership\FakeStripeBillingClient;
 use App\Services\Membership\StripeApiBillingClient;
 use App\Services\Membership\StripeBillingClient;
@@ -23,6 +23,7 @@ use Illuminate\Contracts\Validation\UncompromisedVerifier;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Http\Request;
+use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -105,27 +106,8 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Mail::extend('mailgun-api', fn () => $this->app->make(MailgunApiTransport::class));
-
-        RateLimiter::for('sending-domain-test', function (Request $request) {
-            // Throttling runs before route-model binding, so parameters may still be raw ids.
-            $address = $request->route('emailSenderAddress');
-            $domain = match (true) {
-                $address instanceof EmailSenderAddress => $address->email_sending_domain_id,
-                $address !== null => EmailSenderAddress::query()->whereKey((int) $address)->value('email_sending_domain_id'),
-                default => $request->route('emailSendingDomain'),
-            };
-            $domainId = $domain instanceof Model ? $domain->getKey() : (string) $domain;
-            $tooMany = fn (string $message) => fn (Request $request, array $headers) => response()->json(['message' => $message], 429, $headers);
-
-            return [
-                Limit::perMinute(max(1, (int) config('mailing.test_send.per_user_per_minute', 5)))
-                    ->by('sending-domain-test:user:'.$request->user()?->id)
-                    ->response($tooMany('You have sent several test emails in the last minute. Please wait a minute and try again.')),
-                Limit::perDay(max(1, (int) config('mailing.test_send.per_domain_per_day', 20)))
-                    ->by('sending-domain-test:domain:'.$domainId)
-                    ->response($tooMany('This domain has reached its limit of test emails for today. Please try again tomorrow.')),
-            ];
-        });
+        $this->app->resolving('mail.manager', fn () => $this->app->make(MailTransports::class)->applySystemMailer());
+        Event::listen(JobProcessing::class, fn () => $this->app->make(MailTransports::class)->applySystemMailer($this->app->make('mail.manager')));
 
         RateLimiter::for('admin-user-actions', function (Request $request) {
             $target = $request->route('user');
@@ -146,6 +128,8 @@ class AppServiceProvider extends ServiceProvider
                 Limit::perMinute(30)->by('people-actions:'.$request->user()?->id),
             ];
         });
+
+        RateLimiter::for('mailgun-webhook', fn (Request $request) => Limit::perMinute(max(1, (int) config('mailing.webhook_per_minute', 600)))->by('mailgun-webhook:'.$request->ip()));
 
         RateLimiter::for('contact-details', fn (Request $request) => Limit::perMinute(10)->by('contact-details:'.$request->user()?->id));
 

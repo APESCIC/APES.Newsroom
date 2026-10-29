@@ -14,3 +14,4 @@ Schedule::command('newsroom:purge-security-data')->dailyAt('03:15');
 Schedule::command('auth:clear-resets')->dailyAt('03:20');
 Schedule::command('integrations:check')->hourly();
 Schedule::command('mailing:check-sending-domains')->dailyAt('06:10');
+Schedule::command('mailing:sync-mailgun-suppressions')->dailyAt('05:40');

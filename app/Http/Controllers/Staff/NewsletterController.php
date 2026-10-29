@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Staff;
 
 use App\Enums\Channel;
+use App\Enums\SenderAddressPurpose;
 use App\Enums\SubscriptionStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Campaign;
@@ -400,6 +401,7 @@ class NewsletterController extends Controller
     {
         return EmailSenderAddress::query()
             ->enabled()
+            ->where('purpose', SenderAddressPurpose::News->value)
             ->whereHas('domain', fn ($query) => $query->enabled())
             ->with('domain')
             ->orderBy('address')

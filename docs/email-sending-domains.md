@@ -15,8 +15,10 @@ addresses at **Admin → Settings → Email sending domains**
 - The server checks the same rules, so a bypassed form is still rejected.
 - The part before the @ cannot contain spaces. It also cannot be one of the reserved names: `postmaster`, `abuse`, `hostmaster`, `webmaster` or `mailer-daemon`.
 - An address that has not changed is accepted when the newsletter is saved, so staff can still edit other fields. It is still blocked at send time if its domain is no longer approved, enabled and verified.
-- A From address may be on the domain itself (`news@apespetcare.org.uk`) or on the domain's Mailgun domain (`news@news.myapes.me.uk` under `myapes.me.uk`).
-- System and account emails (confirmations, password resets, sign-in links) always send from apesnews.org.uk through Cloudron SMTP.
+- A From address may be on the domain itself (`news@apespetcare.org.uk`) or on the domain's Mailgun domain (`news@news.myapes.me.uk` under `myapes.me.uk`). When the domain's DMARC record asks for strict alignment (`adkim=s` or `aspf=s`), only addresses on the Mailgun domain itself can verify.
+- Only addresses with the **Newsletters** purpose can be chosen as a newsletter From; No-reply addresses are for test emails and system mail.
+- Newsletter confirmation emails use the newsletter's From address once it is verified, and go through the same transport as its newsletters.
+- System and account emails (password resets, sign-in links, receipts) send from apesnews.org.uk through the system transport chosen under [Mail sending](mail-sending.md) (Cloudron SMTP by default).
 
 ## How newsletters are sent
 
@@ -34,10 +36,18 @@ The Mailgun domain is the domain's **Mailgun domain** override when one is set,
 else the Integrations Mailgun domain when it matches, else the domain itself.
 The transport refuses any From address whose domain is not approved and enabled.
 
-This applies whenever the Mailgun API key is configured under Integrations. Set
-`MAILING_NEWSLETTER_TRANSPORT=smtp` in `/app/data/shared/.env` to send
-newsletters through Cloudron SMTP again (for example during a Mailgun incident).
-Without a Mailgun API key, newsletters use Cloudron SMTP.
+This applies while newsletters use the Mailgun API under
+[Mail sending](mail-sending.md), which is the starting setup once the Mailgun API
+key is configured. Until a super admin chooses a newsletter transport, a missing
+Mailgun API key keeps newsletters on Cloudron SMTP. A super admin can switch
+newsletters to Cloudron SMTP or Custom SMTP there without a redeploy.
+
+If the transport fails while a send is under way, the send **pauses** instead of
+failing: recipients still waiting stay queued, admins are emailed once, and an
+admin resumes it from the campaign page after fixing the problem. A refusal of
+one message (for example an invalid address) fails only that recipient. A
+temporary problem (Mailgun HTTP 429 or 5xx, or no connection) is retried after
+30 seconds and 2 minutes before the send pauses.
 
 ## From addresses and default reply-to
 
@@ -61,10 +71,12 @@ button opens straight away after an address is added or edited. A test:
 - warns when the domain is not verified, but still tries;
 - stores the time and outcome on the domain and address, and writes `email_sending_domain.test_sent` to the audit log with the recipients and outcome.
 
-Tests are limited to 5 a minute per admin and 20 a day per domain (shared by its
-addresses). Further attempts get a 429 with a message saying when to try again.
-Change the limits with `MAILING_TEST_SEND_PER_MINUTE` and
-`MAILING_TEST_SEND_PER_DOMAIN_PER_DAY`.
+Tests are limited to 5 a minute per admin and 20 in any 24 hours per domain
+(shared by its addresses). Only tests an admin is allowed to send count:
+refused, unauthenticated or invalid requests do not use up the limit. Further
+attempts get a 429 with a message saying how long to wait. Disabled domains and
+addresses cannot be tested. Change the limits with `MAILING_TEST_SEND_PER_MINUTE`
+and `MAILING_TEST_SEND_PER_DOMAIN_PER_DAY`.
 
 To confirm DMARC alignment, open the received message's headers and look for
 `dmarc=pass` in `Authentication-Results`.
@@ -72,7 +84,9 @@ To confirm DMARC alignment, open the received message's headers and look for
 ## Send-time enforcement
 
 Live campaigns, test sends and each queued recipient re-check both the From and
-reply-to domains just before sending. The newsroom never falls back to a
+reply-to domains just before sending, using the From and reply-to the email will
+actually carry (the campaign snapshot, including a default reply-to filled in
+when the campaign was created). The newsroom never falls back to a
 different From address. When either domain is disabled, unapproved or (for From)
 not verified:
 
@@ -112,9 +126,31 @@ for reply-to addresses.
 | `failed` | Found in Mailgun but a check fails, or a previously verified domain disappeared from Mailgun. Usable for reply-to only |
 | `disabled` | Turned off by an admin. Not usable at all; newsletters using it cannot send |
 
-Mailgun API errors (unreachable, HTTP errors, no API key) are shown on the page
-but never change the status, so a Mailgun outage does not block sending on its
-own.
+Mailgun API errors during a check (unreachable, HTTP errors, no API key) are
+shown on the page but never change the status. A Mailgun outage while
+newsletters are sending pauses the send (see [How newsletters are sent](#how-newsletters-are-sent)).
+
+## Webhooks and tracking
+
+Each domain card has a **Webhooks and tracking** section. Mailgun posts
+delivered, bounced, temporary failure, complaint, unsubscribe, open and click
+events to `/webhooks/mailgun`; the Newsroom checks each request's signature with
+the **webhook signing key** (Integrations → Mailgun), refuses requests older than
+5 minutes and ignores replayed tokens. Events are stored once each and kept for
+24 months. Bounces, complaints, provider unsubscribes and repeated temporary
+failures suppress the address (see [mail sending](mail-sending.md#bounces-complaints-and-suppression)).
+
+- **Check webhooks** (admins) reads the domain's webhooks and tracking from Mailgun.
+- **Register** (super admins) adds the Newsroom URL to every event that lacks it. Running it again changes nothing. Other URLs on the domain are kept.
+- **Repair** drops Newsroom URLs that point at an old host, then registers.
+- **Remove** takes only the Newsroom URL off each event.
+- **Tracking** (super admins) turns open and click tracking on or off for the domain in Mailgun. Readers still choose for themselves in their mailing preferences.
+
+These use the separate **webhook management key** (Integrations → Mailgun): a
+Developer-role key, or the main account key if your plan has no role keys. The
+page warns when it is the same as the sending key and when it is over 90 days
+old. Every change is audit-logged as `email_sending_domain.webhooks_register`,
+`.webhooks_repair`, `.webhooks_remove` and `.tracking_changed`.
 
 ## Daily check and alerts
 
@@ -139,7 +175,7 @@ bash /app/data/current/deploy/cloudron-www-data.sh \
 - **Enable** puts it back to `pending` and re-checks it.
 - **Remove** is blocked while any newsletter (active or archived) uses the domain for From or reply-to. Change those newsletters first, or disable the domain instead.
 
-Add, disable, enable, remove and every status change are written to the audit log (`email_sending_domain.*`) with the actor (none for the daily check), the domain, and the old and new status. From address changes are logged as `email_sender_address.added`, `.updated` (with the changed fields), `.disabled` and `.enabled`, and default reply-to changes as `email_sending_domain.default_reply_to_changed`. Every change on this page, and every test email, asks admins to confirm their identity if they have not done so in the last few minutes. Staff get 403.
+Add, disable, enable, remove and every status change are written to the audit log (`email_sending_domain.*`) with the actor (none for the daily check), the domain, and the old and new status. From address changes are logged as `email_sender_address.added`, `.updated` (with the changed fields), `.disabled` and `.enabled`, and default reply-to changes as `email_sending_domain.default_reply_to_changed`. Every change on this page except **Check DNS**, and every test email, asks admins to confirm their identity if they have not done so in the last few minutes. A From address that newsletters use cannot be renamed; add the new address alongside it instead. Staff get 403.
 
 ## Seeded domains
 

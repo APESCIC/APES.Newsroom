@@ -5,6 +5,7 @@ import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
 import Badge from '../../../Components/Workspace/ui/Badge';
 import EmptyState from '../../../Components/Workspace/ui/EmptyState';
 import Pagination from '../../../Components/Workspace/ui/Pagination';
+import { deliveryStatusText, type DeliveryStatus } from '../People/types';
 
 type SubscriptionRow = {
     newsletter: string;
@@ -18,6 +19,7 @@ type SubscriberRow = {
     name: string | null;
     signed_up_at: string;
     suppressed: boolean;
+    delivery_status?: DeliveryStatus | null;
     source: string | null;
     consent_action: string | null;
     subscriptions: SubscriptionRow[];
@@ -159,6 +161,7 @@ export default function SubscribersIndex({
                                         {row.consent_action ? ` · ${row.consent_action}` : ''}
                                     </p>
                                     <p className="mt-1">{row.suppressed ? <Badge tone="error">Suppressed globally</Badge> : <Badge tone="ok">Not suppressed</Badge>}</p>
+                                    {row.delivery_status && <p className="mt-1 text-xs text-muted">{deliveryStatusText(row.delivery_status)}</p>}
                                 </div>
                                 <div className="text-sm">
                                     {row.subscriptions.length === 0 ? (

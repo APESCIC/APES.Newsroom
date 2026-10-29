@@ -21,6 +21,10 @@ class EmailSendingDomain extends Model
         'verified_at',
         'last_tested_at',
         'last_test_result',
+        'track_opens',
+        'track_clicks',
+        'webhooks',
+        'webhooks_checked_at',
         'created_by',
     ];
 
@@ -33,6 +37,10 @@ class EmailSendingDomain extends Model
             'verified_at' => 'datetime',
             'last_tested_at' => 'datetime',
             'last_test_result' => 'array',
+            'track_opens' => 'boolean',
+            'track_clicks' => 'boolean',
+            'webhooks' => 'array',
+            'webhooks_checked_at' => 'datetime',
         ];
     }
 

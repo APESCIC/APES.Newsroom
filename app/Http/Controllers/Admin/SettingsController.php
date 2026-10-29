@@ -27,7 +27,7 @@ class SettingsController extends Controller
         $values = $this->settings->all();
         $settings = [];
 
-        foreach (SettingDefinitions::all() as $key => $definition) {
+        foreach (SettingDefinitions::forPage(null) as $key => $definition) {
             $settings[] = [
                 'key' => $key,
                 'section' => $definition['section'],

@@ -20,6 +20,8 @@ return [
 
     'integration_check_retention_days' => (int) env('SECURITY_INTEGRATION_CHECK_RETENTION_DAYS', 30),
 
+    'mail_event_retention_months' => (int) env('SECURITY_MAIL_EVENT_RETENTION_MONTHS', 24),
+
     /*
     |--------------------------------------------------------------------------
     | Password policy

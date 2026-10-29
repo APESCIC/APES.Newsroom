@@ -79,12 +79,15 @@ class MailgunSenderCheck
 
         $mailgunDomain = $this->mailgun->mailgunDomainFor($approved->domain, $approved->mailgun_domain);
         $mailgun = $this->mailgun->lookup($mailgunDomain);
+        $fromDomain = SenderDomains::domainOf($senderEmail);
+        $hasDmarc = $this->mailgun->dmarcRecordFor($fromDomain, $approved->domain) !== null;
+        $alignment = $hasDmarc ? $this->mailgun->alignmentProblem($fromDomain, $approved->domain, $mailgunDomain) : null;
 
         $checks = [
             'mailgun_state' => $mailgun['state'] ?? null,
             'spf' => $mailgun['spf'] ?? false,
             'dkim' => $mailgun['dkim'] ?? false,
-            'dmarc' => $this->mailgun->dmarcRecordFor(SenderDomains::domainOf($senderEmail), $approved->domain) !== null,
+            'dmarc' => $hasDmarc && $alignment === null,
         ];
 
         if (isset($mailgun['error'])) {
@@ -96,7 +99,8 @@ class MailgunSenderCheck
             'Mailgun domain not active' => $checks['mailgun_state'] !== 'active',
             'SPF' => ! $checks['spf'],
             'DKIM' => ! $checks['dkim'],
-            'DMARC' => ! $checks['dmarc'],
+            'DMARC' => ! $hasDmarc,
+            rtrim($alignment ?? 'DMARC alignment', '.') => $alignment !== null,
         ]));
 
         return [
