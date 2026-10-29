@@ -22,5 +22,5 @@
     "Public impact: newsletter emails can come from the new domains once they are verified; no change to public pages",
     "Internal impact: new email_sender_addresses table, Mailgun HTTP API transport for newsletters (MAILING_NEWSLETTER_TRANSPORT=smtp switches back to Cloudron SMTP), sending-domain-test rate limiter, ops runbook in docs/email-sending-domains.md"
   ],
-  "pr": 0
+  "pr": 606
 }
