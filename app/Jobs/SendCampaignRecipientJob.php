@@ -12,6 +12,7 @@ use App\Models\CampaignRecipient;
 use App\Services\Mailing\CampaignSender;
 use App\Services\Mailing\CampaignService;
 use App\Services\Mailing\ConsentService;
+use App\Services\Mailing\SenderDomains;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -106,7 +107,7 @@ class SendCampaignRecipientJob implements ShouldBeUnique, ShouldQueue
             ? $readMore
             : CampaignTrackingController::clickUrl($recipient, $readMore);
 
-        Mail::to($recipient->email)->send(new CampaignPostSummaryMail(
+        Mail::mailer(SenderDomains::newsletterMailer())->to($recipient->email)->send(new CampaignPostSummaryMail(
             snapshot: $campaign->snapshot,
             unsubscribeUrl: $unsubscribePageUrl,
             preferencesUrl: $preferencesUrl,

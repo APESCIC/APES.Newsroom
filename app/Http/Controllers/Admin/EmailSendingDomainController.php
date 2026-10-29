@@ -2,13 +2,20 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\SenderAddressPurpose;
 use App\Enums\SendingDomainStatus;
 use App\Http\Controllers\Controller;
+use App\Models\EmailSenderAddress;
 use App\Models\EmailSendingDomain;
 use App\Services\Audit\AuditLogger;
 use App\Services\Mail\MailgunDomainService;
 use App\Services\Mail\SendingDomainChecker;
+use App\Services\Mail\SendingDomainTester;
+use App\Services\Mailing\DefaultReplyTo;
+use App\Services\Mailing\SenderDomains;
 use App\Services\Mailing\SendingDomainAlerts;
+use Closure;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -17,9 +24,10 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Admin → Settings → Email sending domains. Mailgun is only read: domains are
- * added and verified in the Mailgun dashboard; this page tracks which of them
- * newsletters may use and shows the DNS records each one needs.
+ * Admin → Settings → Email sending domains. Mailgun domains are added and
+ * verified in the Mailgun dashboard; this page tracks which of them
+ * newsletters may use, their allowed From addresses and the DNS records each
+ * one needs, and sends test emails through them.
  */
 class EmailSendingDomainController extends Controller
 {
@@ -30,10 +38,10 @@ class EmailSendingDomainController extends Controller
         private readonly AuditLogger $audit,
     ) {}
 
-    public function index(MailgunDomainService $mailgun, SendingDomainAlerts $alerts): Response
+    public function index(Request $request, MailgunDomainService $mailgun, SendingDomainAlerts $alerts): Response
     {
         $domains = EmailSendingDomain::query()
-            ->with('creator:id,name')
+            ->with(['creator:id,name', 'addresses'])
             ->orderBy('domain')
             ->get()
             ->map(fn (EmailSendingDomain $domain) => [
@@ -46,8 +54,17 @@ class EmailSendingDomainController extends Controller
                 'last_check' => $domain->last_check,
                 'last_checked_at' => $domain->last_checked_at?->toIso8601String(),
                 'verified_at' => $domain->verified_at?->toIso8601String(),
+                'last_test' => $domain->last_test_result,
                 'created_by' => $domain->creator?->name,
                 'in_use' => $domain->newslettersUsing(),
+                'addresses' => $domain->addresses->map(fn (EmailSenderAddress $address) => [
+                    'id' => $address->id,
+                    'address' => $address->address,
+                    'purpose' => $address->purpose->value,
+                    'label' => $address->label,
+                    'enabled' => $address->enabled,
+                    'last_test' => $address->last_test_result,
+                ])->values(),
             ]);
 
         return Inertia::render('Admin/Settings/EmailDomains/Index', [
@@ -56,7 +73,120 @@ class EmailSendingDomainController extends Controller
             'configuredMailgunDomain' => $mailgun->configuredDomain(),
             'dmarcRecommendation' => SendingDomainChecker::dmarcRecommendation(),
             'alerts' => $alerts->failing(),
+            'defaultReplyTo' => DefaultReplyTo::get(),
+            'testRecipient' => $request->user()->email,
+            'offerTestAddressId' => $request->session()->get('offer_test_address'),
+            'purposes' => collect(SenderAddressPurpose::cases())->map(fn (SenderAddressPurpose $purpose) => [
+                'value' => $purpose->value,
+                'label' => $purpose->label(),
+            ])->values(),
         ]);
+    }
+
+    public function storeAddress(Request $request, EmailSendingDomain $emailSendingDomain): RedirectResponse
+    {
+        $validated = $this->validatedAddress($request, $emailSendingDomain);
+
+        $address = $emailSendingDomain->addresses()->create([
+            ...$validated,
+            'enabled' => true,
+            'created_by' => $request->user()->id,
+        ]);
+
+        $this->audit->record($request->user(), 'email_sender_address.added', $address, [
+            'domain' => $emailSendingDomain->domain,
+            'address' => $address->address,
+            'purpose' => $address->purpose->value,
+        ], $request);
+
+        return back()
+            ->with('status', "Added {$address->address}. Send a test email to check it works.")
+            ->with('offer_test_address', $address->id);
+    }
+
+    public function updateAddress(Request $request, EmailSenderAddress $emailSenderAddress): RedirectResponse
+    {
+        $domain = $emailSenderAddress->domain;
+        $validated = $this->validatedAddress($request, $domain, $emailSenderAddress);
+
+        $before = $emailSenderAddress->only(['address', 'purpose', 'label']);
+        $emailSenderAddress->update($validated);
+        $after = $emailSenderAddress->only(['address', 'purpose', 'label']);
+
+        $changes = [];
+        foreach ($after as $field => $value) {
+            $old = $before[$field] instanceof SenderAddressPurpose ? $before[$field]->value : $before[$field];
+            $new = $value instanceof SenderAddressPurpose ? $value->value : $value;
+            if ($old !== $new) {
+                $changes[$field] = ['from' => $old, 'to' => $new];
+            }
+        }
+
+        if ($changes !== []) {
+            $this->audit->record($request->user(), 'email_sender_address.updated', $emailSenderAddress, [
+                'domain' => $domain->domain,
+                'address' => $emailSenderAddress->address,
+                'changes' => $changes,
+            ], $request);
+        }
+
+        return back()
+            ->with('status', "Saved {$emailSenderAddress->address}.")
+            ->with('offer_test_address', $emailSenderAddress->id);
+    }
+
+    public function disableAddress(Request $request, EmailSenderAddress $emailSenderAddress): RedirectResponse
+    {
+        return $this->setAddressEnabled($request, $emailSenderAddress, false);
+    }
+
+    public function enableAddress(Request $request, EmailSenderAddress $emailSenderAddress): RedirectResponse
+    {
+        return $this->setAddressEnabled($request, $emailSenderAddress, true);
+    }
+
+    public function updateDefaultReplyTo(Request $request): RedirectResponse
+    {
+        $request->merge(['default_reply_to' => filled($request->input('default_reply_to')) ? Str::lower(trim((string) $request->input('default_reply_to'))) : null]);
+        $validated = $request->validate([
+            'default_reply_to' => [
+                'nullable', 'string', 'email', 'max:255',
+                function (string $attribute, mixed $value, Closure $fail) {
+                    $problem = filled($value) ? SenderDomains::replyToProblem((string) $value) : null;
+                    if ($problem !== null) {
+                        $fail($problem);
+                    }
+                },
+            ],
+        ]);
+
+        $previous = DefaultReplyTo::get();
+        $next = filled($validated['default_reply_to'] ?? null) ? (string) $validated['default_reply_to'] : null;
+        if ($previous === $next) {
+            return back();
+        }
+
+        DefaultReplyTo::set($next);
+        $this->audit->record($request->user(), 'email_sending_domain.default_reply_to_changed', null, [
+            'from' => $previous,
+            'to' => $next,
+        ], $request);
+
+        return back()->with('status', $next === null ? 'Removed the default reply-to address.' : "Default reply-to set to {$next}.");
+    }
+
+    public function testDomain(Request $request, EmailSendingDomain $emailSendingDomain, SendingDomainTester $tester): JsonResponse
+    {
+        $extra = $this->validatedExtraRecipient($request);
+
+        return response()->json($tester->send($emailSendingDomain, null, $request->user(), $extra, $request));
+    }
+
+    public function testAddress(Request $request, EmailSenderAddress $emailSenderAddress, SendingDomainTester $tester): JsonResponse
+    {
+        $extra = $this->validatedExtraRecipient($request);
+
+        return response()->json($tester->send($emailSenderAddress->domain, $emailSenderAddress, $request->user(), $extra, $request));
     }
 
     public function store(Request $request): RedirectResponse
@@ -155,5 +285,67 @@ class EmailSendingDomainController extends Controller
         $emailSendingDomain->delete();
 
         return back()->with('status', "Removed {$emailSendingDomain->domain}.");
+    }
+
+    /**
+     * @return array{address: string, purpose: string, label: string|null}
+     */
+    private function validatedAddress(Request $request, EmailSendingDomain $domain, ?EmailSenderAddress $existing = null): array
+    {
+        $request->merge(['address' => Str::lower(trim((string) $request->input('address')))]);
+        $suffixes = $domain->addressSuffixes();
+
+        $validated = $request->validate([
+            'address' => [
+                'required', 'string', 'email', 'max:255',
+                Rule::unique('email_sender_addresses', 'address')->ignore($existing?->id),
+                function (string $attribute, mixed $value, Closure $fail) use ($suffixes) {
+                    $email = (string) $value;
+                    $problem = SenderDomains::localPartProblem($email);
+                    if ($problem === null && ! Str::endsWith($email, $suffixes)) {
+                        $problem = 'The address must end with '.implode(' or ', $suffixes).'.';
+                    }
+                    if ($problem !== null) {
+                        $fail($problem);
+                    }
+                },
+            ],
+            'purpose' => ['required', Rule::enum(SenderAddressPurpose::class)],
+            'label' => ['nullable', 'string', 'max:120'],
+        ], [
+            'address.unique' => 'That address is already on the list.',
+        ]);
+
+        return [
+            'address' => $validated['address'],
+            'purpose' => $validated['purpose'],
+            'label' => filled($validated['label'] ?? null) ? trim((string) $validated['label']) : null,
+        ];
+    }
+
+    private function setAddressEnabled(Request $request, EmailSenderAddress $address, bool $enabled): RedirectResponse
+    {
+        if ($address->enabled === $enabled) {
+            return back();
+        }
+
+        $address->update(['enabled' => $enabled]);
+        $this->audit->record($request->user(), $enabled ? 'email_sender_address.enabled' : 'email_sender_address.disabled', $address, [
+            'domain' => $address->domain->domain,
+            'address' => $address->address,
+        ], $request);
+
+        return back()->with('status', ($enabled ? 'Enabled ' : 'Disabled ').$address->address.'.');
+    }
+
+    private function validatedExtraRecipient(Request $request): ?string
+    {
+        $validated = $request->validate([
+            'extra_recipient' => ['nullable', 'string', 'email', 'max:255'],
+        ], [
+            'extra_recipient.email' => 'Enter a valid email address for the extra recipient.',
+        ]);
+
+        return filled($validated['extra_recipient'] ?? null) ? Str::lower(trim((string) $validated['extra_recipient'])) : null;
     }
 }

@@ -102,7 +102,7 @@ class CampaignSender
         return [
             'address' => $newsletter->sender_email,
             'name' => $newsletter->sender_name,
-            'reply_to' => $newsletter->reply_to,
+            'reply_to' => $newsletter->reply_to ?? DefaultReplyTo::usable(),
         ];
     }
 

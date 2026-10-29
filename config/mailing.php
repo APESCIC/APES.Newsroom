@@ -25,4 +25,28 @@ return [
     |
     */
     'sender_domains' => explode(',', (string) env('MAILING_SENDER_DOMAINS', 'apesnews.org.uk')),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Newsletter transport
+    |--------------------------------------------------------------------------
+    |
+    | "mailgun" sends newsletters and sending-domain test emails through the
+    | Mailgun HTTP API, using each From domain's own Mailgun domain, whenever
+    | the Mailgun API key is configured. "smtp" keeps newsletters on the
+    | default mailer (Cloudron SMTP). System and account mail always use the
+    | default mailer.
+    |
+    */
+    'newsletter_transport' => env('MAILING_NEWSLETTER_TRANSPORT', 'mailgun'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sending-domain test emails
+    |--------------------------------------------------------------------------
+    */
+    'test_send' => [
+        'per_user_per_minute' => (int) env('MAILING_TEST_SEND_PER_MINUTE', 5),
+        'per_domain_per_day' => (int) env('MAILING_TEST_SEND_PER_DOMAIN_PER_DAY', 20),
+    ],
 ];

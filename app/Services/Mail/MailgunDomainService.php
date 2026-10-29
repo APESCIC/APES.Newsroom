@@ -125,6 +125,20 @@ class MailgunDomainService
     }
 
     /**
+     * DMARC for a From domain, falling back to the approved parent domain's
+     * policy as receivers do for a subdomain such as news.myapes.me.uk.
+     */
+    public function dmarcRecordFor(string $fromDomain, string $approvedDomain): ?string
+    {
+        $record = $this->dmarcRecord($fromDomain);
+        if ($record !== null || $fromDomain === $approvedDomain || ! Str::endsWith($fromDomain, '.'.$approvedDomain)) {
+            return $record;
+        }
+
+        return $this->dmarcRecord($approvedDomain);
+    }
+
+    /**
      * @param  array<string, mixed>  $record
      * @return array{purpose: string, type: string, name: string, value: string, valid: bool}
      */

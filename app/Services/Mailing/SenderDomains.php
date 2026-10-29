@@ -3,7 +3,9 @@
 namespace App\Services\Mailing;
 
 use App\Enums\SendingDomainStatus;
+use App\Models\EmailSenderAddress;
 use App\Models\EmailSendingDomain;
+use App\Services\Mail\MailgunDomainService;
 use Illuminate\Support\Str;
 
 /**
@@ -70,6 +72,26 @@ class SenderDomains
     }
 
     /**
+     * Why a From address is not on the admin's list of allowed addresses, or
+     * null when it is listed and enabled.
+     */
+    public static function senderAddressProblem(?string $email): ?string
+    {
+        if (blank($email)) {
+            return null;
+        }
+
+        $normalized = Str::lower(trim((string) $email));
+        $address = EmailSenderAddress::query()->where('address', $normalized)->first();
+
+        return match (true) {
+            $address === null => "{$normalized} is not an allowed From address. An admin can add it under Settings → Email sending domains.",
+            ! $address->enabled => "{$normalized} has been disabled as a From address by an admin.",
+            default => null,
+        };
+    }
+
+    /**
      * Why a reply-to address cannot be used, or null when it can.
      */
     public static function replyToProblem(?string $email): ?string
@@ -106,8 +128,45 @@ class SenderDomains
         return null;
     }
 
-    private static function find(string $email): ?EmailSendingDomain
+    /**
+     * The approved domain an address belongs to: its own domain, or the domain
+     * whose Mailgun domain it uses (news@news.myapes.me.uk under myapes.me.uk).
+     */
+    public static function find(string $email): ?EmailSendingDomain
     {
-        return EmailSendingDomain::query()->where('domain', self::domainOf($email))->first();
+        $name = self::domainOf($email);
+        if ($name === '') {
+            return null;
+        }
+
+        return EmailSendingDomain::query()->where('domain', $name)->first()
+            ?? EmailSendingDomain::query()->where('mailgun_domain', $name)->orderBy('id')->first();
+    }
+
+    /**
+     * The Mailgun domain to send a From address through, or null when its
+     * domain is not approved and enabled.
+     */
+    public static function mailgunDomainForSender(string $email, MailgunDomainService $mailgun): ?string
+    {
+        $domain = self::find($email);
+        if ($domain === null || ! $domain->isEnabled()) {
+            return null;
+        }
+
+        return $mailgun->mailgunDomainFor($domain->domain, $domain->mailgun_domain);
+    }
+
+    /**
+     * The mailer newsletters use: the per-domain Mailgun API mailer when
+     * Mailgun is configured and enabled for newsletters, else the default.
+     */
+    public static function newsletterMailer(): ?string
+    {
+        if (config('mailing.newsletter_transport') !== 'mailgun') {
+            return null;
+        }
+
+        return app(MailgunDomainService::class)->isConfigured() ? 'mailgun-api' : null;
     }
 }

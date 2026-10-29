@@ -1,0 +1,26 @@
+{
+  "version": "v1.24.0",
+  "slug": "release-v1-24-0",
+  "released_at": "2026-10-29",
+  "previous_version": "v1.23.0",
+  "theme": "Extra sending domains",
+  "change_types": ["added", "changed", "security"],
+  "topic_tags": ["internal-only", "compliance"],
+  "summary": "Newsletters can now send from apespetcare.org.uk, apesshelter.org.uk and myapes.me.uk as well as apesnews.org.uk, each through its own Mailgun domain, and admins can prove each one works with a test email.",
+  "detailed_changes": [
+    "Newsletters send through the Mailgun HTTP API using the Mailgun domain of their From domain, such as mail.apespetcare.org.uk or news.myapes.me.uk, instead of one shared sending domain. A From domain that is not approved and enabled is refused, and system and account emails still send from apesnews.org.uk (#560).",
+    "apespetcare.org.uk, apesshelter.org.uk and myapes.me.uk are added as approved sending domains with their news@ and noreply@ From addresses (news@news.myapes.me.uk only for myapes.me.uk). They stay pending until their Mailgun and DNS set-up is finished (#599).",
+    "Admins manage each domain's allowed From addresses and a default reply-to on Admin → Settings → Email sending domains, and staff now pick a newsletter's From address from that list (#599).",
+    "Every domain and From address has a Send test email button. It sends straight away to the signed-in admin and one optional extra address, shows Mailgun's message ID or error, and re-checks Active, SPF, DKIM and DMARC (#600).",
+    "Only admins can manage sending domains and send tests, after confirming their identity. Every change and test is written to the audit log, and test emails are limited to 5 a minute per admin and 20 a day per domain (#601).",
+    "Automated tests cover per-domain routing for all four domains, test-send success and failure, permissions, limits and audit logging, with no real calls to Mailgun (#602)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /admin/settings/email-domains, /staff/newsletters/{id}/edit",
+    "User groups affected: admins and super admins (sending domains), staff editing newsletters (From address list)",
+    "Public impact: newsletter emails can come from the new domains once they are verified; no change to public pages",
+    "Internal impact: new email_sender_addresses table, Mailgun HTTP API transport for newsletters (MAILING_NEWSLETTER_TRANSPORT=smtp switches back to Cloudron SMTP), sending-domain-test rate limiter, ops runbook in docs/email-sending-domains.md"
+  ],
+  "pr": 606
+}

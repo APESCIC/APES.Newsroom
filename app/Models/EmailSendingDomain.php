@@ -6,6 +6,7 @@ use App\Enums\SendingDomainStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class EmailSendingDomain extends Model
@@ -18,6 +19,8 @@ class EmailSendingDomain extends Model
         'last_check',
         'last_checked_at',
         'verified_at',
+        'last_tested_at',
+        'last_test_result',
         'created_by',
     ];
 
@@ -28,6 +31,8 @@ class EmailSendingDomain extends Model
             'last_check' => 'array',
             'last_checked_at' => 'datetime',
             'verified_at' => 'datetime',
+            'last_tested_at' => 'datetime',
+            'last_test_result' => 'array',
         ];
     }
 
@@ -47,6 +52,25 @@ class EmailSendingDomain extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * @return HasMany<EmailSenderAddress, $this>
+     */
+    public function addresses(): HasMany
+    {
+        return $this->hasMany(EmailSenderAddress::class)->orderBy('address');
+    }
+
+    /**
+     * Address suffixes on this domain: the domain itself and, when set, its
+     * Mailgun domain (news@news.myapes.me.uk belongs to myapes.me.uk).
+     *
+     * @return list<string>
+     */
+    public function addressSuffixes(): array
+    {
+        return array_values(array_unique(array_filter(['@'.$this->domain, $this->mailgun_domain ? '@'.$this->mailgun_domain : null])));
     }
 
     /**
@@ -74,12 +98,15 @@ class EmailSendingDomain extends Model
      */
     public function newslettersUsing(): array
     {
-        $suffix = '@'.$this->domain;
+        $suffixes = $this->addressSuffixes();
 
         return Newsletter::query()
-            ->where(fn (Builder $query) => $query
-                ->whereRaw('LOWER(sender_email) LIKE ?', ['%'.$suffix])
-                ->orWhereRaw('LOWER(reply_to) LIKE ?', ['%'.$suffix]))
+            ->where(function (Builder $query) use ($suffixes) {
+                foreach ($suffixes as $suffix) {
+                    $query->orWhereRaw('LOWER(sender_email) LIKE ?', ['%'.$suffix])
+                        ->orWhereRaw('LOWER(reply_to) LIKE ?', ['%'.$suffix]);
+                }
+            })
             ->orderBy('name')
             ->get(['id', 'name', 'sender_email', 'reply_to', 'archived_at'])
             ->map(fn (Newsletter $newsletter) => [
@@ -87,8 +114,8 @@ class EmailSendingDomain extends Model
                 'name' => $newsletter->name,
                 'archived' => $newsletter->archived_at !== null,
                 'uses' => array_values(array_filter([
-                    Str::endsWith(Str::lower((string) $newsletter->sender_email), $suffix) ? 'from' : null,
-                    Str::endsWith(Str::lower((string) $newsletter->reply_to), $suffix) ? 'reply_to' : null,
+                    Str::endsWith(Str::lower((string) $newsletter->sender_email), $suffixes) ? 'from' : null,
+                    Str::endsWith(Str::lower((string) $newsletter->reply_to), $suffixes) ? 'reply_to' : null,
                 ])),
             ])
             ->all();
@@ -96,9 +123,15 @@ class EmailSendingDomain extends Model
 
     public function isUsedAsSender(): bool
     {
+        $suffixes = $this->addressSuffixes();
+
         return Newsletter::query()
             ->active()
-            ->whereRaw('LOWER(sender_email) LIKE ?', ['%@'.$this->domain])
+            ->where(function (Builder $query) use ($suffixes) {
+                foreach ($suffixes as $suffix) {
+                    $query->orWhereRaw('LOWER(sender_email) LIKE ?', ['%'.$suffix]);
+                }
+            })
             ->exists();
     }
 }
