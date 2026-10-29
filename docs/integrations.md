@@ -14,7 +14,7 @@ the server environment (Cloudron-injected or needed before the app boots).
 
 | Provider | Key | Env var | Config key | Consumer | Management |
 |----------|-----|---------|------------|----------|------------|
-| Mailgun | API key | `MAILGUN_API_KEY` | `services.mailgun.secret` | `MailgunDomainService` (read-only domain lookups for `MailgunSenderCheck` and [email sending domains](email-sending-domains.md)) | Admin-managed |
+| Mailgun | API key | `MAILGUN_API_KEY` | `services.mailgun.secret` | `MailgunDomainService` (domain lookups for `MailgunSenderCheck` and [email sending domains](email-sending-domains.md)) and `MailgunApiTransport` (newsletter and test-email sends through each domain's Mailgun domain) | Admin-managed |
 | Mailgun | Sending domain | `MAILGUN_DOMAIN` | `services.mailgun.domain` | `MailgunDomainService` | Admin-managed |
 | Mailgun | API endpoint | `MAILGUN_ENDPOINT` | `services.mailgun.endpoint` | `MailgunDomainService` | Admin-managed |
 | Stripe | Secret key | `STRIPE_SECRET` | `services.stripe.secret` | `StripeBillingClient` binding, `AccountController` | Admin-managed |
@@ -40,7 +40,8 @@ Notes:
 - `POSTMARK_API_KEY`, `RESEND_API_KEY` and `AWS_*` are Laravel defaults
   that nothing uses.
 - There is no Mailgun webhook signing key: the Newsroom does not receive
-  Mailgun webhooks, and mail is sent through Cloudron SMTP.
+  Mailgun webhooks. Newsletters send through the Mailgun HTTP API and system
+  mail through Cloudron SMTP (see [email sending domains](email-sending-domains.md)).
 - `APP_KEY` encrypts the stored integration keys. Rotating it needs the old
   key in `APP_PREVIOUS_KEYS`, or every stored key must be re-entered.
 
