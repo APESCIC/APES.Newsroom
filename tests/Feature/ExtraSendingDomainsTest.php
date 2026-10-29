@@ -89,7 +89,7 @@ class ExtraSendingDomainsTest extends TestCase
         Http::fake([
             'api.eu.mailgun.net/v3/*' => $sendOk
                 ? Http::response(['id' => '<20261029.abc123@mailgun.test>', 'message' => 'Queued. Thank you.'])
-                : Http::response(['message' => 'Domain mail.apespetcare.org.uk is not allowed to send: Free accounts are for test purposes only.'], 403),
+                : Http::response(['message' => 'Domain apespetcare.org.uk is not allowed to send: Free accounts are for test purposes only.'], 403),
             'api.eu.mailgun.net/v4/domains/*' => Http::response([
                 'domain' => ['state' => $state],
                 'sending_dns_records' => [
@@ -124,8 +124,8 @@ class ExtraSendingDomainsTest extends TestCase
 
     public function test_extra_domains_and_from_addresses_are_seeded_pending(): void
     {
-        $this->assertSame('mail.apespetcare.org.uk', $this->domain('apespetcare.org.uk')->mailgun_domain);
-        $this->assertSame('mail.apesshelter.org.uk', $this->domain('apesshelter.org.uk')->mailgun_domain);
+        $this->assertSame('apespetcare.org.uk', $this->domain('apespetcare.org.uk')->mailgun_domain);
+        $this->assertSame('apesshelter.org.uk', $this->domain('apesshelter.org.uk')->mailgun_domain);
         $this->assertSame('myapes.me.uk', $this->domain('myapes.me.uk')->mailgun_domain);
         foreach (['apespetcare.org.uk', 'apesshelter.org.uk', 'myapes.me.uk'] as $name) {
             $this->assertSame(SendingDomainStatus::Pending, $this->domain($name)->status);
@@ -170,6 +170,24 @@ class ExtraSendingDomainsTest extends TestCase
         $this->assertSame('myapes.me.uk', $domain->fresh()->mailgun_domain);
     }
 
+    public function test_pet_care_and_shelter_move_to_their_root_mailgun_domains_and_back(): void
+    {
+        $shelter = $this->domain('apesshelter.org.uk');
+        $shelter->forceFill(['created_by' => User::factory()->admin()->create()->id])->save();
+        $migration = require database_path('migrations/2026_11_03_100200_use_root_mailgun_domains_for_petcare_and_shelter.php');
+
+        $migration->down();
+        $this->assertSame('mail.apespetcare.org.uk', $this->domain('apespetcare.org.uk')->mailgun_domain);
+        $this->assertSame('apesshelter.org.uk', $shelter->fresh()->mailgun_domain);
+
+        $this->domain('apespetcare.org.uk')->forceFill(['status' => SendingDomainStatus::Verified, 'verified_at' => now()])->save();
+        $migration->up();
+        $petCare = $this->domain('apespetcare.org.uk');
+        $this->assertSame('apespetcare.org.uk', $petCare->mailgun_domain);
+        $this->assertSame(SendingDomainStatus::Pending, $petCare->status);
+        $this->assertNull($petCare->verified_at);
+    }
+
     public function test_each_from_domain_sends_through_its_own_mailgun_domain(): void
     {
         $this->fakeMailgun();
@@ -177,8 +195,8 @@ class ExtraSendingDomainsTest extends TestCase
 
         $routes = [
             'app@apesnews.org.uk' => 'apesnews.org.uk',
-            'news@apespetcare.org.uk' => 'mail.apespetcare.org.uk',
-            'noreply@apesshelter.org.uk' => 'mail.apesshelter.org.uk',
+            'news@apespetcare.org.uk' => 'apespetcare.org.uk',
+            'noreply@apesshelter.org.uk' => 'apesshelter.org.uk',
             'news@myapes.me.uk' => 'myapes.me.uk',
             'news@news.example.net' => 'news.example.net',
         ];
@@ -309,14 +327,14 @@ class ExtraSendingDomainsTest extends TestCase
                 'ok' => true,
                 'from' => 'news@apespetcare.org.uk',
                 'recipients' => ['admin@apes.org.uk', 'volunteer@example.com'],
-                'mailgun_domain' => 'mail.apespetcare.org.uk',
+                'mailgun_domain' => 'apespetcare.org.uk',
                 'message_id' => '20261029.abc123@mailgun.test',
                 'error' => null,
                 'status' => 'verified',
                 'checks' => ['mailgun_state' => 'active', 'spf' => true, 'dkim' => true, 'dmarc' => true],
             ]);
 
-        $this->assertMessageSentThrough('mail.apespetcare.org.uk');
+        $this->assertMessageSentThrough('apespetcare.org.uk');
         Http::assertSent(fn (Request $request) => str_ends_with($request->url(), '/messages.mime')
             && collect($request->data())->contains(fn ($part) => ($part['name'] ?? null) === 'to' && $part['contents'] === 'admin@apes.org.uk,volunteer@example.com')
             && collect($request->data())->contains(fn ($part) => ($part['name'] ?? null) === 'message'
@@ -557,11 +575,12 @@ class ExtraSendingDomainsTest extends TestCase
     public function test_mailgun_domains_must_be_unique_and_no_reply_addresses_are_not_newsletter_senders(): void
     {
         $admin = User::factory()->admin()->create();
+        $this->subdomainFixture();
         $this->actingAs($admin)->withRecentAuthentication()
-            ->post('/admin/settings/email-domains', ['domain' => 'example.org.uk', 'mailgun_domain' => 'mail.apespetcare.org.uk'])
+            ->post('/admin/settings/email-domains', ['domain' => 'example.org.uk', 'mailgun_domain' => 'news.example.net'])
             ->assertSessionHasErrors(['mailgun_domain' => 'That Mailgun domain is already used by another sending domain.']);
         $this->actingAs($admin)->withRecentAuthentication()
-            ->post('/admin/settings/email-domains', ['domain' => 'mail.apesshelter.org.uk'])
+            ->post('/admin/settings/email-domains', ['domain' => 'news.example.net'])
             ->assertSessionHasErrors('domain');
 
         $this->assertStringContainsString('is a no-reply address', (string) SenderDomains::senderAddressProblem('noreply@apespetcare.org.uk'));
@@ -573,6 +592,7 @@ class ExtraSendingDomainsTest extends TestCase
         $admin = User::factory()->admin()->create();
         $this->domain('apesshelter.org.uk')->forceFill(['created_by' => $admin->id])->save();
 
+        (require database_path('migrations/2026_11_03_100200_use_root_mailgun_domains_for_petcare_and_shelter.php'))->down();
         $migration = require database_path('migrations/2026_11_01_100100_seed_extra_sending_domains.php');
         $migration->down();
 

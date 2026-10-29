@@ -11,7 +11,7 @@ const result = (overrides: Partial<TestResult> = {}): TestResult => ({
     ok: true,
     from: 'news@apespetcare.org.uk',
     recipients: ['admin@apes.org.uk'],
-    mailgun_domain: 'mail.apespetcare.org.uk',
+    mailgun_domain: 'apespetcare.org.uk',
     message_id: 'abc@mailgun.test',
     error: null,
     warning: null,

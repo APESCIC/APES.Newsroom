@@ -133,7 +133,7 @@ class SenderDomains
 
     /**
      * The approved domain an address belongs to: its own domain, or the domain
-     * whose Mailgun domain it uses (news@mail.apespetcare.org.uk under apespetcare.org.uk).
+     * whose Mailgun domain it uses (news@mg.example.org.uk under example.org.uk).
      */
     public static function find(string $email): ?EmailSendingDomain
     {

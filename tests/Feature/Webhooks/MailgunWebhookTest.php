@@ -209,10 +209,10 @@ class MailgunWebhookTest extends TestCase
     {
         config(['services.mailgun.secret' => 'key-1234', 'services.mailgun.domain' => null]);
         Http::fake([
-            'api.eu.mailgun.net/v3/mail.apespetcare.org.uk/bounces*' => Http::response(['items' => [
+            'api.eu.mailgun.net/v3/apespetcare.org.uk/bounces*' => Http::response(['items' => [
                 ['address' => 'Bounced@Example.com', 'code' => '550', 'error' => 'No such user', 'created_at' => 'Fri, 23 Oct 2026 10:00:00 UTC'],
-            ], 'paging' => ['next' => 'https://api.eu.mailgun.net/v3/mail.apespetcare.org.uk/bounces?page=next&limit=1000']], 200),
-            'api.eu.mailgun.net/v3/mail.apespetcare.org.uk/complaints*' => Http::response(['items' => [['address' => 'spam@example.com']], 'paging' => []]),
+            ], 'paging' => ['next' => 'https://api.eu.mailgun.net/v3/apespetcare.org.uk/bounces?page=next&limit=1000']], 200),
+            'api.eu.mailgun.net/v3/apespetcare.org.uk/complaints*' => Http::response(['items' => [['address' => 'spam@example.com']], 'paging' => []]),
             'api.eu.mailgun.net/v3/*' => Http::response(['items' => [], 'paging' => []]),
         ]);
 

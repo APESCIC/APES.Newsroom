@@ -38,14 +38,14 @@ class MailgunWebhookManagementTest extends TestCase
     private function fakeMailgun(array $webhooks): void
     {
         Http::fake([
-            'api.eu.mailgun.net/v3/domains/mail.apespetcare.org.uk/webhooks' => function (Request $request) use (&$webhooks) {
+            'api.eu.mailgun.net/v3/domains/apespetcare.org.uk/webhooks' => function (Request $request) use (&$webhooks) {
                 if ($request->method() === 'POST') {
                     $webhooks[$request['id']] = [$request['url']];
                 }
 
                 return Http::response(['webhooks' => collect($webhooks)->map(fn (array $urls) => ['urls' => $urls])->all()]);
             },
-            'api.eu.mailgun.net/v3/domains/mail.apespetcare.org.uk/webhooks/*' => function (Request $request) use (&$webhooks) {
+            'api.eu.mailgun.net/v3/domains/apespetcare.org.uk/webhooks/*' => function (Request $request) use (&$webhooks) {
                 $event = basename(parse_url($request->url(), PHP_URL_PATH));
                 if ($request->method() === 'DELETE') {
                     unset($webhooks[$event]);
@@ -56,7 +56,7 @@ class MailgunWebhookManagementTest extends TestCase
 
                 return Http::response(['message' => 'ok']);
             },
-            'api.eu.mailgun.net/v3/domains/mail.apespetcare.org.uk/tracking*' => Http::response(['tracking' => ['open' => ['active' => true], 'click' => ['active' => 'htmlonly']]]),
+            'api.eu.mailgun.net/v3/domains/apespetcare.org.uk/tracking*' => Http::response(['tracking' => ['open' => ['active' => true], 'click' => ['active' => 'htmlonly']]]),
         ]);
     }
 

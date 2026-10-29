@@ -15,7 +15,7 @@ addresses at **Admin → Settings → Email sending domains**
 - The server checks the same rules, so a bypassed form is still rejected.
 - The part before the @ cannot contain spaces. It also cannot be one of the reserved names: `postmaster`, `abuse`, `hostmaster`, `webmaster` or `mailer-daemon`.
 - An address that has not changed is accepted when the newsletter is saved, so staff can still edit other fields. It is still blocked at send time if its domain is no longer approved, enabled and verified.
-- A From address may be on the domain itself (`news@apespetcare.org.uk`) or on the domain's Mailgun domain (`news@mail.apespetcare.org.uk` under `apespetcare.org.uk`). When the domain's DMARC record asks for strict alignment (`adkim=s` or `aspf=s`), only addresses on the Mailgun domain itself can verify. That is why `myapes.me.uk`, which has strict DMARC, uses `myapes.me.uk` itself as its Mailgun domain.
+- A From address may be on the domain itself (`news@apespetcare.org.uk`) or on the domain's Mailgun domain when that is a subdomain (`news@mg.example.org.uk` under `example.org.uk`). When the domain's DMARC record asks for strict alignment (`adkim=s` or `aspf=s`), only addresses on the Mailgun domain itself can verify. That is why `myapes.me.uk`, which has strict DMARC, uses `myapes.me.uk` itself as its Mailgun domain.
 - Only addresses with the **Newsletters** purpose can be chosen as a newsletter From; No-reply addresses are for test emails and system mail.
 - Newsletter confirmation emails use the newsletter's From address once it is verified, and go through the same transport as its newsletters.
 - System and account emails (password resets, sign-in links, receipts) send from apesnews.org.uk through the system transport chosen under [Mail sending](mail-sending.md) (Cloudron SMTP by default).
@@ -28,8 +28,8 @@ Mailgun HTTP API (`POST /v3/{mailgun-domain}/messages.mime`), for example:
 | From | Mailgun domain |
 |------|----------------|
 | `app@apesnews.org.uk` | the Mailgun domain under Integrations when it is `apesnews.org.uk` or a subdomain of it, otherwise `apesnews.org.uk` |
-| `news@apespetcare.org.uk` | `mail.apespetcare.org.uk` |
-| `news@apesshelter.org.uk` | `mail.apesshelter.org.uk` |
+| `news@apespetcare.org.uk` | `apespetcare.org.uk` |
+| `news@apesshelter.org.uk` | `apesshelter.org.uk` |
 | `news@myapes.me.uk` | `myapes.me.uk` |
 
 The Mailgun domain is the domain's **Mailgun domain** override when one is set,
@@ -190,20 +190,20 @@ The v1.24.0 migration adds, as `pending` until the ops work below is done:
 
 | Domain | Mailgun domain | From addresses |
 |--------|----------------|----------------|
-| `apespetcare.org.uk` | `mail.apespetcare.org.uk` | `news@apespetcare.org.uk`, `noreply@apespetcare.org.uk` |
-| `apesshelter.org.uk` | `mail.apesshelter.org.uk` | `news@apesshelter.org.uk`, `noreply@apesshelter.org.uk` |
+| `apespetcare.org.uk` | `apespetcare.org.uk` (`mail.apespetcare.org.uk` before v1.25.2) | `news@apespetcare.org.uk`, `noreply@apespetcare.org.uk` |
+| `apesshelter.org.uk` | `apesshelter.org.uk` (`mail.apesshelter.org.uk` before v1.25.2) | `news@apesshelter.org.uk`, `noreply@apesshelter.org.uk` |
 | `myapes.me.uk` | `myapes.me.uk` | `news@myapes.me.uk` only |
 
 It also adds every existing newsletter From address to its domain's list, so current newsletters keep a selectable sender.
 
-`myapes.me.uk` was first seeded with the Mailgun domain `news.myapes.me.uk`. The v1.25.1 migration moves it to the root domain (`myapes.me.uk`, From `news@myapes.me.uk`) for the MyAPES newsletter, and puts it back to `pending`. A domain an admin created themselves is left alone.
+`myapes.me.uk` was first seeded with the Mailgun domain `news.myapes.me.uk`. The v1.25.1 migration moves it to the root domain (`myapes.me.uk`, From `news@myapes.me.uk`) for the MyAPES newsletter, and puts it back to `pending`. Pet Care and Shelter were first seeded with `mail.apespetcare.org.uk` and `mail.apesshelter.org.uk`; both roots were already Mailgun EU domains with their DNS published, so the v1.25.2 migration moves them to the root domains and back to `pending`. A domain an admin created themselves is left alone.
 
 ## Ops runbook: Mailgun and DNS for a new domain
 
 Issues [#596](https://github.com/APESCIC/APES.Newsroom/issues/596), [#597](https://github.com/APESCIC/APES.Newsroom/issues/597) and [#598](https://github.com/APESCIC/APES.Newsroom/issues/598). The Newsroom cannot do these steps; they are done in the Mailgun dashboard and at each domain's DNS host.
 
-1. In Mailgun (**EU region**), add the sending domain: `mail.apespetcare.org.uk`, `mail.apesshelter.org.uk` or `myapes.me.uk` (root, see below).
-2. Publish the records Mailgun lists at the DNS host: SPF (TXT on the subdomain), DKIM (TXT at `…._domainkey.<subdomain>`), the tracking CNAME and Mailgun's MX records **on the subdomain only**. All four domains use Cloudflare DNS; set every record to **DNS only** (not proxied).
+1. In Mailgun (**EU region**), add the sending domain. All three use the root domain: `apespetcare.org.uk`, `apesshelter.org.uk` and `myapes.me.uk`.
+2. Publish the records Mailgun lists at the DNS host: SPF (`include:mailgun.org` in the root SPF), DKIM (the `email._domainkey` TXT and the `pdk1`/`pdk2._domainkey` CNAMEs) and the `email.` tracking CNAME. **Do not** add Mailgun's MX records: each root's MX belongs to its mailbox provider (Microsoft 365 for Pet Care and Shelter, Cloudron for myapes.me.uk), and Mailgun showing its MX records as unverified is expected. All four domains use Cloudflare DNS; set every record to **DNS only** (not proxied).
 3. Keep the root domain's SPF within 10 DNS lookups. The sending subdomain has its own SPF, so the root SPF usually needs no change.
 4. DMARC: keep `p=quarantine` with `rua` reporting on the root domain (`_dmarc.<domain>`). Move to `p=reject` after two clean weeks of reports.
 5. In Mailgun, choose **Verify DNS settings** until the domain shows **Verified**.
@@ -213,8 +213,8 @@ Issues [#596](https://github.com/APESCIC/APES.Newsroom/issues/596), [#597](https
 
 **myapes.me.uk (root Mailgun domain).** DMARC on myapes.me.uk is strict (`adkim=s`, `aspf=s`), and the MyAPES newsletter sends from `news@myapes.me.uk`, so Mailgun sends as `myapes.me.uk` itself. myapes.me.uk hosts MyAPES Account (`myaccount.myapes.me.uk`) and receives mail through Cloudron, so:
 
-- Publish only Mailgun's **DKIM** TXT (`<selector>._domainkey.myapes.me.uk`) and the tracking CNAME (`email.myapes.me.uk`).
+- Publish only Mailgun's **DKIM** records (the `email._domainkey.myapes.me.uk` TXT and the `pdk1`/`pdk2._domainkey.myapes.me.uk` CNAMEs) and the tracking CNAME (`email.myapes.me.uk`).
 - **Do not** add Mailgun's MX records. The root MX stays on Cloudron (`mail.cloudron.apes.org.uk`), and Mailgun shows its receiving records as unverified, which is expected: sending only needs SPF and DKIM.
-- The root SPF already includes `include:mailgun.org`. Keep it within 10 DNS lookups; if it goes over, replace an `a:` host with its IP (`ip4:`).
+- The root SPF must stay within 10 DNS lookups. On 29 Oct 2026 it was flattened from `a:` hosts that all pointed at the Cloudron server (or nowhere) to `v=spf1 ip4:172.236.2.203 ip6:2600:3c13::2000:74ff:fe27:821b mx include:mailgun.org ~all` (6 lookups). If the Cloudron server's IP changes, update the `ip4`/`ip6` values; `mx` still covers it meanwhile.
 - Leave the MyAPES Account mail records alone, and after the change check that MyAPES Account mail still arrives.
 - Use it for the MyAPES newsletter only.
