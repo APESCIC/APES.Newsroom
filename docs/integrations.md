@@ -48,7 +48,9 @@ Notes:
   management key is only used to register webhooks and change tracking, and
   should be a Developer-role key separate from the sending key.
 - `APP_KEY` encrypts the stored integration keys. Rotating it needs the old
-  key in `APP_PREVIOUS_KEYS`, or every stored key must be re-entered.
+  key in `APP_PREVIOUS_KEYS`, or every stored key must be re-entered. A stored
+  key that can no longer be decrypted shows as not set, and saving a new value
+  replaces it.
 
 ## Admin guide
 

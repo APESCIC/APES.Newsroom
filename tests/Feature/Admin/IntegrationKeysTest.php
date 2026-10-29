@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\Auth\RecentAuthentication;
 use App\Services\Integrations\IntegrationSecrets;
 use App\Support\Integrations\IntegrationDefinitions;
+use Illuminate\Encryption\Encrypter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -87,6 +88,27 @@ class IntegrationKeysTest extends TestCase
         $this->assertSame(self::SECRET, app(IntegrationSecrets::class)->get('stripe', 'secret'));
         $this->assertDatabaseHas('integration_check_results', ['provider' => 'stripe', 'trigger' => IntegrationCheckResult::TRIGGER_PRE_SAVE]);
         $this->assertDatabaseHas('audit_logs', ['action' => 'integration_key.set', 'actor_id' => $owner->id]);
+    }
+
+    public function test_a_key_encrypted_with_a_previous_app_key_reads_as_unset_and_can_be_replaced(): void
+    {
+        $owner = User::factory()->superAdmin()->create();
+        $this->stripeOk();
+        app(IntegrationSecrets::class)->set('stripe', 'secret', 'sk_test_oldkeyvalue1234', null);
+        $oldKey = new Encrypter(Encrypter::generateKey(config('app.cipher')), config('app.cipher'));
+        DB::table('integration_secrets')->where(['provider' => 'stripe', 'key' => 'secret'])->update(['value' => $oldKey->encryptString('sk_test_oldkeyvalue1234')]);
+        app(IntegrationSecrets::class)->flush();
+
+        $this->assertNull(app(IntegrationSecrets::class)->get('stripe', 'secret'));
+
+        $this->actingAs($owner)->withRecentAuthentication()
+            ->put(route('admin.settings.integrations.update', ['stripe', 'secret']), ['secret_value' => self::SECRET])
+            ->assertRedirect(route('admin.settings.integrations.index'))
+            ->assertSessionHas('status', 'Stripe secret key replaced.');
+
+        $this->assertSame(self::SECRET, app(IntegrationSecrets::class)->get('stripe', 'secret'));
+        $this->assertSame(1, IntegrationSecret::query()->where(['provider' => 'stripe', 'key' => 'secret'])->count());
+        $this->assertNotNull(IntegrationSecret::query()->where(['provider' => 'stripe', 'key' => 'secret'])->value('rotated_at'));
     }
 
     public function test_failing_check_blocks_saving_unless_forced(): void

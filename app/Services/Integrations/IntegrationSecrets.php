@@ -64,6 +64,14 @@ class IntegrationSecrets
         $secret = IntegrationSecret::query()->firstOrNew(['provider' => $provider, 'key' => $key]);
         $replaced = $secret->exists;
 
+        // Saving compares against the old value, which throws when it was
+        // encrypted with a previous APP_KEY.
+        if ($replaced && ! $this->decryptable((string) $secret->getRawOriginal('value'))) {
+            Log::warning('Replacing a stored integration key that could not be decrypted.', ['provider' => $provider, 'key' => $key]);
+            $secret->delete();
+            $secret = new IntegrationSecret(['provider' => $provider, 'key' => $key]);
+        }
+
         $secret->fill([
             'value' => $value,
             'last_four' => IntegrationSecret::lastFourOf($value),
@@ -92,6 +100,17 @@ class IntegrationSecrets
     public function flush(): void
     {
         Cache::forget(self::CACHE_KEY);
+    }
+
+    private function decryptable(string $ciphertext): bool
+    {
+        try {
+            Crypt::decryptString($ciphertext);
+
+            return true;
+        } catch (DecryptException) {
+            return false;
+        }
     }
 
     private function storedValue(string $provider, string $key): ?string
