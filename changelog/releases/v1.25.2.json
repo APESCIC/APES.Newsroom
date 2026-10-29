@@ -17,5 +17,5 @@
     "Public impact: none",
     "Internal impact: one data migration (Mailgun domain for two sending domains), docs/email-sending-domains.md runbook"
   ],
-  "pr": 632
+  "pr": 636
 }
