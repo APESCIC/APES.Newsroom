@@ -77,13 +77,20 @@ describe('Admin settings page', () => {
         const nav = screen.getByRole('navigation', { name: 'Admin workspace' });
         expect(within(nav).getByRole('link', { name: 'Settings' })).toHaveAttribute('href', '/admin/settings');
         expect(within(nav).getByRole('link', { name: 'Settings' })).toHaveAttribute('aria-current', 'page');
-        expect(within(nav).getByRole('link', { name: 'Releases' })).not.toHaveAttribute('aria-current');
+        expect(within(nav).getByRole('link', { name: 'Audit log' })).not.toHaveAttribute('aria-current');
+    });
+
+    it('has no Releases link because releases are authored from changelog files', () => {
+        render(<SettingsIndex settings={[editorSetting]} />);
+
+        const nav = screen.getByRole('navigation', { name: 'Admin workspace' });
+        expect(within(nav).queryByRole('link', { name: 'Releases' })).not.toBeInTheDocument();
     });
 
     it('shows the Settings link to admins on other admin screens without marking it current', () => {
         render(
-            <WorkspaceLayout area="Admin" active="releases" title="Releases">
-                <p>Releases</p>
+            <WorkspaceLayout area="Admin" active="audit-log" title="Audit log">
+                <p>Audit log</p>
             </WorkspaceLayout>,
         );
 

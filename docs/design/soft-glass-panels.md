@@ -92,8 +92,6 @@ Rules:
 
 - Destructive actions (delete, remove, disable, revoke) sit in an `ActionMenu`
   or open a `ConfirmDialog`; they are never a bare button beside Edit or Save.
-  Admin → Releases keeps its existing delete link because v1.22.0 removes the
-  page.
 - Use `sg-*` classes or these components, not one-off colours. Legacy
   `button-*`, `form-input`, `status-badge-*` and `workspace-glass-*` classes are
   restyled inside the shell for compatibility.

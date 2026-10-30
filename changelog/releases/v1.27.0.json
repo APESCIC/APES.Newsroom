@@ -1,0 +1,23 @@
+{
+  "version": "v1.27.0",
+  "slug": "release-v1-27-0",
+  "released_at": "2026-10-30",
+  "previous_version": "v1.26.1",
+  "theme": "Releases authored from the repository only",
+  "change_types": ["removed"],
+  "topic_tags": ["internal-only"],
+  "summary": "Admin → Releases has been removed; releases are now authored only through the repository changelog files and shown in the Change Log Hub.",
+  "detailed_changes": [
+    "Removed the Admin → Releases screens and their create, edit and delete actions, along with the Releases link in the admin sidebar. Nobody can change release notes from the admin panel any more (#385, #386).",
+    "Releases are written as changelog/releases/vX.Y.Z.json files in a pull request and loaded into the Change Log Hub by the sync that runs on every deploy. A published release is corrected by editing its file and deploying (#388).",
+    "The public Change Log Hub and the footer version link work as before (#387)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /admin/releases (removed), /change-log-hub, footer version link",
+    "User groups affected: admins and super admins",
+    "Public impact: none; the Change Log Hub and footer version are unchanged",
+    "Internal impact: admin sidebar, admin routes, release authoring docs"
+  ],
+  "pr": 0
+}

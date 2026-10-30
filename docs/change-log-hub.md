@@ -44,8 +44,16 @@ that do not affect public or staff product surfaces).
 - Channel / version type: set from `NEWSROOM_RELEASES_IN_BETA` (see
   `config/newsroom.php`). Authors do not pick Stable while in beta.
 - Highest semver in the directory becomes the current footer version.
-- Admin → Releases remains for emergencies; matching file-backed versions are
-  overwritten on the next sync.
+- The JSON files are the only way to author releases. There is no admin
+  screen for creating, editing or deleting them; the hub and footer are
+  read-only.
+
+## Correcting a published release
+
+To fix a typo, wrong date or missing detail in a release that is already live,
+edit its `changelog/releases/vX.Y.Z.json` in a pull request (a modified entry
+satisfies the changelog gate), merge, and deploy. The sync on deploy overwrites
+the matching row, so the hub shows the corrected entry.
 
 ## Local seed
 

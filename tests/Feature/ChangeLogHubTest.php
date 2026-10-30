@@ -7,6 +7,7 @@ use App\Models\User;
 use Database\Seeders\ReleaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class ChangeLogHubTest extends TestCase
@@ -67,120 +68,53 @@ class ChangeLogHubTest extends TestCase
                 ->where('currentRelease.slug', 'release-v111'));
     }
 
-    public function test_guest_cannot_access_admin_releases(): void
+    /**
+     * Former admin release URLs answer like any unknown admin URL: the panel
+     * middleware still sends guests to login and refuses staff first.
+     *
+     * @return array<string, array{?string, int}>
+     */
+    public static function everyRole(): array
     {
-        $this->get('/admin/releases')->assertRedirect('/login');
+        return [
+            'guest' => [null, 302],
+            'staff' => ['staff', 403],
+            'admin' => ['admin', 404],
+            'super admin' => ['superAdmin', 404],
+        ];
     }
 
-    public function test_staff_cannot_access_admin_releases(): void
+    #[DataProvider('everyRole')]
+    public function test_admin_releases_urls_are_gone_for_every_role(?string $role, int $expectedStatus): void
     {
-        $staff = User::factory()->staff()->create();
-
-        $this->actingAs($staff)->get('/admin/releases')->assertForbidden();
-    }
-
-    public function test_admin_can_create_published_release(): void
-    {
-        $admin = User::factory()->admin()->create();
-
-        $response = $this->actingAs($admin)->post('/admin/releases', [
-            'version' => 'v1.2.0',
-            'previous_version' => 'v1.1.1',
-            'released_at' => '2026-09-18',
-            'channel' => 'stable',
-            'version_type' => 'minor stable',
-            'theme' => 'Editor depth',
-            'is_current' => '1',
-            'is_published' => '1',
-            'change_types' => ['added', 'changed'],
-            'topic_tags' => ['public-facing'],
-            'summary' => 'Added richer Editor.js cards.',
-            'detailed_changes_text' => "Added media cards.\nImproved tag archives.",
-            'affected_areas_text' => "Website: APES Newsroom\nPage or route: /articles/{slug}",
-            'version_decision_text' => "Previous version: v1.1.1\nNew version: v1.2.0",
-            'validation_text' => "Checks run: composer test\nManual checks completed: editor review",
-        ]);
-
-        $response->assertRedirect(route('admin.releases.index'));
-
-        $this->assertDatabaseHas('releases', [
-            'version' => 'v1.2.0',
-            'slug' => 'release-v120',
-            'is_published' => true,
-            'is_current' => true,
-        ]);
-    }
-
-    public function test_admin_cannot_publish_without_structured_sections(): void
-    {
-        $admin = User::factory()->admin()->create();
-
-        $this->actingAs($admin)->post('/admin/releases', [
-            'version' => 'v1.2.1',
-            'released_at' => '2026-09-18',
-            'channel' => 'stable',
-            'is_published' => '1',
-            'summary' => 'Incomplete release',
-            'detailed_changes_text' => '',
-            'affected_areas_text' => '',
-            'version_decision_text' => '',
-            'validation_text' => '',
-        ])->assertSessionHasErrors(['detailed_changes', 'affected_areas', 'version_decision', 'validation']);
-    }
-
-    public function test_marking_current_clears_previous_current(): void
-    {
-        $admin = User::factory()->admin()->create();
-        $previous = Release::factory()->published()->current()->create([
+        $release = Release::factory()->published()->current()->create([
             'version' => 'v1.0.0',
             'slug' => 'release-v100',
+            'summary' => 'Original summary',
         ]);
 
-        $this->actingAs($admin)->post('/admin/releases', [
-            'version' => 'v1.0.1',
-            'released_at' => '2026-09-18',
-            'channel' => 'beta',
-            'is_current' => '1',
-            'is_published' => '1',
-            'change_types' => ['fixed'],
-            'summary' => 'Patch release',
-            'detailed_changes_text' => 'Fixed footer link.',
-            'affected_areas_text' => 'Footer',
-            'version_decision_text' => 'Patch bump',
-            'validation_text' => 'Manual check',
-        ])->assertRedirect();
+        if ($role !== null) {
+            $this->actingAs(User::factory()->{$role}()->create());
+        }
 
-        $this->assertFalse($previous->fresh()->is_current);
-        $this->assertTrue(Release::query()->where('version', 'v1.0.1')->value('is_current'));
-    }
+        $this->get('/admin/no-such-page')->assertStatus($expectedStatus);
 
-    public function test_admin_can_update_and_delete_release(): void
-    {
-        $admin = User::factory()->admin()->create();
-        $release = Release::factory()->published()->create([
-            'version' => 'v1.0.2',
-            'slug' => 'release-v102',
-            'summary' => 'Old summary',
-        ]);
+        foreach (['/admin/releases', '/admin/releases/new', "/admin/releases/{$release->id}/edit"] as $url) {
+            $this->get($url)->assertStatus($expectedStatus);
+        }
 
-        $this->actingAs($admin)->put('/admin/releases/'.$release->id, [
-            'version' => 'v1.0.2',
-            'released_at' => '2026-09-18',
-            'channel' => 'stable',
-            'is_published' => '1',
-            'summary' => 'Updated summary',
-            'detailed_changes_text' => 'Updated detail',
-            'affected_areas_text' => 'Hub',
-            'version_decision_text' => 'Patch',
-            'validation_text' => 'Reviewed',
-        ])->assertRedirect(route('admin.releases.index'));
+        $writes = [
+            $this->post('/admin/releases', ['version' => 'v9.9.9', 'summary' => 'Injected']),
+            $this->put("/admin/releases/{$release->id}", ['summary' => 'Changed']),
+            $this->delete("/admin/releases/{$release->id}"),
+        ];
 
-        $this->assertSame('Updated summary', $release->fresh()->summary);
+        foreach ($writes as $response) {
+            $this->assertFalse($response->isSuccessful());
+        }
 
-        $this->actingAs($admin)->delete('/admin/releases/'.$release->id)
-            ->assertRedirect(route('admin.releases.index'));
-
-        $this->assertDatabaseMissing('releases', ['id' => $release->id]);
+        $this->assertDatabaseCount('releases', 1);
+        $this->assertSame('Original summary', $release->fresh()->summary);
     }
 
     public function test_seed_migration_upserts_baseline_releases(): void
@@ -741,29 +675,24 @@ class ChangeLogHubTest extends TestCase
             'slug' => 'release-v1-26-1',
             'version' => 'v1.26.1',
             'channel' => 'beta',
+            'is_current' => false,
+            'is_published' => true,
+        ]);
+        $this->assertDatabaseHas('releases', [
+            'slug' => 'release-v1-27-0',
+            'version' => 'v1.27.0',
+            'channel' => 'beta',
             'is_current' => true,
             'is_published' => true,
         ]);
-        $this->assertDatabaseCount('releases', 80);
+        $this->assertDatabaseCount('releases', 81);
 
         $this->get('/change-log-hub')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->has('releases', 80)
-                ->where('current.version', 'v1.26.1')
+                ->has('releases', 81)
+                ->where('current.version', 'v1.27.0')
                 ->where('current.channel', 'beta')
                 ->where('current.channel_label', 'Beta'));
-    }
-
-    public function test_admin_create_form_defaults_to_beta_while_in_beta(): void
-    {
-        $admin = User::factory()->admin()->create();
-
-        $this->actingAs($admin)->get('/admin/releases/new')
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Admin/Releases/Edit')
-                ->where('releasesInBeta', true)
-                ->where('release', null));
     }
 }

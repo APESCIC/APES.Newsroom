@@ -23,7 +23,6 @@ use App\Http\Controllers\Admin\MailgunDomainWebhooksController as AdminMailgunDo
 use App\Http\Controllers\Admin\MailSendingController as AdminMailSendingController;
 use App\Http\Controllers\Admin\MemberController as AdminMemberController;
 use App\Http\Controllers\Admin\ModerationController;
-use App\Http\Controllers\Admin\ReleaseController as AdminReleaseController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\UserSecurityController as AdminUserSecurityController;
@@ -199,12 +198,6 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Admin->value])
         Route::post('/moderation/comments/{comment}', [ModerationController::class, 'moderateComment'])->name('moderation.comments');
         Route::post('/moderation/reports/{report}', [ModerationController::class, 'resolveReport'])->name('moderation.reports');
         Route::post('/moderation/comments/{comment}/restore', [ModerationController::class, 'restoreComment'])->name('moderation.comments.restore');
-        Route::get('/releases', [AdminReleaseController::class, 'index'])->name('releases.index');
-        Route::get('/releases/new', [AdminReleaseController::class, 'create'])->name('releases.create');
-        Route::post('/releases', [AdminReleaseController::class, 'store'])->name('releases.store');
-        Route::get('/releases/{release}/edit', [AdminReleaseController::class, 'edit'])->name('releases.edit');
-        Route::put('/releases/{release}', [AdminReleaseController::class, 'update'])->name('releases.update');
-        Route::delete('/releases/{release}', [AdminReleaseController::class, 'destroy'])->name('releases.destroy');
         Route::get('/imports/ghost-members', [GhostMembersImportController::class, 'index'])->name('imports.ghost-members');
         Route::post('/imports/ghost-members', [GhostMembersImportController::class, 'upload'])->name('imports.ghost-members.upload');
         Route::get('/imports/ghost-members/{run}/report', [GhostMembersImportController::class, 'report'])->name('imports.ghost-members.report');
