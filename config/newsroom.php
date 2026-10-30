@@ -7,9 +7,9 @@ return [
     | Releases still in beta
     |--------------------------------------------------------------------------
     |
-    | While true, the Admin → Releases create form defaults to the Beta channel
-    | and seeded/baseline Change Log Hub notes use Beta. Flip to false when
-    | Newsroom leaves beta; historical release rows stay on Beta.
+    | While true, releases synced from changelog/releases/*.json and the
+    | seeded baseline Change Log Hub notes use the Beta channel. Flip to false
+    | when Newsroom leaves beta; historical release rows stay on Beta.
     |
     */
 

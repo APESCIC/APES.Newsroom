@@ -47,7 +47,6 @@ export const panelPages: PanelPage[] = [
     { name: 'admin-integrations', path: '/admin/settings/integrations', role: 'super_admin' },
     { name: 'admin-email-domains', path: '/admin/settings/email-domains', role: 'admin' },
     { name: 'admin-audit-log', path: '/admin/audit-log?from=2026-10-20&to=2026-10-20', role: 'admin' },
-    { name: 'admin-releases', path: '/admin/releases', role: 'admin' },
     { name: 'admin-settings', path: '/admin/settings', role: 'admin' },
 ];
 

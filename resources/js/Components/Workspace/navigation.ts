@@ -15,7 +15,6 @@ import {
     MailCheck,
     MailPlus,
     Plug,
-    Rocket,
     ScrollText,
     Send,
     Settings,
@@ -48,7 +47,6 @@ export type WorkspaceActive =
     | 'metrics'
     | 'members'
     | 'webhooks'
-    | 'releases'
     | 'settings'
     | 'integrations'
     | 'email-domains'
@@ -139,7 +137,6 @@ export const navigation: Record<WorkspaceArea, NavGroup[]> = {
             heading: 'System',
             items: [
                 { key: 'audit-log', href: '/admin/audit-log', label: 'Audit log', icon: ScrollText, keywords: 'history events security' },
-                { key: 'releases', href: '/admin/releases', label: 'Releases', icon: Rocket, keywords: 'change log versions' },
                 { key: 'settings', href: '/admin/settings', label: 'Settings', icon: Settings, keywords: 'site editor configuration' },
             ],
         },

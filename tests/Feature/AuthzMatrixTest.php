@@ -23,7 +23,6 @@ use App\Models\Page;
 use App\Models\Post;
 use App\Models\PostRevision;
 use App\Models\Profile;
-use App\Models\Release;
 use App\Models\User;
 use App\Models\WebhookEndpoint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -84,12 +83,6 @@ class AuthzMatrixTest extends TestCase
         'admin.moderation.comments.restore' => Role::Admin,
         'admin.moderation.profiles' => Role::Admin,
         'admin.moderation.reports' => Role::Admin,
-        'admin.releases.index' => Role::Admin,
-        'admin.releases.store' => Role::Admin,
-        'admin.releases.create' => Role::Admin,
-        'admin.releases.update' => Role::Admin,
-        'admin.releases.destroy' => Role::Admin,
-        'admin.releases.edit' => Role::Admin,
         'admin.settings.edit' => Role::Admin,
         'admin.settings.update' => Role::Admin,
         'admin.settings.integrations.index' => Role::Admin,
@@ -420,7 +413,6 @@ class AuthzMatrixTest extends TestCase
                 'user' => User::factory()->create(),
                 'apiToken' => ApiToken::issue(User::factory()->staff()->create(), 'matrix')['model'],
                 'contentApiKey' => ContentApiKey::issue('matrix', null)['model'],
-                'release' => Release::factory()->create(['slug' => 'release-'.Str::lower(Str::random(12))]),
                 'webhook' => WebhookEndpoint::query()->create([
                     'name' => 'Partner',
                     'url' => 'https://hooks.example.com',
