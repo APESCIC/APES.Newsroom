@@ -1,0 +1,21 @@
+{
+  "version": "v1.26.1",
+  "slug": "release-v1-26-1",
+  "released_at": "2026-10-30",
+  "previous_version": "v1.26.0",
+  "theme": "Email client fixes",
+  "change_types": ["fixed"],
+  "topic_tags": ["public-facing", "compliance"],
+  "summary": "Long newsletters are no longer cut short in Gmail, and email buttons keep their shape in Outlook.",
+  "detailed_changes": [
+    "Gmail cuts off emails over 102 KB and hides the rest, including the unsubscribe link. Long newsletters went over that limit because every paragraph repeated the same font settings. The font is now set once and inherited, so a 60-section article drops from about 128 KB to under 50 KB and the unsubscribe link stays visible (#591).",
+    "Buttons keep their padding in Outlook for Windows, which ignores padding on links, so the text no longer sits tight against the edge of the button (#591)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: all outgoing email, especially newsletters",
+    "User groups affected: newsletter readers, account holders",
+    "Public impact: long newsletters show in full in Gmail with a visible unsubscribe link; buttons look right in Outlook",
+    "Internal impact: soft-glass mail theme and button template"
+  ]
+}
