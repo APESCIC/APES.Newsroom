@@ -124,6 +124,22 @@ class BrandedEmailsTest extends TestCase
         $this->assertStringNotContainsString('hero-image', $html);
     }
 
+    public function test_a_long_newsletter_stays_under_the_gmail_clipping_limit(): void
+    {
+        $section = '<h2>Section</h2><p>Six bearded dragons rescued in January have all been <a href="https://apesnews.org.uk/adopt">adopted</a> by families across Merseyside.</p><ul><li>One</li><li>Two</li></ul>';
+        $html = $this->campaign(['html' => str_repeat($section, 60)])->render();
+
+        $this->assertLessThan(102 * 1024, strlen($html), 'Gmail clips messages over 102 KB, hiding the unsubscribe link.');
+        $this->assertStringContainsString('https://apesnews.org.uk/unsubscribe/abc', $html);
+    }
+
+    public function test_buttons_keep_their_padding_in_outlook(): void
+    {
+        $html = $this->campaign()->render();
+
+        $this->assertMatchesRegularExpression('/class="button-cell"[^>]*mso-padding-alt: 12px 28px/', $html);
+    }
+
     public function test_admin_test_emails_use_the_theme(): void
     {
         $this->assertBranded((new TransportTestMail('newsroom@apesnews.org.uk', 'APES Newsroom', 'Mailgun API', 'Newsletters', 'Staff Demo'))->render());
