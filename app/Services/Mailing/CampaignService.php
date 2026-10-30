@@ -108,7 +108,14 @@ class CampaignService
                 'newsletter_id' => $senderNewsletter?->id,
                 'created_by' => $actor->id,
                 'lists' => $lists,
-                'snapshot' => $this->buildSnapshot($lockedPost, $senderNewsletter),
+                'snapshot' => [
+                    ...$this->buildSnapshot($lockedPost, $senderNewsletter),
+                    'segment' => $segment ? [
+                        'id' => $segment->id,
+                        'newsletter_id' => $segment->newsletter_id,
+                        'also_newsletter_id' => $segment->also_newsletter_id,
+                    ] : null,
+                ],
                 'status' => $senderVerified ? CampaignStatus::Queued : CampaignStatus::Failed,
                 'failure_reason' => $senderVerified ? null : self::FAILURE_SENDER_UNVERIFIED,
                 'is_test' => false,
