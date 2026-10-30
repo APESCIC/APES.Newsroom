@@ -1,0 +1,23 @@
+{
+  "version": "v1.26.0",
+  "slug": "release-v1-26-0",
+  "released_at": "2026-10-30",
+  "previous_version": "v1.25.4",
+  "theme": "Branded emails",
+  "change_types": ["changed"],
+  "topic_tags": ["public-facing", "accessibility"],
+  "summary": "Newsletters and account emails now use the Soft glass colours of the public site, with the APES logo, pill buttons and a light footer.",
+  "detailed_changes": [
+    "Every email from APES Newsroom uses one branded template: a pale teal background, a white rounded card with a teal top edge, the APES logo, teal pill buttons and a light footer with the APES CIC address, phone, email and CIC number. Colours are solid so they hold up in email clients that ignore blur and gradients (#588).",
+    "Newsletter emails show the channel as a badge, the story's hero image, the headline, author and date, a Read the full story button and clear preference and unsubscribe links. Test sends keep a clear amber banner (#589).",
+    "All 19 account, security, sign-in, mailing-list and admin alert emails, and the admin transport and sending-domain test emails, use the same template. Long names and links wrap instead of breaking the layout, and the plain-text version carries the same footer (#590).",
+    "All text meets WCAG AA contrast (4.5:1), and buttons and borders meet 3:1. The bright accent teal is only used for decoration, never for text. Buttons keep their shape when email apps switch to dark mode, and the emails stay readable with images turned off (#588, #589, #590)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: all outgoing email (newsletters, mailing-list confirmations, sign-in links, account and security alerts, admin alerts and test emails)",
+    "User groups affected: newsletter readers, account holders, staff and admins",
+    "Public impact: emails look like the public site and are easier to read",
+    "Internal impact: published Laravel mail and notification templates in resources/views/vendor, new soft-glass mail theme set in config/mail.php"
+  ]
+}
