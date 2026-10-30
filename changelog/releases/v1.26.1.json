@@ -17,5 +17,6 @@
     "User groups affected: newsletter readers, account holders",
     "Public impact: long newsletters show in full in Gmail with a visible unsubscribe link; buttons look right in Outlook",
     "Internal impact: soft-glass mail theme and button template"
-  ]
+  ],
+  "pr": 642
 }

@@ -19,5 +19,6 @@
     "User groups affected: newsletter readers, account holders, staff and admins",
     "Public impact: emails look like the public site and are easier to read",
     "Internal impact: published Laravel mail and notification templates in resources/views/vendor, new soft-glass mail theme set in config/mail.php"
-  ]
+  ],
+  "pr": 641
 }
