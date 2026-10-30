@@ -1,11 +1,17 @@
 <x-mail::message>
 @if ($isTest)
-**TEST SEND** — this message was not sent to the live mailing list.
+<p class="test-banner">TEST SEND: this message was not sent to the live mailing list.</p>
 @endif
+
+<p><span class="badge">{{ $snapshot['channel_label'] }}</span></p>
 
 # {{ $snapshot['title'] }}
 
-**{{ $snapshot['channel_label'] }}** · {{ $snapshot['author'] }}@if (!empty($snapshot['published_at'])) · {{ \Illuminate\Support\Carbon::parse($snapshot['published_at'])->timezone('Europe/London')->format('j M Y') }}@endif
+<p class="meta">{{ $snapshot['author'] }}@if (!empty($snapshot['published_at'])) · {{ \Illuminate\Support\Carbon::parse($snapshot['published_at'])->timezone('Europe/London')->format('j M Y') }}@endif</p>
+
+@if (!empty($snapshot['hero_image']))
+<a href="{{ $trackedReadMoreUrl }}"><img src="{{ url($snapshot['hero_image']) }}" class="hero-image" width="506" alt="{{ $snapshot['hero_image_alt'] ?? '' }}"></a>
+@endif
 
 @if (!empty($snapshot['html']))
 {!! $snapshot['html'] !!}
@@ -25,7 +31,7 @@ Thanks,<br>
 @endif
 
 <x-mail::subcopy>
-APES CIC · 40 Morris Street, St Helens, Merseyside, WA9 3EN · 01744 374 015<br>
+You are receiving this because you subscribed to an APES Newsroom newsletter.<br>
 Manage your [preferences]({{ $preferencesUrl }}) or [unsubscribe]({{ $unsubscribeUrl }}).
 </x-mail::subcopy>
 </x-mail::message>
