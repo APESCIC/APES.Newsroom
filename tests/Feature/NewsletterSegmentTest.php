@@ -2,17 +2,22 @@
 
 namespace Tests\Feature;
 
+use App\Enums\CampaignRecipientStatus;
 use App\Enums\CampaignStatus;
 use App\Enums\MailingList;
 use App\Enums\SubscriptionStatus;
+use App\Jobs\SendCampaignRecipientJob;
+use App\Mail\CampaignPostSummaryMail;
 use App\Models\MailingListSubscription;
 use App\Models\Newsletter;
 use App\Models\NewsletterSegment;
 use App\Models\Post;
 use App\Models\User;
+use App\Services\Mailing\CampaignSender;
 use App\Services\Mailing\CampaignService;
 use App\Services\Mailing\ConsentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Tests\Support\VerifiesNewsletterSenders;
 use Tests\TestCase;
@@ -74,6 +79,58 @@ class NewsletterSegmentTest extends TestCase
         $this->assertNotNull($emptyCampaign);
         $this->assertSame(0, $emptyCampaign->recipients()->count());
         $this->assertSame(CampaignStatus::Completed, $emptyCampaign->fresh()->status);
+    }
+
+    public function test_segment_campaign_sends_to_readers_still_confirmed_on_both_newsletters(): void
+    {
+        Notification::fake();
+        Mail::fake();
+
+        $primary = Newsletter::query()->where('slug', 'apes-times')->firstOrFail();
+        $also = Newsletter::query()->create(['name' => 'Foster', 'slug' => 'foster']);
+        $segment = NewsletterSegment::query()->create([
+            'newsletter_id' => $primary->id,
+            'name' => 'Times and foster',
+            'also_newsletter_id' => $also->id,
+        ]);
+
+        $consent = app(ConsentService::class);
+        foreach (['stays@example.com', 'leaves@example.com'] as $email) {
+            foreach ([$primary, $also] as $newsletter) {
+                $consent->confirm($consent->subscribeToNewsletter($email, $newsletter, 'test')->confirm_token);
+            }
+        }
+
+        $admin = User::factory()->admin()->create();
+        $post = Post::factory()->published()->create([
+            'author_id' => $admin->id,
+            'email_on_publish' => true,
+            'newsletter_segment_id' => $segment->id,
+        ]);
+
+        $queue = config('queue.default');
+        config(['queue.default' => 'null']);
+        $campaign = app(CampaignService::class)->createFromPublishedPost($post, $admin);
+        config(['queue.default' => $queue]);
+
+        $this->assertSame([], $campaign->lists);
+        $this->assertSame($also->id, $campaign->snapshot['segment']['also_newsletter_id']);
+
+        MailingListSubscription::query()
+            ->where('newsletter_id', $also->id)
+            ->whereHas('contact', fn ($q) => $q->where('email', 'leaves@example.com'))
+            ->update(['status' => SubscriptionStatus::Unsubscribed]);
+
+        foreach ($campaign->recipients as $recipient) {
+            (new SendCampaignRecipientJob($recipient->id))->handle($consent, app(CampaignSender::class));
+        }
+
+        $statuses = $campaign->recipients()->pluck('status', 'email')->map(fn ($status) => $status->value)->all();
+        $this->assertSame(CampaignRecipientStatus::Accepted->value, $statuses['stays@example.com']);
+        $this->assertSame(CampaignRecipientStatus::Skipped->value, $statuses['leaves@example.com']);
+        $this->assertSame('no_confirmed_consent', $campaign->recipients()->where('email', 'leaves@example.com')->value('last_error'));
+        Mail::assertSent(CampaignPostSummaryMail::class, fn (CampaignPostSummaryMail $mail) => $mail->hasTo('stays@example.com'));
+        Mail::assertNotSent(CampaignPostSummaryMail::class, fn (CampaignPostSummaryMail $mail) => $mail->hasTo('leaves@example.com'));
     }
 
     private function confirmEmail(string $email): void

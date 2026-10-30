@@ -1,0 +1,21 @@
+{
+  "version": "v1.25.4",
+  "slug": "release-v1-25-4",
+  "released_at": "2026-10-30",
+  "previous_version": "v1.25.3",
+  "theme": "Segment newsletter sends",
+  "change_types": ["fixed"],
+  "topic_tags": ["public-facing"],
+  "summary": "Emails sent to a newsletter segment now reach the readers in that segment instead of being skipped.",
+  "detailed_changes": [
+    "A post emailed to a newsletter segment skipped every reader, because the final consent check before each email only looked at the APES CIC, Shelter & Rescue and Pet Care Clinic lists. It now checks that each reader is still confirmed on both of the segment's newsletters, so APES Times, MyAPES and Stream 4 APES segment sends are delivered (#639)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff/posts/{post}/campaign",
+    "User groups affected: staff (segment sends), newsletter readers",
+    "Public impact: readers in a segment now receive the emails meant for them",
+    "Internal impact: campaign snapshots record the segment's newsletters"
+  ],
+  "pr": 640
+}

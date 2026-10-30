@@ -9,6 +9,7 @@ use App\Http\Controllers\Mailing\CampaignTrackingController;
 use App\Mail\CampaignPostSummaryMail;
 use App\Models\Campaign;
 use App\Models\CampaignRecipient;
+use App\Models\Newsletter;
 use App\Services\Mail\MailMessageRefused;
 use App\Services\Mail\MailTransportUnavailable;
 use App\Services\Mailing\CampaignSender;
@@ -96,16 +97,7 @@ class SendCampaignRecipientJob implements ShouldBeUnique, ShouldQueue
                 return;
             }
 
-            $hasConsent = false;
-            foreach ($campaign->lists as $listValue) {
-                $list = MailingList::tryFrom($listValue);
-                if ($list && $consent->hasConfirmedConsent($recipient->email, $list)) {
-                    $hasConsent = true;
-                    break;
-                }
-            }
-
-            if (! $hasConsent) {
+            if (! $this->hasConsent($campaign, $recipient->email, $consent)) {
                 $recipient->update([
                     'status' => CampaignRecipientStatus::Skipped,
                     'last_error' => 'no_confirmed_consent',
@@ -183,6 +175,31 @@ class SendCampaignRecipientJob implements ShouldBeUnique, ShouldQueue
         }
 
         $this->markFailed($recipient, $exception);
+    }
+
+    /**
+     * A segment campaign needs the reader still confirmed on both of the
+     * segment's newsletters; a list campaign on any one of its lists.
+     */
+    private function hasConsent(Campaign $campaign, string $email, ConsentService $consent): bool
+    {
+        $segment = $campaign->snapshot['segment'] ?? null;
+        if (is_array($segment)) {
+            $ids = [(int) $segment['newsletter_id'], (int) $segment['also_newsletter_id']];
+            $newsletters = Newsletter::query()->whereIn('id', $ids)->get();
+
+            return $newsletters->count() === 2
+                && $newsletters->every(fn (Newsletter $newsletter) => $consent->hasConfirmedNewsletterConsent($email, $newsletter));
+        }
+
+        foreach ($campaign->lists ?? [] as $listValue) {
+            $list = MailingList::tryFrom($listValue);
+            if ($list && $consent->hasConfirmedConsent($email, $list)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

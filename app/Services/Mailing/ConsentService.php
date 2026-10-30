@@ -677,6 +677,32 @@ class ConsentService
     }
 
     /**
+     * Whether the address is confirmed (and not suppressed) on an active
+     * newsletter: through its legacy list, or its own subscriptions.
+     */
+    public function hasConfirmedNewsletterConsent(string $email, Newsletter $newsletter): bool
+    {
+        if ($newsletter->isArchived()) {
+            return false;
+        }
+
+        if ($newsletter->legacy_list instanceof MailingList) {
+            return $this->hasConfirmedConsent($email, $newsletter->legacy_list);
+        }
+
+        if ($this->isSuppressed($email)) {
+            return false;
+        }
+
+        $contact = MailingContact::query()->where('email', Str::lower(trim($email)))->first();
+
+        return $contact !== null && $contact->subscriptions()
+            ->where('newsletter_id', $newsletter->id)
+            ->where('status', SubscriptionStatus::Confirmed)
+            ->exists();
+    }
+
+    /**
      * Confirmed emails for any of the given lists, de-duplicated.
      *
      * @param  list<string|MailingList>  $lists
