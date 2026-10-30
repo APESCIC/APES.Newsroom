@@ -19,5 +19,5 @@
     "Public impact: none; the Change Log Hub and footer version are unchanged",
     "Internal impact: admin sidebar, admin routes, release authoring docs"
   ],
-  "pr": 0
+  "pr": 665
 }
