@@ -77,6 +77,17 @@ class MergeSuperAdminIntoAdminMigrationTest extends TestCase
         $this->assertSame(['users' => 1, 'audit_entries' => 1], json_decode((string) $entries->first()->payload, true));
     }
 
+    public function test_up_records_nothing_when_there_is_nothing_to_merge(): void
+    {
+        DB::table('users')->where('id', $this->ownerId)->update(['role' => 'admin']);
+        DB::table('audit_logs')->where('id', $this->roleChangeLogId)->delete();
+
+        $this->migration->up();
+
+        $this->assertSame(0, DB::table('audit_logs')->where('action', self::ACTION)->count());
+        $this->assertSame(0, DB::table('role_merge_snapshots')->count());
+    }
+
     public function test_down_restores_users_and_audit_entries_from_the_snapshot(): void
     {
         $originalPayload = DB::table('audit_logs')->where('id', $this->roleChangeLogId)->value('payload');

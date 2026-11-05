@@ -79,6 +79,10 @@ return new class extends Migration
                 }
             });
 
+        if ($users === 0 && $entries === 0) {
+            return;
+        }
+
         DB::table('audit_logs')->insert([
             'actor_id' => null,
             'action' => self::ACTION,

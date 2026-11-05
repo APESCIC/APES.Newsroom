@@ -78,11 +78,4 @@ class UserFactory extends Factory
             'role' => Role::Admin,
         ]);
     }
-
-    public function superAdmin(): static
-    {
-        return $this->staff()->state(fn (array $attributes) => [
-            'role' => Role::SuperAdmin,
-        ]);
-    }
 }
