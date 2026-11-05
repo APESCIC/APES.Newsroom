@@ -63,7 +63,7 @@ type TestContext = {
     webhookManagement: WebhookManagement;
 };
 
-const NO_WEBHOOK_MANAGEMENT: WebhookManagement = { configured: false, signing_key_configured: false, uses_sending_key: false, rotate_due: false, can_manage: false, callback_url: '' };
+const NO_WEBHOOK_MANAGEMENT: WebhookManagement = { configured: false, signing_key_configured: false, uses_sending_key: false, rotate_due: false, callback_url: '' };
 
 function formatTime(iso: string | null): string {
     if (!iso) return 'Never';

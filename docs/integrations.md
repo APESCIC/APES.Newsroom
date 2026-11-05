@@ -58,11 +58,13 @@ Notes:
 
 | Role | View status and history | Test connection | Add, replace or remove keys |
 |------|-------------------------|-----------------|-----------------------------|
-| Admin | Yes | Yes | No |
-| Super admin | Yes | Yes | Yes |
+| Staff | No | No | No |
+| Admin | Yes | Yes | Yes |
 
 Changing a key asks you to confirm your identity (Cloudron SSO for staff)
-if you have not done so in the last five minutes. Key changes and tests are
+if you have not done so in the last five minutes. Testing a connection also
+needs a recent sign-in, within the account's usual re-confirmation window
+(#742). Key changes and tests are
 limited to 10 per minute per person.
 
 ### Add or replace a key
@@ -112,7 +114,7 @@ plain message, the time and how long the check took.
 card's **History** lists recent checks and key changes.
 
 When a provider's check moves from passing or warning to failing, every
-admin and super admin (except locked accounts) gets one email. No more
+admin (except locked accounts) gets one email. No more
 emails are sent while it keeps failing; the next alert comes only after it
 has recovered and failed again. Checks run before saving a new key never
 count towards status or alerts.

@@ -79,7 +79,7 @@ class RequiredTwoFactorTest extends TestCase
 
     public function test_cloudron_sso_staff_are_exempt(): void
     {
-        $this->requireFor(['public', 'staff', 'admin', 'super_admin']);
+        $this->requireFor(['public', 'staff', 'admin']);
 
         $this->actingAs(User::factory()->staff()->create())->get('/staff/posts')->assertOk();
         $this->actingAs(User::factory()->admin()->create())->get('/admin/settings')->assertOk();

@@ -7,9 +7,9 @@ use App\Models\User;
 
 /**
  * User management. Staff can view and edit the details of public accounts
- * (#567); security actions stay with admins. Super admins can additionally
- * change roles and act on other admins; nobody can act on an account of equal
- * or higher rank except a super admin acting on an admin.
+ * (#567); security actions stay with admins. Admins can act on any other
+ * account, including other admins (the routes require a recent sign-in),
+ * but never on themselves and never on the last admin.
  */
 class UserPolicy
 {
@@ -32,6 +32,11 @@ class UserPolicy
         return $actor->role->atLeast(Role::Admin) && $this->outranks($actor, $user);
     }
 
+    public function lock(User $actor, User $user): bool
+    {
+        return $this->manageSecurity($actor, $user) && ! $this->isLastAdmin($user);
+    }
+
     /**
      * Edit name, email (via confirmation) and private contact details.
      */
@@ -46,14 +51,13 @@ class UserPolicy
     }
 
     /**
-     * Delete or anonymise another account. Super admins only, and never
-     * another super admin, so the last owner cannot be removed.
+     * Delete or anonymise another account.
      */
     public function erase(User $actor, User $user): bool
     {
-        return $actor->role === Role::SuperAdmin
+        return $actor->role->atLeast(Role::Admin)
             && ! $actor->is($user)
-            && $user->role !== Role::SuperAdmin;
+            && ! $this->isLastAdmin($user);
     }
 
     /**
@@ -62,9 +66,10 @@ class UserPolicy
      */
     public function changeRole(User $actor, User $user): bool
     {
-        return $actor->role === Role::SuperAdmin
+        return $actor->role->atLeast(Role::Admin)
             && ! $actor->is($user)
-            && $user->auth_provider !== 'cloudron_oidc';
+            && $user->auth_provider !== 'cloudron_oidc'
+            && ! $this->isLastAdmin($user);
     }
 
     private function outranks(User $actor, User $user): bool
@@ -73,10 +78,23 @@ class UserPolicy
             return false;
         }
 
-        if ($actor->role === Role::SuperAdmin) {
-            return $user->role !== Role::SuperAdmin;
+        if ($actor->role === Role::Admin) {
+            return true;
         }
 
         return $actor->role->rank() > $user->role->rank();
+    }
+
+    /**
+     * The only admin whose account is not locked.
+     */
+    private function isLastAdmin(User $user): bool
+    {
+        return $user->role === Role::Admin
+            && ! User::query()
+                ->where('role', Role::Admin)
+                ->whereNull('locked_at')
+                ->whereKeyNot($user->getKey())
+                ->exists();
     }
 }

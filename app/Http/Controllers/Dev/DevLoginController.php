@@ -26,10 +26,6 @@ class DevLoginController extends Controller
             'email' => 'admin@apes.local',
             'redirect' => '/admin',
         ],
-        'super_admin' => [
-            'email' => 'superadmin@apes.local',
-            'redirect' => '/admin',
-        ],
     ];
 
     public function login(Request $request, string $role): RedirectResponse

@@ -54,13 +54,8 @@
 | `/admin/campaigns` | Campaign management | admin+ |
 | `/admin/moderation/profiles` | Profile moderation | admin+ |
 | `/admin/moderation/comments` | Comment moderation | admin+ |
-
-## Super admin
-
-| Path | Page | Role |
-|------|------|------|
-| `/super-admin/settings` | Newsroom configuration | super_admin |
-| `/super-admin/audit` | Audit log access | super_admin |
+| `/admin/settings` | Newsroom configuration | admin+ |
+| `/admin/audit-log` | Audit log access | admin+ |
 
 ## Error pages
 

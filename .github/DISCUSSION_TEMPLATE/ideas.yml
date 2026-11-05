@@ -1,0 +1,23 @@
+title: "[Idea] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: "Thanks for sharing an idea for APES Newsroom. Please don't include personal details."
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+    validations:
+      required: true
+  - type: dropdown
+    id: who
+    attributes:
+      label: Who is it for?
+      options: [Readers, Newsletter subscribers, Members, APES staff, Not sure]

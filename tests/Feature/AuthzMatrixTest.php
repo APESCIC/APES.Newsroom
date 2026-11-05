@@ -73,10 +73,10 @@ class AuthzMatrixTest extends TestCase
         'admin.users.password-reset' => Role::Admin,
         'admin.users.two-factor.reset' => Role::Admin,
         'admin.users.passkeys.remove' => Role::Admin,
-        'admin.users.role' => Role::SuperAdmin,
+        'admin.users.role' => Role::Admin,
         'admin.users.edit' => Role::Admin,
         'admin.users.update' => Role::Admin,
-        'admin.users.destroy' => Role::SuperAdmin,
+        'admin.users.destroy' => Role::Admin,
         'admin.users.verification' => Role::Admin,
         'admin.moderation.index' => Role::Admin,
         'admin.moderation.comments' => Role::Admin,
@@ -87,8 +87,8 @@ class AuthzMatrixTest extends TestCase
         'admin.settings.update' => Role::Admin,
         'admin.settings.integrations.index' => Role::Admin,
         'admin.settings.integrations.test' => Role::Admin,
-        'admin.settings.integrations.update' => Role::SuperAdmin,
-        'admin.settings.integrations.destroy' => Role::SuperAdmin,
+        'admin.settings.integrations.update' => Role::Admin,
+        'admin.settings.integrations.destroy' => Role::Admin,
         'admin.settings.email-domains.index' => Role::Admin,
         'admin.settings.email-domains.recheck' => Role::Admin,
         'admin.settings.email-domains.store' => Role::Admin,
@@ -103,13 +103,13 @@ class AuthzMatrixTest extends TestCase
         'admin.settings.email-domains.addresses.enable' => Role::Admin,
         'admin.settings.email-domains.addresses.test' => Role::Admin,
         'admin.settings.email-domains.webhooks.refresh' => Role::Admin,
-        'admin.settings.email-domains.webhooks.register' => Role::SuperAdmin,
-        'admin.settings.email-domains.webhooks.repair' => Role::SuperAdmin,
-        'admin.settings.email-domains.webhooks.remove' => Role::SuperAdmin,
-        'admin.settings.email-domains.tracking' => Role::SuperAdmin,
+        'admin.settings.email-domains.webhooks.register' => Role::Admin,
+        'admin.settings.email-domains.webhooks.repair' => Role::Admin,
+        'admin.settings.email-domains.webhooks.remove' => Role::Admin,
+        'admin.settings.email-domains.tracking' => Role::Admin,
         'admin.settings.mail-sending.index' => Role::Admin,
         'admin.settings.mail-sending.test' => Role::Admin,
-        'admin.settings.mail-sending.update' => Role::SuperAdmin,
+        'admin.settings.mail-sending.update' => Role::Admin,
         'admin.webhooks.index' => Role::Admin,
         'admin.webhooks.store' => Role::Admin,
         'admin.webhooks.update' => Role::Admin,
@@ -320,9 +320,9 @@ class AuthzMatrixTest extends TestCase
         $this->assertDatabaseCount('settings', 0);
     }
 
-    public function test_admin_and_super_admin_can_access_admin_settings(): void
+    public function test_admin_can_access_admin_settings(): void
     {
-        foreach ([User::factory()->admin()->create(), User::factory()->superAdmin()->create()] as $user) {
+        foreach ([User::factory()->admin()->create()] as $user) {
             $this->actingAs($user)->withRecentAuthentication()->get('/admin/settings')->assertOk();
             $this->actingAs($user)->withRecentAuthentication()
                 ->put('/admin/settings', ['settings' => ['editor' => ['driver' => 'tinymce']]])
@@ -375,7 +375,6 @@ class AuthzMatrixTest extends TestCase
             Role::Public => $factory->create(),
             Role::Staff => $factory->staff()->create(),
             Role::Admin => $factory->admin()->create(),
-            Role::SuperAdmin => $factory->superAdmin()->create(),
         };
     }
 

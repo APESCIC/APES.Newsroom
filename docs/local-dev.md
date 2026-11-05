@@ -31,7 +31,6 @@ sessions without Cloudron OIDC:
 | Public | `public@apes.local` | `/` |
 | Staff | `staff@apes.local` | `/staff` |
 | Admin | `admin@apes.local` | `/admin` |
-| Super admin | `superadmin@apes.local` | `/admin` |
 
 Demo password for all seeded users: `password`. Only the public demo user
 can sign in with it: staff-level accounts are refused password, magic-link
@@ -123,8 +122,7 @@ CLOUDRON_LDAP_BIND_DN=cn=admin,dc=apes,dc=local
 CLOUDRON_LDAP_BIND_PASSWORD=admin
 ```
 
-Test users (password = username): `staffer@apes.local`, `admin@apes.local`,
-`superadmin@apes.local`.
+Test users (password = username): `staffer@apes.local` and `admin@apes.local`.
 
 ### 3. Run the app
 
@@ -212,8 +210,8 @@ php artisan test tests/Integration/LocalOpenLdapTest.php
 Remove-Item Env:\RUN_LIVE_LDAP_TESTS
 ```
 
-The test queries `LdapGroupLookup` for all three fixture users and requires the
-staff, admin, and super-admin group DNs. To inspect only the staff result:
+The test queries `LdapGroupLookup` for both fixture users and requires the
+staff and admin group DNs. To inspect only the staff result:
 
 ```powershell
 $code = 'echo json_encode(app(\App\Services\Auth\LdapGroupLookup::class)->groupsForEmail("staffer@apes.local"));'

@@ -4,7 +4,7 @@ import type { UserDetail } from '../../Pages/Admin/Users/types';
 import ReasonConfirmDialog from './ReasonConfirmDialog';
 
 /**
- * Super-admin control for accounts outside Cloudron SSO. Only demotion to
+ * Admin control for accounts outside Cloudron SSO. Only demotion to
  * Public is possible in-app; elevated roles come from directory groups.
  */
 export default function UserRoleControl({ user }: { user: UserDetail }) {
@@ -21,7 +21,7 @@ export default function UserRoleControl({ user }: { user: UserDetail }) {
     }
 
     if (!user.can.change_role) {
-        return <p className="text-sm text-muted">Only a super admin can change this account's role.</p>;
+        return <p className="text-sm text-muted">You cannot change your own role or the last admin's role from here.</p>;
     }
 
     if (user.role === 'public') {

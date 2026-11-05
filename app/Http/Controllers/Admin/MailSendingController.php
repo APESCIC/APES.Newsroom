@@ -21,7 +21,8 @@ use Inertia\Response;
 
 /**
  * Admin → Settings → Mail sending: which transport system mail and
- * newsletters use. Super admins change it; admins view and test it.
+ * newsletters use. Admins view and test it, and change it after a recent
+ * sign-in.
  */
 class MailSendingController extends Controller
 {
@@ -76,7 +77,6 @@ class MailSendingController extends Controller
                 'system' => TransportTester::lastResult('system'),
                 'newsletters' => TransportTester::lastResult('newsletters'),
             ],
-            'canManage' => $request->user()->can('access-super-admin-area'),
             'testRecipient' => $request->user()->email,
         ]);
     }

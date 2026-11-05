@@ -8,14 +8,14 @@ use Illuminate\Support\Arr;
 use Illuminate\Validation\Validator;
 
 /**
- * Saves Admin → Settings → Mail sending. Super admins only; a transport that
+ * Saves Admin → Settings → Mail sending. Admins only, after a recent sign-in; a transport that
  * cannot be used right now is refused so mail never goes to a dead mailer.
  */
 class UpdateMailSendingSettingsRequest extends UpdateSettingsRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('access-super-admin-area') ?? false;
+        return $this->user()?->can('access-admin-area') ?? false;
     }
 
     protected function settingsPage(): ?string

@@ -41,10 +41,6 @@ class LocalOpenLdapTest extends TestCase
                 'admin@apes.local',
                 'cn=newsroom-admins,ou=groups,dc=apes,dc=local',
             ],
-            'super admin' => [
-                'superadmin@apes.local',
-                'cn=newsroom-super-admins,ou=groups,dc=apes,dc=local',
-            ],
         ];
     }
 }

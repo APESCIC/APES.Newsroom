@@ -1,6 +1,6 @@
 import type { ContactDetailsValues } from '../../../Components/Account/ContactDetailsFields';
 
-export type Role = 'public' | 'staff' | 'admin' | 'super_admin';
+export type Role = 'public' | 'staff' | 'admin';
 
 export type SignInMethod = 'sso' | 'password' | 'passwordless';
 
@@ -99,8 +99,6 @@ export function roleLabel(role: Role): string {
             return 'Staff';
         case 'admin':
             return 'Admin';
-        case 'super_admin':
-            return 'Super admin';
         default: {
             const unreachable: never = role;
             return unreachable;

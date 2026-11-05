@@ -39,11 +39,6 @@ class DemoUsersSeeder extends Seeder
                 'email' => 'admin@apes.local',
                 'role' => Role::Admin,
             ],
-            [
-                'name' => 'Super Admin Demo',
-                'email' => 'superadmin@apes.local',
-                'role' => Role::SuperAdmin,
-            ],
         ];
 
         foreach ($users as $data) {

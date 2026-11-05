@@ -21,7 +21,10 @@ class StaffOidcLoginTest extends TestCase
 
     private const ADMIN_GROUP = 'newsroom-admins';
 
-    private const SUPER_ADMIN_GROUP = 'newsroom-super-admins';
+    /** Groups retired in v1.28.0 (#724); kept here to prove they grant nothing. */
+    private const RETIRED_LOCAL_GROUP = 'newsroom-super-admins';
+
+    private const RETIRED_CLOUDRON_GROUP = 'newsroom.superadmin';
 
     private function identity(string $sub = 'oidc-sub-1', bool $emailVerified = true): StaffOidcIdentity
     {
@@ -62,12 +65,15 @@ class StaffOidcLoginTest extends TestCase
         $this->assertSame(Role::Admin, $result->user->role);
     }
 
-    public function test_a_super_admin_group_grants_super_admin(): void
+    public function test_the_retired_admin_groups_are_not_recognised(): void
     {
-        $result = $this->reconcilerWithGroups([self::SUPER_ADMIN_GROUP])->reconcile($this->identity());
+        foreach ([self::RETIRED_LOCAL_GROUP, 'cn='.self::RETIRED_CLOUDRON_GROUP.',ou=groups,dc=cloudron'] as $group) {
+            $result = $this->reconcilerWithGroups([$group])->reconcile($this->identity());
 
-        $this->assertTrue($result->allowed);
-        $this->assertSame(Role::SuperAdmin, $result->user->role);
+            $this->assertFalse($result->allowed, $group);
+        }
+
+        $this->assertSame(0, User::count());
     }
 
     public function test_membership_in_multiple_groups_grants_the_highest_matched_role(): void
@@ -132,14 +138,15 @@ class StaffOidcLoginTest extends TestCase
         $this->assertNull($result->user->password);
     }
 
-    public function test_cloudron_memberof_dn_matches_dotted_group_cn(): void
+    public function test_a_member_of_the_retired_group_and_admin_signs_in_as_admin(): void
     {
         $result = $this->reconcilerWithGroups([
-            'cn=newsroom.superadmin,ou=groups,dc=cloudron',
+            'cn='.self::RETIRED_CLOUDRON_GROUP.',ou=groups,dc=cloudron',
+            'cn=newsroom.admin,ou=groups,dc=cloudron',
         ])->reconcile($this->identity());
 
         $this->assertTrue($result->allowed);
-        $this->assertSame(Role::SuperAdmin, $result->user->role);
+        $this->assertSame(Role::Admin, $result->user->role);
     }
 
     public function test_cloudron_admin_memberof_dn_grants_admin(): void

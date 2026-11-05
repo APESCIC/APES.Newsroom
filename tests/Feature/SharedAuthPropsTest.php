@@ -58,20 +58,7 @@ class SharedAuthPropsTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->where('auth.can.accessStaff', true)
                 ->where('auth.can.accessAdmin', true)
-                ->where('auth.can.accessSuperAdmin', false)
-                ->where('auth.can.reviewPosts', true));
-    }
-
-    public function test_super_admin_can_access_staff_and_admin(): void
-    {
-        $user = User::factory()->superAdmin()->create();
-
-        $this->actingAs($user)
-            ->get('/')
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->where('auth.can.accessStaff', true)
-                ->where('auth.can.accessAdmin', true)
-                ->where('auth.can.accessSuperAdmin', true));
+                ->where('auth.can.reviewPosts', true)
+                ->missing('auth.can.accessSuperAdmin'));
     }
 }

@@ -7,8 +7,8 @@ confirmation emails).
 
 | Role | View | Check connection and send test emails | Change |
 |------|------|---------------------------------------|--------|
-| Admin | Yes | Yes | No (403) |
-| Super admin | Yes | Yes | Yes, after confirming their identity |
+| Staff | No (403) | No (403) | No (403) |
+| Admin | Yes | Yes | Yes, after confirming their identity |
 
 ## Transports
 
@@ -21,7 +21,7 @@ confirmation emails).
 The Cloudron sendmail addon stays required: Cloudron SMTP is always available
 as a fallback for system mail.
 
-**Starting setup.** Until a super admin saves this page, system mail uses
+**Starting setup.** Until an admin saves this page, system mail uses
 Cloudron SMTP, newsletters use the Mailgun API (or Cloudron SMTP while the
 Mailgun API key is missing), and there is no fallback.
 
@@ -81,7 +81,7 @@ With newsletters on Mailgun and the [webhooks registered](email-sending-domains.
 | Permanent failure (hard bounce) | Address suppressed, reason `bounced` |
 | Spam complaint | Address suppressed, reason `complained` |
 | Unsubscribe through the email app (Mailgun) | Address suppressed, reason `unsubscribed_mailgun` |
-| Temporary failure | Suppressed as `repeated_soft_bounce` after **3** failures on separate sends within **30 days**. A delivery resets the count. Super admins change both numbers on this page |
+| Temporary failure | Suppressed as `repeated_soft_bounce` after **3** failures on separate sends within **30 days**. A delivery resets the count. Admins change both numbers on this page |
 | Delivered, opened, clicked | Stored for stats |
 
 Suppressions reuse the existing `suppressions` table, record a `suppressed`
@@ -101,7 +101,7 @@ Mail events are kept 24 months and pruned daily by
 
 - **Open tracking is opt-in.** A tracking pixel is only included for readers who turned it on in their mailing preferences.
 - **Click tracking is on unless the reader opts out** in their mailing preferences. Readers who opt out get plain links.
-- **Per domain.** Super admins can turn either off for a sending domain (applied in Mailgun too).
+- **Per domain.** Admins can turn either off for a sending domain (applied in Mailgun too).
 - **One tracker per email.** Sends through the Mailgun API use Mailgun's tracking, set per message (`o:tracking-opens` and `o:tracking-clicks`); other transports use the Newsroom's own signed links. Never both.
 - Changes to a reader's choices are recorded in their consent history.
 

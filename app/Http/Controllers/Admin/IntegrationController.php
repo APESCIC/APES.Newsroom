@@ -41,7 +41,7 @@ class IntegrationController extends Controller
         private readonly AuditLogger $audit,
     ) {}
 
-    public function index(Request $request): Response
+    public function index(): Response
     {
         Gate::authorize('access-admin-area');
 
@@ -78,14 +78,13 @@ class IntegrationController extends Controller
 
         return Inertia::render('Admin/Settings/Integrations/Index', [
             'providers' => $providers,
-            'canManage' => $request->user()->can('access-super-admin-area'),
             'failedCheck' => session('integration_failed_check'),
         ]);
     }
 
     public function update(Request $request, string $provider, string $key): RedirectResponse
     {
-        Gate::authorize('access-super-admin-area');
+        Gate::authorize('access-admin-area');
         abort_unless(IntegrationDefinitions::hasKey($provider, $key), 404);
 
         $label = IntegrationDefinitions::phrase($provider, $key);
@@ -128,7 +127,7 @@ class IntegrationController extends Controller
 
     public function destroy(Request $request, string $provider, string $key): RedirectResponse
     {
-        Gate::authorize('access-super-admin-area');
+        Gate::authorize('access-admin-area');
         abort_unless(IntegrationDefinitions::hasKey($provider, $key), 404);
 
         $removed = $this->secrets->remove($provider, $key);

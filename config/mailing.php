@@ -31,7 +31,7 @@ return [
     | Newsletter transport
     |--------------------------------------------------------------------------
     |
-    | The starting newsletter transport until a super admin chooses one under
+    | The starting newsletter transport until an admin chooses one under
     | Admin → Settings → Mail sending: "mailgun" (the Mailgun HTTP API, using
     | each From domain's own Mailgun domain, once its API key is set) or
     | "smtp" (the environment mailer, Cloudron SMTP on Cloudron).

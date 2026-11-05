@@ -338,7 +338,7 @@ Staff MFA is enforced by Cloudron, not by the Newsroom (decision on #303):
   and remove impersonate passwords afterwards.
 
 Revisit the decision if Cloudron starts sending `amr` with `otp` or `mfa`;
-the app could then require it for `newsroom.admin` and `newsroom.superadmin`.
+the app could then require it for `newsroom.admin`.
 
 ### Passkeys (relying party)
 
@@ -351,10 +351,37 @@ so members would have to add them again.
 ## LDAP group mapping
 
 Staff roles are derived from each user's `memberof` attribute in Cloudron
-LDAP. Live Cloudron groups are `newsroom.staff`, `newsroom.admin`, and
-`newsroom.superadmin` (mapped in `config/rbac.php`). `memberof` returns
-full DNs such as `cn=newsroom.staff,ou=groups,dc=cloudron`; the reconciler
-matches the CN RDN as well as bare CNs used in local OpenLDAP.
+LDAP. Live Cloudron groups are `newsroom.staff` and `newsroom.admin`
+(mapped in `config/rbac.php`). `memberof` returns full DNs such as
+`cn=newsroom.staff,ou=groups,dc=cloudron`; the reconciler matches the CN RDN
+as well as bare CNs used in local OpenLDAP. A member of several groups gets
+the highest role; a member of none is refused at sign-in and demoted to
+Public by the daily `staff:reconcile-roles` run.
+
+### Retiring the old super admin group (v1.28.0)
+
+v1.28.0 merged the super admin role into admin (#713) and no longer reads
+the `newsroom.superadmin` group. It ships in one deploy, so the group change
+is split around it (#723):
+
+1. **Before the merge.** In the Cloudron dashboard, note every member of
+   `newsroom.superadmin` and add each one to `newsroom.admin` as well. Check
+   the app's access control (Cloudron → app → Access Control) allows
+   `newsroom.admin` and `newsroom.staff`. Nobody's access changes yet,
+   because the highest group still wins. Confirm with the `memberof` search
+   above that each former member now lists `newsroom.admin`.
+2. **Deploy v1.28.0.** Its migration turns every stored `super_admin` role
+   and audit entry into `admin` and keeps the originals in
+   `role_merge_snapshots` for rollback.
+3. **After the deploy.** Ask the former members to sign out and in (or wait
+   for the daily reconcile) and check they show as Admin under Admin →
+   Users. Then remove them from `newsroom.superadmin` and delete the group.
+4. **Next day.** Check the audit log for `staff.role_changed` entries from
+   the reconcile: there should be none for the former members.
+
+Rollback: re-create `newsroom.superadmin` and re-add its members, then roll
+the app back to v1.27.1 (`migrate:rollback` of the v1.28.0 migration
+restores the original roles and audit entries from the snapshot).
 
 **Discover group names** inside the Cloudron container:
 
@@ -377,7 +404,7 @@ keys in `/app/data/shared/.env` if you maintain that file by hand.
 
 ## Integration keys (Mailgun, Stripe, Unsplash, OpenAI, Slack)
 
-Super admins can set these keys under **Admin → Settings → Integrations**
+Admins can set these keys, after re-confirming their sign-in, under **Admin → Settings → Integrations**
 (`/admin/settings/integrations`); see [`integrations.md`](integrations.md).
 A stored key overrides the matching environment variable straight away,
 with no redeploy, `config:cache` or queue worker restart. Removing it

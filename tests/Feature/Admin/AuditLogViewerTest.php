@@ -29,7 +29,7 @@ class AuditLogViewerTest extends TestCase
             $this->actingAs($user)->withRecentAuthentication()->get('/admin/audit-log/export')->assertForbidden();
         }
 
-        foreach ([User::factory()->admin()->create(), User::factory()->superAdmin()->create()] as $user) {
+        foreach ([User::factory()->admin()->create()] as $user) {
             $this->actingAs($user)->get('/admin/audit-log')
                 ->assertOk()
                 ->assertInertia(fn (Assert $page) => $page->component('Admin/AuditLog/Index'));

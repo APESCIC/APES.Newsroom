@@ -12,19 +12,19 @@ profile. Users, Members and Subscribers all link to it.
 
 ## Who can do what
 
-| Action | Staff | Admin | Super admin |
-|--------|-------|-------|-------------|
-| View People and person pages | Public accounts | Yes | Yes |
-| Edit name, email and contact details | Public accounts | Accounts ranked below them | Anyone except another super admin |
-| View and edit mailing-only subscribers | Yes | Yes | Yes |
-| Delete a mailing-only subscriber | No | Yes | Yes |
-| Edit or reset public profile fields | Public accounts | Accounts ranked below them | Anyone except another super admin |
-| Complimentary access, member note, member newsletter toggles | No | Accounts ranked below them | Anyone except another super admin |
-| View the Users list and security pages | No | Yes | Yes |
-| Lock (suspend), unlock, sign out, credential resets | No | Accounts ranked below them | Anyone except another super admin |
-| Resend the verification email | No | Accounts ranked below them | Anyone except another super admin |
-| Change role (to Public only, non-SSO accounts) | No | No | Yes |
-| Delete a user | No | No | Anyone except themselves or another super admin |
+| Action | Staff | Admin |
+|--------|-------|-------|
+| View People and person pages | Public accounts | Yes |
+| Edit name, email and contact details | Public accounts | Anyone, including other admins |
+| View and edit mailing-only subscribers | Yes | Yes |
+| Delete a mailing-only subscriber | No | Yes |
+| Edit or reset public profile fields | Public accounts | Anyone, including other admins |
+| Complimentary access, member note, member newsletter toggles | No | Anyone, including other admins |
+| View the Users list and security pages | No | Yes |
+| Lock (suspend), unlock, sign out, credential resets | No | Anyone, including other admins; never the last unlocked admin (lock) |
+| Resend the verification email | No | Anyone, including other admins |
+| Change role (to Public only, non-SSO accounts) | No | Yes, except the last unlocked admin |
+| Delete a user | No | Anyone except the last unlocked admin |
 
 Nobody can act on their own account from these screens. Every change needs a
 reason, recent re-authentication, and is rate limited (`admin-user-actions` on
@@ -62,7 +62,7 @@ token, signs the user out everywhere, and tells them by email. Unlock reverses i
 
 ## Deleting a user
 
-Super admins delete from the user page by typing the user's email and a
+Admins delete from the user page by typing the user's email and a
 reason. What happens depends on `AccountDeletionPolicy`:
 
 - **Deleted**: Public, non-SSO accounts that own no editorial or audit records

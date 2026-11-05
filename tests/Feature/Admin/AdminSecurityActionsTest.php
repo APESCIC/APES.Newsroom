@@ -108,18 +108,25 @@ class AdminSecurityActionsTest extends TestCase
         $this->assertSame(['user.signed_out'], AuditLog::query()->where('action', 'like', 'user.%')->pluck('action')->all());
     }
 
-    public function test_actions_need_a_reason_recent_authentication_and_rank(): void
+    public function test_actions_need_a_reason_and_recent_authentication_and_never_target_yourself(): void
     {
         $user = User::factory()->create();
-        $otherAdmin = User::factory()->admin()->create();
 
         $this->actingAs($this->admin)->post("/admin/users/{$user->id}/sign-out", ['reason' => 'No re-auth'])
             ->assertRedirect(route('account.confirm-identity'));
         $this->act($user, 'sign-out', '')->assertSessionHasErrors('reason');
-        $this->act($otherAdmin, 'sign-out', 'Peer admin')->assertForbidden();
         $this->act($this->admin, 'sign-out', 'Myself')->assertForbidden();
 
         $this->assertDatabaseMissing('audit_logs', ['action' => 'user.signed_out']);
+    }
+
+    public function test_an_admin_signs_out_another_admin(): void
+    {
+        $otherAdmin = User::factory()->admin()->create();
+
+        $this->act($otherAdmin, 'sign-out', 'Peer admin lost a laptop')->assertSessionHasNoErrors()->assertRedirect();
+
+        $this->assertDatabaseHas('audit_logs', ['action' => 'user.signed_out', 'actor_id' => $this->admin->id, 'subject_id' => $otherAdmin->id]);
     }
 
     private function act(User $user, string $action, string $reason)

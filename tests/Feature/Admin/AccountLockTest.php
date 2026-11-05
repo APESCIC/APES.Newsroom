@@ -97,19 +97,15 @@ class AccountLockTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
         $otherAdmin = User::factory()->admin()->create();
-        $superAdmin = User::factory()->superAdmin()->create();
-        $otherSuperAdmin = User::factory()->superAdmin()->create();
         $staff = User::factory()->staff()->create();
 
         $attempts = [
             [User::factory()->create(), $staff, 403],
             [$staff, User::factory()->create(), 403],
+            [$staff, $admin, 403],
             [$admin, $admin, 403],
-            [$admin, $otherAdmin, 403],
-            [$admin, $superAdmin, 403],
-            [$superAdmin, $otherSuperAdmin, 403],
             [$admin, $staff, 302],
-            [$superAdmin, $otherAdmin, 302],
+            [$admin, $otherAdmin, 302],
         ];
 
         foreach ($attempts as [$actor, $target, $status]) {
@@ -120,9 +116,8 @@ class AccountLockTest extends TestCase
 
         $this->assertTrue($staff->fresh()->isLocked());
         $this->assertTrue($otherAdmin->fresh()->isLocked());
-        $this->assertFalse($superAdmin->fresh()->isLocked());
-        $this->assertFalse($otherSuperAdmin->fresh()->isLocked());
         $this->assertFalse($admin->fresh()->isLocked());
+        $this->assertDatabaseHas('audit_logs', ['action' => 'user.locked', 'actor_id' => $admin->id, 'subject_id' => $otherAdmin->id]);
     }
 
     public function test_locked_account_cannot_sign_in_with_a_password(): void

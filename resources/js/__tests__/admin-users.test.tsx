@@ -55,7 +55,7 @@ describe('Admin users pages', () => {
     });
 
     it('lists users with their sign-in method and second factors', () => {
-        render(<UsersIndex filters={filters} roles={['public', 'staff', 'admin', 'super_admin']} users={{ data: [row], current_page: 1, last_page: 1, per_page: 25, total: 1, prev_page_url: null, next_page_url: null }} />);
+        render(<UsersIndex filters={filters} roles={['public', 'staff', 'admin']} users={{ data: [row], current_page: 1, last_page: 1, per_page: 25, total: 1, prev_page_url: null, next_page_url: null }} />);
 
         const table = screen.getByRole('table');
         expect(within(table).getByRole('link', { name: 'Paula Password' })).toHaveAttribute('href', '/admin/users/9');
@@ -140,7 +140,7 @@ describe('Admin users pages', () => {
         expect(access.getByText('Password, two-factor and passkeys for this account are managed by Cloudron SSO.')).toBeInTheDocument();
     });
 
-    it('lets a super admin remove a stale elevated role and explains the directory otherwise', async () => {
+    it('lets an admin remove a stale elevated role and explains the directory otherwise', async () => {
         const user = userEvent.setup();
         const { unmount } = render(<UsersShow user={{ ...detail, role: 'staff', can: { ...detail.can, manage_security: true, change_role: true } }} />);
 
@@ -239,10 +239,10 @@ describe('Admin users pages', () => {
         }));
     });
 
-    it('explains when only a super admin can delete', () => {
+    it('explains when the account cannot be deleted from here', () => {
         render(<UsersShow user={detail} />);
 
-        expect(within(screen.getByRole('region', { name: 'Delete user' })).getByText('Only a super admin can delete this account.')).toBeInTheDocument();
+        expect(within(screen.getByRole('region', { name: 'Delete user' })).getByText('You cannot delete your own account or the last admin from here.')).toBeInTheDocument();
     });
 
     it('explains that SSO accounts get their second factor from Cloudron', () => {

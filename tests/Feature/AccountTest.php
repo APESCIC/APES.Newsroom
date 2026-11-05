@@ -89,7 +89,7 @@ class AccountTest extends TestCase
 
     public function test_privileged_and_oidc_accounts_cannot_call_self_service_deletion_directly(): void
     {
-        $accounts = collect([Role::Staff, Role::Admin, Role::SuperAdmin])
+        $accounts = collect([Role::Staff, Role::Admin])
             ->flatMap(fn (Role $role) => [
                 User::factory()->create([
                     'role' => $role,

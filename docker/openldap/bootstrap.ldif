@@ -26,14 +26,6 @@ uid: admin
 mail: admin@apes.local
 userPassword: admin
 
-dn: cn=superadmin,ou=users,dc=apes,dc=local
-objectClass: inetOrgPerson
-cn: Super Admin
-sn: Admin
-uid: superadmin
-mail: superadmin@apes.local
-userPassword: superadmin
-
 dn: cn=newsroom-staff,ou=groups,dc=apes,dc=local
 objectClass: groupOfUniqueNames
 cn: newsroom-staff
@@ -43,8 +35,3 @@ dn: cn=newsroom-admins,ou=groups,dc=apes,dc=local
 objectClass: groupOfUniqueNames
 cn: newsroom-admins
 uniqueMember: cn=admin,ou=users,dc=apes,dc=local
-
-dn: cn=newsroom-super-admins,ou=groups,dc=apes,dc=local
-objectClass: groupOfUniqueNames
-cn: newsroom-super-admins
-uniqueMember: cn=superadmin,ou=users,dc=apes,dc=local

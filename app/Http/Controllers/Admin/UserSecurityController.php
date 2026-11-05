@@ -28,7 +28,7 @@ class UserSecurityController extends Controller
 
     public function lock(Request $request, User $user): RedirectResponse
     {
-        Gate::authorize('manageSecurity', $user);
+        Gate::authorize('lock', $user);
         $reason = $this->reason($request);
 
         if ($user->isLocked()) {

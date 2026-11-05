@@ -1,42 +1,54 @@
 # APES Newsroom
 
+[![Licence: AGPL-3.0](https://img.shields.io/badge/licence-AGPL--3.0-blue)](LICENSE)
+[![Latest release](https://img.shields.io/github/v/release/APESCIC/APES.Newsroom)](https://github.com/APESCIC/APES.Newsroom/releases/latest)
 [![CI](https://github.com/APESCIC/APES.Newsroom/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/APESCIC/APES.Newsroom/actions/workflows/ci.yml)
 
-APES Newsroom is the mission-led wildlife publishing platform for the
-[Association for the Protection of Exotic Species (APES CIC)](https://apes.org.uk).
-It provides a public newsroom for APES CIC, APES Shelter & Rescue, and APES Pet
-Care Clinic, together with authenticated editorial, campaign, moderation, and
-governance workspaces.
+APES Newsroom is the news and mailing-list app of the Association of Protecting
+Exotic Species CIC. Built and run by APES for its own use; the code is public.
+It lets the public read articles from APES staff, departments and divisions at
+https://www.apesnews.org.uk/, and sign up to mailing lists and more.
 
-The production Newsroom is available at
-[www.apesnews.org.uk](https://www.apesnews.org.uk/). The guarded cutover from  <!-- pragma: allowlist secret -->
-Ghost completed on 2026-08-06 under
-[issue #11](https://github.com/APESCIC/APES.Newsroom/issues/11).
+The production Newsroom runs at [www.apesnews.org.uk](https://www.apesnews.org.uk/). <!-- pragma: allowlist secret -->
+The guarded cutover from Ghost completed on 2026-08-06 under
+[issue #11](https://github.com/APESCIC/APES.Newsroom/issues/11); the former
+Ghost app stays stopped and recoverable at `ghost-legacy.apesnews.org.uk`.
 
-## Repository status
+## Latest release
 
-Last verified: **2026-09-24**.
+**v1.28.0**: see [Releases](https://github.com/APESCIC/APES.Newsroom/releases)
+and the [Change Log Hub](https://www.apesnews.org.uk/change-log-hub).
 
-- `main` is the remote default branch and its CI workflow is current.
-- The public Newsroom is live at `www.apesnews.org.uk`; the apex  <!-- pragma: allowlist secret -->
-  `apesnews.org.uk` DNS transition was not recorded as complete during cutover.
-- The former Ghost app remains stopped and recoverable at
-  `ghost-legacy.apesnews.org.uk`. Retirement or deletion is not authorized.
-- Live campaign sends remain an explicit operational decision; imports and
-  migration did not send mail.
-- Product and engineering work is tracked in
-  [GitHub Issues](https://github.com/APESCIC/APES.Newsroom/issues). The current
-  frog-led theme exploration remains gated in
-  [issue #36](https://github.com/APESCIC/APES.Newsroom/issues/36).
+## Roadmap
 
-See [Epic #1](https://github.com/APESCIC/APES.Newsroom/issues/1) and the
-[delivery record](docs/epic-1-build-plan.md) for the original dependency map
-and completion evidence.
+| Version | Milestone |
+|---------|-----------|
+| v1.29.0 | [System email templates](https://github.com/APESCIC/APES.Newsroom/milestone/35) |
+| v1.30.0 | [Newsletter email templates](https://github.com/APESCIC/APES.Newsroom/milestone/36) |
+| v1.31.0 | [SEO and social previews](https://github.com/APESCIC/APES.Newsroom/milestone/37) |
+| v1.32.0 | [Publish flow wizard](https://github.com/APESCIC/APES.Newsroom/milestone/38) |
+| v1.33.0 | [Social cross-posting via Postiz](https://github.com/APESCIC/APES.Newsroom/milestone/39) |
+| v1.34.0 | [Tiptap editor](https://github.com/APESCIC/APES.Newsroom/milestone/40) |
+| v1.35.0 | [Ghost admin parity](https://github.com/APESCIC/APES.Newsroom/milestone/20) |
+| Later | [ActivityPub (Fediverse)](https://github.com/APESCIC/APES.Newsroom/milestone/10) |
+
+v1.28.0 [merged super admin into admin](https://github.com/APESCIC/APES.Newsroom/milestone/41).
+
+## Roles
+
+| Role | Who | Can |
+|------|-----|-----|
+| Public | Readers with an account | Manage their account, mailing lists, profile and comments |
+| Staff | Members of the `newsroom.staff` Cloudron group | Write and edit posts and pages, manage media, people and campaigns |
+| Admin | Members of the `newsroom.admin` Cloudron group | Everything staff can, plus users, moderation, settings, integrations and mail sending; sensitive changes need a recent sign-in |
+
+Staff and admin roles come only from Cloudron directory groups. See
+[user management](docs/user-management.md) for the full list of actions.
 
 ## Product capabilities
 
 - Public home, channel, article, author, tag, archive, search, RSS, sitemap,
-  and Change Log Hub surfaces for the three APES channels.
+  and Change Log Hub surfaces for the APES channels.
 - Versioned Editor.js content with staff drafts, review, scheduling, publishing,
   preview, revisions, redirects, and SEO controls, edited in Editor.js or
   TinyMCE (see [Editors](#editors)).
@@ -50,7 +62,7 @@ and completion evidence.
 - Governance artifacts for privacy, retention, threat modelling, accessibility,
   deployment, backup, and rollback.
 
-## Architecture
+## Stack
 
 The application uses Laravel 13, PHP 8.4, Inertia, React, TypeScript, Editor.js,
 MySQL, and Redis. Production runs in an existing Cloudron LAMP app. Cloudron
@@ -75,7 +87,7 @@ TinyMCE is bundled from npm and self-hosted under GPLv2+ (`license_key: 'gpl'`);
 it is never loaded from Tiny Cloud. See [`docs/editors.md`](docs/editors.md) for
 admin and staff guidance.
 
-## Local setup
+## Local development
 
 Prerequisites are PHP 8.4 with Composer and a current Node.js/npm runtime.
 SQLite and database-backed sessions/cache/queues are sufficient for the default
@@ -127,30 +139,24 @@ Deployments are manual, backup-first, versioned, and rollback-capable. The
 GitHub Environment name is **`beta`** but targets the live LAMP app at
 `https://www.apesnews.org.uk/` (app id `74a2a784-a161-4787-84ff-2b8efc957bc8`). Follow the  <!-- pragma: allowlist secret -->
 [Cloudron deployment runbook](docs/deployment.md) and the
-[beta acceptance record](docs/deployment-beta-acceptance.md). Repository work
-does not by itself authorize apex DNS changes, live campaign sends, or Ghost
-retirement. Merge does not auto-deploy.
+[beta acceptance record](docs/deployment-beta-acceptance.md). Merge does not
+auto-deploy, and repository work does not by itself authorize live campaign
+sends or Ghost retirement.
 
-## Documentation and support
+## Links
 
-- [Delivery plan and dependency record](docs/epic-1-build-plan.md)
-- [Local Redis/OIDC/LDAP development](docs/local-dev.md)
-- [Deployment and rollback](docs/deployment.md)
-- [Integration keys and health checks](docs/integrations.md)
-- [Beta acceptance evidence](docs/deployment-beta-acceptance.md)
-- [Design records](docs/design/), including
-  [accessibility evidence](docs/design/accessibility-notes.md)
-- [Governance records](docs/governance/), including the
-  [data inventory](docs/governance/data-inventory.md),
-  [retention schedule](docs/governance/retention-schedule.md), and
-  [threat model](docs/governance/threat-model.md)
-- [Security reporting](SECURITY.md) — report vulnerabilities privately via a
-  [security advisory](https://github.com/APESCIC/APES.Newsroom/security/advisories/new),
-  never a public issue
-- [Report a bug](https://github.com/APESCIC/APES.Newsroom/issues/new?template=bug_report.yml)
-  or [request a feature](https://github.com/APESCIC/APES.Newsroom/issues/new?template=feature_request.yml)
-- [All issues](https://github.com/APESCIC/APES.Newsroom/issues),
-  [Discussions](https://github.com/APESCIC/APES.Newsroom/discussions), and
+- [Wiki](https://github.com/APESCIC/APES.Newsroom/wiki)
+- [Discussions](https://github.com/APESCIC/APES.Newsroom/discussions)
+- [Getting help](SUPPORT.md)
+- [Contributing](CONTRIBUTING.md)
+- [Security policy](SECURITY.md): report vulnerabilities privately, never in a public issue
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Deployment and rollback](docs/deployment.md),
+  [governance records](docs/governance/) and [design records](docs/design/)
+- [All issues](https://github.com/APESCIC/APES.Newsroom/issues) and
   [Releases](https://github.com/APESCIC/APES.Newsroom/releases)
 
-The repository is maintained by [APES CIC](https://github.com/APESCIC).
+## Licence
+
+Copyright (C) 2026 Association of Protecting Exotic Species CIC. Licensed under
+the GNU Affero General Public License v3.0; see [LICENSE](LICENSE).

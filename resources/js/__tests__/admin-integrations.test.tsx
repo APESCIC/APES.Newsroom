@@ -5,11 +5,11 @@ import IntegrationsIndex, { type IntegrationProvider } from '../Pages/Admin/Sett
 import type { SharedPageProps } from '../types/page';
 import { getInertiaMock, setMockPage } from '../test/inertia';
 
-const superAdminProps: SharedPageProps = {
+const adminProps: SharedPageProps = {
     appName: 'APES Newsroom',
     auth: {
-        user: { id: 1, name: 'Sky Owner', email: 'sky@example.test', role: 'super_admin' },
-        can: { accessStaff: true, accessAdmin: true, accessSuperAdmin: true },
+        user: { id: 1, name: 'Sky Owner', email: 'sky@example.test', role: 'admin' },
+        can: { accessStaff: true, accessAdmin: true },
     },
 };
 
@@ -60,11 +60,11 @@ const stripe: IntegrationProvider = {
 
 describe('Admin integrations page', () => {
     beforeEach(() => {
-        setMockPage(superAdminProps);
+        setMockPage(adminProps);
     });
 
     it('shows only the last four characters and the latest status', () => {
-        render(<IntegrationsIndex providers={[stripe]} canManage />);
+        render(<IntegrationsIndex providers={[stripe]} />);
 
         const card = screen.getByRole('region', { name: 'Stripe' });
         expect(within(card).getByText('••••9876')).toBeInTheDocument();
@@ -74,7 +74,7 @@ describe('Admin integrations page', () => {
 
     it('uses write-only password inputs and submits with PUT', async () => {
         const user = userEvent.setup();
-        render(<IntegrationsIndex providers={[stripe]} canManage />);
+        render(<IntegrationsIndex providers={[stripe]} />);
 
         const input = screen.getByLabelText('New Stripe webhook signing secret');
         expect(input).toHaveAttribute('type', 'password');
@@ -87,13 +87,13 @@ describe('Admin integrations page', () => {
         expect(visit.url).toBe('/admin/settings/integrations/stripe/webhook_secret');
         expect(visit.data).toEqual({ secret_value: 'whsec_newvalue', force: false });
 
-        act(() => visit.options.onSuccess?.({ props: superAdminProps }));
+        act(() => visit.options.onSuccess?.({ props: adminProps }));
         expect(input).toHaveValue('');
     });
 
     it('offers Save anyway after a failed connection test', async () => {
         const user = userEvent.setup();
-        render(<IntegrationsIndex providers={[stripe]} canManage failedCheck={{ provider: 'stripe', key: 'webhook_secret' }} />);
+        render(<IntegrationsIndex providers={[stripe]} failedCheck={{ provider: 'stripe', key: 'webhook_secret' }} />);
 
         await user.type(screen.getByLabelText('New Stripe webhook signing secret'), 'whsec_bad');
         await user.click(within(screen.getByRole('region', { name: 'Stripe' })).getAllByRole('button', { name: 'Save' })[0]);
@@ -104,16 +104,16 @@ describe('Admin integrations page', () => {
         expect(screen.getByLabelText('Save anyway, even though the connection test failed')).not.toBeChecked();
     });
 
-    it('hides key inputs from admins who cannot manage keys', () => {
-        render(<IntegrationsIndex providers={[stripe]} canManage={false} />);
+    it('lets admins test connections and explains the recent sign-in check', () => {
+        render(<IntegrationsIndex providers={[stripe]} />);
 
-        expect(screen.queryByLabelText('New Stripe secret key')).not.toBeInTheDocument();
-        expect(screen.getByText('You can view status and test connections. Only super admins can change keys.')).toBeInTheDocument();
+        expect(screen.getByLabelText('New Stripe secret key')).toBeInTheDocument();
+        expect(screen.getByText(/Changing a key asks you to confirm your identity/)).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Test connection' })).toBeEnabled();
     });
 
     it('marks the Integrations navigation link as current', () => {
-        render(<IntegrationsIndex providers={[stripe]} canManage />);
+        render(<IntegrationsIndex providers={[stripe]} />);
 
         const nav = screen.getByRole('navigation', { name: 'Admin workspace' });
         expect(within(nav).getByRole('link', { name: 'Integrations & keys' })).toHaveAttribute('aria-current', 'page');

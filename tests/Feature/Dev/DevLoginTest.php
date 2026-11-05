@@ -56,12 +56,7 @@ class DevLoginTest extends TestCase
                 'allowed' => ['/staff', '/staff/posts', '/admin', '/admin/moderation'],
                 'forbidden' => [],
             ],
-            'super_admin' => [
-                'role' => Role::SuperAdmin,
-                'redirect' => '/admin',
-                'allowed' => ['/staff', '/staff/posts', '/admin', '/admin/moderation'],
-                'forbidden' => [],
-            ],
+
         ];
 
         foreach ($cases as $roleKey => $case) {

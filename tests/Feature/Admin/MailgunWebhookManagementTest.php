@@ -63,7 +63,7 @@ class MailgunWebhookManagementTest extends TestCase
     public function test_register_adds_the_newsroom_url_once_and_keeps_other_urls(): void
     {
         $this->fakeMailgun(['delivered' => ['https://other.example.com/hook']]);
-        $owner = User::factory()->superAdmin()->create();
+        $owner = User::factory()->admin()->create();
 
         $this->actingAs($owner)->withRecentAuthentication()
             ->post("/admin/settings/email-domains/{$this->domain->id}/webhooks/register")
@@ -92,7 +92,7 @@ class MailgunWebhookManagementTest extends TestCase
             'delivered' => ['https://old-beta.example.org/webhooks/mailgun', 'https://other.example.com/hook'],
             'clicked' => [$this->callback],
         ]);
-        $owner = User::factory()->superAdmin()->create();
+        $owner = User::factory()->admin()->create();
 
         $this->actingAs($owner)->withRecentAuthentication()->post("/admin/settings/email-domains/{$this->domain->id}/webhooks/repair")->assertSessionHasNoErrors();
         $this->assertSame(['https://other.example.com/hook', $this->callback], $this->domain->fresh()->webhooks['events']['delivered']['urls']);
@@ -107,7 +107,7 @@ class MailgunWebhookManagementTest extends TestCase
     public function test_tracking_changes_are_applied_in_mailgun_and_audited(): void
     {
         $this->fakeMailgun([]);
-        $owner = User::factory()->superAdmin()->create();
+        $owner = User::factory()->admin()->create();
 
         $this->actingAs($owner)->withRecentAuthentication()
             ->put("/admin/settings/email-domains/{$this->domain->id}/tracking", ['track_opens' => false, 'track_clicks' => true])
@@ -121,13 +121,24 @@ class MailgunWebhookManagementTest extends TestCase
         $this->assertSame(['track_opens' => false, 'track_clicks' => true], $audit->payload['to']);
     }
 
-    public function test_admins_can_only_check_and_mailgun_errors_are_shown(): void
+    public function test_changes_need_a_recent_sign_in_and_staff_are_refused(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $staff = User::factory()->staff()->create();
+
+        $this->actingAs($admin)->post("/admin/settings/email-domains/{$this->domain->id}/webhooks/register")
+            ->assertRedirect(route('account.confirm-identity'));
+        $this->actingAs($admin)->put("/admin/settings/email-domains/{$this->domain->id}/tracking", ['track_opens' => true, 'track_clicks' => true])
+            ->assertRedirect(route('account.confirm-identity'));
+
+        $this->actingAs($staff)->withRecentAuthentication()->post("/admin/settings/email-domains/{$this->domain->id}/webhooks/register")->assertForbidden();
+        $this->actingAs($staff)->withRecentAuthentication()->put("/admin/settings/email-domains/{$this->domain->id}/tracking", ['track_opens' => true, 'track_clicks' => true])->assertForbidden();
+    }
+
+    public function test_mailgun_errors_are_shown_on_refresh(): void
     {
         Http::fake(['api.eu.mailgun.net/*' => Http::response(['message' => 'Invalid private key'], 401)]);
         $admin = User::factory()->admin()->create();
-
-        $this->actingAs($admin)->withRecentAuthentication()->post("/admin/settings/email-domains/{$this->domain->id}/webhooks/register")->assertForbidden();
-        $this->actingAs($admin)->withRecentAuthentication()->put("/admin/settings/email-domains/{$this->domain->id}/tracking", ['track_opens' => true, 'track_clicks' => true])->assertForbidden();
 
         $this->actingAs($admin)->withRecentAuthentication()->post("/admin/settings/email-domains/{$this->domain->id}/webhooks/refresh");
         $this->assertStringContainsString('Invalid private key', $this->domain->fresh()->webhooks['error']);
@@ -136,12 +147,12 @@ class MailgunWebhookManagementTest extends TestCase
     public function test_the_page_warns_when_the_management_key_is_the_sending_key(): void
     {
         config(['services.mailgun.management_key' => 'sending-key-1234']);
-        $owner = User::factory()->superAdmin()->create();
+        $owner = User::factory()->admin()->create();
 
         $this->actingAs($owner)->get('/admin/settings/email-domains')
             ->assertInertia(fn (Assert $page) => $page
                 ->where('webhookManagement.uses_sending_key', true)
-                ->where('webhookManagement.can_manage', true)
+                ->missing('webhookManagement.can_manage')
                 ->where('webhookManagement.callback_url', $this->callback));
     }
 }

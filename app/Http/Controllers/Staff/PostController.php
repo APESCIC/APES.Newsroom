@@ -130,7 +130,7 @@ class PostController extends Controller
             'mailingLists' => $this->mailingListOptions(),
             'segments' => $this->segmentOptions(),
             'staffUsers' => User::query()
-                ->whereIn('role', [Role::Staff, Role::Admin, Role::SuperAdmin])
+                ->whereIn('role', [Role::Staff, Role::Admin])
                 ->orderBy('name')
                 ->get(['id', 'name', 'email'])
                 ->map(fn (User $user) => [
@@ -181,7 +181,7 @@ class PostController extends Controller
             'mailingLists' => $this->mailingListOptions(),
             'segments' => $this->segmentOptions(),
             'staffUsers' => User::query()
-                ->whereIn('role', [Role::Staff, Role::Admin, Role::SuperAdmin])
+                ->whereIn('role', [Role::Staff, Role::Admin])
                 ->orderBy('name')
                 ->get(['id', 'name', 'email'])
                 ->map(fn (User $user) => [

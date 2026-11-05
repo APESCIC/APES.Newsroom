@@ -49,35 +49,49 @@ class IntegrationKeysTest extends TestCase
         $this->assertSame(0, IntegrationSecret::query()->count());
     }
 
-    public function test_admin_can_view_and_test_but_not_change_keys(): void
+    public function test_admin_can_view_test_and_manage_keys(): void
     {
         $admin = User::factory()->admin()->create();
         $this->stripeOk();
-        app(IntegrationSecrets::class)->set('stripe', 'secret', self::SECRET, null);
 
         $this->actingAs($admin)->get(route('admin.settings.integrations.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Admin/Settings/Integrations/Index')
-                ->where('canManage', false));
+                ->missing('canManage'));
 
         $this->actingAs($admin)->post(route('admin.settings.integrations.test', 'stripe'))
+            ->assertRedirect(route('account.confirm-identity'));
+        $this->assertDatabaseMissing('integration_check_results', ['provider' => 'stripe', 'trigger' => 'manual']);
+
+        $this->actingAs($admin)->withRecentAuthentication()->post(route('admin.settings.integrations.test', 'stripe'))
             ->assertRedirect(route('admin.settings.integrations.index'));
         $this->assertDatabaseHas('integration_check_results', ['provider' => 'stripe', 'trigger' => 'manual', 'user_id' => $admin->id]);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'integration_key.tested', 'actor_id' => $admin->id]);
 
-        $this->actingAs($admin)->withRecentAuthentication()
+        $this->actingAs(User::factory()->staff()->create())->withRecentAuthentication()
+            ->post(route('admin.settings.integrations.test', 'stripe'))
+            ->assertForbidden();
+    }
+
+    public function test_staff_cannot_change_keys(): void
+    {
+        $staff = User::factory()->staff()->create();
+        app(IntegrationSecrets::class)->set('stripe', 'secret', self::SECRET, null);
+
+        $this->actingAs($staff)->withRecentAuthentication()
             ->put(route('admin.settings.integrations.update', ['stripe', 'secret']), ['secret_value' => 'sk_test_otherkey1234'])
             ->assertForbidden();
-        $this->actingAs($admin)->withRecentAuthentication()
+        $this->actingAs($staff)->withRecentAuthentication()
             ->delete(route('admin.settings.integrations.destroy', ['stripe', 'secret']))
             ->assertForbidden();
 
         $this->assertSame(self::SECRET, app(IntegrationSecrets::class)->get('stripe', 'secret'));
     }
 
-    public function test_super_admin_saves_a_key_after_a_passing_check(): void
+    public function test_admin_saves_a_key_after_a_passing_check(): void
     {
-        $owner = User::factory()->superAdmin()->create();
+        $owner = User::factory()->admin()->create();
         $this->stripeOk();
 
         $this->actingAs($owner)->withRecentAuthentication()
@@ -92,7 +106,7 @@ class IntegrationKeysTest extends TestCase
 
     public function test_a_key_encrypted_with_a_previous_app_key_reads_as_unset_and_can_be_replaced(): void
     {
-        $owner = User::factory()->superAdmin()->create();
+        $owner = User::factory()->admin()->create();
         $this->stripeOk();
         app(IntegrationSecrets::class)->set('stripe', 'secret', 'sk_test_oldkeyvalue1234', null);
         $oldKey = new Encrypter(Encrypter::generateKey(config('app.cipher')), config('app.cipher'));
@@ -113,7 +127,7 @@ class IntegrationKeysTest extends TestCase
 
     public function test_failing_check_blocks_saving_unless_forced(): void
     {
-        $owner = User::factory()->superAdmin()->create();
+        $owner = User::factory()->admin()->create();
         Http::fake(['api.stripe.com/*' => Http::response(['error' => ['message' => 'Invalid API Key provided: '.self::SECRET]], 401)]);
 
         $this->actingAs($owner)->withRecentAuthentication()
@@ -138,7 +152,7 @@ class IntegrationKeysTest extends TestCase
 
     public function test_changes_need_a_recent_identity_confirmation(): void
     {
-        $owner = User::factory()->superAdmin()->create();
+        $owner = User::factory()->admin()->create();
 
         $this->actingAs($owner)
             ->put(route('admin.settings.integrations.update', ['stripe', 'secret']), ['secret_value' => self::SECRET])
@@ -158,7 +172,7 @@ class IntegrationKeysTest extends TestCase
 
     public function test_key_changes_are_rate_limited(): void
     {
-        $owner = User::factory()->superAdmin()->create();
+        $owner = User::factory()->admin()->create();
 
         for ($i = 0; $i < 10; $i++) {
             $this->actingAs($owner)->withRecentAuthentication()
@@ -173,7 +187,7 @@ class IntegrationKeysTest extends TestCase
 
     public function test_invalid_values_and_unknown_keys_are_rejected(): void
     {
-        $owner = User::factory()->superAdmin()->create();
+        $owner = User::factory()->admin()->create();
 
         $this->actingAs($owner)->withRecentAuthentication()
             ->put(route('admin.settings.integrations.update', ['stripe', 'secret']), ['secret_value' => 'pk_test_wrongkind'])
@@ -188,7 +202,7 @@ class IntegrationKeysTest extends TestCase
 
     public function test_values_never_reach_the_page_audit_log_or_flashed_input(): void
     {
-        $owner = User::factory()->superAdmin()->create();
+        $owner = User::factory()->admin()->create();
         $this->stripeOk();
 
         $this->actingAs($owner)->withRecentAuthentication()
@@ -202,7 +216,7 @@ class IntegrationKeysTest extends TestCase
 
         $response = $this->actingAs($owner)->get(route('admin.settings.integrations.index'));
         $response->assertOk()->assertInertia(fn (Assert $page) => $page
-            ->where('canManage', true)
+            ->missing('canManage')
             ->where('providers.1.provider', 'stripe')
             ->where('providers.1.keys.0.source', 'database')
             ->where('providers.1.keys.0.last_four', '5432')
@@ -221,7 +235,7 @@ class IntegrationKeysTest extends TestCase
 
     public function test_non_sensitive_values_are_shown_in_full(): void
     {
-        $owner = User::factory()->superAdmin()->create();
+        $owner = User::factory()->admin()->create();
         app(IntegrationSecrets::class)->set(IntegrationDefinitions::MAILGUN, 'domain', 'mg.apesnews.org.uk', null);
 
         $this->actingAs($owner)->get(route('admin.settings.integrations.index'))
@@ -234,7 +248,7 @@ class IntegrationKeysTest extends TestCase
     public function test_removing_a_key_falls_back_to_the_environment(): void
     {
         config(['newsroom.unsplash.access_key' => 'env-unsplash-key-1234']);
-        $owner = User::factory()->superAdmin()->create();
+        $owner = User::factory()->admin()->create();
         app(IntegrationSecrets::class)->set('unsplash', 'access_key', 'db-unsplash-key-9999', $owner);
 
         $this->actingAs($owner)->withRecentAuthentication()

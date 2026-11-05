@@ -7,7 +7,6 @@ enum Role: string
     case Public = 'public';
     case Staff = 'staff';
     case Admin = 'admin';
-    case SuperAdmin = 'super_admin';
 
     /**
      * Ordinal rank used for privilege comparisons. Higher is more privileged.
@@ -18,7 +17,6 @@ enum Role: string
             self::Public => 0,
             self::Staff => 1,
             self::Admin => 2,
-            self::SuperAdmin => 3,
         };
     }
 

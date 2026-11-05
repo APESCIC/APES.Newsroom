@@ -17,7 +17,6 @@ class RoleAuthorizationTest extends TestCase
 
         Route::middleware(['web', 'auth', 'role:staff'])->get('/_test/staff-only', fn () => 'ok');
         Route::middleware(['web', 'auth', 'role:admin'])->get('/_test/admin-only', fn () => 'ok');
-        Route::middleware(['web', 'auth', 'role:super_admin'])->get('/_test/super-admin-only', fn () => 'ok');
     }
 
     public function test_guest_is_redirected_to_login_from_any_protected_route(): void
@@ -40,20 +39,11 @@ class RoleAuthorizationTest extends TestCase
         $this->actingAs($user)->get('/_test/admin-only')->assertForbidden();
     }
 
-    public function test_admin_can_access_admin_route_but_not_super_admin_route(): void
+    public function test_admin_can_access_everything_staff_can(): void
     {
         $user = User::factory()->admin()->create();
 
-        $this->actingAs($user)->get('/_test/admin-only')->assertOk();
-        $this->actingAs($user)->get('/_test/super-admin-only')->assertForbidden();
-    }
-
-    public function test_super_admin_can_access_everything_admin_can(): void
-    {
-        $user = User::factory()->superAdmin()->create();
-
         $this->actingAs($user)->get('/_test/staff-only')->assertOk();
         $this->actingAs($user)->get('/_test/admin-only')->assertOk();
-        $this->actingAs($user)->get('/_test/super-admin-only')->assertOk();
     }
 }

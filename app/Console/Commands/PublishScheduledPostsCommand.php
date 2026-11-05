@@ -32,11 +32,7 @@ class PublishScheduledPostsCommand extends Command
             ->where('scheduled_for', '<=', now('Europe/London'))
             ->pluck('id');
 
-        $systemActor = User::query()
-            ->where('role', Role::SuperAdmin)
-            ->orderBy('id')
-            ->first()
-            ?? User::query()->where('role', Role::Admin)->orderBy('id')->first();
+        $systemActor = User::query()->where('role', Role::Admin)->orderBy('id')->first();
 
         $publishedCount = 0;
         $skippedCount = 0;

@@ -207,7 +207,7 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Admin->value])
             Route::get('/', [AdminMailSendingController::class, 'index'])->name('index');
             Route::post('/test', [AdminMailSendingController::class, 'test'])->middleware('auth.recent')->name('test');
             Route::put('/', [AdminMailSendingController::class, 'update'])
-                ->middleware(['role:'.Role::SuperAdmin->value, 'auth.recent:300'])
+                ->middleware('auth.recent:300')
                 ->name('update');
         });
         Route::prefix('/settings/email-domains')->name('settings.email-domains.')->group(function () {
@@ -234,7 +234,7 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Admin->value])
                     ->whereNumber('emailSendingDomain')
                     ->middleware('throttle:10,1')
                     ->name('webhooks.refresh');
-                Route::middleware(['role:'.Role::SuperAdmin->value, 'auth.recent:300', 'throttle:10,1'])->group(function () {
+                Route::middleware(['auth.recent:300', 'throttle:10,1'])->group(function () {
                     Route::post('/{emailSendingDomain}/webhooks/register', [AdminMailgunDomainWebhooksController::class, 'register'])->whereNumber('emailSendingDomain')->name('webhooks.register');
                     Route::post('/{emailSendingDomain}/webhooks/repair', [AdminMailgunDomainWebhooksController::class, 'repair'])->whereNumber('emailSendingDomain')->name('webhooks.repair');
                     Route::delete('/{emailSendingDomain}/webhooks', [AdminMailgunDomainWebhooksController::class, 'remove'])->whereNumber('emailSendingDomain')->name('webhooks.remove');
@@ -249,9 +249,9 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Admin->value])
             Route::get('/', [AdminIntegrationController::class, 'index'])->name('index');
             Route::post('/{provider}/test', [AdminIntegrationController::class, 'test'])
                 ->whereIn('provider', $providers)
-                ->middleware('throttle:integration-keys')
+                ->middleware(['auth.recent', 'throttle:integration-keys'])
                 ->name('test');
-            Route::middleware(['role:'.Role::SuperAdmin->value, 'auth.recent:300', 'throttle:integration-keys'])->group(function () use ($providers) {
+            Route::middleware(['auth.recent:300', 'throttle:integration-keys'])->group(function () use ($providers) {
                 Route::put('/{provider}/{key}', [AdminIntegrationController::class, 'update'])
                     ->whereIn('provider', $providers)
                     ->where('key', '[a-z_]+')

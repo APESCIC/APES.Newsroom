@@ -51,7 +51,7 @@ final class SettingDefinitions
 
     public const MAIL_SOFT_BOUNCE_WINDOW = 'mail.soft_bounce.window_days';
 
-    /** Settings shown on Admin → Settings → Mail sending, changed by super admins only. */
+    /** Settings shown on Admin → Settings → Mail sending, changed by admins after a recent sign-in. */
     public const PAGE_MAIL_SENDING = 'mail-sending';
 
     /** Passwords shorter than this are never allowed, whatever the setting says. */

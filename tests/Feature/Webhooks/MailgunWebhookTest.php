@@ -172,7 +172,7 @@ class MailgunWebhookTest extends TestCase
         $this->assertSame(Suppression::REPEATED_SOFT_BOUNCE, Suppression::query()->where('email', 'reader@example.com')->value('reason'));
     }
 
-    public function test_super_admins_can_change_the_temporary_failure_limit(): void
+    public function test_admins_can_change_the_temporary_failure_limit(): void
     {
         app(SettingsRepository::class)->set(SettingDefinitions::MAIL_SOFT_BOUNCE_LIMIT, 2);
 

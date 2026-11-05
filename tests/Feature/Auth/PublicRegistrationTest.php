@@ -35,7 +35,7 @@ class PublicRegistrationTest extends TestCase
             'email' => 'jamie@example.com',
             'password' => 'correct-horse-battery-staple',
             'password_confirmation' => 'correct-horse-battery-staple',
-            'role' => 'super_admin',
+            'role' => 'admin',
         ]);
 
         $user = User::where('email', 'jamie@example.com')->firstOrFail();

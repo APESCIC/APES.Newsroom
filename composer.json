@@ -4,7 +4,7 @@
     "type": "project",
     "description": "APES Newsroom: public newsroom and authenticated publishing/campaign/moderation workspaces for APES CIC, APES Shelter & Rescue, and APES Pet Care Clinic.",
     "keywords": ["laravel", "inertia", "newsroom", "apes"],
-    "license": "proprietary",
+    "license": "AGPL-3.0-only",
     "require": {
         "php": "^8.4",
         "bacon/bacon-qr-code": "^3.1",

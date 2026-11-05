@@ -1,0 +1,29 @@
+{
+  "version": "v1.28.0",
+  "slug": "release-v1-28-0",
+  "released_at": "2026-11-05",
+  "previous_version": "v1.27.1",
+  "theme": "One admin role",
+  "change_types": ["changed", "removed", "security", "added"],
+  "topic_tags": ["internal-only", "compliance"],
+  "summary": "The super admin role is merged into admin: admins now hold every former super admin ability, with sensitive changes behind a re-confirmed sign-in. The public repository also gains its licence, Code of Conduct, security, contributing and support files.",
+  "detailed_changes": [
+    "Merged the super admin role into admin. Former super admins sign in as admin, and their stored role and audit entries were converted, with a snapshot kept for rollback (#714, #715, #724).",
+    "Integration keys, mail sending settings and Mailgun webhook and tracking changes now need an admin who re-confirmed their sign-in in the last five minutes; staff are refused (#716).",
+    "Admins can lock, unlock, sign out, reset, edit, delete or demote other admins after re-confirming their sign-in, never their own account, and the last unlocked admin is always kept (#717, #720).",
+    "Testing an integration connection now needs a recent sign-in too (#742).",
+    "Scheduled publishing, integration alerts, campaign alerts, author lists, API token owners and the Ghost importer use admins (#718).",
+    "Removed super admin from the staff and admin screens and the local role preview (#719, #722).",
+    "Wrote a security review of the wider admin rights into the threat model, with a recommendation to keep two-factor sign-in on for every admin (#720).",
+    "Added a runbook for retiring the old Cloudron super admin group without anyone losing access (#723).",
+    "Added the AGPL-3.0 licence, Code of Conduct, security policy, contributing and support guides, Discussion forms and a refreshed README (#727)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /admin/users, /admin/settings/integrations, /admin/settings/mail-sending, /admin/settings/email-domains",
+    "User groups affected: staff and admins",
+    "Public impact: none",
+    "Internal impact: one admin role, re-confirmed sign-in for sensitive changes, Cloudron group change, repository licence and community files"
+  ],
+  "pr": 741
+}

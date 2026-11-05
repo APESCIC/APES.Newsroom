@@ -1,6 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 
-export type Role = 'public' | 'staff' | 'admin' | 'super_admin';
+export type Role = 'public' | 'staff' | 'admin';
 
 export type PanelPage = {
     name: string;
@@ -29,7 +29,7 @@ export const panelPages: PanelPage[] = [
     { name: 'staff-media', path: '/staff/media', role: 'staff' },
     { name: 'staff-newsletters', path: '/staff/newsletters', role: 'staff' },
     { name: 'staff-people', path: '/staff/people', role: 'staff' },
-    { name: 'staff-person', path: '/staff/people/users/5', role: 'admin' },
+    { name: 'staff-person', path: '/staff/people/users/4', role: 'admin' },
     { name: 'staff-subscriber', path: '/staff/people/contacts/2', role: 'staff' },
     { name: 'staff-subscribers', path: '/staff/subscribers', role: 'staff' },
     { name: 'staff-plans', path: '/staff/membership-plans', role: 'staff' },
@@ -44,7 +44,7 @@ export const panelPages: PanelPage[] = [
     { name: 'admin-webhooks', path: '/admin/webhooks', role: 'admin' },
     { name: 'admin-api-tokens', path: '/admin/api-tokens', role: 'admin' },
     { name: 'admin-content-api-keys', path: '/admin/content-api-keys', role: 'admin' },
-    { name: 'admin-integrations', path: '/admin/settings/integrations', role: 'super_admin' },
+    { name: 'admin-integrations', path: '/admin/settings/integrations', role: 'admin' },
     { name: 'admin-email-domains', path: '/admin/settings/email-domains', role: 'admin' },
     { name: 'admin-audit-log', path: '/admin/audit-log?from=2026-10-20&to=2026-10-20', role: 'admin' },
     { name: 'admin-settings', path: '/admin/settings', role: 'admin' },

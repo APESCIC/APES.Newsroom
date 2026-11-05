@@ -22,7 +22,7 @@ class AdminUsersTest extends TestCase
         $this->withoutVite();
     }
 
-    public function test_only_admins_and_super_admins_can_open_user_management(): void
+    public function test_only_admins_can_open_user_management(): void
     {
         $target = User::factory()->create();
 
@@ -34,7 +34,7 @@ class AdminUsersTest extends TestCase
             $this->actingAs($user)->get("/admin/users/{$target->id}")->assertForbidden();
         }
 
-        foreach ([User::factory()->admin()->create(), User::factory()->superAdmin()->create()] as $user) {
+        foreach ([User::factory()->admin()->create()] as $user) {
             $this->actingAs($user)->get('/admin/users')
                 ->assertOk()
                 ->assertInertia(fn (Assert $page) => $page->component('Admin/Users/Index'));

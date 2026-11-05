@@ -4,7 +4,7 @@ export type AuthUser = {
     id: number;
     name: string;
     email: string;
-    role: 'public' | 'staff' | 'admin' | 'super_admin';
+    role: 'public' | 'staff' | 'admin';
 };
 
 export type SharedAuth = {
@@ -12,7 +12,6 @@ export type SharedAuth = {
     can: {
         accessStaff: boolean;
         accessAdmin: boolean;
-        accessSuperAdmin?: boolean;
         reviewPosts?: boolean;
     };
 };

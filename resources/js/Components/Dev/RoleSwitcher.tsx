@@ -12,7 +12,6 @@ const ROLES = [
     { key: 'public', label: 'Public' },
     { key: 'staff', label: 'Staff' },
     { key: 'admin', label: 'Admin' },
-    { key: 'super_admin', label: 'Super admin' },
 ] as const;
 
 export default function RoleSwitcher() {
