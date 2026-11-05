@@ -30,9 +30,9 @@ class MailgunDomainWebhooksController extends Controller
     ) {}
 
     /**
-     * @return array{configured: bool, signing_key_configured: bool, uses_sending_key: bool, rotate_due: bool, can_manage: bool, callback_url: string}
+     * @return array{configured: bool, signing_key_configured: bool, uses_sending_key: bool, rotate_due: bool, callback_url: string}
      */
-    public static function managementStatus(Request $request): array
+    public static function managementStatus(): array
     {
         $manager = app(MailgunWebhookManager::class);
         $secret = IntegrationSecret::query()->where(['provider' => IntegrationDefinitions::MAILGUN, 'key' => 'management_key'])->first();
@@ -43,7 +43,6 @@ class MailgunDomainWebhooksController extends Controller
             'signing_key_configured' => app(IntegrationSecrets::class)->configured(IntegrationDefinitions::MAILGUN, 'webhook_signing_key'),
             'uses_sending_key' => $manager->usesSendingKey(),
             'rotate_due' => $setAt !== null && $setAt->lt(now()->subDays(self::ROTATE_AFTER_DAYS)),
-            'can_manage' => $request->user()->can('access-admin-area'),
             'callback_url' => $manager->callbackUrl(),
         ];
     }

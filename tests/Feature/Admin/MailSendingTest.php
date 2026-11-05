@@ -113,7 +113,7 @@ class MailSendingTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Admin/Settings/MailSending/Index')
-                ->where('canManage', true)
+                ->missing('canManage')
                 ->has('settings', 5)
                 ->has('transports', 3)
                 ->has('features'));

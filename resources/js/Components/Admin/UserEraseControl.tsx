@@ -29,7 +29,7 @@ export default function UserEraseControl({ user }: { user: UserDetail }) {
     }, []);
 
     if (!user.can.erase || user.erase_mode === null) {
-        return <p className="text-sm text-muted">Only a super admin can delete this account.</p>;
+        return <p className="text-sm text-muted">You cannot delete your own account or the last admin from here.</p>;
     }
 
     const explanation = eraseExplanation(user.erase_mode, user.name);

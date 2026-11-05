@@ -77,7 +77,6 @@ class MailSendingController extends Controller
                 'system' => TransportTester::lastResult('system'),
                 'newsletters' => TransportTester::lastResult('newsletters'),
             ],
-            'canManage' => $request->user()->can('access-admin-area'),
             'testRecipient' => $request->user()->email,
         ]);
     }

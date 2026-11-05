@@ -156,42 +156,6 @@ function SettingsForm({ settings }: { settings: SettingDefinition[] }) {
     );
 }
 
-function displayValue(setting: SettingDefinition): string {
-    switch (setting.type) {
-        case 'enum':
-            return setting.options.find((option) => option.value === setting.value)?.label ?? setting.value;
-        case 'int':
-            return `${setting.value}${setting.unit ? ` ${setting.unit}` : ''}`;
-        case 'bool':
-            return setting.value ? 'On' : 'Off';
-        case 'multi_enum':
-            return setting.value.join(', ') || 'None';
-        default: {
-            const exhaustive: never = setting;
-            return exhaustive;
-        }
-    }
-}
-
-function ReadOnlySettings({ settings }: { settings: SettingDefinition[] }) {
-    return (
-        <section className="sg-card flex flex-col gap-3 p-5 sm:p-6" aria-labelledby="mail-sending-current-heading">
-            <h2 id="mail-sending-current-heading" className="text-base font-semibold text-body">
-                Sending method
-            </h2>
-            <p className="text-sm text-muted">Only super admins can change these. You can still check connections and send test emails.</p>
-            <dl className="grid gap-3 text-sm sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-                {settings.map((setting) => (
-                    <div key={setting.key} className="contents">
-                        <dt className="font-semibold text-body">{setting.label}</dt>
-                        <dd className="text-body">{displayValue(setting)}</dd>
-                    </div>
-                ))}
-            </dl>
-        </section>
-    );
-}
-
 export default function MailSendingIndex({
     settings,
     transports,
@@ -199,7 +163,6 @@ export default function MailSendingIndex({
     cloudron,
     features,
     lastTests,
-    canManage,
     testRecipient,
 }: {
     settings: SettingDefinition[];
@@ -208,7 +171,6 @@ export default function MailSendingIndex({
     cloudron: { detected: boolean; mailer: string; from: string | null };
     features: Feature[];
     lastTests: Record<Purpose, TransportTestResult | null>;
-    canManage: boolean;
     testRecipient: string;
 }) {
     const labelFor = (key: string) => transports.find((transport) => transport.value === key)?.label ?? key;
@@ -255,7 +217,7 @@ export default function MailSendingIndex({
                     </p>
                 </section>
 
-                {canManage ? <SettingsForm settings={settings} /> : <ReadOnlySettings settings={settings} />}
+                <SettingsForm settings={settings} />
 
                 <section className="sg-card flex flex-col gap-3 p-5 sm:p-6" aria-labelledby="mail-sending-transports-heading">
                     <h2 id="mail-sending-transports-heading" className="text-base font-semibold text-body">

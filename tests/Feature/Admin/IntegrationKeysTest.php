@@ -58,7 +58,7 @@ class IntegrationKeysTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Admin/Settings/Integrations/Index')
-                ->where('canManage', true));
+                ->missing('canManage'));
 
         $this->actingAs($admin)->post(route('admin.settings.integrations.test', 'stripe'))
             ->assertRedirect(route('admin.settings.integrations.index'));
@@ -207,7 +207,7 @@ class IntegrationKeysTest extends TestCase
 
         $response = $this->actingAs($owner)->get(route('admin.settings.integrations.index'));
         $response->assertOk()->assertInertia(fn (Assert $page) => $page
-            ->where('canManage', true)
+            ->missing('canManage')
             ->where('providers.1.provider', 'stripe')
             ->where('providers.1.keys.0.source', 'database')
             ->where('providers.1.keys.0.last_four', '5432')

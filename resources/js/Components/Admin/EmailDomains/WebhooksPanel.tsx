@@ -14,7 +14,6 @@ export type WebhookManagement = {
     signing_key_configured: boolean;
     uses_sending_key: boolean;
     rotate_due: boolean;
-    can_manage: boolean;
     callback_url: string;
 };
 
@@ -112,41 +111,30 @@ export default function WebhooksPanel({
                     <button type="button" className="sg-btn sg-btn-secondary sg-btn-sm" disabled={busy || !management.configured} onClick={() => act('post', `${base}/webhooks/refresh`)}>
                         Check webhooks
                     </button>
-                    {management.can_manage && (
-                        <>
-                            <button type="button" className="sg-btn sg-btn-primary sg-btn-sm" disabled={busy || !management.configured} onClick={() => act('post', `${base}/webhooks/register`)}>
-                                Register
-                            </button>
-                            <button type="button" className="sg-btn sg-btn-secondary sg-btn-sm" disabled={busy || !management.configured} onClick={() => act('post', `${base}/webhooks/repair`)}>
-                                Repair
-                            </button>
-                            <button type="button" className="sg-btn sg-btn-secondary sg-btn-sm" disabled={busy || !management.configured} onClick={() => act('delete', `${base}/webhooks`)}>
-                                Remove
-                            </button>
-                        </>
-                    )}
+                    <button type="button" className="sg-btn sg-btn-primary sg-btn-sm" disabled={busy || !management.configured} onClick={() => act('post', `${base}/webhooks/register`)}>
+                        Register
+                    </button>
+                    <button type="button" className="sg-btn sg-btn-secondary sg-btn-sm" disabled={busy || !management.configured} onClick={() => act('post', `${base}/webhooks/repair`)}>
+                        Repair
+                    </button>
+                    <button type="button" className="sg-btn sg-btn-secondary sg-btn-sm" disabled={busy || !management.configured} onClick={() => act('delete', `${base}/webhooks`)}>
+                        Remove
+                    </button>
                 </div>
-                {management.can_manage ? (
-                    <form onSubmit={saveTracking} className="flex flex-col gap-2 border-t border-border pt-3" aria-label={`Tracking on ${domain}`}>
-                        <p className="text-muted">Readers still choose for themselves: opens are only tracked for readers who opted in, clicks unless they opted out.</p>
-                        <label className="inline-flex min-h-11 items-center gap-2">
-                            <input type="checkbox" checked={tracking.data.track_opens} onChange={(event) => tracking.setData('track_opens', event.target.checked)} />
-                            Allow open tracking on this domain
-                        </label>
-                        <label className="inline-flex min-h-11 items-center gap-2">
-                            <input type="checkbox" checked={tracking.data.track_clicks} onChange={(event) => tracking.setData('track_clicks', event.target.checked)} />
-                            Allow click tracking on this domain
-                        </label>
-                        <button type="submit" className="sg-btn sg-btn-secondary sg-btn-sm self-start" disabled={tracking.processing || !tracking.isDirty}>
-                            Save tracking
-                        </button>
-                    </form>
-                ) : (
-                    <p className="text-xs text-muted">
-                        Newsroom settings: open tracking {trackOpens ? 'allowed' : 'off'}, click tracking {trackClicks ? 'allowed' : 'off'}. Only super admins can change
-                        webhooks and tracking.
-                    </p>
-                )}
+                <form onSubmit={saveTracking} className="flex flex-col gap-2 border-t border-border pt-3" aria-label={`Tracking on ${domain}`}>
+                    <p className="text-muted">Readers still choose for themselves: opens are only tracked for readers who opted in, clicks unless they opted out.</p>
+                    <label className="inline-flex min-h-11 items-center gap-2">
+                        <input type="checkbox" checked={tracking.data.track_opens} onChange={(event) => tracking.setData('track_opens', event.target.checked)} />
+                        Allow open tracking on this domain
+                    </label>
+                    <label className="inline-flex min-h-11 items-center gap-2">
+                        <input type="checkbox" checked={tracking.data.track_clicks} onChange={(event) => tracking.setData('track_clicks', event.target.checked)} />
+                        Allow click tracking on this domain
+                    </label>
+                    <button type="submit" className="sg-btn sg-btn-secondary sg-btn-sm self-start" disabled={tracking.processing || !tracking.isDirty}>
+                        Save tracking
+                    </button>
+                </form>
             </div>
         </details>
     );

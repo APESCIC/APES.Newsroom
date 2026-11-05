@@ -159,17 +159,7 @@ function phrase(label: string): string {
     return /^[A-Z]{2}/.test(label) ? label : label.charAt(0).toLowerCase() + label.slice(1);
 }
 
-function KeyRow({
-    provider,
-    item,
-    canManage,
-    failedCheck,
-}: {
-    provider: IntegrationProvider;
-    item: IntegrationKey;
-    canManage: boolean;
-    failedCheck: FailedCheck;
-}) {
+function KeyRow({ provider, item, failedCheck }: { provider: IntegrationProvider; item: IntegrationKey; failedCheck: FailedCheck }) {
     const form = useForm({ secret_value: '', force: false });
     const [confirmRemove, setConfirmRemove] = useState(false);
     const inputId = `integration-${provider.provider}-${item.key}`;
@@ -211,49 +201,47 @@ function KeyRow({
                     )}
                 </p>
             </div>
-            {canManage && (
-                <form onSubmit={submit} className="flex flex-col gap-2">
-                    <label htmlFor={inputId} className="sr-only">
-                        New {provider.label} {name}
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                        <input
-                            id={inputId}
-                            type={item.sensitive ? 'password' : 'text'}
-                            autoComplete="off"
-                            spellCheck={false}
-                            className="form-input min-w-0 flex-1"
-                            placeholder={item.source === null ? `Enter ${name}` : `Replace ${name}`}
-                            value={form.data.secret_value}
-                            aria-describedby={form.errors.secret_value ? `${inputId}-help ${errorId}` : `${inputId}-help`}
-                            aria-invalid={form.errors.secret_value ? true : undefined}
-                            onChange={(event) => form.setData('secret_value', event.target.value)}
-                        />
-                        <button type="submit" className="sg-btn sg-btn-primary" disabled={form.processing || form.data.secret_value === ''}>
-                            {item.source === 'database' ? 'Replace' : 'Save'}
+            <form onSubmit={submit} className="flex flex-col gap-2">
+                <label htmlFor={inputId} className="sr-only">
+                    New {provider.label} {name}
+                </label>
+                <div className="flex flex-wrap gap-2">
+                    <input
+                        id={inputId}
+                        type={item.sensitive ? 'password' : 'text'}
+                        autoComplete="off"
+                        spellCheck={false}
+                        className="form-input min-w-0 flex-1"
+                        placeholder={item.source === null ? `Enter ${name}` : `Replace ${name}`}
+                        value={form.data.secret_value}
+                        aria-describedby={form.errors.secret_value ? `${inputId}-help ${errorId}` : `${inputId}-help`}
+                        aria-invalid={form.errors.secret_value ? true : undefined}
+                        onChange={(event) => form.setData('secret_value', event.target.value)}
+                    />
+                    <button type="submit" className="sg-btn sg-btn-primary" disabled={form.processing || form.data.secret_value === ''}>
+                        {item.source === 'database' ? 'Replace' : 'Save'}
+                    </button>
+                    {item.source === 'database' && (
+                        <button type="button" className="sg-btn sg-btn-ghost !text-danger" disabled={form.processing} onClick={() => setConfirmRemove(true)}>
+                            Remove
                         </button>
-                        {item.source === 'database' && (
-                            <button type="button" className="sg-btn sg-btn-ghost !text-danger" disabled={form.processing} onClick={() => setConfirmRemove(true)}>
-                                Remove
-                            </button>
-                        )}
-                    </div>
-                    <p id={`${inputId}-help`} className="text-xs text-muted">
-                        {item.help}
+                    )}
+                </div>
+                <p id={`${inputId}-help`} className="text-xs text-muted">
+                    {item.help}
+                </p>
+                {form.errors.secret_value && (
+                    <p id={errorId} className="text-sm text-danger">
+                        {form.errors.secret_value}
                     </p>
-                    {form.errors.secret_value && (
-                        <p id={errorId} className="text-sm text-danger">
-                            {form.errors.secret_value}
-                        </p>
-                    )}
-                    {showForce && (
-                        <label className="inline-flex min-h-11 items-center gap-2 text-sm text-body">
-                            <input type="checkbox" checked={form.data.force} onChange={(event) => form.setData('force', event.target.checked)} />
-                            Save anyway, even though the connection test failed
-                        </label>
-                    )}
-                </form>
-            )}
+                )}
+                {showForce && (
+                    <label className="inline-flex min-h-11 items-center gap-2 text-sm text-body">
+                        <input type="checkbox" checked={form.data.force} onChange={(event) => form.setData('force', event.target.checked)} />
+                        Save anyway, even though the connection test failed
+                    </label>
+                )}
+            </form>
             <ConfirmDialog
                 open={confirmRemove}
                 title={`Remove the stored ${provider.label} ${name}?`}
@@ -268,7 +256,7 @@ function KeyRow({
     );
 }
 
-function ProviderCard({ provider, canManage, failedCheck }: { provider: IntegrationProvider; canManage: boolean; failedCheck: FailedCheck }) {
+function ProviderCard({ provider, failedCheck }: { provider: IntegrationProvider; failedCheck: FailedCheck }) {
     const [testing, setTesting] = useState(false);
     const headingId = `integration-${provider.provider}-heading`;
 
@@ -300,7 +288,7 @@ function ProviderCard({ provider, canManage, failedCheck }: { provider: Integrat
             )}
             {!provider.managed && <p className="text-sm text-muted">Managed by Cloudron in the server environment; nothing to enter here.</p>}
             {provider.keys.map((item) => (
-                <KeyRow key={item.key} provider={provider} item={item} canManage={canManage} failedCheck={failedCheck} />
+                <KeyRow key={item.key} provider={provider} item={item} failedCheck={failedCheck} />
             ))}
             {(provider.history.length > 0 || provider.rotations.length > 0) && (
                 <details className="text-sm">
@@ -338,15 +326,7 @@ function ProviderCard({ provider, canManage, failedCheck }: { provider: Integrat
     );
 }
 
-export default function IntegrationsIndex({
-    providers,
-    canManage,
-    failedCheck = null,
-}: {
-    providers: IntegrationProvider[];
-    canManage: boolean;
-    failedCheck?: FailedCheck;
-}) {
+export default function IntegrationsIndex({ providers, failedCheck = null }: { providers: IntegrationProvider[]; failedCheck?: FailedCheck }) {
     const { errors } = usePage<SharedPageProps>().props;
     const otherErrors = Object.entries(errors ?? {}).filter(([field]) => field !== 'secret_value');
 
@@ -398,17 +378,12 @@ export default function IntegrationsIndex({
                     </table>
                     <p className="px-5 text-xs text-muted">Configured integrations are checked every hour. Admins are emailed when a check starts failing.</p>
                 </section>
-                {!canManage && (
-                    <p className="text-sm text-muted">You can view status and test connections. Only super admins can change keys.</p>
-                )}
-                {canManage && (
-                    <p className="text-sm text-muted">
-                        Saved keys are encrypted and never shown again; only the last four characters are displayed. Changing a key asks you to confirm your
-                        identity if you have not done so in the last five minutes.
-                    </p>
-                )}
+                <p className="text-sm text-muted">
+                    Saved keys are encrypted and never shown again; only the last four characters are displayed. Changing a key asks you to confirm your
+                    identity if you have not done so in the last five minutes.
+                </p>
                 {providers.map((provider) => (
-                    <ProviderCard key={provider.provider} provider={provider} canManage={canManage} failedCheck={failedCheck} />
+                    <ProviderCard key={provider.provider} provider={provider} failedCheck={failedCheck} />
                 ))}
             </>
         </WorkspaceLayout>

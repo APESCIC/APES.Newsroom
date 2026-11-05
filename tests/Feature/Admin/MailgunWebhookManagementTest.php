@@ -152,7 +152,7 @@ class MailgunWebhookManagementTest extends TestCase
         $this->actingAs($owner)->get('/admin/settings/email-domains')
             ->assertInertia(fn (Assert $page) => $page
                 ->where('webhookManagement.uses_sending_key', true)
-                ->where('webhookManagement.can_manage', true)
+                ->missing('webhookManagement.can_manage')
                 ->where('webhookManagement.callback_url', $this->callback));
     }
 }

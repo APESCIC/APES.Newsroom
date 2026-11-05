@@ -21,7 +21,6 @@ const DEV_ROLES = [
     { key: 'public', label: 'Public' },
     { key: 'staff', label: 'Staff' },
     { key: 'admin', label: 'Admin' },
-    { key: 'super_admin', label: 'Super admin' },
 ] as const;
 
 const PASSKEY_OPTIONS_URL = '/passkeys/login/options';

@@ -84,7 +84,7 @@ class EmailSendingDomainController extends Controller
             'defaultReplyToProblem' => filled(DefaultReplyTo::get()) ? SenderDomains::replyToProblem((string) DefaultReplyTo::get()) : null,
             'testRecipient' => $request->user()->email,
             'offerTestAddressId' => $request->session()->get('offer_test_address'),
-            'webhookManagement' => MailgunDomainWebhooksController::managementStatus($request),
+            'webhookManagement' => MailgunDomainWebhooksController::managementStatus(),
             'purposes' => collect(SenderAddressPurpose::cases())->map(fn (SenderAddressPurpose $purpose) => [
                 'value' => $purpose->value,
                 'label' => $purpose->label(),

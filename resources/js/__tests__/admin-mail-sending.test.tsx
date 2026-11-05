@@ -44,26 +44,25 @@ const props = {
 beforeEach(() => {
     setMockPage({
         appName: 'APES Newsroom',
-        auth: { user: { id: 1, name: 'Admin', email: 'admin@apes.org.uk', role: 'admin' }, can: { accessStaff: true, accessAdmin: true, accessSuperAdmin: false } },
+        auth: { user: { id: 1, name: 'Admin', email: 'admin@apes.org.uk', role: 'admin' }, can: { accessStaff: true, accessAdmin: true } },
     });
 });
 
 afterEach(() => vi.restoreAllMocks());
 
 describe('Mail sending page', () => {
-    it('shows admins the current setup read-only with test panels', () => {
-        render(<MailSendingIndex {...props} canManage={false} />);
+    it('shows admins the settings form with test panels', () => {
+        render(<MailSendingIndex {...props} />);
 
-        expect(screen.getByText(/Only super admins can change these/)).toBeInTheDocument();
-        expect(screen.queryByRole('button', { name: 'Save mail sending' })).toBeNull();
+        expect(screen.getByRole('button', { name: 'Save mail sending' })).toBeInTheDocument();
         expect(screen.getAllByRole('button', { name: 'Check connection' })).toHaveLength(2);
         expect(screen.getByRole('table', { name: 'Features available on each mail transport' })).toBeInTheDocument();
         expect(screen.getByText('Custom SMTP needs a host and password under Integrations.')).toBeInTheDocument();
     });
 
-    it('lets super admins save the sending method', async () => {
+    it('lets admins save the sending method', async () => {
         const user = userEvent.setup();
-        render(<MailSendingIndex {...props} canManage />);
+        render(<MailSendingIndex {...props} />);
 
         await user.click(screen.getByRole('radio', { name: 'Custom SMTP' }));
         await user.click(screen.getByRole('button', { name: 'Save mail sending' }));
@@ -91,7 +90,7 @@ describe('Mail sending page', () => {
                 { status: 200 },
             ),
         );
-        render(<MailSendingIndex {...props} canManage={false} />);
+        render(<MailSendingIndex {...props} />);
 
         await user.click(screen.getAllByRole('button', { name: 'Check connection' })[0]);
 
