@@ -51,6 +51,7 @@ class UserErasureService
 
         $mode = DB::transaction(function () use ($user, $actor) {
             $lockedUser = User::query()->lockForUpdate()->findOrFail($user->id);
+            LastAdminGuard::ensureAnotherAdmin($lockedUser, 'reason', 'The last unlocked admin cannot be deleted.');
 
             if ($this->policy->blockingReason($lockedUser) === null) {
                 $this->eraser->delete($lockedUser, false, null);

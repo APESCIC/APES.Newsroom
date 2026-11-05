@@ -29,6 +29,40 @@
 | Dependency vulns | CI `composer audit` / `npm audit` |
 | Content injection via Ghost import | HTML→blocks conversion; legacy blocks sanitized; needs_import_review flag |
 
+## Review: wider admin rights (v1.28.0, #720)
+
+v1.28.0 merged the super admin role into admin (#713). Every admin now holds
+what only super admins could do before:
+
+| Ability admins gained | Re-confirmed sign-in | Audit entry |
+|-----------------------|----------------------|-------------|
+| Add, replace or remove integration keys | Within 5 minutes (`auth.recent:300`) | `integration_key.set`, `.replaced`, `.removed` |
+| Test an integration connection (#742) | Yes (`auth.recent`) | `integration_key.tested` |
+| Change mail sending transports and bounce limits | Within 5 minutes | `mail_sending.updated` |
+| Register, repair or remove Mailgun webhooks; change tracking | Within 5 minutes | `email_sending_domain.webhooks_*`, `email_sending_domain.tracking_changed` |
+| Lock, unlock, sign out, reset credentials, edit or resend verification for **other admins** | Yes (`auth.recent`) | `user.locked`, `user.unlocked`, `user.signed_out`, `user.password_reset_forced`, `user.two_factor_reset`, `user.passkeys_removed`, `user.updated` |
+| Delete or anonymise any other account, including admins | Yes | `user.erased` |
+| Demote a non-SSO account (including an admin) to Public | Yes | `user.role_changed` |
+
+Limits that still hold: nobody acts on their own account; the last unlocked
+admin cannot be locked, erased or demoted (checked in `UserPolicy` and again
+under a row lock in `LastAdminGuard`, so two admins acting on each other at the
+same moment cannot both succeed); staff and admin roles still come only from
+Cloudron groups; every action needs a reason and is rate limited.
+
+**Recommendation.** Admin accounts are now the highest privilege in the app.
+Keep Cloudron Mandatory 2FA on for every `newsroom.admin` member, keep that
+group small, and review it whenever someone changes role.
+
+Findings from the review, and what happened to each:
+
+- Concurrent demotion or lock could leave no admin: fixed with `LastAdminGuard` (row lock in the service transaction).
+- Integration connection tests did not need a recent sign-in: fixed in #742.
+- Deploying before members are in `newsroom.admin` would demote SSO-only former super admins: covered by the pre-merge step of the runbook in [`docs/deployment.md`](../deployment.md#retiring-the-old-super-admin-group-v1280) (#723).
+- New code reading an unmigrated `super_admin` row: not reachable, because `cloudron-activate.sh` migrates before switching the release.
+- Rolling the migration back after live use restores the original roles, which could re-elevate accounts changed since: accepted; roll back only straight after a failed deploy.
+- The audit rewrite changes exact `super_admin` values only and skips payloads that are not JSON: accepted; none are expected, and the snapshot keeps every changed row.
+
 ## Headers
 
 `SecurityHeaders` middleware sets CSP, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Permissions-Policy` on web and API responses, plus `Strict-Transport-Security` over HTTPS (see [`docs/deployment.md`](../deployment.md#transport-security-secure-cookies-hsts)).

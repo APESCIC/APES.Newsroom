@@ -5,6 +5,7 @@ namespace Tests\Feature\Admin;
 use App\Mail\TransportTestMail;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Services\Auth\RecentAuthentication;
 use App\Services\Integrations\IntegrationSecrets;
 use App\Services\Mail\MailTransports;
 use App\Services\Mail\SmtpHandshake;
@@ -157,6 +158,11 @@ class MailSendingTest extends TestCase
         $owner = User::factory()->admin()->create();
 
         $this->actingAs($owner)->put('/admin/settings/mail-sending', ['settings' => ['mail' => ['system_transport' => 'cloudron_smtp']]])
+            ->assertRedirect('/account/confirm-identity');
+
+        $this->actingAs($owner)
+            ->withSession([RecentAuthentication::SESSION_KEY => now()->subMinutes(6)->getTimestamp()])
+            ->put('/admin/settings/mail-sending', ['settings' => ['mail' => ['system_transport' => 'cloudron_smtp']]])
             ->assertRedirect('/account/confirm-identity');
     }
 

@@ -8,6 +8,7 @@ use App\Notifications\Security\AccountUnlockedNotification;
 use App\Services\Audit\AuditLogger;
 use App\Services\Auth\UserSessionRevoker;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AccountLockService
 {
@@ -18,11 +19,15 @@ class AccountLockService
 
     public function lock(User $user, User $actor, string $reason, Request $request): void
     {
-        $user->forceFill([
-            'locked_at' => now(),
-            'locked_reason' => $reason,
-            'locked_by' => $actor->id,
-        ])->save();
+        DB::transaction(function () use ($user, $actor, $reason) {
+            LastAdminGuard::ensureAnotherAdmin($user, 'reason', 'The last unlocked admin cannot be locked.');
+
+            $user->forceFill([
+                'locked_at' => now(),
+                'locked_reason' => $reason,
+                'locked_by' => $actor->id,
+            ])->save();
+        });
 
         $this->sessions->revoke($user);
         $user->magicLinkTokens()->whereNull('used_at')->delete();

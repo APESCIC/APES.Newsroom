@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\Audit\AuditLogger;
 use App\Services\Auth\UserSessionRevoker;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -35,16 +36,17 @@ class UserRoleChanger
             throw ValidationException::withMessages(['role' => 'The account already has this role.']);
         }
 
-        if ($user->role === Role::Admin && ! User::query()->where('role', Role::Admin)->whereNull('locked_at')->whereKeyNot($user->id)->exists()) {
-            throw ValidationException::withMessages(['role' => 'The last admin cannot be demoted.']);
-        }
-
         $from = $user->role;
-        $user->forceFill(['role' => $role])->save();
 
-        if (! $role->atLeast(Role::Staff)) {
-            $user->apiTokens()->delete();
-        }
+        DB::transaction(function () use ($user, $role) {
+            LastAdminGuard::ensureAnotherAdmin($user, 'role', 'The last admin cannot be demoted.');
+
+            $user->forceFill(['role' => $role])->save();
+
+            if (! $role->atLeast(Role::Staff)) {
+                $user->apiTokens()->delete();
+            }
+        });
 
         $this->sessions->revoke($user);
 
