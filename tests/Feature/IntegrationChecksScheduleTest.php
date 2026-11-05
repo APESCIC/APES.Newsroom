@@ -72,7 +72,7 @@ class IntegrationChecksScheduleTest extends TestCase
     {
         Notification::fake();
         $admin = User::factory()->admin()->create();
-        $owner = User::factory()->superAdmin()->create();
+        $owner = User::factory()->admin()->create();
         $staff = User::factory()->staff()->create();
         $locked = User::factory()->admin()->create(['locked_at' => now()]);
         app(IntegrationSecrets::class)->set('unsplash', 'access_key', 'stored-unsplash-key', null);

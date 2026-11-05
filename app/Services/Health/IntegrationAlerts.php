@@ -27,7 +27,7 @@ class IntegrationAlerts
         }
 
         $recipients = User::query()
-            ->whereIn('role', [Role::Admin->value, Role::SuperAdmin->value])
+            ->where('role', Role::Admin->value)
             ->whereNull('locked_at')
             ->get();
 

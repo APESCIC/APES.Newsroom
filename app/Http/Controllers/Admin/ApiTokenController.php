@@ -46,7 +46,7 @@ class ApiTokenController extends Controller
                 ])
                 ->values(),
             'owners' => User::query()
-                ->whereIn('role', [Role::Staff, Role::Admin, Role::SuperAdmin])
+                ->whereIn('role', [Role::Staff, Role::Admin])
                 ->whereNull('locked_at')
                 ->orderBy('name')
                 ->get(['id', 'name', 'email'])

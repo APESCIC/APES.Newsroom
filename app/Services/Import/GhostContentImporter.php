@@ -296,7 +296,7 @@ class GhostContentImporter
             }
         }
 
-        $fallbackAuthorId = (int) (User::query()->whereIn('role', [Role::Admin, Role::Staff, Role::SuperAdmin])->value('id')
+        $fallbackAuthorId = (int) (User::query()->whereIn('role', [Role::Admin, Role::Staff])->value('id')
             ?: User::query()->value('id'));
 
         $authorsByPost = [];
@@ -484,7 +484,7 @@ class GhostContentImporter
             $authorsByPost[(string) ($row['post_id'] ?? '')][] = (string) ($row['author_id'] ?? '');
         }
 
-        $fallbackAuthorId = User::query()->whereIn('role', [Role::Admin, Role::Staff, Role::SuperAdmin])->value('id');
+        $fallbackAuthorId = User::query()->whereIn('role', [Role::Admin, Role::Staff])->value('id');
         if (! $fallbackAuthorId) {
             $fallback = User::query()->firstOrNew(['email' => 'import-fallback@apes.local']);
             $fallback->forceFill([
