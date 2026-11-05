@@ -29,7 +29,7 @@ export const panelPages: PanelPage[] = [
     { name: 'staff-media', path: '/staff/media', role: 'staff' },
     { name: 'staff-newsletters', path: '/staff/newsletters', role: 'staff' },
     { name: 'staff-people', path: '/staff/people', role: 'staff' },
-    { name: 'staff-person', path: '/staff/people/users/5', role: 'admin' },
+    { name: 'staff-person', path: '/staff/people/users/4', role: 'admin' },
     { name: 'staff-subscriber', path: '/staff/people/contacts/2', role: 'staff' },
     { name: 'staff-subscribers', path: '/staff/subscribers', role: 'staff' },
     { name: 'staff-plans', path: '/staff/membership-plans', role: 'staff' },
