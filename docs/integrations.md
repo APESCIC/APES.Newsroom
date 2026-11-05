@@ -62,7 +62,9 @@ Notes:
 | Admin | Yes | Yes | Yes |
 
 Changing a key asks you to confirm your identity (Cloudron SSO for staff)
-if you have not done so in the last five minutes. Key changes and tests are
+if you have not done so in the last five minutes. Testing a connection also
+needs a recent sign-in, within the account's usual re-confirmation window
+(#742). Key changes and tests are
 limited to 10 per minute per person.
 
 ### Add or replace a key

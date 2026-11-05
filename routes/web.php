@@ -249,7 +249,7 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Admin->value])
             Route::get('/', [AdminIntegrationController::class, 'index'])->name('index');
             Route::post('/{provider}/test', [AdminIntegrationController::class, 'test'])
                 ->whereIn('provider', $providers)
-                ->middleware('throttle:integration-keys')
+                ->middleware(['auth.recent', 'throttle:integration-keys'])
                 ->name('test');
             Route::middleware(['auth.recent:300', 'throttle:integration-keys'])->group(function () use ($providers) {
                 Route::put('/{provider}/{key}', [AdminIntegrationController::class, 'update'])

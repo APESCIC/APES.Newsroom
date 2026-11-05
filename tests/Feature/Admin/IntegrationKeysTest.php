@@ -61,8 +61,17 @@ class IntegrationKeysTest extends TestCase
                 ->missing('canManage'));
 
         $this->actingAs($admin)->post(route('admin.settings.integrations.test', 'stripe'))
+            ->assertRedirect(route('account.confirm-identity'));
+        $this->assertDatabaseMissing('integration_check_results', ['provider' => 'stripe', 'trigger' => 'manual']);
+
+        $this->actingAs($admin)->withRecentAuthentication()->post(route('admin.settings.integrations.test', 'stripe'))
             ->assertRedirect(route('admin.settings.integrations.index'));
         $this->assertDatabaseHas('integration_check_results', ['provider' => 'stripe', 'trigger' => 'manual', 'user_id' => $admin->id]);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'integration_key.tested', 'actor_id' => $admin->id]);
+
+        $this->actingAs(User::factory()->staff()->create())->withRecentAuthentication()
+            ->post(route('admin.settings.integrations.test', 'stripe'))
+            ->assertForbidden();
     }
 
     public function test_staff_cannot_change_keys(): void

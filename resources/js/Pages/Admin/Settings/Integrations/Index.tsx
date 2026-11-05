@@ -380,7 +380,7 @@ export default function IntegrationsIndex({ providers, failedCheck = null }: { p
                 </section>
                 <p className="text-sm text-muted">
                     Saved keys are encrypted and never shown again; only the last four characters are displayed. Changing a key asks you to confirm your
-                    identity if you have not done so in the last five minutes.
+                    identity if you have not done so in the last five minutes, and testing a connection needs a recent sign-in too.
                 </p>
                 {providers.map((provider) => (
                     <ProviderCard key={provider.provider} provider={provider} failedCheck={failedCheck} />
