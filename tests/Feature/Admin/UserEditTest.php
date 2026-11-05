@@ -46,8 +46,8 @@ class UserEditTest extends TestCase
                 ->where('user.contact_details.address_town', 'Leeds')
                 ->where('user.can.update', true)
                 ->where('user.can.resend_verification', true)
-                ->where('user.can.erase', false)
-                ->where('user.erase_mode', null));
+                ->where('user.can.erase', true)
+                ->where('user.erase_mode', 'deleted'));
     }
 
     public function test_contact_details_stay_out_of_the_user_list(): void
@@ -123,20 +123,27 @@ class UserEditTest extends TestCase
         $this->assertDatabaseMissing('audit_logs', ['action' => 'user.updated']);
     }
 
-    public function test_edit_needs_reason_recent_authentication_and_rank(): void
+    public function test_edit_needs_reason_and_recent_authentication_and_never_targets_yourself(): void
     {
         $user = User::factory()->create();
-        $peer = User::factory()->admin()->create();
 
         $this->actingAs($this->admin)
             ->patch(route('admin.users.update', $user), ['name' => 'X', 'email' => $user->email, 'reason' => 'Fix'])
             ->assertRedirect(route('account.confirm-identity'));
         $this->update($user, ['name' => 'X', 'email' => $user->email, 'reason' => ''])->assertSessionHasErrors('reason');
-        $this->update($peer, ['name' => 'X', 'email' => $peer->email])->assertForbidden();
         $this->update($this->admin, ['name' => 'X', 'email' => $this->admin->email])->assertForbidden();
         $this->actingAs(User::factory()->staff()->create())->get(route('admin.users.edit', $user))->assertForbidden();
 
         $this->assertDatabaseMissing('audit_logs', ['action' => 'user.updated']);
+    }
+
+    public function test_an_admin_edits_another_admins_contact_details(): void
+    {
+        $peer = User::factory()->admin()->create();
+
+        $this->update($peer, ['name' => $peer->name, 'email' => $peer->email, 'address_town' => 'York'])->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('audit_logs', ['action' => 'user.updated', 'actor_id' => $this->admin->id, 'subject_id' => $peer->id]);
     }
 
     /**

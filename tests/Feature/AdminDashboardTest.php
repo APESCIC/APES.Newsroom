@@ -24,13 +24,13 @@ class AdminDashboardTest extends TestCase
         $this->withoutVite();
     }
 
-    public function test_only_admins_and_super_admins_can_open_the_admin_dashboard(): void
+    public function test_only_admins_can_open_the_admin_dashboard(): void
     {
         $this->get('/admin')->assertRedirect('/login');
         $this->actingAs(User::factory()->create())->get('/admin')->assertForbidden();
         $this->actingAs(User::factory()->staff()->create())->get('/admin')->assertForbidden();
 
-        foreach ([User::factory()->admin()->create(), User::factory()->superAdmin()->create()] as $user) {
+        foreach ([User::factory()->admin()->create()] as $user) {
             $this->actingAs($user)
                 ->get('/admin')
                 ->assertOk()

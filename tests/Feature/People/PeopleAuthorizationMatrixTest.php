@@ -119,7 +119,6 @@ class PeopleAuthorizationMatrixTest extends TestCase
             Role::Public => $factory->create(),
             Role::Staff => $factory->staff()->create(),
             Role::Admin => $factory->admin()->create(),
-            Role::SuperAdmin => $factory->superAdmin()->create(),
         };
     }
 }

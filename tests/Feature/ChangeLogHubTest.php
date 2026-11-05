@@ -80,7 +80,6 @@ class ChangeLogHubTest extends TestCase
             'guest' => [null, 302],
             'staff' => ['staff', 403],
             'admin' => ['admin', 404],
-            'super admin' => ['superAdmin', 404],
         ];
     }
 

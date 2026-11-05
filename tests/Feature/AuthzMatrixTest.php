@@ -320,9 +320,9 @@ class AuthzMatrixTest extends TestCase
         $this->assertDatabaseCount('settings', 0);
     }
 
-    public function test_admin_and_super_admin_can_access_admin_settings(): void
+    public function test_admin_can_access_admin_settings(): void
     {
-        foreach ([User::factory()->admin()->create(), User::factory()->superAdmin()->create()] as $user) {
+        foreach ([User::factory()->admin()->create()] as $user) {
             $this->actingAs($user)->withRecentAuthentication()->get('/admin/settings')->assertOk();
             $this->actingAs($user)->withRecentAuthentication()
                 ->put('/admin/settings', ['settings' => ['editor' => ['driver' => 'tinymce']]])
@@ -375,7 +375,6 @@ class AuthzMatrixTest extends TestCase
             Role::Public => $factory->create(),
             Role::Staff => $factory->staff()->create(),
             Role::Admin => $factory->admin()->create(),
-            Role::SuperAdmin => $factory->superAdmin()->create(),
         };
     }
 

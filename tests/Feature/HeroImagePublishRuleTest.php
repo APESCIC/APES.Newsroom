@@ -81,7 +81,7 @@ class HeroImagePublishRuleTest extends TestCase
 
     public function test_scheduled_publisher_skips_posts_without_hero_alt_text(): void
     {
-        User::factory()->superAdmin()->create();
+        User::factory()->admin()->create();
         $blocked = $this->postWithHero('', ['status' => PostStatus::Scheduled, 'scheduled_for' => now()->subMinute()]);
         $ready = $this->postWithHero('Volunteers at the shelter', ['status' => PostStatus::Scheduled, 'scheduled_for' => now()->subMinute()]);
 

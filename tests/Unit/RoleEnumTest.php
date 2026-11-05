@@ -10,7 +10,7 @@ class RoleEnumTest extends TestCase
 {
     public static function ordinalPairs(): array
     {
-        $roles = [Role::Public, Role::Staff, Role::Admin, Role::SuperAdmin];
+        $roles = [Role::Public, Role::Staff, Role::Admin];
         $cases = [];
 
         foreach ($roles as $subject) {
@@ -37,6 +37,11 @@ class RoleEnumTest extends TestCase
         $this->assertSame(0, Role::Public->rank());
         $this->assertSame(1, Role::Staff->rank());
         $this->assertSame(2, Role::Admin->rank());
-        $this->assertSame(3, Role::SuperAdmin->rank());
+    }
+
+    public function test_admin_is_the_highest_role(): void
+    {
+        $this->assertSame(['public', 'staff', 'admin'], array_map(fn (Role $role) => $role->value, Role::cases()));
+        $this->assertNull(Role::tryFrom('super_admin'));
     }
 }

@@ -1,6 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 
-export type Role = 'public' | 'staff' | 'admin' | 'super_admin';
+export type Role = 'public' | 'staff' | 'admin';
 
 export type PanelPage = {
     name: string;
@@ -44,7 +44,7 @@ export const panelPages: PanelPage[] = [
     { name: 'admin-webhooks', path: '/admin/webhooks', role: 'admin' },
     { name: 'admin-api-tokens', path: '/admin/api-tokens', role: 'admin' },
     { name: 'admin-content-api-keys', path: '/admin/content-api-keys', role: 'admin' },
-    { name: 'admin-integrations', path: '/admin/settings/integrations', role: 'super_admin' },
+    { name: 'admin-integrations', path: '/admin/settings/integrations', role: 'admin' },
     { name: 'admin-email-domains', path: '/admin/settings/email-domains', role: 'admin' },
     { name: 'admin-audit-log', path: '/admin/audit-log?from=2026-10-20&to=2026-10-20', role: 'admin' },
     { name: 'admin-settings', path: '/admin/settings', role: 'admin' },
