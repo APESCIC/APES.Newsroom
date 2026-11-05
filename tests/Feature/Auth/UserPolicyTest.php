@@ -12,6 +12,11 @@ class UserPolicyTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const ABILITIES = ['manageSecurity', 'lock', 'update', 'resendVerification', 'changeRole', 'erase'];
+
+    /** A local (non-SSO) account, the only kind whose role can change in the app. */
+    private const LOCAL = ['auth_provider' => null, 'external_id' => null];
+
     /**
      * Expected abilities of each actor role against a Public target.
      *
@@ -19,13 +24,12 @@ class UserPolicyTest extends TestCase
      */
     public static function abilitiesOnPublicTarget(): array
     {
-        $none = ['viewAny' => false, 'view' => false, 'manageSecurity' => false, 'update' => false, 'resendVerification' => false, 'changeRole' => false, 'erase' => false];
+        $none = ['viewAny' => false, 'view' => false, 'manageSecurity' => false, 'lock' => false, 'update' => false, 'resendVerification' => false, 'changeRole' => false, 'erase' => false];
 
         return [
             'public' => [Role::Public, $none],
             'staff' => [Role::Staff, [...$none, 'view' => true, 'update' => true]],
-            'admin' => [Role::Admin, ['viewAny' => true, 'view' => true, 'manageSecurity' => true, 'update' => true, 'resendVerification' => true, 'changeRole' => false, 'erase' => false]],
-            'super admin' => [Role::SuperAdmin, ['viewAny' => true, 'view' => true, 'manageSecurity' => true, 'update' => true, 'resendVerification' => true, 'changeRole' => true, 'erase' => true]],
+            'admin' => [Role::Admin, ['viewAny' => true, 'view' => true, 'manageSecurity' => true, 'lock' => true, 'update' => true, 'resendVerification' => true, 'changeRole' => true, 'erase' => true]],
         ];
     }
 
@@ -58,28 +62,56 @@ class UserPolicyTest extends TestCase
 
     public function test_nobody_edits_or_erases_themselves(): void
     {
-        foreach ([Role::Staff, Role::Admin, Role::SuperAdmin] as $role) {
+        foreach ([Role::Staff, Role::Admin] as $role) {
             $actor = $this->userWithRole($role);
 
-            foreach (['manageSecurity', 'update', 'resendVerification', 'changeRole', 'erase'] as $ability) {
+            foreach (self::ABILITIES as $ability) {
                 $this->assertFalse($actor->can($ability, $actor), "{$role->value} {$ability} on self");
             }
         }
     }
 
-    public function test_admins_cannot_act_on_peers_and_super_admins_cannot_erase_each_other(): void
+    public function test_admins_can_act_on_other_admins(): void
     {
         $admin = User::factory()->admin()->create();
-        $peer = User::factory()->admin()->create();
-        $owner = User::factory()->superAdmin()->create();
-        $otherOwner = User::factory()->superAdmin()->create();
+        $peer = User::factory()->admin()->create(self::LOCAL);
+        $staff = User::factory()->staff()->create(self::LOCAL);
 
-        $this->assertFalse($admin->can('update', $peer));
-        $this->assertFalse($admin->can('update', $owner));
-        $this->assertTrue($owner->can('update', $peer));
-        $this->assertTrue($owner->can('erase', $peer));
-        $this->assertFalse($owner->can('update', $otherOwner));
-        $this->assertFalse($owner->can('erase', $otherOwner));
+        foreach (self::ABILITIES as $ability) {
+            $this->assertTrue($admin->can($ability, $peer), "admin {$ability} on admin");
+            $this->assertTrue($admin->can($ability, $staff), "admin {$ability} on staff");
+        }
+    }
+
+    public function test_staff_cannot_act_on_admins(): void
+    {
+        $staff = User::factory()->staff()->create();
+        $admin = User::factory()->admin()->create();
+
+        foreach (self::ABILITIES as $ability) {
+            $this->assertFalse($staff->can($ability, $admin), "staff {$ability} on admin");
+        }
+    }
+
+    public function test_the_last_unlocked_admin_cannot_be_erased_locked_or_demoted(): void
+    {
+        $lockedAdmin = User::factory()->admin()->create(['locked_at' => now()]);
+        $admin = User::factory()->admin()->create(self::LOCAL);
+
+        foreach (['lock', 'erase', 'changeRole'] as $ability) {
+            $this->assertFalse($lockedAdmin->can($ability, $admin), "{$ability} on the last unlocked admin");
+        }
+
+        $this->assertTrue($admin->can('erase', $lockedAdmin));
+    }
+
+    public function test_sso_accounts_keep_their_directory_role(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $ssoAdmin = User::factory()->admin()->create(['auth_provider' => 'cloudron_oidc']);
+
+        $this->assertFalse($admin->can('changeRole', $ssoAdmin));
+        $this->assertTrue($admin->can('lock', $ssoAdmin));
     }
 
     private function userWithRole(Role $role): User
@@ -89,8 +121,7 @@ class UserPolicyTest extends TestCase
         return match ($role) {
             Role::Public => $factory->create(),
             Role::Staff => $factory->staff()->create(),
-            Role::Admin => $factory->admin()->create(),
-            Role::SuperAdmin => $factory->superAdmin()->create(),
+            default => $factory->admin()->create(),
         };
     }
 }

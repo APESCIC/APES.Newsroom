@@ -35,8 +35,8 @@ class UserRoleChanger
             throw ValidationException::withMessages(['role' => 'The account already has this role.']);
         }
 
-        if ($user->role === Role::SuperAdmin && ! User::query()->where('role', Role::SuperAdmin)->whereKeyNot($user->id)->exists()) {
-            throw ValidationException::withMessages(['role' => 'The last super admin cannot be demoted.']);
+        if ($user->role === Role::Admin && ! User::query()->where('role', Role::Admin)->whereNull('locked_at')->whereKeyNot($user->id)->exists()) {
+            throw ValidationException::withMessages(['role' => 'The last admin cannot be demoted.']);
         }
 
         $from = $user->role;

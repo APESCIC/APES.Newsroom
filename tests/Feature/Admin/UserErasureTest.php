@@ -26,10 +26,10 @@ class UserErasureTest extends TestCase
         parent::setUp();
         $this->withoutVite();
         Notification::fake();
-        $this->owner = User::factory()->superAdmin()->create();
+        $this->owner = User::factory()->admin()->create();
     }
 
-    public function test_detail_page_tells_a_super_admin_which_erasure_applies(): void
+    public function test_detail_page_tells_an_admin_which_erasure_applies(): void
     {
         $reader = User::factory()->create();
         $author = User::factory()->staff()->create();
@@ -92,23 +92,30 @@ class UserErasureTest extends TestCase
         $this->assertDatabaseMissing('audit_logs', ['action' => 'user.erased']);
     }
 
-    public function test_only_super_admins_erase_and_never_themselves_or_another_owner(): void
+    public function test_erasure_needs_a_recent_sign_in_and_never_applies_to_yourself(): void
     {
         $reader = User::factory()->create();
-        $admin = User::factory()->admin()->create();
-        $otherOwner = User::factory()->superAdmin()->create();
+        $staff = User::factory()->staff()->create();
 
         $this->actingAs($this->owner)
             ->delete(route('admin.users.destroy', $reader), ['reason' => 'No re-auth', 'confirm_email' => $reader->email])
             ->assertRedirect(route('account.confirm-identity'));
-        $this->actingAs($admin)->withRecentAuthentication()
+        $this->actingAs($staff)->withRecentAuthentication()
             ->delete(route('admin.users.destroy', $reader), ['reason' => 'Nope', 'confirm_email' => $reader->email])
             ->assertForbidden();
         $this->erase($this->owner)->assertForbidden();
-        $this->erase($otherOwner)->assertForbidden();
 
         $this->assertDatabaseHas('users', ['id' => $reader->id]);
         $this->assertDatabaseMissing('audit_logs', ['action' => 'user.erased']);
+    }
+
+    public function test_an_admin_erases_another_admin(): void
+    {
+        $otherAdmin = User::factory()->admin()->create();
+
+        $this->erase($otherAdmin)->assertSessionHasNoErrors()->assertRedirect();
+
+        $this->assertDatabaseHas('audit_logs', ['action' => 'user.erased', 'actor_id' => $this->owner->id]);
     }
 
     private function erase(User $user, ?string $confirmEmail = null)

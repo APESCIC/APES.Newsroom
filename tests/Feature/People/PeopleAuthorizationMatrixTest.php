@@ -47,8 +47,8 @@ class PeopleAuthorizationMatrixTest extends TestCase
             'edit the member note' => ['note', Role::Admin],
             'toggle a member newsletter' => ['member_newsletter', Role::Admin],
             'lock an account' => ['lock', Role::Admin],
-            'change a role' => ['role', Role::SuperAdmin],
-            'erase an account' => ['erase', Role::SuperAdmin],
+            'change a role' => ['role', Role::Admin],
+            'erase an account' => ['erase', Role::Admin],
         ];
     }
 
