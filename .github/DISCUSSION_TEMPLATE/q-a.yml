@@ -1,0 +1,14 @@
+body:
+  - type: markdown
+    attributes:
+      value: "Ask a question about using APES Newsroom. For account problems, use the contact links on apesnews.org.uk. Security problems: report privately via the Security tab."
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+    validations:
+      required: true
+  - type: textarea
+    id: tried
+    attributes:
+      label: What have you tried?
