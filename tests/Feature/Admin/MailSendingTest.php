@@ -106,27 +106,27 @@ class MailSendingTest extends TestCase
         $this->assertSame(['address' => 'newsroom.app@apesnews.org.uk', 'name' => 'Pet Care', 'reply_to' => 'news@apespetcare.org.uk'], $identity);
     }
 
-    public function test_admins_can_view_but_only_super_admins_change(): void
+    public function test_admins_can_view_and_manage_and_staff_are_refused(): void
     {
         $admin = User::factory()->admin()->create();
         $this->actingAs($admin)->get('/admin/settings/mail-sending')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Admin/Settings/MailSending/Index')
-                ->where('canManage', false)
+                ->where('canManage', true)
                 ->has('settings', 5)
                 ->has('transports', 3)
                 ->has('features'));
 
-        $this->save($admin, [SettingDefinitions::MAIL_SYSTEM_TRANSPORT => MailTransports::CLOUDRON_SMTP])->assertForbidden();
+        $this->save(User::factory()->staff()->create(), [SettingDefinitions::MAIL_SYSTEM_TRANSPORT => MailTransports::CLOUDRON_SMTP])->assertForbidden();
 
         $this->actingAs($admin)->get('/admin/settings')
             ->assertInertia(fn (Assert $page) => $page->where('settings', fn ($settings) => collect($settings)->every(fn ($setting) => ! str_starts_with($setting['key'], 'mail.'))));
     }
 
-    public function test_super_admin_changes_transports_with_validation_and_audit(): void
+    public function test_admin_changes_transports_with_validation_and_audit(): void
     {
-        $owner = User::factory()->superAdmin()->create();
+        $owner = User::factory()->admin()->create();
 
         $this->save($owner, [SettingDefinitions::MAIL_SYSTEM_TRANSPORT => MailTransports::MAILGUN_API])
             ->assertSessionHasErrors(['settings.'.SettingDefinitions::MAIL_SYSTEM_TRANSPORT => 'The Mailgun API key is not set under Integrations.']);
@@ -154,7 +154,7 @@ class MailSendingTest extends TestCase
 
     public function test_changes_need_recent_authentication(): void
     {
-        $owner = User::factory()->superAdmin()->create();
+        $owner = User::factory()->admin()->create();
 
         $this->actingAs($owner)->put('/admin/settings/mail-sending', ['settings' => ['mail' => ['system_transport' => 'cloudron_smtp']]])
             ->assertRedirect('/account/confirm-identity');

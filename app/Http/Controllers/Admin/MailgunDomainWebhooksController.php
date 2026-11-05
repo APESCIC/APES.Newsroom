@@ -16,12 +16,12 @@ use RuntimeException;
 
 /**
  * Webhooks and open/click tracking for each sending domain's Mailgun domain
- * (Admin → Settings → Email sending domains). Admins can re-read the state;
- * only super admins change it.
+ * (Admin → Settings → Email sending domains). Admins can re-read the state,
+ * and change it after a recent sign-in.
  */
 class MailgunDomainWebhooksController extends Controller
 {
-    /** Remind super admins to rotate a management key older than this. */
+    /** Remind admins to rotate a management key older than this. */
     public const ROTATE_AFTER_DAYS = 90;
 
     public function __construct(
@@ -43,7 +43,7 @@ class MailgunDomainWebhooksController extends Controller
             'signing_key_configured' => app(IntegrationSecrets::class)->configured(IntegrationDefinitions::MAILGUN, 'webhook_signing_key'),
             'uses_sending_key' => $manager->usesSendingKey(),
             'rotate_due' => $setAt !== null && $setAt->lt(now()->subDays(self::ROTATE_AFTER_DAYS)),
-            'can_manage' => $request->user()->can('access-super-admin-area'),
+            'can_manage' => $request->user()->can('access-admin-area'),
             'callback_url' => $manager->callbackUrl(),
         ];
     }
@@ -73,7 +73,7 @@ class MailgunDomainWebhooksController extends Controller
 
     public function tracking(Request $request, EmailSendingDomain $emailSendingDomain): RedirectResponse
     {
-        Gate::authorize('access-super-admin-area');
+        Gate::authorize('access-admin-area');
         $validated = $request->validate([
             'track_opens' => ['required', 'boolean'],
             'track_clicks' => ['required', 'boolean'],
@@ -115,7 +115,7 @@ class MailgunDomainWebhooksController extends Controller
      */
     private function change(Request $request, EmailSendingDomain $domain, string $verb, callable $action): RedirectResponse
     {
-        Gate::authorize('access-super-admin-area');
+        Gate::authorize('access-admin-area');
 
         return $this->run(function () use ($request, $domain, $verb, $action) {
             $events = $action();

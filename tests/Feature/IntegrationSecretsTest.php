@@ -41,7 +41,7 @@ class IntegrationSecretsTest extends TestCase
     public function test_stored_value_wins_over_environment_and_is_encrypted_at_rest(): void
     {
         config(['services.mailgun.secret' => 'env-mailgun-key-1234']);
-        $admin = User::factory()->superAdmin()->create();
+        $admin = User::factory()->admin()->create();
         $secrets = app(IntegrationSecrets::class);
 
         $secrets->get(IntegrationDefinitions::MAILGUN, 'api_key');

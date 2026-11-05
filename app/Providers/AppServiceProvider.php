@@ -71,7 +71,6 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::define('access-staff-area', fn (User $user) => $user->role->atLeast(Role::Staff));
         Gate::define('access-admin-area', fn (User $user) => $user->role->atLeast(Role::Admin));
-        Gate::define('access-super-admin-area', fn (User $user) => $user->role->atLeast(Role::SuperAdmin));
 
         Password::defaults(fn () => PasswordPolicy::rule());
 

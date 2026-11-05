@@ -49,7 +49,7 @@ class HandleInertiaRequests extends Middleware
                 'can' => [
                     'accessStaff' => $request->user()?->can('access-staff-area') ?? false,
                     'accessAdmin' => $request->user()?->can('access-admin-area') ?? false,
-                    'accessSuperAdmin' => $request->user()?->can('access-super-admin-area') ?? false,
+                    'accessSuperAdmin' => $request->user()?->can('access-admin-area') ?? false,
                     'reviewPosts' => $request->user()?->can('review', Post::class) ?? false,
                 ],
             ],
