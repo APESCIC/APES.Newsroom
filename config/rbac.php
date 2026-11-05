@@ -25,11 +25,11 @@ return [
         // Local OpenLDAP (docker/openldap/bootstrap.ldif)
         'newsroom-staff' => Role::Staff,
         'newsroom-admins' => Role::Admin,
-        'newsroom-super-admins' => Role::SuperAdmin,
+        'newsroom-super-admins' => Role::Admin,
         // Live Cloudron groups (memberof CNs)
         'newsroom.staff' => Role::Staff,
         'newsroom.admin' => Role::Admin,
-        'newsroom.superadmin' => Role::SuperAdmin,
+        'newsroom.superadmin' => Role::Admin,
     ],
 
 ];

@@ -38,4 +38,21 @@ class ReconcileStaffRolesCommandTest extends TestCase
 
         $this->assertSame(Role::Admin, $user->fresh()->role);
     }
+
+    public function test_command_keeps_a_former_super_admin_in_both_groups_as_admin(): void
+    {
+        $user = User::factory()->admin()->create(['email' => 'owner@example.com']);
+
+        $lookup = Mockery::mock(LdapGroupLookup::class);
+        $lookup->shouldReceive('groupsForEmail')->with('owner@example.com')->andReturn([
+            'cn=newsroom.superadmin,ou=groups,dc=cloudron',
+            'cn=newsroom.admin,ou=groups,dc=cloudron',
+        ]);
+        $this->app->instance(LdapGroupLookup::class, $lookup);
+
+        $this->artisan('staff:reconcile-roles')->assertSuccessful();
+
+        $this->assertSame(Role::Admin, $user->fresh()->role);
+        $this->assertDatabaseMissing('audit_logs', ['action' => 'staff.role_changed', 'subject_id' => $user->id]);
+    }
 }

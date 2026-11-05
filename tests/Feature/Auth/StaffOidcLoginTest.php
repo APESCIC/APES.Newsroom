@@ -62,12 +62,12 @@ class StaffOidcLoginTest extends TestCase
         $this->assertSame(Role::Admin, $result->user->role);
     }
 
-    public function test_a_super_admin_group_grants_super_admin(): void
+    public function test_the_old_super_admin_group_grants_admin(): void
     {
         $result = $this->reconcilerWithGroups([self::SUPER_ADMIN_GROUP])->reconcile($this->identity());
 
         $this->assertTrue($result->allowed);
-        $this->assertSame(Role::SuperAdmin, $result->user->role);
+        $this->assertSame(Role::Admin, $result->user->role);
     }
 
     public function test_membership_in_multiple_groups_grants_the_highest_matched_role(): void
@@ -132,14 +132,15 @@ class StaffOidcLoginTest extends TestCase
         $this->assertNull($result->user->password);
     }
 
-    public function test_cloudron_memberof_dn_matches_dotted_group_cn(): void
+    public function test_cloudron_superadmin_and_admin_member_signs_in_as_admin(): void
     {
         $result = $this->reconcilerWithGroups([
             'cn=newsroom.superadmin,ou=groups,dc=cloudron',
+            'cn=newsroom.admin,ou=groups,dc=cloudron',
         ])->reconcile($this->identity());
 
         $this->assertTrue($result->allowed);
-        $this->assertSame(Role::SuperAdmin, $result->user->role);
+        $this->assertSame(Role::Admin, $result->user->role);
     }
 
     public function test_cloudron_admin_memberof_dn_grants_admin(): void
