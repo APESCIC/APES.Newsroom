@@ -1,0 +1,24 @@
+{
+  "version": "v1.27.1",
+  "slug": "release-v1-27-1",
+  "released_at": "2026-11-05",
+  "previous_version": "v1.27.0",
+  "theme": "Ship once per milestone",
+  "change_types": ["added"],
+  "topic_tags": ["internal-only"],
+  "summary": "Newsroom work now ships once per milestone: every issue is completed first, then one merge, one release and one deploy.",
+  "detailed_changes": [
+    "Added a Cursor rule that applies milestone shipping in every session: all of a milestone's issues are completed first, then one merge commit to main, one release and one deploy, with hotfixes only on Bambie's written approval (#728).",
+    "Added AGENTS.md with the milestone shipping stages and the new definition of done: an issue is done when committed on its branch, and a milestone is done only after its merge, release and deploy (#730).",
+    "Added CONTRIBUTING.md with a short \"How work ships\" guide for contributors (#731).",
+    "Reviewed the release and deploy workflows: nothing tags, releases or deploys on merge, so no workflow changes were needed (#732)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: none",
+    "User groups affected: maintainers and AI coding agents",
+    "Public impact: none",
+    "Internal impact: contributor and agent documentation, Cursor rules"
+  ],
+  "pr": 734
+}
