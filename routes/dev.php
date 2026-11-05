@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::post('/_dev/login/{role}', [DevLoginController::class, 'login'])
-    ->where('role', 'public|staff|admin|super_admin')
+    ->where('role', 'public|staff|admin')
     ->name('dev.login');
 
 Route::post('/_dev/logout', [DevLoginController::class, 'logout'])

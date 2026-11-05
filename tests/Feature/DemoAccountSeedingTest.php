@@ -27,7 +27,7 @@ class DemoAccountSeedingTest extends TestCase
     {
         $this->seed();
 
-        $this->assertSame(4, DemoAccounts::query()->count());
+        $this->assertSame(3, DemoAccounts::query()->count());
     }
 
     public function test_check_command_passes_quietly_when_no_demo_accounts_exist(): void
@@ -42,7 +42,7 @@ class DemoAccountSeedingTest extends TestCase
         $this->seed(DemoUsersSeeder::class);
 
         $this->artisan('newsroom:check-demo-accounts')
-            ->expectsOutputToContain('WARNING: 4 demo account(s)')
+            ->expectsOutputToContain('WARNING: 3 demo account(s)')
             ->assertSuccessful();
     }
 

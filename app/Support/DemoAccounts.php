@@ -17,7 +17,6 @@ final class DemoAccounts
         'public@apes.local',
         'staff@apes.local',
         'admin@apes.local',
-        'superadmin@apes.local',
     ];
 
     /**

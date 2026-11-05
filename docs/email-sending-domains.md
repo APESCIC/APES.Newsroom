@@ -2,7 +2,7 @@
 
 Admins manage which domains newsletters may use for their From and reply-to
 addresses at **Admin → Settings → Email sending domains**
-(`/admin/settings/email-domains`, admin and super admin only).
+(`/admin/settings/email-domains`, admins only).
 
 ## Rules
 
@@ -38,8 +38,8 @@ The transport refuses any From address whose domain is not approved and enabled.
 
 This applies while newsletters use the Mailgun API under
 [Mail sending](mail-sending.md), which is the starting setup once the Mailgun API
-key is configured. Until a super admin chooses a newsletter transport, a missing
-Mailgun API key keeps newsletters on Cloudron SMTP. A super admin can switch
+key is configured. Until an admin chooses a newsletter transport, a missing
+Mailgun API key keeps newsletters on Cloudron SMTP. An admin can switch
 newsletters to Cloudron SMTP or Custom SMTP there without a redeploy.
 
 If the transport fails while a send is under way, the send **pauses** instead of
@@ -141,10 +141,10 @@ the **webhook signing key** (Integrations → Mailgun), refuses requests older t
 failures suppress the address (see [mail sending](mail-sending.md#bounces-complaints-and-suppression)).
 
 - **Check webhooks** (admins) reads the domain's webhooks and tracking from Mailgun.
-- **Register** (super admins) adds the Newsroom URL to every event that lacks it. Running it again changes nothing. Other URLs on the domain are kept.
+- **Register** (admins, after confirming their identity) adds the Newsroom URL to every event that lacks it. Running it again changes nothing. Other URLs on the domain are kept.
 - **Repair** drops Newsroom URLs that point at an old host, then registers.
 - **Remove** takes only the Newsroom URL off each event.
-- **Tracking** (super admins) turns open and click tracking on or off for the domain in Mailgun. Readers still choose for themselves in their mailing preferences.
+- **Tracking** (admins, after confirming their identity) turns open and click tracking on or off for the domain in Mailgun. Readers still choose for themselves in their mailing preferences.
 
 These use the separate **webhook management key** (Integrations → Mailgun): a
 Developer-role key, or the main account key if your plan has no role keys. The
