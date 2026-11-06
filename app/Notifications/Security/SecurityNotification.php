@@ -2,6 +2,7 @@
 
 namespace App\Notifications\Security;
 
+use App\Services\EmailTemplates\TemplatedMail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -23,6 +24,16 @@ abstract class SecurityNotification extends Notification implements ShouldQueue
      */
     abstract protected function summary(): array;
 
+    abstract protected function templateKey(): string;
+
+    /**
+     * @return array<string, string|int|float|null>
+     */
+    protected function templatePlaceholders(): array
+    {
+        return [];
+    }
+
     /**
      * @return array<int, string>
      */
@@ -32,6 +43,21 @@ abstract class SecurityNotification extends Notification implements ShouldQueue
     }
 
     public function toMail(object $notifiable): MailMessage
+    {
+        return app(TemplatedMail::class)->build(
+            key: $this->templateKey(),
+            placeholders: $this->templatePlaceholders(),
+            actionLabel: $this->actionText(),
+            actionUrl: $this->actionUrl(),
+            extraLines: [
+                '**Was this you?** If so, you can ignore this email.',
+                $this->notYouAdvice(),
+            ],
+            fallback: fn (): MailMessage => $this->defaultMail(),
+        );
+    }
+
+    protected function defaultMail(): MailMessage
     {
         $message = (new MailMessage)->subject('APES Newsroom: '.$this->subject());
 

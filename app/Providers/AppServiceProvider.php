@@ -7,6 +7,7 @@ use App\Http\Middleware\EnsureAuthEpoch;
 use App\Models\User;
 use App\Services\Auth\PendingTwoFactorLogin;
 use App\Services\Auth\RecentAuthentication;
+use App\Services\EmailTemplates\TemplatedMail;
 use App\Services\Integrations\IntegrationSecrets;
 use App\Services\Mail\MailgunApiTransport;
 use App\Services\Mail\MailgunDomainService;
@@ -18,15 +19,19 @@ use App\Services\Settings\SettingsRepository;
 use App\Support\Auth\PasswordPolicy;
 use App\Support\Integrations\IntegrationDefinitions;
 use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Validation\UncompromisedVerifier;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -74,6 +79,7 @@ class AppServiceProvider extends ServiceProvider
 
         Password::defaults(fn () => PasswordPolicy::rule());
 
+        $this->configureTemplatedAuthMails();
         $this->configurePasskeyRelyingParty();
 
         Event::listen(Login::class, function (Login $event) {
@@ -182,6 +188,51 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(5)->by('reauth-user:'.$request->user()?->id),
             Limit::perMinute(20)->by('reauth-ip:'.$request->ip()),
         ]);
+    }
+
+    /**
+     * Framework VerifyEmail / ResetPassword go through TemplatedMail so admin
+     * overrides apply; without an override the Laravel defaults are unchanged.
+     */
+    private function configureTemplatedAuthMails(): void
+    {
+        VerifyEmail::toMailUsing(function (object $notifiable, string $url) {
+            return app(TemplatedMail::class)->build(
+                key: 'verify_email',
+                placeholders: ['url' => $url],
+                actionLabel: Lang::get('Verify Email Address'),
+                actionUrl: $url,
+                fallback: fn (): MailMessage => (new MailMessage)
+                    ->subject(Lang::get('Verify your email address'))
+                    ->line(Lang::get('Please click the button below to verify your email address.'))
+                    ->action(Lang::get('Verify Email Address'), $url)
+                    ->line(Lang::get('If you did not create an account, no further action is required.')),
+            );
+        });
+
+        ResetPassword::toMailUsing(function (object $notifiable, string $token) {
+            $url = url(route('password.reset', [
+                'token' => $token,
+                'email' => $notifiable->getEmailForPasswordReset(),
+            ], false));
+            $expire = (string) config('auth.passwords.'.config('auth.defaults.passwords').'.expire');
+
+            return app(TemplatedMail::class)->build(
+                key: 'password_reset',
+                placeholders: [
+                    'url' => $url,
+                    'expire_minutes' => $expire,
+                ],
+                actionLabel: Lang::get('Reset Password'),
+                actionUrl: $url,
+                fallback: fn (): MailMessage => (new MailMessage)
+                    ->subject(Lang::get('Reset your password'))
+                    ->line(Lang::get('You are receiving this email because we received a password reset request for your account.'))
+                    ->action(Lang::get('Reset Password'), $url)
+                    ->line(Lang::get('This password reset link will expire in :count minutes.', ['count' => $expire]))
+                    ->line(Lang::get('If you did not request a password reset, no further action is required.')),
+            );
+        });
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Services\EmailTemplates\TemplatedMail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
@@ -24,7 +25,7 @@ class SendingDomainTestMail extends Mailable
         return new Envelope(
             from: new Address($this->fromAddress, 'APES Newsroom'),
             replyTo: $this->replyToAddress !== null ? [new Address($this->replyToAddress)] : [],
-            subject: '[TEST] Sending check for '.$this->fromAddress,
+            subject: $this->resolvedSubject(),
         );
     }
 
@@ -39,14 +40,50 @@ class SendingDomainTestMail extends Mailable
 
     public function content(): Content
     {
+        $placeholders = $this->placeholders();
+        $templated = app(TemplatedMail::class);
+
+        if ($templated->hasOverride('sending_domain_test')) {
+            $rendered = $templated->renderOverride('sending_domain_test', $placeholders);
+
+            return new Content(
+                html: $rendered['html'],
+                text: $rendered['text'],
+            );
+        }
+
         return new Content(
             markdown: 'mail.sending-domain-test',
             with: [
                 'fromAddress' => $this->fromAddress,
                 'mailgunDomain' => $this->mailgunDomain,
                 'requestedBy' => self::plainName($this->requestedBy),
-                'sentAt' => now()->timezone('Europe/London')->format('j M Y, H:i'),
+                'sentAt' => $placeholders['sent_at'],
             ],
         );
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function placeholders(): array
+    {
+        return [
+            'from_address' => $this->fromAddress,
+            'mailgun_domain' => $this->mailgunDomain,
+            'requested_by' => self::plainName($this->requestedBy),
+            'sent_at' => now()->timezone('Europe/London')->format('j M Y, H:i'),
+        ];
+    }
+
+    private function resolvedSubject(): string
+    {
+        $templated = app(TemplatedMail::class);
+
+        if (! $templated->hasOverride('sending_domain_test')) {
+            return '[TEST] Sending check for '.$this->fromAddress;
+        }
+
+        return $templated->renderOverride('sending_domain_test', $this->placeholders())['subject'];
     }
 }

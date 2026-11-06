@@ -16,4 +16,9 @@ class TwoFactorEnabledNotification extends SecurityNotification
             'You will be asked for a code from your authenticator app when you sign in.',
         ];
     }
+
+    protected function templateKey(): string
+    {
+        return 'two_factor_enabled';
+    }
 }

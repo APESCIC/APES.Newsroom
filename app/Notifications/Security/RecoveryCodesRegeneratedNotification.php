@@ -16,4 +16,9 @@ class RecoveryCodesRegeneratedNotification extends SecurityNotification
             'Your previous recovery codes no longer work. The codes are never sent by email.',
         ];
     }
+
+    protected function templateKey(): string
+    {
+        return 'recovery_codes_regenerated';
+    }
 }

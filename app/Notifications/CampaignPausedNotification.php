@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Services\EmailTemplates\TemplatedMail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -33,14 +34,30 @@ class CampaignPausedNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $message = (new MailMessage)
-            ->subject("APES Newsroom: newsletter send paused ({$this->title})")
-            ->line("Sending \"{$this->title}\" has paused because the newsletter mail transport failed. {$this->remaining} recipients are still waiting.")
-            ->line($this->reason)
-            ->line('Nothing switches to another transport. Fix the problem under Admin → Settings → Mail sending, then resume the send from the campaign page.');
+        $actionLabel = $this->postId !== null ? 'Open the campaign' : 'Review mail sending';
+        $actionUrl = $this->postId !== null
+            ? route('staff.posts.campaign.preview', $this->postId)
+            : route('admin.settings.mail-sending.index');
 
-        return $this->postId !== null
-            ? $message->action('Open the campaign', route('staff.posts.campaign.preview', $this->postId))
-            : $message->action('Review mail sending', route('admin.settings.mail-sending.index'));
+        return app(TemplatedMail::class)->build(
+            key: 'campaign_paused',
+            placeholders: [
+                'title' => $this->title,
+                'reason' => $this->reason,
+                'remaining' => $this->remaining,
+                'campaign_url' => $actionUrl,
+            ],
+            actionLabel: $actionLabel,
+            actionUrl: $actionUrl,
+            fallback: function () use ($actionLabel, $actionUrl): MailMessage {
+                $message = (new MailMessage)
+                    ->subject("APES Newsroom: newsletter send paused ({$this->title})")
+                    ->line("Sending \"{$this->title}\" has paused because the newsletter mail transport failed. {$this->remaining} recipients are still waiting.")
+                    ->line($this->reason)
+                    ->line('Nothing switches to another transport. Fix the problem under Admin → Settings → Mail sending, then resume the send from the campaign page.');
+
+                return $message->action($actionLabel, $actionUrl);
+            },
+        );
     }
 }

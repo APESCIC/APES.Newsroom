@@ -18,4 +18,14 @@ class PasskeyRemovedNotification extends SecurityNotification
             'It can no longer be used to sign in.',
         ];
     }
+
+    protected function templateKey(): string
+    {
+        return 'passkey_removed';
+    }
+
+    protected function templatePlaceholders(): array
+    {
+        return ['passkey_name' => $this->passkeyName];
+    }
 }

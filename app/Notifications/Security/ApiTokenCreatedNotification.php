@@ -19,6 +19,16 @@ class ApiTokenCreatedNotification extends SecurityNotification
         ];
     }
 
+    protected function templateKey(): string
+    {
+        return 'api_token_created';
+    }
+
+    protected function templatePlaceholders(): array
+    {
+        return ['token_name' => $this->tokenName];
+    }
+
     protected function notYouAdvice(): string
     {
         return 'If you did not expect this token, ask a newsroom administrator to revoke it straight away.';

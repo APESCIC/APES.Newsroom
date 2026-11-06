@@ -16,6 +16,11 @@ class AccountUnlockedNotification extends SecurityNotification
         ];
     }
 
+    protected function templateKey(): string
+    {
+        return 'account_unlocked';
+    }
+
     protected function notYouAdvice(): string
     {
         return 'Once signed in, check your account security page and change your password if you are unsure it is still private.';

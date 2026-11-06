@@ -31,6 +31,7 @@ class AdminAccountActionNotification extends SecurityNotification
             self::PASSWORD_RESET => 'an administrator reset your password',
             self::TWO_FACTOR_RESET => 'an administrator turned off two-factor sign-in',
             self::PASSKEYS_REMOVED => 'an administrator removed your passkeys',
+            default => throw new InvalidArgumentException("Unknown admin account action [{$this->action}]."),
         };
     }
 
@@ -53,6 +54,18 @@ class AdminAccountActionNotification extends SecurityNotification
                 'An administrator removed every passkey from your APES Newsroom account.',
                 'You can add a new passkey from your account security page.',
             ],
+            default => throw new InvalidArgumentException("Unknown admin account action [{$this->action}]."),
+        };
+    }
+
+    protected function templateKey(): string
+    {
+        return match ($this->action) {
+            self::SIGNED_OUT => 'admin_signed_out',
+            self::PASSWORD_RESET => 'admin_password_reset',
+            self::TWO_FACTOR_RESET => 'admin_two_factor_reset',
+            self::PASSKEYS_REMOVED => 'admin_passkeys_removed',
+            default => throw new InvalidArgumentException("Unknown admin account action [{$this->action}]."),
         };
     }
 }

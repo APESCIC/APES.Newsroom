@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\ContentApiKeyController as AdminContentApiKeyController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\EmailSendingDomainController as AdminEmailSendingDomainController;
+use App\Http\Controllers\Admin\EmailTemplateController as AdminEmailTemplateController;
 use App\Http\Controllers\Admin\GhostContentImportController;
 use App\Http\Controllers\Admin\GhostMembersImportController;
 use App\Http\Controllers\Admin\IntegrationController as AdminIntegrationController;
@@ -209,6 +210,33 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Admin->value])
             Route::put('/', [AdminMailSendingController::class, 'update'])
                 ->middleware('auth.recent:300')
                 ->name('update');
+        });
+        Route::prefix('/settings/email-templates')->name('settings.email-templates.')->group(function () {
+            Route::get('/', [AdminEmailTemplateController::class, 'index'])->name('index');
+            Route::get('/{key}', [AdminEmailTemplateController::class, 'edit'])
+                ->where('key', '[a-z0-9_]+')
+                ->name('edit');
+            Route::post('/{key}/preview', [AdminEmailTemplateController::class, 'preview'])
+                ->where('key', '[a-z0-9_]+')
+                ->name('preview');
+            Route::get('/{key}/versions', [AdminEmailTemplateController::class, 'versions'])
+                ->where('key', '[a-z0-9_]+')
+                ->name('versions');
+            Route::middleware('auth.recent')->group(function () {
+                Route::put('/{key}', [AdminEmailTemplateController::class, 'update'])
+                    ->where('key', '[a-z0-9_]+')
+                    ->name('update');
+                Route::post('/{key}/test', [AdminEmailTemplateController::class, 'test'])
+                    ->where('key', '[a-z0-9_]+')
+                    ->name('test');
+                Route::post('/{key}/versions/{version}/restore', [AdminEmailTemplateController::class, 'restore'])
+                    ->where('key', '[a-z0-9_]+')
+                    ->whereNumber('version')
+                    ->name('versions.restore');
+                Route::post('/{key}/revert', [AdminEmailTemplateController::class, 'revert'])
+                    ->where('key', '[a-z0-9_]+')
+                    ->name('revert');
+            });
         });
         Route::prefix('/settings/email-domains')->name('settings.email-domains.')->group(function () {
             Route::get('/', [AdminEmailSendingDomainController::class, 'index'])->name('index');
