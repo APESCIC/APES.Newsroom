@@ -2,6 +2,7 @@
 
 namespace App\Notifications\Security;
 
+use App\Services\EmailTemplates\TemplatedMail;
 use Illuminate\Notifications\Messages\MailMessage;
 
 class AccountLockedNotification extends SecurityNotification
@@ -19,14 +20,25 @@ class AccountLockedNotification extends SecurityNotification
         ];
     }
 
+    protected function templateKey(): string
+    {
+        return 'account_locked';
+    }
+
     public function toMail(object $notifiable): MailMessage
     {
-        $message = (new MailMessage)->subject('APES Newsroom: '.$this->subject());
+        return app(TemplatedMail::class)->build(
+            key: $this->templateKey(),
+            placeholders: $this->templatePlaceholders(),
+            fallback: function (): MailMessage {
+                $message = (new MailMessage)->subject('APES Newsroom: '.$this->subject());
 
-        foreach ($this->summary() as $line) {
-            $message->line($line);
-        }
+                foreach ($this->summary() as $line) {
+                    $message->line($line);
+                }
 
-        return $message->line('If you were not expecting this, please contact the newsroom team.');
+                return $message->line('If you were not expecting this, please contact the newsroom team.');
+            },
+        );
     }
 }

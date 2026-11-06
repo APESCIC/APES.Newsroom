@@ -16,4 +16,9 @@ class TwoFactorDisabledNotification extends SecurityNotification
             'Signing in now needs only your password or an emailed link.',
         ];
     }
+
+    protected function templateKey(): string
+    {
+        return 'two_factor_disabled';
+    }
 }

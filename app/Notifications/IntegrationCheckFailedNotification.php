@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Services\EmailTemplates\TemplatedMail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -31,11 +32,21 @@ class IntegrationCheckFailedNotification extends Notification implements ShouldQ
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
-            ->subject("APES Newsroom: {$this->providerLabel} integration check is failing")
-            ->line("The {$this->providerLabel} integration check started failing at {$this->checkedAt}.")
-            ->line($this->message)
-            ->line('Features that depend on it may not work until it is fixed. You will not get another email while it keeps failing.')
-            ->action('Review integrations', route('admin.settings.integrations.index'));
+        return app(TemplatedMail::class)->build(
+            key: 'integration_check_failed',
+            placeholders: [
+                'provider_label' => $this->providerLabel,
+                'message' => $this->message,
+                'checked_at' => $this->checkedAt,
+            ],
+            actionLabel: 'Review integrations',
+            actionUrl: route('admin.settings.integrations.index'),
+            fallback: fn (): MailMessage => (new MailMessage)
+                ->subject("APES Newsroom: {$this->providerLabel} integration check is failing")
+                ->line("The {$this->providerLabel} integration check started failing at {$this->checkedAt}.")
+                ->line($this->message)
+                ->line('Features that depend on it may not work until it is fixed. You will not get another email while it keeps failing.')
+                ->action('Review integrations', route('admin.settings.integrations.index')),
+        );
     }
 }

@@ -26,6 +26,19 @@ class EmailChangeRequestedNotification extends SecurityNotification
         ];
     }
 
+    protected function templateKey(): string
+    {
+        return 'email_change_requested';
+    }
+
+    protected function templatePlaceholders(): array
+    {
+        return [
+            'masked_new_email' => $this->maskedNewEmail,
+            'cancel_url' => $this->cancelUrl,
+        ];
+    }
+
     protected function notYouAdvice(): string
     {
         return 'If it was not you, cancel the change below, then change your password and sign out of other sessions.';

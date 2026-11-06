@@ -2,6 +2,9 @@
 
 namespace App\Notifications\Security;
 
+use App\Services\EmailTemplates\TemplatedMail;
+use Illuminate\Notifications\Messages\MailMessage;
+
 class PasswordChangedNotification extends SecurityNotification
 {
     public function __construct(private readonly bool $viaReset = false) {}
@@ -19,5 +22,26 @@ class PasswordChangedNotification extends SecurityNotification
                 : 'The password for your APES Newsroom account was changed.',
             'Other signed-in sessions have been signed out.',
         ];
+    }
+
+    protected function templateKey(): string
+    {
+        return 'password_changed';
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        return app(TemplatedMail::class)->build(
+            key: $this->templateKey(),
+            placeholders: $this->templatePlaceholders(),
+            actionLabel: $this->actionText(),
+            actionUrl: $this->actionUrl(),
+            extraLines: [
+                '**Was this you?** If so, you can ignore this email.',
+                $this->notYouAdvice(),
+            ],
+            viaReset: $this->viaReset,
+            fallback: fn (): MailMessage => $this->defaultMail(),
+        );
     }
 }

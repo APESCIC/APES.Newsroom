@@ -18,4 +18,14 @@ class PasskeyAddedNotification extends SecurityNotification
             'It can now be used to sign in.',
         ];
     }
+
+    protected function templateKey(): string
+    {
+        return 'passkey_added';
+    }
+
+    protected function templatePlaceholders(): array
+    {
+        return ['passkey_name' => $this->passkeyName];
+    }
 }

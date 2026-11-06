@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Newsletter;
+use App\Services\EmailTemplates\TemplatedMail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -28,16 +29,31 @@ class ConfirmNewsletterNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         $purpose = $this->newsletter->description;
+        $purposeText = is_string($purpose) ? $purpose : '';
 
-        $message = (new MailMessage)
-            ->subject('Confirm your '.$this->newsletter->name.' subscription')
-            ->line('You asked to join the '.$this->newsletter->name.' newsletter.')
-            ->action('Confirm subscription', $this->confirmUrl)
-            ->line('If you did not request this, you can ignore this email.');
+        $message = app(TemplatedMail::class)->build(
+            key: 'confirm_newsletter',
+            placeholders: [
+                'newsletter_name' => $this->newsletter->name,
+                'newsletter_description' => $purposeText,
+                'confirm_url' => $this->confirmUrl,
+            ],
+            actionLabel: 'Confirm subscription',
+            actionUrl: $this->confirmUrl,
+            fallback: function () use ($purposeText): MailMessage {
+                $message = (new MailMessage)
+                    ->subject('Confirm your '.$this->newsletter->name.' subscription')
+                    ->line('You asked to join the '.$this->newsletter->name.' newsletter.')
+                    ->action('Confirm subscription', $this->confirmUrl)
+                    ->line('If you did not request this, you can ignore this email.');
 
-        if (is_string($purpose) && $purpose !== '') {
-            $message->line($purpose);
-        }
+                if ($purposeText !== '') {
+                    $message->line($purposeText);
+                }
+
+                return $message;
+            },
+        );
 
         return NewsletterSenderMessage::apply($message, $this->newsletter);
     }

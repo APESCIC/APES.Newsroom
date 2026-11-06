@@ -24,4 +24,18 @@ class NewDeviceSignInNotification extends SecurityNotification
             "Time: {$this->signedInAt}",
         ]));
     }
+
+    protected function templateKey(): string
+    {
+        return 'new_device_sign_in';
+    }
+
+    protected function templatePlaceholders(): array
+    {
+        return [
+            'device' => $this->device,
+            'masked_ip' => $this->maskedIp ?? '',
+            'signed_in_at' => $this->signedInAt,
+        ];
+    }
 }
