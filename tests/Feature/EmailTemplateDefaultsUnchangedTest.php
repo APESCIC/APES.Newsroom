@@ -6,6 +6,7 @@ use App\Enums\MailingList;
 use App\Models\Newsletter;
 use App\Models\User;
 use App\Notifications\ConfirmMailingListNotification;
+use App\Notifications\ConfirmNewsletterNotification;
 use App\Notifications\MagicLinkNotification;
 use App\Notifications\Security\PasswordChangedNotification;
 use App\Notifications\Security\TwoFactorEnabledNotification;
@@ -92,7 +93,7 @@ class EmailTemplateDefaultsUnchangedTest extends TestCase
     {
         $newsletter = new Newsletter(['name' => 'APES Shelter & Rescue', 'description' => 'Adoption news.']);
         $user = User::factory()->make();
-        $message = (new \App\Notifications\ConfirmNewsletterNotification($newsletter, self::URL))->toMail($user);
+        $message = (new ConfirmNewsletterNotification($newsletter, self::URL))->toMail($user);
 
         $this->assertSame('Confirm your APES Shelter & Rescue subscription', $message->subject);
     }
