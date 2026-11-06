@@ -1,0 +1,27 @@
+{
+  "version": "v1.29.0",
+  "slug": "release-v1-29-0",
+  "released_at": "2026-11-06",
+  "previous_version": "v1.28.0",
+  "theme": "System email templates",
+  "change_types": ["added", "security"],
+  "topic_tags": ["internal-only", "compliance"],
+  "summary": "Admins can view and edit every system email’s subject and Markdown body with safe placeholders, preview, test send, version history and revert; security alert templates need a recent sign-in.",
+  "detailed_changes": [
+    "Added a registry of every system email (account, security, mailing consent, staff alerts and transport tests) with defaults in code and optional stored overrides (#645).",
+    "Stored templates use a sandboxed {{ tag }} renderer with allowlists, escaping, sanitised Markdown and an automatic plain-text part; Blade or PHP in a template is never executed (#646).",
+    "Notifications and mailables, including password reset and email verification, read subject and body through the registry so an override appears in sent mail while unchanged defaults match today (#647).",
+    "Admin → Settings → Email templates lists templates by group and opens an editor with a placeholder picker, required-tag checks and locked-parts notices (#648).",
+    "Admins can preview HTML and plain text (desktop or mobile width) and send a throttled test to themselves, with provider errors surfaced (#649).",
+    "Every save keeps a version with who and when; admins can diff, restore a version, or revert to the code default, all audit-logged (#650).",
+    "Staff cannot open the templates screens. Security alert templates can be changed only after the admin re-confirms sign-in within five minutes; all changes are audit-logged without secrets (#651)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /admin/settings/email-templates",
+    "User groups affected: admins (editors); staff (no access); account holders (receive the same emails unless an admin overrides wording)",
+    "Public impact: none unless an admin changes a template",
+    "Internal impact: editable system email wording with preview, test send, history and recent-auth for security templates"
+  ],
+  "pr": 743
+}
