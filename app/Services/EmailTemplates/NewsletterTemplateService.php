@@ -2,10 +2,18 @@
 
 namespace App\Services\EmailTemplates;
 
+use App\Enums\ContentVisibility;
+use App\Enums\MailingList;
+use App\Mail\CampaignPostSummaryMail;
 use App\Models\EmailTemplate;
 use App\Models\EmailTemplateVersion;
+use App\Models\Newsletter;
+use App\Models\Post;
 use App\Models\User;
 use App\Services\Audit\AuditLogger;
+use App\Services\Mail\TestSendThrottle;
+use App\Services\Mailing\CampaignSender;
+use App\Services\Mailing\CampaignService;
 use App\Support\EmailTemplates\NewsletterTemplateDefaults as Defaults;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -21,6 +29,9 @@ class NewsletterTemplateService
         private readonly NewsletterTemplates $templates,
         private readonly TemplateRenderer $renderer,
         private readonly AuditLogger $audit,
+        private readonly CampaignService $campaigns,
+        private readonly CampaignSender $sender,
+        private readonly TestSendThrottle $throttle,
     ) {}
 
     /**
@@ -164,6 +175,73 @@ class NewsletterTemplateService
         });
     }
 
+    /**
+     * Renders the draft with a real post, shown as the chosen visibility,
+     * exactly as a campaign email would be built from it.
+     *
+     * @param  array<string, mixed>  $settings
+     * @return array{subject: string, html: string}
+     */
+    public function preview(string $scope, string $subject, string $intro, array $settings, Post $post, ContentVisibility $visibility, User $editor): array
+    {
+        $this->authorize($editor);
+        $this->assertDraftIsValid($subject, $intro, $settings);
+
+        $shown = $this->postAs($post, $visibility);
+        $snapshot = $this->campaigns->buildSnapshot(
+            $shown,
+            $this->newsletterFor($scope, $shown),
+            $this->templates->draft($scope, $subject, $intro, $settings),
+        );
+
+        $mail = new CampaignPostSummaryMail(
+            snapshot: $snapshot,
+            unsubscribeUrl: url('/mailing/unsubscribe'),
+            preferencesUrl: url('/mailing/preferences'),
+            listUnsubscribeUrl: url('/mailing/unsubscribe'),
+            isTest: true,
+            recipientFirstName: $this->templates->firstNameFor($editor->email),
+        );
+
+        return [
+            'subject' => (string) $mail->envelope()->subject,
+            'html' => (string) $mail->render(),
+        ];
+    }
+
+    /**
+     * Sends the draft to the signed-in user through the normal campaign test
+     * send (same sender checks and queue), throttled per user and template.
+     *
+     * @param  array<string, mixed>  $settings
+     */
+    public function sendTest(string $scope, string $subject, string $intro, array $settings, Post $post, ContentVisibility $visibility, User $editor): void
+    {
+        $this->authorize($editor);
+        $this->assertDraftIsValid($subject, $intro, $settings);
+
+        $refusal = $this->throttle->attempt($editor, 'newsletter-template:'.$scope, 'This template');
+        if ($refusal !== null) {
+            throw ValidationException::withMessages(['test' => $refusal]);
+        }
+
+        $newsletterId = Defaults::newsletterIdFromScope($scope);
+        $campaign = $this->campaigns->createTestSend(
+            $this->postAs($post, $visibility),
+            $editor,
+            $editor->email,
+            $this->templates->draft($scope, $subject, $intro, $settings),
+            $newsletterId !== null ? Newsletter::query()->find($newsletterId) : null,
+        );
+
+        $this->audit->record($editor, 'newsletter_template.test_sent', $this->templates->find($scope), [
+            'scope' => $scope,
+            'post_id' => $post->id,
+            'campaign_id' => $campaign->id,
+            'to' => $editor->email,
+        ], request());
+    }
+
     public function authorize(User $user): void
     {
         Gate::forUser($user)->authorize('manage-newsletter-templates');
@@ -172,6 +250,38 @@ class NewsletterTemplateService
     private function assertScope(string $scope): void
     {
         abort_unless(Defaults::isNewsletterScope($scope), 404);
+    }
+
+    /**
+     * @param  array<string, mixed>  $settings
+     */
+    private function assertDraftIsValid(string $subject, string $intro, array $settings): void
+    {
+        $errors = $this->validate($subject, $intro, $settings);
+        if ($errors !== []) {
+            throw ValidationException::withMessages(['template' => $errors]);
+        }
+    }
+
+    /**
+     * An unsaved copy of the post shown as the chosen visibility.
+     */
+    private function postAs(Post $post, ContentVisibility $visibility): Post
+    {
+        $copy = clone $post;
+        $copy->visibility = $visibility;
+
+        return $copy;
+    }
+
+    private function newsletterFor(string $scope, Post $post): ?Newsletter
+    {
+        $id = Defaults::newsletterIdFromScope($scope);
+        if ($id !== null) {
+            return Newsletter::query()->find($id);
+        }
+
+        return $this->sender->newsletterForPost($post) ?? $this->sender->newsletterForLists([MailingList::ApesCic->value]);
     }
 
     /**

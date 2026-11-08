@@ -148,7 +148,11 @@ class CampaignService
         });
     }
 
-    public function createTestSend(Post $post, User $actor, string $recipientEmail): Campaign
+    /**
+     * @param  array<string, mixed>|null  $template  an unsaved newsletter template draft to test
+     * @param  Newsletter|null  $senderNewsletter  send as this newsletter instead of the post's
+     */
+    public function createTestSend(Post $post, User $actor, string $recipientEmail, ?array $template = null, ?Newsletter $senderNewsletter = null): Campaign
     {
         $lists = $this->normalizeListValues($post->mailing_lists ?? []);
         if ($lists === []) {
@@ -156,7 +160,7 @@ class CampaignService
         }
 
         $email = Str::lower(trim($recipientEmail));
-        $senderNewsletter = $post->newsletter_segment_id
+        $senderNewsletter ??= $post->newsletter_segment_id
             ? $this->sender->newsletterForPost($post)
             : $this->sender->newsletterForLists($lists);
 
@@ -168,13 +172,13 @@ class CampaignService
             ]);
         }
 
-        return DB::transaction(function () use ($post, $actor, $lists, $email, $senderNewsletter) {
+        return DB::transaction(function () use ($post, $actor, $lists, $email, $senderNewsletter, $template) {
             $campaign = Campaign::create([
                 'post_id' => $post->id,
                 'newsletter_id' => $senderNewsletter?->id,
                 'created_by' => $actor->id,
                 'lists' => $lists,
-                'snapshot' => $this->buildSnapshot($post, $senderNewsletter),
+                'snapshot' => $this->buildSnapshot($post, $senderNewsletter, $template),
                 'status' => CampaignStatus::Queued,
                 'is_test' => true,
                 'test_recipient' => $email,

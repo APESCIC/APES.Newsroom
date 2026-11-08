@@ -5,6 +5,7 @@ namespace App\Services\EmailTemplates;
 use App\Models\EmailTemplate;
 use App\Models\MailingContact;
 use App\Models\Newsletter;
+use App\Models\User;
 use App\Support\EmailTemplates\NewsletterTemplateDefaults as Defaults;
 use DomainException;
 use Illuminate\Support\Str;
@@ -195,7 +196,8 @@ class NewsletterTemplates
             ->forNormalizedEmail($email)
             ->first();
 
-        $name = trim((string) ($contact?->name ?: $contact?->user?->name ?: ''));
+        $name = trim((string) ($contact?->name ?: $contact?->user?->name
+            ?: User::query()->where('email', Str::lower(trim($email)))->value('name') ?: ''));
 
         return $name !== '' ? Str::before($name, ' ') : 'there';
     }

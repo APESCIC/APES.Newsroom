@@ -1,6 +1,7 @@
 import { router, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Monitor, Smartphone } from 'lucide-react';
 import { useId, useMemo, useRef, useState, type FormEvent } from 'react';
+import { refusalMessage, xsrfToken } from '../../../Components/Admin/EmailDomains/TestSendPanel';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
 import Badge from '../../../Components/Workspace/ui/Badge';
 import ConfirmDialog from '../../../Components/Workspace/ui/ConfirmDialog';
@@ -33,6 +34,16 @@ type Version = {
 };
 
 type TextField = 'subject' | 'intro' | 'sign_off' | 'read_more_label' | 'members_cta' | 'paid_cta';
+
+type Visibility = 'public' | 'members' | 'paid';
+
+type PreviewPost = { id: number; title: string; visibility: Visibility };
+
+const VISIBILITIES: Array<{ value: Visibility; label: string }> = [
+    { value: 'public', label: 'Public' },
+    { value: 'members', label: 'Members' },
+    { value: 'paid', label: 'Paid' },
+];
 
 const TAG_PATTERN = /\{\{\s*([a-z][a-z0-9_]*)\s*\}\}/gu;
 
@@ -110,6 +121,8 @@ export default function NewsletterTemplateEdit({
     placeholders,
     postPlaceholders,
     versions,
+    testRecipient,
+    previewPosts = [],
 }: {
     target: string;
     newsletter: { id: number; name: string } | null;
@@ -120,6 +133,7 @@ export default function NewsletterTemplateEdit({
     samplePlaceholders: Record<string, string>;
     versions: Version[];
     testRecipient: string;
+    previewPosts?: PreviewPost[];
 }) {
     const { flash, errors } = usePage<SharedPageProps>().props;
     const form = useForm<TemplateDraft>({ subject: template.subject, intro: template.intro, settings: template.settings });
@@ -128,6 +142,16 @@ export default function NewsletterTemplateEdit({
     const [revertOpen, setRevertOpen] = useState(false);
     const [restoreId, setRestoreId] = useState<number | null>(null);
     const [expandedVersion, setExpandedVersion] = useState<number | null>(null);
+    const [postId, setPostId] = useState<number | null>(previewPosts[0]?.id ?? null);
+    const [visibility, setVisibility] = useState<Visibility>(previewPosts[0]?.visibility ?? 'public');
+    const [previewWidth, setPreviewWidth] = useState<'desktop' | 'mobile'>('desktop');
+    const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null);
+    const [previewBusy, setPreviewBusy] = useState(false);
+    const [previewError, setPreviewError] = useState<string | null>(null);
+    const [testBusy, setTestBusy] = useState(false);
+    const [testError, setTestError] = useState<string | null>(null);
+    const [testMessage, setTestMessage] = useState<string | null>(null);
+    const postSelectId = useId();
     const ids = {
         subject: useId(),
         intro: useId(),
@@ -176,6 +200,56 @@ export default function NewsletterTemplateEdit({
         event.preventDefault();
         if (!canSave) return;
         form.put(base, { preserveScroll: true });
+    };
+
+    const postDraft = async (path: 'preview' | 'test'): Promise<{ status: number; payload: unknown } | null> => {
+        if (postId === null) return null;
+        const response = await fetch(`${base}/${path}`, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-XSRF-TOKEN': xsrfToken() },
+            body: JSON.stringify({ ...form.data, post_id: postId, visibility }),
+        });
+        return { status: response.status, payload: await response.json().catch(() => null) };
+    };
+
+    const runPreview = async () => {
+        setPreviewBusy(true);
+        setPreviewError(null);
+        try {
+            const result = await postDraft('preview');
+            if (result === null) return;
+            const body = (result.payload ?? {}) as { subject?: unknown; html?: unknown };
+            if (result.status !== 200 || typeof body.subject !== 'string' || typeof body.html !== 'string') {
+                setPreviewError(result.status === 200 ? 'The preview response could not be read.' : refusalMessage(result.status, result.payload));
+                return;
+            }
+            setPreview({ subject: body.subject, html: body.html });
+        } catch {
+            setPreviewError('The preview could not be generated. Check your connection and try again.');
+        } finally {
+            setPreviewBusy(false);
+        }
+    };
+
+    const runTest = async () => {
+        setTestBusy(true);
+        setTestError(null);
+        setTestMessage(null);
+        try {
+            const result = await postDraft('test');
+            if (result === null) return;
+            const body = (result.payload ?? {}) as { message?: unknown };
+            if (result.status !== 200) {
+                setTestError(refusalMessage(result.status, result.payload));
+                return;
+            }
+            setTestMessage(typeof body.message === 'string' ? body.message : 'Test email queued.');
+        } catch {
+            setTestError('The test email could not be sent. Check your connection and try again.');
+        } finally {
+            setTestBusy(false);
+        }
     };
 
     const restoreVersion = () => {
@@ -382,6 +456,122 @@ export default function NewsletterTemplateEdit({
                         )}
                     </div>
                 </form>
+
+                <section className="sg-card flex flex-col gap-4 p-5 sm:p-6" aria-labelledby="newsletter-template-preview-heading">
+                    <h2 id="newsletter-template-preview-heading" className="text-base font-semibold text-body">
+                        Preview with a real post
+                    </h2>
+                    {previewPosts.length === 0 ? (
+                        <p className="text-sm text-muted">Publish a post first to preview the newsletter email with it.</p>
+                    ) : (
+                        <>
+                            <div className="flex flex-col gap-1">
+                                <label htmlFor={postSelectId} className="text-sm font-semibold text-body">
+                                    Post
+                                </label>
+                                <select
+                                    id={postSelectId}
+                                    className="form-input"
+                                    value={postId ?? ''}
+                                    onChange={(event) => setPostId(Number(event.target.value))}
+                                >
+                                    {previewPosts.map((post) => (
+                                        <option key={post.id} value={post.id}>
+                                            {post.title}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <fieldset className="flex flex-wrap items-center gap-2">
+                                <legend className="mb-1 text-sm font-semibold text-body">Show the post as</legend>
+                                {VISIBILITIES.map((option) => (
+                                    <button
+                                        key={option.value}
+                                        type="button"
+                                        className={`sg-btn sg-btn-sm ${visibility === option.value ? 'sg-btn-primary' : 'sg-btn-secondary'}`}
+                                        aria-pressed={visibility === option.value}
+                                        onClick={() => setVisibility(option.value)}
+                                    >
+                                        {option.label}
+                                    </button>
+                                ))}
+                            </fieldset>
+                            <div className="flex flex-wrap gap-2">
+                                <button
+                                    type="button"
+                                    className={`sg-btn sg-btn-sm ${previewWidth === 'desktop' ? 'sg-btn-primary' : 'sg-btn-secondary'}`}
+                                    aria-pressed={previewWidth === 'desktop'}
+                                    onClick={() => setPreviewWidth('desktop')}
+                                >
+                                    <Monitor aria-hidden="true" className="mr-1 inline h-4 w-4" />
+                                    Desktop
+                                </button>
+                                <button
+                                    type="button"
+                                    className={`sg-btn sg-btn-sm ${previewWidth === 'mobile' ? 'sg-btn-primary' : 'sg-btn-secondary'}`}
+                                    aria-pressed={previewWidth === 'mobile'}
+                                    onClick={() => setPreviewWidth('mobile')}
+                                >
+                                    <Smartphone aria-hidden="true" className="mr-1 inline h-4 w-4" />
+                                    Mobile
+                                </button>
+                                <button
+                                    type="button"
+                                    className="sg-btn sg-btn-secondary sg-btn-sm"
+                                    disabled={previewBusy || problems.length > 0}
+                                    onClick={() => void runPreview()}
+                                >
+                                    {previewBusy ? 'Rendering…' : 'Refresh preview'}
+                                </button>
+                            </div>
+                            {previewError && (
+                                <p role="alert" className="text-sm text-danger">
+                                    {previewError}
+                                </p>
+                            )}
+                            {preview ? (
+                                <div className="flex flex-col gap-2">
+                                    <p className="text-sm text-body">
+                                        <span className="font-semibold">Subject:</span> {preview.subject}
+                                    </p>
+                                    <div
+                                        className={`mx-auto w-full overflow-hidden rounded border border-border bg-white ${previewWidth === 'mobile' ? 'max-w-sm' : 'max-w-3xl'}`}
+                                    >
+                                        <iframe title="Newsletter email preview" sandbox="" srcDoc={preview.html} className="h-[36rem] w-full border-0" />
+                                    </div>
+                                </div>
+                            ) : (
+                                <p className="text-sm text-muted">Choose a post and click “Refresh preview” to render the current draft.</p>
+                            )}
+                        </>
+                    )}
+                </section>
+
+                <section className="sg-card flex flex-col gap-3 p-5 sm:p-6" aria-labelledby="newsletter-template-test-heading">
+                    <h2 id="newsletter-template-test-heading" className="text-base font-semibold text-body">
+                        Send a test
+                    </h2>
+                    <p className="text-sm text-muted">
+                        Sends the current draft with the post chosen above to you ({testRecipient}) through the normal campaign test send. Test sends are
+                        throttled.
+                    </p>
+                    <button
+                        type="button"
+                        className="sg-btn sg-btn-primary self-start"
+                        disabled={testBusy || postId === null || problems.length > 0}
+                        onClick={() => void runTest()}
+                    >
+                        {testBusy ? 'Sending…' : 'Send test email'}
+                    </button>
+                    {testError && (
+                        <p role="alert" className="text-sm text-danger">
+                            {testError}
+                        </p>
+                    )}
+                    <div aria-live="polite" aria-atomic="true">
+                        {testMessage && <p className="text-sm font-semibold text-success">{testMessage}</p>}
+                    </div>
+                </section>
 
                 <section className="sg-card flex flex-col gap-3 p-5 sm:p-6" aria-labelledby="newsletter-template-versions-heading">
                     <h2 id="newsletter-template-versions-heading" className="text-base font-semibold text-body">

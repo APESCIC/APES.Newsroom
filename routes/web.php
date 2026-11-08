@@ -359,7 +359,7 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
         Route::post('/posts/{post}/revisions/{revision}/restore', [StaffPostController::class, 'restoreRevision'])->name('posts.revisions.restore');
         Route::get('/posts/{post}/preview', [StaffPostController::class, 'preview'])->name('posts.preview');
         Route::get('/posts/{post}/campaign', [StaffCampaignController::class, 'preview'])->name('posts.campaign.preview');
-        Route::post('/posts/{post}/campaign/test-send', [StaffCampaignController::class, 'testSend'])->name('posts.campaign.test');
+        Route::post('/posts/{post}/campaign/test-send', [StaffCampaignController::class, 'testSend'])->middleware('throttle:10,1')->name('posts.campaign.test');
         Route::post('/posts/{post}/campaign/resume', [StaffCampaignController::class, 'resume'])->middleware(['auth.recent', 'throttle:10,1'])->name('posts.campaign.resume');
 
         Route::get('/metrics', StaffMetricsController::class)->name('metrics.index');
@@ -408,6 +408,14 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
             $target = 'default|[1-9][0-9]*';
 
             Route::get('/', [StaffNewsletterTemplateController::class, 'edit'])->where('target', $target)->name('edit');
+            Route::post('/preview', [StaffNewsletterTemplateController::class, 'preview'])
+                ->where('target', $target)
+                ->middleware('throttle:60,1')
+                ->name('preview');
+            Route::post('/test', [StaffNewsletterTemplateController::class, 'test'])
+                ->where('target', $target)
+                ->middleware('throttle:10,1')
+                ->name('test');
             Route::middleware('throttle:30,1')->group(function () use ($target) {
                 Route::put('/', [StaffNewsletterTemplateController::class, 'update'])->where('target', $target)->name('update');
                 Route::post('/versions/{version}/restore', [StaffNewsletterTemplateController::class, 'restore'])

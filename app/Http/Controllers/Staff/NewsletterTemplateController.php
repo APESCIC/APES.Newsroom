@@ -2,16 +2,23 @@
 
 namespace App\Http\Controllers\Staff;
 
+use App\Enums\ContentVisibility;
+use App\Enums\PostStatus;
 use App\Http\Controllers\Controller;
 use App\Models\EmailTemplateVersion;
 use App\Models\Newsletter;
+use App\Models\Post;
 use App\Services\EmailTemplates\NewsletterTemplateService;
 use App\Support\EmailTemplates\NewsletterTemplateDefaults as Defaults;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 /**
  * Staff → Newsletters → email template: the default newsletter template
@@ -40,6 +47,57 @@ class NewsletterTemplateController extends Controller
             'samplePlaceholders' => Defaults::samplePlaceholders(),
             'versions' => $this->versions($scope),
             'testRecipient' => $request->user()->email,
+            'previewPosts' => Post::query()
+                ->where('status', PostStatus::Published->value)
+                ->latest('published_at')
+                ->limit(30)
+                ->get(['id', 'title', 'visibility'])
+                ->map(fn (Post $post) => ['id' => $post->id, 'title' => $post->title, 'visibility' => $post->visibility?->value ?? 'public'])
+                ->all(),
+        ]);
+    }
+
+    public function preview(Request $request, string $target): JsonResponse
+    {
+        Gate::authorize('manage-newsletter-templates');
+        [$scope] = $this->target($target);
+        $validated = $this->validated($request);
+        [$post, $visibility] = $this->previewPost($request);
+
+        try {
+            $preview = $this->service->preview($scope, $validated['subject'], $validated['intro'], $validated['settings'], $post, $visibility, $request->user());
+        } catch (ValidationException $exception) {
+            return response()->json(['ok' => false, 'message' => collect($exception->errors())->flatten()->implode(' ')], 422);
+        }
+
+        return response()->json($preview);
+    }
+
+    public function test(Request $request, string $target): JsonResponse
+    {
+        Gate::authorize('manage-newsletter-templates');
+        [$scope] = $this->target($target);
+        $validated = $this->validated($request);
+        [$post, $visibility] = $this->previewPost($request);
+
+        try {
+            $this->service->sendTest($scope, $validated['subject'], $validated['intro'], $validated['settings'], $post, $visibility, $request->user());
+        } catch (ValidationException $exception) {
+            $throttled = $exception->errors()['test'][0] ?? null;
+
+            return response()->json([
+                'ok' => false,
+                'message' => is_string($throttled) ? $throttled : collect($exception->errors())->flatten()->implode(' '),
+            ], is_string($throttled) ? 429 : 422);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return response()->json(['ok' => false, 'message' => 'The test email could not be queued.'], 502);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Test email queued for '.$request->user()->email.'.',
         ]);
     }
 
@@ -94,6 +152,23 @@ class NewsletterTemplateController extends Controller
         $newsletter = Newsletter::query()->findOrFail((int) $target);
 
         return [Defaults::scopeFor($newsletter->id), $newsletter];
+    }
+
+    /**
+     * @return array{0: Post, 1: ContentVisibility}
+     */
+    private function previewPost(Request $request): array
+    {
+        $validated = $request->validate([
+            'post_id' => ['required', 'integer'],
+            'visibility' => ['required', Rule::enum(ContentVisibility::class)],
+        ]);
+
+        $post = Post::query()
+            ->where('status', PostStatus::Published->value)
+            ->findOrFail((int) $validated['post_id']);
+
+        return [$post, ContentVisibility::from($validated['visibility'])];
     }
 
     /**
