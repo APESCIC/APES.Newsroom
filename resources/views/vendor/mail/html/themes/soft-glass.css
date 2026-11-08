@@ -340,6 +340,12 @@ hr {
     font-size: 14px;
 }
 
+.standfirst {
+    color: #0B2B2C;
+    font-size: 17px;
+    font-weight: bold;
+}
+
 .test-banner {
     background-color: #FFF6E5;
     border: 1px solid #8A4B0B;

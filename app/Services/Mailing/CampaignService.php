@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Notifications\CampaignPausedNotification;
 use App\Services\Audit\AuditLogger;
 use App\Services\EditorJs\BlockRenderer;
+use App\Services\EmailTemplates\NewsletterTemplates;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -30,6 +31,7 @@ class CampaignService
         private readonly ConsentService $consent,
         private readonly CampaignSender $sender,
         private readonly AuditLogger $audit,
+        private readonly NewsletterTemplates $templates,
     ) {}
 
     /**
@@ -186,10 +188,16 @@ class CampaignService
     }
 
     /**
+     * Everything the email needs, frozen at creation. A saved newsletter
+     * template (or an editor draft passed as $template) is captured with it;
+     * with neither, the snapshot is exactly what it was before templates.
+     *
+     * @param  array<string, mixed>|null  $template
      * @return array<string, mixed>
      */
-    public function buildSnapshot(Post $post, ?Newsletter $senderNewsletter = null): array
+    public function buildSnapshot(Post $post, ?Newsletter $senderNewsletter = null, ?array $template = null): array
     {
+        $template ??= $this->templates->snapshot($this->templates->resolve($senderNewsletter));
         $post->loadMissing('author');
 
         $content = is_array($post->content) ? $post->content : [];
@@ -207,7 +215,7 @@ class CampaignService
             $excerpt = $excerpt !== '' ? $excerpt."\n\n".$cta : $cta;
         }
 
-        return [
+        $snapshot = [
             'title' => $post->title,
             'excerpt' => $excerpt,
             'html' => $html,
@@ -221,6 +229,19 @@ class CampaignService
             'read_more_url' => url('/articles/'.$post->slug),
             'slug' => $post->slug,
             'sender' => $this->sender->identity($senderNewsletter),
+        ];
+
+        if ($template === null) {
+            return $snapshot;
+        }
+
+        return [
+            ...$snapshot,
+            'template' => $template,
+            'placeholders' => $this->templates->postPlaceholders([
+                ...$snapshot,
+                'excerpt' => $post->excerpt,
+            ], $senderNewsletter),
         ];
     }
 

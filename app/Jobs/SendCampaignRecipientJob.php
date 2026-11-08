@@ -10,6 +10,7 @@ use App\Mail\CampaignPostSummaryMail;
 use App\Models\Campaign;
 use App\Models\CampaignRecipient;
 use App\Models\Newsletter;
+use App\Services\EmailTemplates\NewsletterTemplates;
 use App\Services\Mail\MailMessageRefused;
 use App\Services\Mail\MailTransportUnavailable;
 use App\Services\Mailing\CampaignSender;
@@ -132,6 +133,9 @@ class SendCampaignRecipientJob implements ShouldBeUnique, ShouldQueue
                 providerTrackOpens: ! $ownTracking && $tracking['opens'],
                 providerTrackClicks: ! $ownTracking && $tracking['clicks'],
                 campaignRecipientId: $recipient->id,
+                recipientFirstName: is_array($campaign->snapshot['template'] ?? null)
+                    ? app(NewsletterTemplates::class)->firstNameFor($recipient->email)
+                    : null,
             ));
         } catch (MailMessageRefused $exception) {
             $this->markFailed($recipient, $exception);
