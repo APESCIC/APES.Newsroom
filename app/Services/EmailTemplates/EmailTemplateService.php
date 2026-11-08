@@ -31,7 +31,7 @@ class EmailTemplateService
      */
     public function listForAdmin(): array
     {
-        $overrides = EmailTemplate::query()->get()->keyBy('key');
+        $overrides = EmailTemplate::query()->system()->get()->keyBy('key');
         $grouped = [];
 
         foreach ($this->registry->groups() as $group => $definitions) {
@@ -83,7 +83,7 @@ class EmailTemplateService
 
         return DB::transaction(function () use ($key, $subject, $body, $editor): EmailTemplate {
             $template = EmailTemplate::query()->updateOrCreate(
-                ['key' => $key],
+                ['key' => $key, 'scope' => EmailTemplate::SCOPE_SYSTEM],
                 [
                     'subject' => $subject,
                     'body' => $body,

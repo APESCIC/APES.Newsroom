@@ -78,7 +78,7 @@ class TemplatedMail
 
     public function findOverride(string $key): ?EmailTemplate
     {
-        return EmailTemplate::query()->where('key', $key)->first();
+        return EmailTemplate::query()->system()->where('key', $key)->first();
     }
 
     /**

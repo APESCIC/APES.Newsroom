@@ -13,6 +13,7 @@ class EmailTemplateVersion extends Model
         'email_template_id',
         'subject',
         'body',
+        'settings',
         'editor_id',
         'created_at',
     ];
@@ -21,6 +22,7 @@ class EmailTemplateVersion extends Model
     {
         return [
             'created_at' => 'datetime',
+            'settings' => 'array',
         ];
     }
 
