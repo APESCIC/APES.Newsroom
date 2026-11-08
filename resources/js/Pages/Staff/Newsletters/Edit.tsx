@@ -1,7 +1,8 @@
-import { router, useForm } from '@inertiajs/react';
+import { Link, router, useForm } from '@inertiajs/react';
 import { Mail } from 'lucide-react';
 import { FormEventHandler } from 'react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
+import { NewsletterTemplateBadge, type NewsletterTemplateUsage } from '../../../Components/Staff/NewsletterTemplateUsage';
 import PillButton from '../../../Components/Workspace/ui/PillButton';
 
 type NewsletterData = {
@@ -32,6 +33,7 @@ type NewsletterData = {
     display_order: number;
     public_label: string | null;
     public_description: string | null;
+    template: NewsletterTemplateUsage;
 };
 
 type ChannelOption = { value: string; label: string; slug: string; taken_by: string | null };
@@ -454,6 +456,29 @@ export default function NewsletterEdit({
                     )}
                 </div>
             </form>
+            {newsletter && (
+                <section aria-labelledby="newsletter-template-heading" className="sg-card space-y-3 p-5 sm:p-6">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <h2 id="newsletter-template-heading" className="text-base font-semibold text-body">
+                            Email template
+                        </h2>
+                        <NewsletterTemplateBadge usage={newsletter.template} />
+                    </div>
+                    <p className="text-sm text-muted">
+                        {newsletter.template === 'own'
+                            ? 'This newsletter sends with its own version of the newsletter email. Revert it to use the default template again.'
+                            : 'This newsletter sends with the default newsletter email. Create its own version to change the wording for this newsletter only.'}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                        <Link href={`/staff/newsletter-templates/${newsletter.id}`} className="sg-btn sg-btn-secondary">
+                            {newsletter.template === 'own' ? 'Edit this newsletter’s template' : 'Create a version for this newsletter'}
+                        </Link>
+                        <Link href="/staff/newsletter-templates/default" className="sg-btn sg-btn-secondary">
+                            Edit the default template
+                        </Link>
+                    </div>
+                </section>
+            )}
             {newsletter && (
                 <section aria-label="Segments" className="sg-card space-y-3 p-5 sm:p-6">
                     <h2 className="text-base font-semibold text-body">Segments</h2>

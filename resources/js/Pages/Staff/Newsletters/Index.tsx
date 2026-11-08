@@ -1,6 +1,7 @@
 import { Link, router } from '@inertiajs/react';
-import { Archive, ArchiveRestore, ExternalLink, Mail, Pencil, Plus } from 'lucide-react';
+import { Archive, ArchiveRestore, ExternalLink, FileText, Mail, Pencil, Plus } from 'lucide-react';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
+import { NewsletterTemplateBadge, type NewsletterTemplateUsage } from '../../../Components/Staff/NewsletterTemplateUsage';
 import { useConfirmedAction } from '../../../Components/Workspace/useConfirmedAction';
 import ActionMenu, { type MenuAction } from '../../../Components/Workspace/ui/ActionMenu';
 import Badge from '../../../Components/Workspace/ui/Badge';
@@ -32,6 +33,7 @@ type NewsletterRow = {
     unsubscribed_count: number;
     account_confirmed_count: number;
     mailing_only_confirmed_count: number;
+    template: NewsletterTemplateUsage;
 };
 
 const FILTERS: Array<{ value: StatusFilter; label: string }> = [
@@ -78,6 +80,11 @@ export default function NewslettersIndex({
             icon: Pencil,
             href: `/staff/newsletters/${newsletter.id}/edit`,
         },
+        {
+            label: 'Edit email template',
+            icon: FileText,
+            href: `/staff/newsletter-templates/${newsletter.id}`,
+        },
         ...(newsletter.status === 'active'
             ? [
                   {
@@ -113,6 +120,14 @@ export default function NewslettersIndex({
             New newsletter
         </PillButton>
     );
+    const actions = (
+        <div className="flex flex-wrap gap-2">
+            <PillButton href="/staff/newsletter-templates/default" variant="secondary" icon={FileText}>
+                Default email template
+            </PillButton>
+            {newNewsletter}
+        </div>
+    );
 
     return (
         <WorkspaceLayout
@@ -120,7 +135,7 @@ export default function NewslettersIndex({
             active="newsletters"
             title="Newsletters"
             subtitle="Every newsletter members can subscribe to, including the three channel lists"
-            actions={newNewsletter}
+            actions={actions}
         >
             <ListSearch
                 path="/staff/newsletters"
@@ -159,6 +174,7 @@ export default function NewslettersIndex({
                                             {newsletter.name}
                                         </Link>
                                         <StatusBadge status={newsletter.status} />
+                                        <NewsletterTemplateBadge usage={newsletter.template} />
                                         {newsletter.channel && newsletter.status === 'active' && (
                                             <Badge tone="info">
                                                 Public channel #{newsletter.display_order}

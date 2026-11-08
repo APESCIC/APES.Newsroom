@@ -27,6 +27,38 @@ class NewsletterTemplates
     }
 
     /**
+     * Which template each newsletter sends with: its own version, the edited
+     * default, or the built-in email.
+     *
+     * @param  iterable<Newsletter>  $newsletters
+     * @return array<int, 'own'|'default_edited'|'built_in'>
+     */
+    public function usage(iterable $newsletters): array
+    {
+        $scopes = EmailTemplate::query()->where('key', Defaults::KEY)->pluck('scope')->all();
+        $defaultEdited = in_array(Defaults::SCOPE_DEFAULT, $scopes, true);
+        $usage = [];
+
+        foreach ($newsletters as $newsletter) {
+            $usage[$newsletter->id] = match (true) {
+                in_array(Defaults::scopeFor($newsletter->id), $scopes, true) => 'own',
+                $defaultEdited => 'default_edited',
+                default => 'built_in',
+            };
+        }
+
+        return $usage;
+    }
+
+    /**
+     * @return 'own'|'default_edited'|'built_in'
+     */
+    public function usageFor(Newsletter $newsletter): string
+    {
+        return $this->usage([$newsletter])[$newsletter->id];
+    }
+
+    /**
      * A choice of "newsletter" (the default) or "newsletter:<id>" wins; with no
      * choice the sending newsletter's own version is used, then the default.
      * Null means nothing is saved and the built-in email is sent unchanged.
