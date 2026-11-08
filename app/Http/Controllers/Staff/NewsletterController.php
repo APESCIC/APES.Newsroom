@@ -11,6 +11,7 @@ use App\Models\EmailSenderAddress;
 use App\Models\EmailSendingDomain;
 use App\Models\Newsletter;
 use App\Models\NewsletterSegment;
+use App\Services\EmailTemplates\NewsletterTemplates;
 use App\Services\Mail\MailgunSenderCheck;
 use App\Services\Mailing\CampaignSender;
 use App\Services\Mailing\CampaignService;
@@ -27,7 +28,10 @@ use Inertia\Response;
 
 class NewsletterController extends Controller
 {
-    public function __construct(private readonly CampaignSender $sender) {}
+    public function __construct(
+        private readonly CampaignSender $sender,
+        private readonly NewsletterTemplates $templates,
+    ) {}
 
     public function index(Request $request): Response
     {
@@ -59,27 +63,31 @@ class NewsletterController extends Controller
             ->orderBy('name')
             ->orderBy('id')
             ->paginate(20)
-            ->withQueryString()
-            ->through(fn (Newsletter $newsletter) => [
-                'id' => $newsletter->id,
-                'name' => $newsletter->name,
-                'slug' => $newsletter->slug,
-                'description' => $newsletter->description,
-                'legacy_list' => $newsletter->legacy_list?->value,
-                'status' => $newsletter->status(),
-                'sender_name' => $newsletter->sender_name,
-                'sender_email' => $newsletter->sender_email,
-                'sender_verified' => $this->sender->isVerified($newsletter),
-                'channel' => $newsletter->channel?->value,
-                'show_on_home' => $newsletter->show_on_home,
-                'show_in_nav' => $newsletter->show_in_nav,
-                'display_order' => $newsletter->display_order,
-                'confirmed_count' => (int) $newsletter->confirmed_count,
-                'pending_count' => (int) $newsletter->pending_count,
-                'unsubscribed_count' => (int) $newsletter->unsubscribed_count,
-                'account_confirmed_count' => (int) $newsletter->account_confirmed_count,
-                'mailing_only_confirmed_count' => (int) $newsletter->mailing_only_confirmed_count,
-            ]);
+            ->withQueryString();
+
+        $templateUsage = $this->templates->usage($newsletters->items());
+
+        $newsletters->through(fn (Newsletter $newsletter) => [
+            'id' => $newsletter->id,
+            'name' => $newsletter->name,
+            'slug' => $newsletter->slug,
+            'description' => $newsletter->description,
+            'legacy_list' => $newsletter->legacy_list?->value,
+            'status' => $newsletter->status(),
+            'sender_name' => $newsletter->sender_name,
+            'sender_email' => $newsletter->sender_email,
+            'sender_verified' => $this->sender->isVerified($newsletter),
+            'channel' => $newsletter->channel?->value,
+            'show_on_home' => $newsletter->show_on_home,
+            'show_in_nav' => $newsletter->show_in_nav,
+            'display_order' => $newsletter->display_order,
+            'confirmed_count' => (int) $newsletter->confirmed_count,
+            'pending_count' => (int) $newsletter->pending_count,
+            'unsubscribed_count' => (int) $newsletter->unsubscribed_count,
+            'account_confirmed_count' => (int) $newsletter->account_confirmed_count,
+            'mailing_only_confirmed_count' => (int) $newsletter->mailing_only_confirmed_count,
+            'template' => $templateUsage[$newsletter->id] ?? 'built_in',
+        ]);
 
         return Inertia::render('Staff/Newsletters/Index', [
             'newsletters' => $newsletters,
@@ -137,6 +145,7 @@ class NewsletterController extends Controller
                 'display_order' => $newsletter->display_order,
                 'public_label' => $newsletter->public_label,
                 'public_description' => $newsletter->public_description,
+                'template' => $this->templates->usageFor($newsletter),
             ],
             'channelOptions' => $this->channelOptions($newsletter),
             'domainOptions' => $this->domainOptions(),

@@ -47,6 +47,7 @@ type PostData = {
     email_on_publish: boolean;
     mailing_lists: string[];
     newsletter_segment_id: number | null;
+    newsletter_template?: string | null;
     review_notes: string | null;
     tags: string[];
     featured: boolean;
@@ -82,6 +83,7 @@ type PostForm = {
     email_on_publish: boolean;
     mailing_lists: string[];
     newsletter_segment_id: string;
+    newsletter_template: string;
     tags_text: string;
     featured: boolean;
     co_author_ids: number[];
@@ -114,6 +116,7 @@ const INLINE_ERROR_FIELDS = [
     'email_on_publish',
     'mailing_lists',
     'newsletter_segment_id',
+    'newsletter_template',
     'featured',
     'co_author_ids',
     'expected_updated_at',
@@ -142,6 +145,7 @@ function formFromPost(post: PostData | null, channels: Channel[], editor: Editor
         email_on_publish: post?.email_on_publish ?? false,
         mailing_lists: post?.mailing_lists ?? [],
         newsletter_segment_id: post?.newsletter_segment_id ? String(post.newsletter_segment_id) : '',
+        newsletter_template: post?.newsletter_template ?? '',
         tags_text: (post?.tags ?? []).join(', '),
         featured: post?.featured ?? false,
         co_author_ids: post?.co_author_ids ?? [],
@@ -235,6 +239,7 @@ export default function PostEdit({
     channels,
     mailingLists,
     segments = [],
+    newsletterTemplates = [],
     staffUsers = [],
     canPublish,
     revisions,
@@ -244,6 +249,7 @@ export default function PostEdit({
     channels: Channel[];
     mailingLists: MailingListOption[];
     segments?: SegmentOption[];
+    newsletterTemplates?: Array<{ value: string; label: string }>;
     staffUsers?: Array<{ id: number; name: string; email: string }>;
     canPublish: boolean;
     revisions: Revision[];
@@ -732,6 +738,24 @@ export default function PostEdit({
                                         segments={segments}
                                         segmentId={data.newsletter_segment_id}
                                     />
+                                    {newsletterTemplates.length > 0 && (
+                                        <label className="text-sm" htmlFor="newsletter_template">
+                                            Email template
+                                            <select
+                                                id="newsletter_template"
+                                                className="form-input mt-1 w-full"
+                                                value={data.newsletter_template}
+                                                onChange={(e) => setData('newsletter_template', e.target.value)}
+                                            >
+                                                {newsletterTemplates.map((option) => (
+                                                    <option key={option.value} value={option.value}>
+                                                        {option.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </label>
+                                    )}
+                                    <FieldError message={errors.newsletter_template} />
                                 </div>
                             )}
                             <FieldError message={fieldError(errors, 'mailing_lists')} />

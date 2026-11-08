@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Post;
 use App\Services\Media\HeroImageInput;
 use App\Services\Publishing\EditorialPostWriter;
+use App\Support\EmailTemplates\NewsletterTemplateChoice;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -107,6 +108,7 @@ class AdminPostController extends Controller
             'mailing_lists' => ['nullable', 'array'],
             'mailing_lists.*' => [Rule::enum(MailingList::class)],
             'newsletter_segment_id' => ['nullable', 'integer', 'exists:newsletter_segments,id'],
+            'newsletter_template' => NewsletterTemplateChoice::rules(),
             'tags' => ['nullable', 'array'],
             'tags.*' => ['string', 'max:100'],
             'featured' => ['sometimes', 'boolean'],

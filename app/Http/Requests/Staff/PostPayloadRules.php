@@ -6,6 +6,7 @@ use App\Enums\Channel;
 use App\Enums\ContentVisibility;
 use App\Enums\MailingList;
 use App\Services\Media\HeroImageInput;
+use App\Support\EmailTemplates\NewsletterTemplateChoice;
 use Illuminate\Validation\Rule;
 
 trait PostPayloadRules
@@ -23,6 +24,10 @@ trait PostPayloadRules
 
         if ($this->exists('newsletter_segment_id') && $this->input('newsletter_segment_id') === '') {
             $merge['newsletter_segment_id'] = null;
+        }
+
+        if ($this->exists('newsletter_template') && $this->input('newsletter_template') === '') {
+            $merge['newsletter_template'] = null;
         }
 
         if ($this->exists('mailing_lists') && ! is_array($this->input('mailing_lists'))) {
@@ -65,6 +70,7 @@ trait PostPayloadRules
             'mailing_lists' => ['nullable', 'array'],
             'mailing_lists.*' => [Rule::enum(MailingList::class)],
             'newsletter_segment_id' => ['nullable', 'integer', 'exists:newsletter_segments,id'],
+            'newsletter_template' => NewsletterTemplateChoice::rules(),
             'tags' => ['nullable', 'array'],
             'tags.*' => ['string', 'max:100'],
             'featured' => ['sometimes', 'boolean'],

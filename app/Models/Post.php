@@ -21,7 +21,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'hero_image', 'hero_image_alt', 'hero_image_caption', 'hero_image_credit',
     'hero_media_id', 'hero_focal_x', 'hero_focal_y',
     'meta_title', 'meta_description', 'canonical_url', 'published_at',
-    'scheduled_for', 'email_on_publish', 'mailing_lists', 'newsletter_segment_id', 'review_notes', 'needs_import_review',
+    'scheduled_for', 'email_on_publish', 'mailing_lists', 'newsletter_segment_id', 'newsletter_template', 'review_notes', 'needs_import_review',
     'featured',
 ])]
 class Post extends Model

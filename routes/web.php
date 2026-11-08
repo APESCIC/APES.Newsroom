@@ -63,6 +63,7 @@ use App\Http\Controllers\Staff\MembershipAdminController as StaffMembershipAdmin
 use App\Http\Controllers\Staff\MembershipPlanController as StaffMembershipPlanController;
 use App\Http\Controllers\Staff\MetricsController as StaffMetricsController;
 use App\Http\Controllers\Staff\NewsletterController as StaffNewsletterController;
+use App\Http\Controllers\Staff\NewsletterTemplateController as StaffNewsletterTemplateController;
 use App\Http\Controllers\Staff\OfferController as StaffOfferController;
 use App\Http\Controllers\Staff\PageController as StaffPageController;
 use App\Http\Controllers\Staff\PersonController as StaffPersonController;
@@ -358,7 +359,7 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
         Route::post('/posts/{post}/revisions/{revision}/restore', [StaffPostController::class, 'restoreRevision'])->name('posts.revisions.restore');
         Route::get('/posts/{post}/preview', [StaffPostController::class, 'preview'])->name('posts.preview');
         Route::get('/posts/{post}/campaign', [StaffCampaignController::class, 'preview'])->name('posts.campaign.preview');
-        Route::post('/posts/{post}/campaign/test-send', [StaffCampaignController::class, 'testSend'])->name('posts.campaign.test');
+        Route::post('/posts/{post}/campaign/test-send', [StaffCampaignController::class, 'testSend'])->middleware('throttle:10,1')->name('posts.campaign.test');
         Route::post('/posts/{post}/campaign/resume', [StaffCampaignController::class, 'resume'])->middleware(['auth.recent', 'throttle:10,1'])->name('posts.campaign.resume');
 
         Route::get('/metrics', StaffMetricsController::class)->name('metrics.index');
@@ -402,6 +403,28 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
         Route::post('/newsletters/{newsletter}/verify-sender', [StaffNewsletterController::class, 'verifySender'])
             ->middleware('throttle:10,1')
             ->name('newsletters.verify-sender');
+
+        Route::prefix('/newsletter-templates/{target}')->name('newsletter-templates.')->group(function () {
+            $target = 'default|[1-9][0-9]*';
+
+            Route::get('/', [StaffNewsletterTemplateController::class, 'edit'])->where('target', $target)->name('edit');
+            Route::post('/preview', [StaffNewsletterTemplateController::class, 'preview'])
+                ->where('target', $target)
+                ->middleware('throttle:60,1')
+                ->name('preview');
+            Route::post('/test', [StaffNewsletterTemplateController::class, 'test'])
+                ->where('target', $target)
+                ->middleware('throttle:10,1')
+                ->name('test');
+            Route::middleware('throttle:30,1')->group(function () use ($target) {
+                Route::put('/', [StaffNewsletterTemplateController::class, 'update'])->where('target', $target)->name('update');
+                Route::post('/versions/{version}/restore', [StaffNewsletterTemplateController::class, 'restore'])
+                    ->where('target', $target)
+                    ->whereNumber('version')
+                    ->name('versions.restore');
+                Route::post('/revert', [StaffNewsletterTemplateController::class, 'revert'])->where('target', $target)->name('revert');
+            });
+        });
 
         Route::get('/membership-plans', [StaffMembershipPlanController::class, 'index'])->name('membership-plans.index');
         Route::patch('/membership-plans/{plan}', [StaffMembershipPlanController::class, 'update'])->name('membership-plans.update');

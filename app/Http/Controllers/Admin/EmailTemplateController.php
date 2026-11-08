@@ -154,7 +154,7 @@ class EmailTemplateController extends Controller
         $this->definition($key);
 
         $record = EmailTemplateVersion::query()->with('template')->findOrFail($version);
-        if ($record->template === null || $record->template->key !== $key) {
+        if ($record->template === null || $record->template->key !== $key || $record->template->scope !== EmailTemplate::SCOPE_SYSTEM) {
             abort(404);
         }
 

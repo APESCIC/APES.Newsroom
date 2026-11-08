@@ -16,6 +16,8 @@ use App\Models\User;
 use App\Notifications\CampaignPausedNotification;
 use App\Services\Audit\AuditLogger;
 use App\Services\EditorJs\BlockRenderer;
+use App\Services\EmailTemplates\NewsletterTemplates;
+use App\Support\EmailTemplates\NewsletterTemplateDefaults;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -30,6 +32,7 @@ class CampaignService
         private readonly ConsentService $consent,
         private readonly CampaignSender $sender,
         private readonly AuditLogger $audit,
+        private readonly NewsletterTemplates $templates,
     ) {}
 
     /**
@@ -145,7 +148,11 @@ class CampaignService
         });
     }
 
-    public function createTestSend(Post $post, User $actor, string $recipientEmail): Campaign
+    /**
+     * @param  array<string, mixed>|null  $template  an unsaved newsletter template draft to test
+     * @param  Newsletter|null  $senderNewsletter  send as this newsletter instead of the post's
+     */
+    public function createTestSend(Post $post, User $actor, string $recipientEmail, ?array $template = null, ?Newsletter $senderNewsletter = null): Campaign
     {
         $lists = $this->normalizeListValues($post->mailing_lists ?? []);
         if ($lists === []) {
@@ -153,7 +160,7 @@ class CampaignService
         }
 
         $email = Str::lower(trim($recipientEmail));
-        $senderNewsletter = $post->newsletter_segment_id
+        $senderNewsletter ??= $post->newsletter_segment_id
             ? $this->sender->newsletterForPost($post)
             : $this->sender->newsletterForLists($lists);
 
@@ -165,13 +172,13 @@ class CampaignService
             ]);
         }
 
-        return DB::transaction(function () use ($post, $actor, $lists, $email, $senderNewsletter) {
+        return DB::transaction(function () use ($post, $actor, $lists, $email, $senderNewsletter, $template) {
             $campaign = Campaign::create([
                 'post_id' => $post->id,
                 'newsletter_id' => $senderNewsletter?->id,
                 'created_by' => $actor->id,
                 'lists' => $lists,
-                'snapshot' => $this->buildSnapshot($post, $senderNewsletter),
+                'snapshot' => $this->buildSnapshot($post, $senderNewsletter, $template),
                 'status' => CampaignStatus::Queued,
                 'is_test' => true,
                 'test_recipient' => $email,
@@ -186,10 +193,16 @@ class CampaignService
     }
 
     /**
+     * Everything the email needs, frozen at creation. A saved newsletter
+     * template (or an editor draft passed as $template) is captured with it;
+     * with neither, the snapshot is exactly what it was before templates.
+     *
+     * @param  array<string, mixed>|null  $template
      * @return array<string, mixed>
      */
-    public function buildSnapshot(Post $post, ?Newsletter $senderNewsletter = null): array
+    public function buildSnapshot(Post $post, ?Newsletter $senderNewsletter = null, ?array $template = null): array
     {
+        $template ??= $this->templates->snapshot($this->templates->resolve($senderNewsletter, $post->newsletter_template));
         $post->loadMissing('author');
 
         $content = is_array($post->content) ? $post->content : [];
@@ -198,16 +211,24 @@ class CampaignService
             ? app(BlockRenderer::class)->toHtml($content)
             : null;
 
+        $placeholders = $template === null ? [] : $this->templates->postPlaceholders([
+            'title' => $post->title,
+            'excerpt' => $post->excerpt,
+            'author' => $post->author->name,
+            'read_more_url' => url('/articles/'.$post->slug),
+            'channel_label' => $post->channel->label(),
+        ], $senderNewsletter);
+
         $excerpt = $post->excerpt;
         if ($visibility !== 'public') {
-            $cta = $visibility === 'paid'
-                ? 'This article is for paid members. Subscribe in your account to read the full post.'
-                : 'This article is for members. Create a free account to read the full post.';
+            $cta = $template !== null
+                ? $this->templates->gatedCallToAction($template, $visibility, $placeholders)
+                : ($visibility === 'paid' ? NewsletterTemplateDefaults::PAID_CTA : NewsletterTemplateDefaults::MEMBERS_CTA);
             $excerpt = trim((string) $excerpt);
             $excerpt = $excerpt !== '' ? $excerpt."\n\n".$cta : $cta;
         }
 
-        return [
+        $snapshot = [
             'title' => $post->title,
             'excerpt' => $excerpt,
             'html' => $html,
@@ -221,6 +242,16 @@ class CampaignService
             'read_more_url' => url('/articles/'.$post->slug),
             'slug' => $post->slug,
             'sender' => $this->sender->identity($senderNewsletter),
+        ];
+
+        if ($template === null) {
+            return $snapshot;
+        }
+
+        return [
+            ...$snapshot,
+            'template' => $template,
+            'placeholders' => $placeholders,
         ];
     }
 
