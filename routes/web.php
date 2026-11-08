@@ -63,6 +63,7 @@ use App\Http\Controllers\Staff\MembershipAdminController as StaffMembershipAdmin
 use App\Http\Controllers\Staff\MembershipPlanController as StaffMembershipPlanController;
 use App\Http\Controllers\Staff\MetricsController as StaffMetricsController;
 use App\Http\Controllers\Staff\NewsletterController as StaffNewsletterController;
+use App\Http\Controllers\Staff\NewsletterTemplateController as StaffNewsletterTemplateController;
 use App\Http\Controllers\Staff\OfferController as StaffOfferController;
 use App\Http\Controllers\Staff\PageController as StaffPageController;
 use App\Http\Controllers\Staff\PersonController as StaffPersonController;
@@ -402,6 +403,20 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
         Route::post('/newsletters/{newsletter}/verify-sender', [StaffNewsletterController::class, 'verifySender'])
             ->middleware('throttle:10,1')
             ->name('newsletters.verify-sender');
+
+        Route::prefix('/newsletter-templates/{target}')->name('newsletter-templates.')->group(function () {
+            $target = 'default|[1-9][0-9]*';
+
+            Route::get('/', [StaffNewsletterTemplateController::class, 'edit'])->where('target', $target)->name('edit');
+            Route::middleware('throttle:30,1')->group(function () use ($target) {
+                Route::put('/', [StaffNewsletterTemplateController::class, 'update'])->where('target', $target)->name('update');
+                Route::post('/versions/{version}/restore', [StaffNewsletterTemplateController::class, 'restore'])
+                    ->where('target', $target)
+                    ->whereNumber('version')
+                    ->name('versions.restore');
+                Route::post('/revert', [StaffNewsletterTemplateController::class, 'revert'])->where('target', $target)->name('revert');
+            });
+        });
 
         Route::get('/membership-plans', [StaffMembershipPlanController::class, 'index'])->name('membership-plans.index');
         Route::patch('/membership-plans/{plan}', [StaffMembershipPlanController::class, 'update'])->name('membership-plans.update');

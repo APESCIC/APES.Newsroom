@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Enums\Role;
 use App\Http\Middleware\EnsureAuthEpoch;
 use App\Models\User;
+use App\Policies\NewsletterTemplatePolicy;
 use App\Services\Auth\PendingTwoFactorLogin;
 use App\Services\Auth\RecentAuthentication;
 use App\Services\EmailTemplates\TemplatedMail;
@@ -76,6 +77,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::define('access-staff-area', fn (User $user) => $user->role->atLeast(Role::Staff));
         Gate::define('access-admin-area', fn (User $user) => $user->role->atLeast(Role::Admin));
+        Gate::define('manage-newsletter-templates', [NewsletterTemplatePolicy::class, 'manage']);
 
         Password::defaults(fn () => PasswordPolicy::rule());
 
