@@ -1,0 +1,29 @@
+{
+  "version": "v1.30.0",
+  "slug": "release-v1-30-0",
+  "released_at": "2026-11-08",
+  "previous_version": "v1.29.0",
+  "theme": "Newsletter email templates",
+  "change_types": ["added", "changed", "security"],
+  "topic_tags": ["internal-only", "compliance", "accessibility"],
+  "summary": "Staff and admins can edit the newsletter email as one default template plus optional per-newsletter versions, preview it with a real post, send a test and revert, while unsubscribe and List-Unsubscribe stay locked.",
+  "detailed_changes": [
+    "Added one default newsletter template, stored with versions on the v1.29.0 safe renderer. With nothing saved, the campaign email is byte for byte what it was before (#655).",
+    "Campaign emails render the subject, introduction, sign-off and button label through allowlisted {{ tag }} placeholders with escaping and sanitised Markdown. The layout, test banner, footer, unsubscribe and preferences links and List-Unsubscribe headers stay locked (#657).",
+    "The members-only and paid call-to-action wording added to gated posts is now editable; the defaults are unchanged (#658).",
+    "Each newsletter can have its own version that overrides the default; removing it returns to the default, and the newsletter list and edit pages show which template is in use (#656).",
+    "Staff → Newsletters → email template: a Markdown editor with a placeholder picker, a choice of sections (hero image, full post, excerpt) and unknown placeholders rejected on save (#659).",
+    "Preview the draft with a real published post shown as public, members or paid, and send a throttled test to yourself through the normal campaign test send. The post campaign test-send route is now throttled too (#660).",
+    "A post can choose which newsletter template its campaign uses; the campaign keeps the template it was created with, so later edits never change sent campaigns (#661).",
+    "Every save is a version with who and when; staff and admins can restore a version or revert, all audit-logged. Members and subscribers get 403 (#662).",
+    "Tests prove the unedited default is unchanged and that no template can remove or hide the unsubscribe link (#663)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff/newsletter-templates/default, /staff/newsletter-templates/{newsletter}, /staff/newsletters, /staff/posts/{post}/edit",
+    "User groups affected: staff and admins (editors); newsletter subscribers (receive the same email unless a template is saved)",
+    "Public impact: none until staff save a newsletter template",
+    "Internal impact: editable newsletter wording with preview, test send, version history and per-campaign template choice"
+  ],
+  "pr": 744
+}
