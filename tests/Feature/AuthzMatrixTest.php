@@ -168,6 +168,12 @@ class AuthzMatrixTest extends TestCase
         'staff.newsletters.restore' => Role::Staff,
         'staff.newsletters.segments.store' => Role::Staff,
         'staff.newsletters.verify-sender' => Role::Staff,
+        'staff.newsletter-templates.edit' => Role::Staff,
+        'staff.newsletter-templates.update' => Role::Staff,
+        'staff.newsletter-templates.preview' => Role::Staff,
+        'staff.newsletter-templates.test' => Role::Staff,
+        'staff.newsletter-templates.versions.restore' => Role::Staff,
+        'staff.newsletter-templates.revert' => Role::Staff,
         'staff.offers.index' => Role::Staff,
         'staff.offers.store' => Role::Staff,
         'staff.offers.update' => Role::Staff,
@@ -472,6 +478,7 @@ class AuthzMatrixTest extends TestCase
                     'discount_value' => 10,
                 ]),
                 'fallbackPlaceholder' => 'no-such-page',
+                'target' => 'default',
             };
         }
 

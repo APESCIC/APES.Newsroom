@@ -28,6 +28,7 @@ export const panelPages: PanelPage[] = [
     { name: 'staff-pages', path: '/staff/pages', role: 'staff' },
     { name: 'staff-media', path: '/staff/media', role: 'staff' },
     { name: 'staff-newsletters', path: '/staff/newsletters', role: 'staff' },
+    { name: 'staff-newsletter-template', path: '/staff/newsletter-templates/default', role: 'staff' },
     { name: 'staff-people', path: '/staff/people', role: 'staff' },
     { name: 'staff-person', path: '/staff/people/users/4', role: 'admin' },
     { name: 'staff-subscriber', path: '/staff/people/contacts/2', role: 'staff' },
