@@ -17,6 +17,7 @@ use App\Notifications\CampaignPausedNotification;
 use App\Services\Audit\AuditLogger;
 use App\Services\EditorJs\BlockRenderer;
 use App\Services\EmailTemplates\NewsletterTemplates;
+use App\Support\EmailTemplates\NewsletterTemplateDefaults;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -206,11 +207,19 @@ class CampaignService
             ? app(BlockRenderer::class)->toHtml($content)
             : null;
 
+        $placeholders = $template === null ? [] : $this->templates->postPlaceholders([
+            'title' => $post->title,
+            'excerpt' => $post->excerpt,
+            'author' => $post->author->name,
+            'read_more_url' => url('/articles/'.$post->slug),
+            'channel_label' => $post->channel->label(),
+        ], $senderNewsletter);
+
         $excerpt = $post->excerpt;
         if ($visibility !== 'public') {
-            $cta = $visibility === 'paid'
-                ? 'This article is for paid members. Subscribe in your account to read the full post.'
-                : 'This article is for members. Create a free account to read the full post.';
+            $cta = $template !== null
+                ? $this->templates->gatedCallToAction($template, $visibility, $placeholders)
+                : ($visibility === 'paid' ? NewsletterTemplateDefaults::PAID_CTA : NewsletterTemplateDefaults::MEMBERS_CTA);
             $excerpt = trim((string) $excerpt);
             $excerpt = $excerpt !== '' ? $excerpt."\n\n".$cta : $cta;
         }
@@ -238,10 +247,7 @@ class CampaignService
         return [
             ...$snapshot,
             'template' => $template,
-            'placeholders' => $this->templates->postPlaceholders([
-                ...$snapshot,
-                'excerpt' => $post->excerpt,
-            ], $senderNewsletter),
+            'placeholders' => $placeholders,
         ];
     }
 
