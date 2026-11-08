@@ -202,7 +202,7 @@ class CampaignService
      */
     public function buildSnapshot(Post $post, ?Newsletter $senderNewsletter = null, ?array $template = null): array
     {
-        $template ??= $this->templates->snapshot($this->templates->resolve($senderNewsletter));
+        $template ??= $this->templates->snapshot($this->templates->resolve($senderNewsletter, $post->newsletter_template));
         $post->loadMissing('author');
 
         $content = is_array($post->content) ? $post->content : [];

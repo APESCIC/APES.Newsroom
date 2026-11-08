@@ -26,6 +26,7 @@ use App\Services\Media\HeroImageInput;
 use App\Services\Publishing\HeroImageRequirements;
 use App\Services\Publishing\PublicArticlePresenter;
 use App\Services\Webhooks\OutboundWebhookDispatcher;
+use App\Support\EmailTemplates\NewsletterTemplateChoice;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -129,6 +130,7 @@ class PostController extends Controller
             'channels' => $this->channelOptions(),
             'mailingLists' => $this->mailingListOptions(),
             'segments' => $this->segmentOptions(),
+            'newsletterTemplates' => NewsletterTemplateChoice::options(),
             'staffUsers' => User::query()
                 ->whereIn('role', [Role::Staff, Role::Admin])
                 ->orderBy('name')
@@ -180,6 +182,7 @@ class PostController extends Controller
             'channels' => $this->channelOptions($post->channel),
             'mailingLists' => $this->mailingListOptions(),
             'segments' => $this->segmentOptions(),
+            'newsletterTemplates' => NewsletterTemplateChoice::options(),
             'staffUsers' => User::query()
                 ->whereIn('role', [Role::Staff, Role::Admin])
                 ->orderBy('name')
@@ -496,6 +499,7 @@ class PostController extends Controller
             'email_on_publish' => $post->email_on_publish,
             'mailing_lists' => $post->mailing_lists ?? [],
             'newsletter_segment_id' => $post->newsletter_segment_id,
+            'newsletter_template' => $post->newsletter_template,
             'review_notes' => $post->review_notes,
             'tags' => $post->tags->pluck('name')->all(),
             'featured' => (bool) $post->featured,
