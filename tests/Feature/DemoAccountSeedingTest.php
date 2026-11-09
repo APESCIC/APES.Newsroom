@@ -7,6 +7,7 @@ use App\Support\DemoAccounts;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\DemoUsersSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class DemoAccountSeedingTest extends TestCase
@@ -28,6 +29,15 @@ class DemoAccountSeedingTest extends TestCase
         $this->seed();
 
         $this->assertSame(3, DemoAccounts::query()->count());
+        $this->assertEqualsCanonicalizing(DemoAccounts::EMAILS, DemoAccounts::query()->pluck('email')->all());
+        $this->assertTrue(Hash::check(DemoAccounts::PASSWORD, (string) User::query()->where('email', DemoAccounts::MEMBER)->value('password')));
+    }
+
+    public function test_demo_accounts_use_example_test_addresses(): void
+    {
+        foreach (DemoAccounts::EMAILS as $email) {
+            $this->assertStringEndsWith('@example.test', $email);
+        }
     }
 
     public function test_check_command_passes_quietly_when_no_demo_accounts_exist(): void
@@ -43,6 +53,15 @@ class DemoAccountSeedingTest extends TestCase
 
         $this->artisan('newsroom:check-demo-accounts')
             ->expectsOutputToContain('WARNING: 3 demo account(s)')
+            ->assertSuccessful();
+    }
+
+    public function test_check_command_still_flags_pre_v1_30_3_demo_addresses(): void
+    {
+        User::factory()->create(['email' => 'staff@apes.local']);
+
+        $this->artisan('newsroom:check-demo-accounts')
+            ->expectsOutputToContain('WARNING: 1 demo account(s)')
             ->assertSuccessful();
     }
 

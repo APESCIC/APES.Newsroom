@@ -2,6 +2,7 @@
 .DS_Store
 .env
 .env.backup
+.env.backup-*
 .env.production
 .phpactor.json
 .phpunit.result.cache
@@ -21,10 +22,9 @@
 /public/fonts-manifest.dev.json
 /public/hot
 /public/storage
+/storage/app/public/demo/
 /storage/*.key
 /storage/pail
 /vendor
 _ide_helper.php
-Homestead.json
-Homestead.yaml
 Thumbs.db

@@ -4,9 +4,24 @@ Guidance for AI coding agents working in this repository. Setup, testing and
 operations are in the [README](README.md); deployment and rollback are in the
 [deployment runbook](docs/deployment.md).
 
-Local preview: `http://apes-newsroom.test` (WampServer's Apache, PHP 8.4),
-with `npm run dev` for Vite HMR. Setup is in
-[docs/local-dev.md](docs/local-dev.md#wampserver-preview).
+## Local development (Laragon)
+
+Laragon on Windows is the only supported local setup. Use this project's own
+Laragon project and profile, and never suggest Docker or any other local web
+stack.
+
+- Site: `http://apes-newsroom.test` (Laragon's Apache, PHP 8.4, serving
+  `public/`), database `apes_newsroom_local` on Laragon's MySQL 8.4, Vite on
+  `http://127.0.0.1:5181`. Values: [docs/laragon/profile.md](docs/laragon/profile.md)
+  and [docs/laragon/profile.json](docs/laragon/profile.json).
+- Setup: `composer setup` ([scripts/laragon-setup.ps1](scripts/laragon-setup.ps1)),
+  guide in [docs/local-dev.md](docs/local-dev.md).
+- Live preview: `npm run dev` (or `composer dev` for Vite plus the queue
+  worker). Apache serves the site, so do not run `php artisan serve`.
+- Demo data: `composer demo:seed` and `composer demo:reset`; contents and
+  test logins in [docs/laragon/demo-data.md](docs/laragon/demo-data.md). Test
+  changes against the demo data, sign in through the local role preview, and
+  keep any new demo records clearly fake (`example.*` emails only).
 
 ## Milestone shipping
 

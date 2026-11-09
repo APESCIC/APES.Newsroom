@@ -17,12 +17,12 @@ return [
     |
     | Cloudron may return a full DN (`cn=newsroom.staff,ou=groups,dc=cloudron`).
     | StaffReconciler also matches the CN RDN extracted from a DN, so map
-    | keys can be CNs. Include local OpenLDAP hyphenated CNs and the live
+    | keys can be CNs. Include the hyphenated test-directory CNs and the live
     | Cloudron dotted group names used on the directory.
     |
     */
     'ldap_group_map' => [
-        // Local OpenLDAP (docker/openldap/bootstrap.ldif)
+        // Hyphenated CNs used by test directories and the test suite
         'newsroom-staff' => Role::Staff,
         'newsroom-admins' => Role::Admin,
         // Live Cloudron groups (memberof CNs)

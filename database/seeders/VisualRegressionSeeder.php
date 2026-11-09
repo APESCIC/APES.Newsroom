@@ -21,6 +21,7 @@ use App\Models\Post;
 use App\Models\Profile;
 use App\Models\User;
 use App\Models\WebhookEndpoint;
+use App\Support\DemoAccounts;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -46,8 +47,8 @@ class VisualRegressionSeeder extends Seeder
         try {
             $this->call(DemoUsersSeeder::class);
 
-            $staff = User::query()->where('email', 'staff@apes.local')->firstOrFail();
-            $admin = User::query()->where('email', 'admin@apes.local')->firstOrFail();
+            $staff = User::query()->where('email', DemoAccounts::STAFF)->firstOrFail();
+            $admin = User::query()->where('email', DemoAccounts::ADMIN)->firstOrFail();
 
             $this->seedPosts($staff, $admin);
             $this->seedPages($staff);
@@ -111,9 +112,9 @@ class VisualRegressionSeeder extends Seeder
 
     private function seedModeration(): void
     {
-        $reader = User::query()->updateOrCreate(['email' => 'reader@apes.local'], [
+        $reader = User::query()->updateOrCreate(['email' => 'reader@example.test'], [
             'name' => 'Riley Reader',
-            'password' => 'password',
+            'password' => DemoAccounts::PASSWORD,
             'email_verified_at' => now(),
             'auth_provider' => 'password',
         ]);
@@ -140,11 +141,11 @@ class VisualRegressionSeeder extends Seeder
      */
     private function seedPeople(): void
     {
-        $reader = User::query()->where('email', 'reader@apes.local')->firstOrFail();
+        $reader = User::query()->where('email', 'reader@example.test')->firstOrFail();
         Membership::query()->updateOrCreate(['user_id' => $reader->id], ['status' => MembershipStatus::Free]);
 
         $contacts = [
-            ['reader@apes.local', 'Riley Reader', $reader->id, MailingList::ApesCic],
+            ['reader@example.test', 'Riley Reader', $reader->id, MailingList::ApesCic],
             ['sam.subscriber@example.test', 'Sam Subscriber', null, MailingList::ApesShelterRescue],
         ];
 

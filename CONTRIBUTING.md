@@ -11,7 +11,7 @@ Thanks for your interest. APES Newsroom is built and run by the Association of P
 ## Code contributions
 We don't usually accept outside pull requests, because the app is planned around APES's own needs. If you'd like to suggest a change, please start a Discussion first so we can talk it through.
 
-For the APES team: work is planned in milestones (`vX.Y.Z Beta: Name`), every pull request needs a changelog entry for the Change Log Hub (or the `skip-changelog` label), and CI must pass before merging. Setup, local development and testing are covered in the [README](README.md).
+For the APES team: work is planned in milestones (`vX.Y.Z Beta: Name`), every pull request needs a changelog entry for the Change Log Hub (or the `skip-changelog` label), and CI must pass before merging. Setup, local development and testing are covered in the [README](README.md). Laragon on Windows is the only supported local setup; see [docs/local-dev.md](docs/local-dev.md).
 
 ## How work ships
 

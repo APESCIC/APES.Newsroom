@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\Role;
 use App\Models\User;
+use App\Support\DemoAccounts;
 use Illuminate\Database\Seeder;
 
 class DemoUsersSeeder extends Seeder
@@ -11,7 +12,7 @@ class DemoUsersSeeder extends Seeder
     /**
      * Seed password-based demo users for local role preview.
      *
-     * All accounts use password "password". Role is force-filled because
+     * All accounts use DemoAccounts::PASSWORD. Role is force-filled because
      * it is not mass-assignable on User. Refuses to run outside local and
      * testing, even when called directly with --class.
      */
@@ -26,17 +27,17 @@ class DemoUsersSeeder extends Seeder
         $users = [
             [
                 'name' => 'Public Demo',
-                'email' => 'public@apes.local',
+                'email' => DemoAccounts::MEMBER,
                 'role' => Role::Public,
             ],
             [
                 'name' => 'Staff Demo',
-                'email' => 'staff@apes.local',
+                'email' => DemoAccounts::STAFF,
                 'role' => Role::Staff,
             ],
             [
                 'name' => 'Admin Demo',
-                'email' => 'admin@apes.local',
+                'email' => DemoAccounts::ADMIN,
                 'role' => Role::Admin,
             ],
         ];
@@ -46,7 +47,7 @@ class DemoUsersSeeder extends Seeder
                 ['email' => $data['email']],
                 [
                     'name' => $data['name'],
-                    'password' => 'password',
+                    'password' => DemoAccounts::PASSWORD,
                     'email_verified_at' => now(),
                     'auth_provider' => 'password',
                 ],

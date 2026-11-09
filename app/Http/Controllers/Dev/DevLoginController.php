@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dev;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\DemoAccounts;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,15 +16,15 @@ class DevLoginController extends Controller
      */
     private const ROLES = [
         'public' => [
-            'email' => 'public@apes.local',
+            'email' => DemoAccounts::MEMBER,
             'redirect' => '/',
         ],
         'staff' => [
-            'email' => 'staff@apes.local',
+            'email' => DemoAccounts::STAFF,
             'redirect' => '/staff',
         ],
         'admin' => [
-            'email' => 'admin@apes.local',
+            'email' => DemoAccounts::ADMIN,
             'redirect' => '/admin',
         ],
     ];
