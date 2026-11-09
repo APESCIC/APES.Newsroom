@@ -4,7 +4,8 @@
 
 .DESCRIPTION
     Reads docs/laragon/profile.json, checks Laragon's PHP, Composer, Node.js and
-    MySQL against it, installs the apes-newsroom Laragon profile if missing,
+    MySQL against it, warns if the php or node on PATH is not Laragon's,
+    installs the apes-newsroom Laragon profile if missing,
     creates .env from .env.example if missing, installs dependencies, creates
     this project's database, runs migrations and offers to load demo data.
 
@@ -85,6 +86,18 @@ function Get-EnvValue([string[]]$Lines, [string]$Key) {
     return $null
 }
 
+function Test-PathTool([string]$Name, [string]$Source, [string[]]$VersionArgs, [string]$LaragonDir, [string]$Uses) {
+    if (-not $Source) {
+        Add-Warning "$Name is not on PATH, so $Uses cannot find it outside this script. Run them from Laragon's Terminal (Menu > Laragon > Terminal)."
+    } elseif (-not $Source.StartsWith($LaragonRoot.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) {
+        $version = (Get-NativeOutput $Source $VersionArgs)[0]
+        if (-not $version) { $version = 'unknown version' }
+        Add-Warning "$Name on PATH is $Source ($($version.Trim())), not Laragon's, and $Uses use it. Run them from Laragon's Terminal (Menu > Laragon > Terminal), or put $LaragonDir first on PATH."
+    } else {
+        Write-Ok "$Name on PATH is Laragon's ($Source)"
+    }
+}
+
 function Test-Port([string]$HostName, [int]$Port) {
     $client = New-Object System.Net.Sockets.TcpClient
     try {
@@ -97,6 +110,8 @@ Write-Host "APES Newsroom Laragon setup ($RepoRoot)" -ForegroundColor White
 
 # --- Laragon and its tools ------------------------------------------------
 Write-Step 'Checking Laragon'
+$PathPhp = (Get-Command php -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1).Source
+$PathNode = (Get-Command node -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1).Source
 if (-not $LaragonRoot) { $LaragonRoot = $Config.laragonRoot }
 if (-not (Test-Path (Join-Path $LaragonRoot 'laragon.exe'))) {
     Stop-Setup "Laragon not found at $LaragonRoot. Install Laragon (Full) or pass -LaragonRoot."
@@ -157,6 +172,10 @@ if ($nodeVersion -notmatch "^v$([regex]::Escape($nodeWanted))\.") {
 } else {
     Write-Ok "Node.js $nodeVersion"
 }
+
+$nodeHome = if ($nodeDir) { $nodeDir.FullName } else { Join-Path $LaragonRoot "bin\nodejs\node-v$nodeWanted" }
+Test-PathTool 'php' $PathPhp @('-r', 'echo PHP_VERSION;') $phpDir.FullName 'composer and php artisan'
+Test-PathTool 'node' $PathNode @('-v') $nodeHome 'npm run dev, npm run build and npm test'
 
 $dbWanted = [string]$Config.database.version
 $mysqlDir = Get-VersionFolder (Join-Path $LaragonRoot 'bin\mysql') ("^mysql-" + [regex]::Escape($dbWanted))

@@ -16,6 +16,10 @@ stack.
   and [docs/laragon/profile.json](docs/laragon/profile.json).
 - Setup: `composer setup` ([scripts/laragon-setup.ps1](scripts/laragon-setup.ps1)),
   guide in [docs/local-dev.md](docs/local-dev.md).
+- Agent shells are not Laragon's Terminal, so `php` and `node` may resolve to
+  another install. If setup warns about that, put Laragon's PHP 8.4 and
+  `C:\laragon\bin\nodejs\node-v22` first on `$env:Path` for that shell
+  before running `composer`, `php artisan` or `npm`.
 - Live preview: `npm run dev` (or `composer dev` for Vite plus the queue
   worker). Apache serves the site, so do not run `php artisan serve`.
 - Demo data: `composer demo:seed` and `composer demo:reset`; contents and

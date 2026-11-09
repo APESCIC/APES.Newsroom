@@ -59,7 +59,9 @@ The folder name `apes-newsroom` gives the hostname `apes-newsroom.test`.
 
 ## 3. Run the setup script
 
-From the repo folder, in any PowerShell or Laragon's terminal:
+From the repo folder, in Laragon's Terminal (**Menu > Laragon > Terminal**).
+It has its own `PATH` with Laragon's PHP, Composer and Node.js, so it is
+the safest place to run this and the other commands on this page:
 
 ```powershell
 composer setup
@@ -71,7 +73,7 @@ composer setup
 
 1. checks Laragon's PHP (and the PHP that Apache runs), PHP extensions,
    Composer, Node.js and MySQL, and warns clearly if anything is the wrong
-   version;
+   version or if the `php` or `node` on your `PATH` is not Laragon's;
 2. checks the project folder and that `apes-newsroom.test` resolves;
 3. installs the `apes-newsroom` Laragon profile if it is missing;
 4. copies `.env.example` to `.env` if there is no `.env`, and generates
@@ -263,6 +265,7 @@ appears only when OIDC is configured.
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
 | Setup warns that Apache runs another PHP version | Laragon's PHP is set to something other than 8.4 | **Menu > PHP > Version > php-8.4.x**, or **Menu > Profile > apes-newsroom**, then **Menu > Apache > Reload** |
+| Setup warns that `php` or `node` on `PATH` is not Laragon's | Another PHP or Node.js install comes earlier on Windows `PATH`, so `composer`, `npm run dev` and `npm run build` use it instead of Laragon's PHP 8.4 and Node.js 22 | Run the commands from Laragon's Terminal (**Menu > Laragon > Terminal**). For other terminals and editors, choose **Menu > Tools > Path > Add Laragon to Path**; if `where.exe php` or `where.exe node` still lists another install first, remove that install from `PATH` |
 | `apes-newsroom.test` does not open, or opens Laragon's start page | Virtual host or hosts entry not created yet | Check the folder is `C:\laragon\www\apes-newsroom`, then **Menu > Apache > Reload** (Laragon asks for admin rights to edit the hosts file) |
 | Apache will not start: port 80 or 443 in use | Another web server or IIS is running | Stop the other server (or IIS: `iisreset /stop` in an elevated prompt), or change Laragon's port in **Menu > Preferences > Services & Ports** |
 | MySQL will not start: port 3306 in use | Another MySQL or MariaDB is running | Stop it, then **Start All** in Laragon |
