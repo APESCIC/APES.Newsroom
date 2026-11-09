@@ -19,6 +19,58 @@ required. Seeding creates password demo users for local role preview
 (see below). `DemoUsersSeeder` only runs when `APP_ENV` is `local` or
 `testing`; deploys warn if any of the four demo accounts below exists.
 
+## WampServer preview
+
+The everyday preview is WampServer's Apache serving `public/` at
+<http://apes-newsroom.test>, with Vite HMR from `npm run dev`. The app still
+uses SQLite, so WampServer's MySQL is not needed for Newsroom.
+
+| Part | What runs it | Address |
+| --- | --- | --- |
+| Web server | WampServer 3.4 Apache 2.4, serving `public/` | <http://apes-newsroom.test> |
+| PHP | WampServer's PHP 8.4 (tray > PHP > Version) | |
+| Front end | Vite (`npm run dev`) | written to `public/hot` |
+| Mail | `MAIL_MAILER=log`, written to `storage/logs/laravel.log` | |
+
+Keep any other local web stack stopped while WampServer runs: WampServer
+needs ports 80 and 3306.
+
+1. Point the name at your machine. From an elevated PowerShell:
+
+   ```powershell
+   Add-Content -Path C:\Windows\System32\drivers\etc\hosts -Value "127.0.0.1 apes-newsroom.test"
+   ```
+
+2. In the WampServer tray menu choose **PHP**, then **Version**, then the
+   newest **8.4**, and wait for the W icon to turn green.
+3. Add a virtual host at the end of
+   `C:\wamp64\bin\apache\apache2.4.x\conf\extra\httpd-vhosts.conf`, using your
+   own path to the repository:
+
+   ```apache
+   <VirtualHost *:80>
+     ServerName apes-newsroom.test
+     DocumentRoot "c:/users/<you>/documents/github/apes.newsroom/public"
+     <Directory "c:/users/<you>/documents/github/apes.newsroom/public/">
+       Options +FollowSymLinks
+       AllowOverride All
+       Require local
+     </Directory>
+   </VirtualHost>
+   ```
+
+   Check it with `C:\wamp64\bin\apache\apache2.4.x\bin\httpd.exe -t`, then
+   restart Apache from the tray menu (**Apache** > **Service administration**
+   > **Restart Service**).
+4. Set `APP_URL=http://apes-newsroom.test` in `.env`, then run
+   `php artisan config:clear`.
+5. Run `npm run dev` and open <http://apes-newsroom.test>. Page assets load
+   from the Vite address in `public/hot`, so edits reload in the browser.
+
+If the page shows WampServer's home page, Apache has not loaded the virtual
+host yet: restart it. Passkeys do not work on this address (see
+[Passkeys locally](#passkeys-locally)).
+
 ## Role preview (local only)
 
 When `APP_ENV=local`, a floating **Local role preview** bar appears on
@@ -42,8 +94,8 @@ local. Do not enable this in staging or production.
 
 ```bash
 php artisan migrate --seed
-composer dev
-# open http://localhost:8000 — use the floating switcher
+npm run dev
+# open http://apes-newsroom.test (or http://localhost:8000 with composer dev) — use the floating switcher
 ```
 
 ## Production-like setup
@@ -156,10 +208,13 @@ Expected health response when Redis is configured:
 
 ## Passkeys locally
 
-Browsers refuse WebAuthn on IP addresses, so passkeys only work at
-`http://localhost:8000` (the `.env.example` default). Opening the app at
-`http://127.0.0.1:8000` shows the passkey buttons but the browser rejects
-every ceremony.
+Browsers refuse WebAuthn on IP addresses and on plain-http names other than
+`localhost`, so passkeys only work at `http://localhost:8000` (the
+`.env.example` default). Opening the app at `http://127.0.0.1:8000` or at the
+WampServer preview `http://apes-newsroom.test` shows the passkey buttons but
+the browser rejects every ceremony. To test passkeys, set
+`APP_URL=http://localhost:8000`, run `php artisan config:clear` and
+`composer dev`, and use that address.
 
 The relying party ID and the allowed origin come from `APP_URL` at boot
 (after Cloudron supplies `CLOUDRON_APP_ORIGIN` in production). Override

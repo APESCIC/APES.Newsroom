@@ -4,8 +4,9 @@ Guidance for AI coding agents working in this repository. Setup, testing and
 operations are in the [README](README.md); deployment and rollback are in the
 [deployment runbook](docs/deployment.md).
 
-Local preview: `http://apes-newsroom.test` (Laragon), with `npm run dev` for
-Vite HMR.
+Local preview: `http://apes-newsroom.test` (WampServer's Apache, PHP 8.4),
+with `npm run dev` for Vite HMR. Setup is in
+[docs/local-dev.md](docs/local-dev.md#wampserver-preview).
 
 ## Milestone shipping
 

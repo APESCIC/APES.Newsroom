@@ -16,7 +16,7 @@ Ghost app stays stopped and recoverable at `ghost-legacy.apesnews.org.uk`.
 
 ## Latest release
 
-**v1.28.0**: see [Releases](https://github.com/APESCIC/APES.Newsroom/releases)
+**v1.30.2**: see [Releases](https://github.com/APESCIC/APES.Newsroom/releases)
 and the [Change Log Hub](https://www.apesnews.org.uk/change-log-hub).
 
 ## Roadmap
@@ -104,6 +104,8 @@ php artisan serve
 ```
 
 Use `npm run dev` instead of the production build while editing frontend code.
+The day-to-day preview is WampServer's Apache at `http://apes-newsroom.test`;
+see [WampServer preview](docs/local-dev.md#wampserver-preview).
 For Redis, OpenLDAP, and OIDC integration, follow
 [`docs/local-dev.md`](docs/local-dev.md). For publishing release notes to the
 public Change Log Hub, follow [`docs/change-log-hub.md`](docs/change-log-hub.md).
