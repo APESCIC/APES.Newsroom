@@ -1,0 +1,23 @@
+{
+  "version": "v1.30.2",
+  "slug": "release-v1-30-2",
+  "released_at": "2026-11-09",
+  "previous_version": "v1.30.0",
+  "theme": "WampServer local preview",
+  "change_types": ["changed"],
+  "topic_tags": ["internal-only"],
+  "summary": "The developer preview of APES Newsroom now runs on WampServer at http://apes-newsroom.test instead of Laragon. Nothing changes for readers, subscribers or staff on the live site.",
+  "detailed_changes": [
+    "The local development guide describes the WampServer preview: Apache 2.4 with PHP 8.4 serving the app at http://apes-newsroom.test, a virtual host and hosts entry, APP_URL, and Vite live reload from npm run dev (#751).",
+    "The agent guide and README point to the WampServer preview, and Laragon is no longer part of local development or testing (#751).",
+    "The passkeys notes explain that passkeys only work at http://localhost:8000 locally, because browsers refuse them on a plain-http .test address (#751)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: none (developer documentation only)",
+    "User groups affected: developers working on the Newsroom",
+    "Public impact: none",
+    "Internal impact: local preview and testing run on WampServer instead of Laragon"
+  ],
+  "pr": 753
+}
