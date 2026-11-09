@@ -1,0 +1,19 @@
+{
+	auto_https off
+}
+
+:80 {
+	encode gzip
+
+	# public/storage is a Windows junction locally, which Linux cannot follow.
+	handle_path /storage/* {
+		root * /app/storage/app/public
+		file_server
+	}
+
+	handle {
+		root * /app/public
+		php_fastcgi app:9000
+		file_server
+	}
+}

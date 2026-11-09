@@ -1,0 +1,73 @@
+# Local development: http://apesnews.test:8082 (see docs/local-dev.md "Docker preview").
+# Fake data only. Not used by CI or Cloudron deploys.
+#
+# Start or reuse the preview with scripts/local/docker-preview.ps1 (composer dev:docker);
+# it checks for existing containers before creating any.
+#
+#   docker compose up -d redis          # Redis only, for the production-like setup
+#   docker compose up -d openldap       # OpenLDAP fixture
+#   docker compose --profile services up -d   # preview plus Redis and OpenLDAP
+name: apes-newsroom
+
+services:
+  app:
+    build: docker/php
+    volumes:
+      - .:/app
+      # Linux Composer packages in a volume: PHP on a Windows bind mount is too slow for vendor/.
+      - vendor:/app/vendor
+      # Compiled views, file sessions and file cache, for the same reason.
+      - framework:/app/storage/framework
+    # No app settings here: container environment variables would override phpunit.xml
+    # and point the test suite at the local database. docker-preview sets them in .env.
+
+  web:
+    image: caddy:2-alpine
+    ports:
+      # 8082, so it does not clash with port 80, the APES Intranet on 8080 or MyAPES Account on 8081.
+      - "8082:80"
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - .:/app:ro
+    depends_on:
+      - app
+
+  node:
+    build: docker/node
+    working_dir: /app
+    command: sh -c "npm ci --no-audit --no-fund && npm run dev"
+    environment:
+      VITE_DEV_HOST: apesnews.test
+      # 5176, so it does not clash with a host Vite on 5173, the APES Intranet on 5174 or MyAPES Account on 5175.
+      VITE_PORT: "5176"
+    ports:
+      - "5176:5176"
+    volumes:
+      - .:/app
+      # Linux packages, kept apart from any Windows node_modules on the host.
+      - node_modules:/app/node_modules
+
+  redis:
+    image: redis:7-alpine
+    profiles: [services]
+    ports:
+      - "6379:6379"
+
+  openldap:
+    image: osixia/openldap:1.5.0
+    profiles: [services]
+    command:
+      - --copy-service
+    ports:
+      - "389:389"
+    environment:
+      LDAP_ORGANISATION: APES
+      LDAP_DOMAIN: apes.local
+      LDAP_ADMIN_PASSWORD: admin
+    volumes:
+      - ./docker/openldap/bootstrap.ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom/bootstrap.ldif
+
+volumes:
+  node_modules:
+  vendor:
+  framework:
