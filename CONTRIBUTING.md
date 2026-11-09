@@ -29,6 +29,25 @@ may skip the stages only with Bambie's written approval recorded on the issue.
 
 The full rules, including the definition of done, are in [AGENTS.md](AGENTS.md#milestone-shipping).
 
+## Milestone versioning
+
+Milestones are named and shipped by version, never by GitHub's milestone
+number: branch `milestone/v1-31-0-seo-social-previews`, PR title
+`[v1.31.0] JSON-LD structured data (#671)`, tag `v1.31.0`.
+
+- `composer milestone:next` shows the next milestone's version and branch
+  name; `composer milestone:pr-title -- <issue>` gives the PR title.
+- `composer milestone:check-title -- "<title>"` and
+  `composer milestone:check-branch -- "<branch>"` tell you what is wrong. The
+  `milestone-version-check` CI job runs them on every pull request.
+- To check your branch name before each push, run
+  `git config core.hooksPath .githooks` once.
+
+Cursor agents follow
+[`.cursor/rules/milestone-versioning.mdc`](.cursor/rules/milestone-versioning.mdc)
+and the skills in `.cursor/skills/`. See
+[AGENTS.md](AGENTS.md#milestone-versioning).
+
 ## Licence
 By contributing, you agree your contributions are licensed under the AGPL-3.0 licence of this project.
 
