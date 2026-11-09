@@ -104,6 +104,8 @@ php artisan serve
 ```
 
 Use `npm run dev` instead of the production build while editing frontend code.
+The day-to-day preview is WampServer's Apache at `http://apes-newsroom.test`;
+see [WampServer preview](docs/local-dev.md#wampserver-preview).
 For Redis, OpenLDAP, and OIDC integration, follow
 [`docs/local-dev.md`](docs/local-dev.md). For publishing release notes to the
 public Change Log Hub, follow [`docs/change-log-hub.md`](docs/change-log-hub.md).
