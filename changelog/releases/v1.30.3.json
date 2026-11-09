@@ -1,0 +1,25 @@
+{
+  "version": "v1.30.3",
+  "slug": "release-v1-30-3",
+  "released_at": "2026-11-09",
+  "previous_version": "v1.30.2",
+  "theme": "Laragon local development",
+  "change_types": ["changed"],
+  "topic_tags": ["internal-only"],
+  "summary": "Developers now run APES Newsroom on Laragon only, as its own project at http://apes-newsroom.test with its own database, a one-step setup script and realistic fake demo data. Nothing changes for readers, subscribers or staff on the live site.",
+  "detailed_changes": [
+    "Laragon on Windows is the only supported local setup: the Newsroom has its own Laragon project, profile (PHP 8.4, MySQL 8.4, Node.js 22), database apes_newsroom_local and Vite port 5181, so it runs beside other APESCIC projects without clashes (#755).",
+    "A setup script checks the Laragon versions, installs the project's Laragon profile, prepares .env and dependencies, creates the database, runs migrations and offers to load demo data, and is safe to run again (#755).",
+    "New local-only demo data fills every main page and list with clearly fake, repeatable en_GB records and test logins on example.test addresses, and refuses to run anywhere except a local install (#755).",
+    "Live reload now works in the local preview: the security policy allows the Vite dev server only in the local environment (#755).",
+    "The previous local setups and their files are removed, and the README, local development guide and agent guidance describe Laragon only (#755)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: none (developer tooling and documentation only)",
+    "User groups affected: developers working on the Newsroom",
+    "Public impact: none",
+    "Internal impact: local development, demo data and testing run on Laragon"
+  ],
+  "pr": 756
+}
