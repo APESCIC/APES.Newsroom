@@ -43,16 +43,19 @@
     },
     "scripts": {
         "setup": [
-            "composer install",
-            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
-            "@php artisan key:generate",
-            "@php artisan migrate --force",
-            "npm install",
-            "npm run build"
+            "Composer\\Config::disableProcessTimeout",
+            "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/laragon-setup.ps1"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
             "@php artisan dev"
+        ],
+        "demo:seed": [
+            "@php artisan newsroom:demo-data"
+        ],
+        "demo:reset": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php artisan newsroom:demo-data --reset"
         ],
         "test": [
             "@php artisan config:clear --ansi",

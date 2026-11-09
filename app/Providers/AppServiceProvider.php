@@ -25,6 +25,7 @@ use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Validation\UncompromisedVerifier;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\DevCommands;
 use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -83,6 +84,10 @@ class AppServiceProvider extends ServiceProvider
 
         $this->configureTemplatedAuthMails();
         $this->configurePasskeyRelyingParty();
+
+        // Laragon's Apache serves the site, so `composer dev` runs only the
+        // queue listener and Vite (docs/local-dev.md).
+        DevCommands::except('server');
 
         Event::listen(Login::class, function (Login $event) {
             if ($event->guard === 'web' && $event->user instanceof User) {
