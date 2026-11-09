@@ -313,7 +313,7 @@ The login page shows a staff sign-in button once `CLOUDRON_OIDC_DISCOVERY_URL`
 is set.
 
 For local development, create a **second** client with redirect URI
-`http://localhost:8000/auth/cloudron/callback` — see
+`http://apes-newsroom.test/auth/cloudron/callback` — see
 [`docs/local-dev.md`](local-dev.md).
 
 ### Staff two-factor authentication (Cloudron)

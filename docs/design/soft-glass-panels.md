@@ -125,12 +125,15 @@ Set `CAPTURE_DIR` (and optionally `CAPTURE_ONLY=public` or `panels`) and run
 `npx playwright test capture` to save desktop and phone screenshots for
 before-and-after evidence on a pull request.
 
-Run locally against a seeded app on port 8012:
+Run locally the way CI does: a separate SQLite database (so the Laragon
+database and its demo data are left alone) served on port 8012:
 
-```bash
-php artisan migrate:fresh --seeder='Database\Seeders\VisualRegressionSeeder'
-php artisan serve --port=8012
-npm run test:e2e
+```powershell
+$env:DB_CONNECTION = 'sqlite'; $env:DB_DATABASE = "$PWD\database\e2e.sqlite"; $env:APP_URL = 'http://127.0.0.1:8012'
+New-Item -ItemType File -Force database\e2e.sqlite | Out-Null
+php artisan migrate:fresh --force --seeder='Database\Seeders\VisualRegressionSeeder'
+php artisan serve --host=127.0.0.1 --port=8012   # in a second terminal with the same variables
+$env:E2E_BASE_URL = 'http://127.0.0.1:8012'; npm run test:e2e
 ```
 
 Screenshots only match on Linux; on other systems run the axe and layout

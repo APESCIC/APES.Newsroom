@@ -1,131 +1,164 @@
-# Local development
+# Local development with Laragon
 
-Two modes: **default** (zero extra services) and **production-like**
-(Redis, OIDC, LDAP). Everyday feature work and CI use the default.
-
-## Default setup
-
-```
-composer install
-cp .env.example .env
-php artisan key:generate
-php artisan migrate --seed
-npm install
-composer dev    # or: php artisan serve + npm run dev
-```
-
-Uses SQLite with database-backed sessions, cache, and queue. No Docker
-required. Seeding creates password demo users for local role preview
-(see below). `DemoUsersSeeder` only runs when `APP_ENV` is `local` or
-`testing`; deploys warn if any of the four demo accounts below exists.
-
-## WampServer preview
-
-The everyday preview is WampServer's Apache serving `public/` at
-<http://apes-newsroom.test>, with Vite HMR from `npm run dev`. The app still
-uses SQLite, so WampServer's MySQL is not needed for Newsroom.
+**Laragon on Windows is the only supported local setup for APES Newsroom.**
+The repo runs as its own Laragon project at <http://apes-newsroom.test>, with
+its own MySQL database (`apes_newsroom_local`) and its own Vite port (5181),
+so it can run beside other APESCIC projects. The project's Laragon settings
+are in [docs/laragon/profile.md](laragon/profile.md).
 
 | Part | What runs it | Address |
 | --- | --- | --- |
-| Web server | WampServer 3.4 Apache 2.4, serving `public/` | <http://apes-newsroom.test> |
-| PHP | WampServer's PHP 8.4 (tray > PHP > Version) | |
-| Front end | Vite (`npm run dev`) | written to `public/hot` |
-| Mail | `MAIL_MAILER=log`, written to `storage/logs/laravel.log` | |
+| Web server | Laragon's Apache 2.4, serving `public/` | <http://apes-newsroom.test> |
+| PHP | Laragon's PHP 8.4 (thread-safe build) | |
+| Database | Laragon's MySQL 8.4, database `apes_newsroom_local` | `127.0.0.1:3306` |
+| Live reload | Vite (`npm run dev`) | `http://127.0.0.1:5181`, written to `public/hot` |
+| Mail | `MAIL_MAILER=log`, written to `storage/logs/laravel.log` (or Laragon's Mailpit, see below) | |
 
-Keep any other local web stack stopped while WampServer runs: WampServer
-needs ports 80 and 3306.
+Tests use SQLite in memory (`phpunit.xml`), so `composer test` needs no
+database.
 
-1. Point the name at your machine. From an elevated PowerShell:
+## Prerequisites
 
-   ```powershell
-   Add-Content -Path C:\Windows\System32\drivers\etc\hosts -Value "127.0.0.1 apes-newsroom.test"
-   ```
+- Windows 10 or 11 with [Laragon](https://laragon.org/download/) (Full),
+  installed at the default `C:\laragon`, with Auto Virtual Hosts on (the
+  default) and the `{name}.test` hostname pattern.
+- Laragon's PHP 8.4 thread-safe build. If **Menu > PHP > Version** has no
+  8.4, add it from the same menu.
+- Laragon's Node.js 22 (`C:\laragon\bin\nodejs\node-v22`), the same major
+  version as CI.
+- Git.
 
-2. In the WampServer tray menu choose **PHP**, then **Version**, then the
-   newest **8.4**, and wait for the W icon to turn green.
-3. Add a virtual host at the end of
-   `C:\wamp64\bin\apache\apache2.4.x\conf\extra\httpd-vhosts.conf`, using your
-   own path to the repository:
+## 1. Put the repo in its own Laragon project folder
 
-   ```apache
-   <VirtualHost *:80>
-     ServerName apes-newsroom.test
-     DocumentRoot "c:/users/<you>/documents/github/apes.newsroom/public"
-     <Directory "c:/users/<you>/documents/github/apes.newsroom/public/">
-       Options +FollowSymLinks
-       AllowOverride All
-       Require local
-     </Directory>
-   </VirtualHost>
-   ```
+Clone it straight into Laragon's document root:
 
-   Check it with `C:\wamp64\bin\apache\apache2.4.x\bin\httpd.exe -t`, then
-   restart Apache from the tray menu (**Apache** > **Service administration**
-   > **Restart Service**).
-4. Set `APP_URL=http://apes-newsroom.test` in `.env`, then run
-   `php artisan config:clear`.
-5. Run `npm run dev` and open <http://apes-newsroom.test>. Page assets load
-   from the Vite address in `public/hot`, so edits reload in the browser.
+```powershell
+git clone https://github.com/APESCIC/APES.Newsroom.git C:\laragon\www\apes-newsroom
+```
 
-If the page shows WampServer's home page, Apache has not loaded the virtual
-host yet: restart it. Passkeys do not work on this address (see
-[Passkeys locally](#passkeys-locally)).
+If you already have a clone elsewhere (for example from GitHub Desktop),
+link it in instead of cloning twice:
 
-## Role preview (local only)
+```powershell
+cmd /c mklink /J C:\laragon\www\apes-newsroom C:\Users\<you>\Documents\GitHub\APES.Newsroom
+```
 
-When `APP_ENV=local`, a floating **Local role preview** bar appears on
-every page. Use it (or the one-click buttons on `/login`) to switch
-sessions without Cloudron OIDC:
+The folder name `apes-newsroom` gives the hostname `apes-newsroom.test`.
+
+## 2. Apply the Laragon profile and start Laragon
+
+1. Open Laragon and click **Start All** (Apache and MySQL).
+2. Choose **Menu > Apache > Reload**. Auto Virtual Hosts creates the
+   `apes-newsroom.test` site with `public/` as its document root and adds
+   the hosts entry.
+3. Check **Menu > PHP > Version** is 8.4. The setup script also installs a
+   Laragon profile called `apes-newsroom` that pins PHP 8.4, MySQL 8.4 and
+   Node.js 22. You can switch to it with **Menu > Profile > apes-newsroom**.
+   A profile is global in Laragon, not per project; see
+   [profile.md](laragon/profile.md#the-laragon-profile).
+
+## 3. Run the setup script
+
+From the repo folder, in any PowerShell or Laragon's terminal:
+
+```powershell
+composer setup
+# or: powershell -NoProfile -ExecutionPolicy Bypass -File scripts\laragon-setup.ps1
+```
+
+[`scripts/laragon-setup.ps1`](../scripts/laragon-setup.ps1) reads
+[`docs/laragon/profile.json`](laragon/profile.json) and:
+
+1. checks Laragon's PHP (and the PHP that Apache runs), PHP extensions,
+   Composer, Node.js and MySQL, and warns clearly if anything is the wrong
+   version;
+2. checks the project folder and that `apes-newsroom.test` resolves;
+3. installs the `apes-newsroom` Laragon profile if it is missing;
+4. copies `.env.example` to `.env` if there is no `.env`, and generates
+   `APP_KEY` if it is empty;
+5. runs `composer install` and `npm ci` when they are needed;
+6. creates the `apes_newsroom_local` database if it does not exist, links
+   `public/storage` and runs the migrations;
+7. offers to load the demo data.
+
+It is safe to run again at any time, and it only touches this repo, the
+`apes_newsroom_local` database and `C:\laragon\usr\profile\apes-newsroom.ini`.
+
+| Switch | Does |
+| --- | --- |
+| `-Demo` / `-NoDemo` | Load or skip the demo data without asking |
+| `-UpdateEnv` | If an existing `.env` has different `APP_URL` or `DB_*` values, back it up to `.env.backup-<time>` and set the profile values |
+| `-LaragonRoot D:\laragon` | Laragon is not in `C:\laragon` |
+
+Then open <http://apes-newsroom.test>.
+
+## 4. Demo data
+
+```powershell
+composer demo:seed    # load the demo data (safe to run again, adds no duplicates)
+composer demo:reset   # wipe apes_newsroom_local, migrate and load the demo data again
+```
+
+The data is fake, the same on every run (fixed seed), and only loads when
+`APP_ENV=local`. A reset also refuses unless the database is MySQL on
+`127.0.0.1` and its name ends in `_local`. What it contains and the test
+logins are in [docs/laragon/demo-data.md](laragon/demo-data.md). Test new
+work against it.
+
+## 5. Live preview
+
+```powershell
+npm run dev     # Vite with hot reload on http://127.0.0.1:5181
+composer dev    # Vite plus the queue worker (php artisan dev)
+```
+
+Apache serves the site, so there is no `php artisan serve`. While Vite runs,
+`public/hot` points the pages at it: saving a React component or CSS file
+updates the browser without a reload, and saving a Blade template, route or
+PHP file reloads the page. When Vite stops, the site uses the last
+`npm run build` output from `public/build`.
+
+The app's Content Security Policy allows the Vite address only when
+`APP_ENV=local` and `public/hot` exists, so production is unaffected.
+
+## Local role preview
+
+When `APP_ENV=local`, a floating **Local role preview** bar appears on every
+page. Use it, or the one-click buttons on `/login`, to switch between the
+demo accounts without Cloudron OIDC:
 
 | Control | User | Default landing |
 |---------|------|-----------------|
-| Guest | logout | `/` |
-| Public | `public@apes.local` | `/` |
-| Staff | `staff@apes.local` | `/staff` |
-| Admin | `admin@apes.local` | `/admin` |
+| Guest | signed out | `/` |
+| Public | `member@example.test` | `/` |
+| Staff | `staff@example.test` | `/staff` |
+| Admin | `admin@example.test` | `/admin` |
 
-Demo password for all seeded users: `password`. Only the public demo user
-can sign in with it: staff-level accounts are refused password, magic-link
-and password-reset sign-in (issue #276), so use the role preview for them.
+Staff-level accounts are refused password, magic-link and password-reset
+sign-in in every environment (issue #276), so staff and admin always use the
+role preview locally. The endpoints (`POST /_dev/login/{role}`,
+`POST /_dev/logout`) only exist when `APP_ENV=local`, and the controller also
+returns 404 outside local.
 
-Endpoints (`POST /_dev/login/{role}`, `POST /_dev/logout`) are registered
-only when `APP_ENV=local`, and the controller also returns 404 outside
-local. Do not enable this in staging or production.
+## Running several APESCIC projects side by side
 
-```bash
-php artisan migrate --seed
-npm run dev
-# open http://apes-newsroom.test (or http://localhost:8000 with composer dev) — use the floating switcher
-```
+Each APESCIC repo is its own Laragon project: its own folder in
+`C:\laragon\www`, its own `<folder>.test` hostname, its own `_local`
+database and its own Vite port. Laragon's Apache (ports 80 and 443) and MySQL
+(3306) are shared. Laragon runs one PHP version for all sites at a time, and
+every APESCIC Laravel repo accepts PHP 8.4, so keep Laragon on 8.4.
 
-## Production-like setup
+APES Newsroom's Vite port is 5181 with `strictPort`, so it fails loudly
+instead of moving to another project's port. Ports are listed in
+[profile.md](laragon/profile.md#ports-used-by-apescic-projects).
 
-Use this to verify Redis drivers, staff OIDC login, and LDAP role mapping
-before deploying to beta.
+## Production-like testing (optional)
 
-### 1. Start optional services
+Use this to check Redis drivers, staff OIDC sign-in and LDAP role mapping
+before a deploy.
 
-```bash
-docker compose up -d redis          # Redis only (most common)
-docker compose up -d                # Redis + OpenLDAP
-docker compose down
-```
-
-OpenLDAP is seeded from `docker/openldap/bootstrap.ldif` with test users
-and groups matching `config/rbac.php`. The tracked Compose service uses the
-image's `--copy-service` option so its startup scripts can safely process the
-bind-mounted LDIF on Windows and Docker Desktop.
-
-The fixture creates users before its `groupOfUniqueNames` groups. This order
-and the groups' `uniqueMember` attributes match the image's enabled `memberOf`
-overlay, which ignores membership references to users that do not yet exist.
-
-### 2. Configure `.env`
-
-Copy the commented block at the bottom of `.env.example` into your local
-`.env` and uncomment the values you need.
-
-**Redis:**
+**Redis.** Start Laragon's Redis (**Menu > Redis**). Laragon's PHP has no
+`redis` extension, so use predis:
 
 ```env
 CACHE_STORE=redis
@@ -136,94 +169,72 @@ REDIS_HOST=127.0.0.1
 REDIS_PORT=6379
 ```
 
-Use `predis` on Windows if the PHP `redis` extension is not installed.
-Cloudron uses `phpredis`.
+Cloudron uses `phpredis`. With `QUEUE_CONNECTION=redis`, run `composer dev`
+(or `php artisan queue:work`) so queued jobs are processed.
 
-**OIDC (Cloudron client for localhost):**
-
-Create a **second** OpenID client in the Cloudron dashboard:
-
-- Redirect URI: `http://localhost:8000/auth/cloudron/callback`
+**Mail.** To read outgoing mail in a browser instead of the log, use
+Laragon's Mailpit (inbox at <http://localhost:8025>):
 
 ```env
-APP_URL=http://localhost:8000
+MAIL_MAILER=smtp
+MAIL_HOST=127.0.0.1
+MAIL_PORT=1025
+```
+
+**OIDC (Cloudron client for local use).** Create a **second** OpenID client
+in the Cloudron dashboard with the redirect URI
+`http://apes-newsroom.test/auth/cloudron/callback`, then set:
+
+```env
 CLOUDRON_OIDC_DISCOVERY_URL=https://<cloudron-domain>/.well-known/openid-configuration
 CLOUDRON_OIDC_ISSUER=https://<cloudron-domain>
-CLOUDRON_OIDC_CLIENT_ID=<localhost-client-id>
-CLOUDRON_OIDC_CLIENT_SECRET=<localhost-client-secret>
+CLOUDRON_OIDC_CLIENT_ID=<local-client-id>
+CLOUDRON_OIDC_CLIENT_SECRET=<local-client-secret>
 CLOUDRON_OIDC_PROVIDER_NAME=Cloudron
 ```
 
-Sign-in uses PKCE (S256) and a nonce, and the callback verifies the ID
-token against the discovery document's `jwks_uri`. `CLOUDRON_OIDC_ISSUER`
-must match the token's `iss` claim (a trailing slash is ignored), and the
-client ID must be in its `aud` claim.
+Sign-in uses PKCE (S256) and a nonce, and the callback verifies the ID token
+against the discovery document's `jwks_uri`. `CLOUDRON_OIDC_ISSUER` must match
+the token's `iss` claim (a trailing slash is ignored), and the client ID must
+be in its `aud` claim.
 
-**LDAP — option A: Cloudron directory**
+**LDAP.** Copy the `CLOUDRON_LDAP_*` values for a test directory you can
+reach into `.env`. Never use production credentials locally. Group names are
+mapped to roles in `config/rbac.php`.
 
-Copy `CLOUDRON_LDAP_*` values from Cloudron `/app/data/credentials.txt`
-into `.env`. Requires network access to the Cloudron LDAP host.
+Then check:
 
-**LDAP — option B: Docker OpenLDAP**
-
-```env
-CLOUDRON_LDAP_URL=ldap://127.0.0.1:389
-CLOUDRON_LDAP_USERS_BASE_DN=ou=users,dc=apes,dc=local
-CLOUDRON_LDAP_GROUPS_BASE_DN=ou=groups,dc=apes,dc=local
-CLOUDRON_LDAP_BIND_DN=cn=admin,dc=apes,dc=local
-CLOUDRON_LDAP_BIND_PASSWORD=admin
-```
-
-Test users (password = username): `staffer@apes.local` and `admin@apes.local`.
-
-### 3. Run the app
-
-```bash
-# Terminal 1
-composer dev
-
-# Terminal 2 (required when QUEUE_CONNECTION=redis)
-php artisan queue:work
-```
-
-### 4. Verify
-
-```bash
+```powershell
 php artisan deploy:preflight
-curl http://localhost:8000/health
+curl.exe http://apes-newsroom.test/health
 ```
 
-Expected health response when Redis is configured:
-
-```json
-{"status":"ok","checks":{"database":true,"cache":true}}
-```
-
-**Staff OIDC flow:**
-
-1. Visit `http://localhost:8000/login`
-2. Click the staff sign-in button
-3. Authenticate at Cloudron OIDC
-4. Callback reconciles LDAP groups and stores the session in Redis
+With Redis configured, `/health` returns
+`{"status":"ok","checks":{"database":true,"cache":true}}`.
 
 ## Passkeys locally
 
-Browsers refuse WebAuthn on IP addresses and on plain-http names other than
-`localhost`, so passkeys only work at `http://localhost:8000` (the
-`.env.example` default). Opening the app at `http://127.0.0.1:8000` or at the
-WampServer preview `http://apes-newsroom.test` shows the passkey buttons but
-the browser rejects every ceremony. To test passkeys, set
-`APP_URL=http://localhost:8000`, run `php artisan config:clear` and
-`composer dev`, and use that address.
+Browsers only allow WebAuthn on `https://` addresses and on `localhost`, so
+passkeys do not work at `http://apes-newsroom.test`. To test them:
 
-The relying party ID and the allowed origin come from `APP_URL` at boot
-(after Cloudron supplies `CLOUDRON_APP_ORIGIN` in production). Override
+1. In Laragon choose **Menu > Apache > SSL > Enabled**, then
+   **Menu > Apache > SSL > Add laragon.crt to Trust Store**.
+2. Set `APP_URL=https://apes-newsroom.test` and run
+   `php artisan config:clear`.
+3. Open <https://apes-newsroom.test>.
+
+The relying party ID and allowed origin come from `APP_URL` at boot. Override
 them only for unusual setups:
 
 ```env
-# PASSKEYS_RP_ID=localhost
-# PASSKEYS_ALLOWED_ORIGINS=http://localhost:8000
+# PASSKEYS_RP_ID=apes-newsroom.test
+# PASSKEYS_ALLOWED_ORIGINS=https://apes-newsroom.test
 ```
+
+With an `https://` `APP_URL` the app sends HSTS, so your browser then keeps
+using HTTPS for `apes-newsroom.test`. To go back to plain HTTP, set `APP_URL`
+back and clear the name in `chrome://net-internals/#hsts` (Edge:
+`edge://net-internals/#hsts`).
 
 Chrome DevTools > More tools > WebAuthn can add a virtual authenticator if
 you have no platform passkey. Automated tests use
@@ -232,58 +243,36 @@ throwaway P-256 key.
 
 ## Automated tests
 
-PHPUnit covers auth logic without live services:
-
-```bash
+```powershell
 composer test
+composer lint
+npm run typecheck
+npm run lint
+npm run test:frontend
+npm run build
 ```
 
-`StaffOidcLoginTest` mocks LDAP lookup. `CloudronOidcProviderTest` signs
-ID tokens with a throwaway RSA key and fakes the discovery, JWKS, token and
-userinfo endpoints. `LdapGroupLookupTest` uses
-LdapRecord's directory emulator. `LoginPageTest` verifies the staff
-button appears only when OIDC is configured.
+Auth tests need no live services. `StaffOidcLoginTest` mocks the LDAP lookup,
+`CloudronOidcProviderTest` signs ID tokens with a throwaway RSA key and fakes
+the discovery, JWKS, token and userinfo endpoints, `LdapGroupLookupTest` uses
+LdapRecord's directory emulator, and `LoginPageTest` checks the staff button
+appears only when OIDC is configured.
 
-### Live OpenLDAP smoke test
-
-The live integration test is intentionally outside the default PHPUnit suites,
-so everyday development and CI do not require Docker. To rebuild only the
-disposable OpenLDAP fixture from the tracked Compose configuration:
-
-```powershell
-docker compose -f docker-compose.yml config
-docker compose -f docker-compose.yml stop openldap
-docker compose -f docker-compose.yml rm -f openldap
-docker compose -f docker-compose.yml up -d openldap
-```
-
-After OpenLDAP is ready, run the opt-in application-level test:
-
-```powershell
-$env:RUN_LIVE_LDAP_TESTS = '1'
-php artisan test tests/Integration/LocalOpenLdapTest.php
-Remove-Item Env:\RUN_LIVE_LDAP_TESTS
-```
-
-The test queries `LdapGroupLookup` for both fixture users and requires the
-staff and admin group DNs. To inspect only the staff result:
-
-```powershell
-$code = 'echo json_encode(app(\App\Services\Auth\LdapGroupLookup::class)->groupsForEmail("staffer@apes.local"));'
-php artisan tinker --execute=$code
-```
-
-The expected result contains
-`cn=newsroom-staff,ou=groups,dc=apes,dc=local`. Never use production LDAP
-credentials for this fixture test.
-
-## Troubleshooting
+## Common fixes
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| `cache: false` on `/health` | Redis not running or wrong host | `docker compose up -d redis`; check `REDIS_HOST` |
-| OIDC redirect mismatch | Wrong redirect URI on client | Register exact callback URL in Cloudron dashboard |
-| Staff login denied (no group) | `memberof` values don't match `config/rbac.php` | Run ldapsearch (see `docs/deployment.md`) and update keys |
-| OpenLDAP exits while loading the fixture on Windows | Container is not using the tracked copy-service behavior | Recreate only OpenLDAP with the commands in the live smoke-test section |
-| LDAP connection timeout | Cloudron LDAP not reachable locally | Use Docker OpenLDAP (option B) |
-| Queue jobs not processing | Worker not running | Start `php artisan queue:work` in a second terminal |
+| Setup warns that Apache runs another PHP version | Laragon's PHP is set to something other than 8.4 | **Menu > PHP > Version > php-8.4.x**, or **Menu > Profile > apes-newsroom**, then **Menu > Apache > Reload** |
+| `apes-newsroom.test` does not open, or opens Laragon's start page | Virtual host or hosts entry not created yet | Check the folder is `C:\laragon\www\apes-newsroom`, then **Menu > Apache > Reload** (Laragon asks for admin rights to edit the hosts file) |
+| Apache will not start: port 80 or 443 in use | Another web server or IIS is running | Stop the other server (or IIS: `iisreset /stop` in an elevated prompt), or change Laragon's port in **Menu > Preferences > Services & Ports** |
+| MySQL will not start: port 3306 in use | Another MySQL or MariaDB is running | Stop it, then **Start All** in Laragon |
+| `npm run dev` says port 5181 is in use | Another Vite for this repo is still running | Stop the old one (close its terminal); never change the port to dodge it, as other projects rely on theirs |
+| Pages load without styles or scripts | `public/hot` points at a Vite that has stopped | Start `npm run dev`, or delete `public/hot` to use the built assets |
+| `SQLSTATE[HY000] [1049] Unknown database` | The database was not created | Run `composer setup` (it creates `apes_newsroom_local`) |
+| `SQLSTATE[HY000] [2002]` connection refused | MySQL is not running | **Start All** in Laragon |
+| `cache: false` on `/health` | `CACHE_STORE=redis` but Laragon's Redis is stopped | **Menu > Redis > Start**, or set `CACHE_STORE=database` |
+| Demo images missing | `public/storage` link missing or GD off | `php artisan storage:link`; **Menu > PHP > Extensions > gd** |
+| "Permission denied" writing `storage/` or `bootstrap/cache` | The repo is in a protected folder or a file is read-only | Keep the repo under `C:\laragon\www` or your user folder, and clear read-only: `attrib -r /s storage\* bootstrap\cache\*` |
+| OIDC redirect mismatch | Wrong redirect URI on the client | Register `http://apes-newsroom.test/auth/cloudron/callback` exactly in Cloudron |
+| Staff sign-in denied (no group) | `memberof` values do not match `config/rbac.php` | Run ldapsearch (see `docs/deployment.md`) and update the keys |
+| Queue jobs not processing | Worker not running | Run `composer dev`, or `php artisan queue:work` |
