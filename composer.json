@@ -54,6 +54,10 @@
             "Composer\\Config::disableProcessTimeout",
             "@php artisan dev"
         ],
+        "dev:docker": [
+            "Composer\\Config::disableProcessTimeout",
+            "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/local/docker-preview.ps1"
+        ],
         "test": [
             "@php artisan config:clear --ansi",
             "@php artisan test"
