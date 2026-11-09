@@ -1,0 +1,40 @@
+{
+    "project": "apes-newsroom",
+    "laragonRoot": "C:\\laragon",
+    "folder": "C:\\laragon\\www\\apes-newsroom",
+    "hostname": "apes-newsroom.test",
+    "appUrl": "http://apes-newsroom.test",
+    "documentRoot": "public",
+    "webServer": "apache",
+    "laragonProfile": "apes-newsroom",
+    "php": {
+        "version": "8.4",
+        "threadSafe": true,
+        "extensions": ["bcmath", "curl", "exif", "fileinfo", "gd", "intl", "mbstring", "openssl", "pdo_mysql", "sodium", "zip"]
+    },
+    "database": {
+        "engine": "mysql",
+        "version": "8.4",
+        "host": "127.0.0.1",
+        "port": 3306,
+        "username": "root",
+        "password": "",
+        "name": "apes_newsroom_local"
+    },
+    "node": {
+        "version": "22"
+    },
+    "vite": {
+        "host": "127.0.0.1",
+        "port": 5181
+    },
+    "redis": {
+        "host": "127.0.0.1",
+        "port": 6379,
+        "client": "predis"
+    },
+    "mailpit": {
+        "smtpPort": 1025,
+        "uiPort": 8025
+    }
+}
