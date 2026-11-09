@@ -57,6 +57,17 @@ class LaragonProfileTest extends TestCase
         }
     }
 
+    public function test_profile_runs_php_through_fastcgi(): void
+    {
+        $profile = $this->profile();
+        $doc = (string) file_get_contents(base_path('docs/laragon/profile.md'));
+
+        $this->assertFalse($profile['php']['threadSafe']);
+        $this->assertSame('fcgid', $profile['php']['apacheHandler']);
+        $this->assertStringContainsString('NTS build', $doc);
+        $this->assertStringContainsString('FastCGI (mod_fcgid)', $doc);
+    }
+
     public function test_composer_requires_the_profile_php_version(): void
     {
         $composer = json_decode((string) file_get_contents(base_path('composer.json')), true, flags: JSON_THROW_ON_ERROR);

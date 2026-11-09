@@ -9,7 +9,7 @@ are in [docs/laragon/profile.md](laragon/profile.md).
 | Part | What runs it | Address |
 | --- | --- | --- |
 | Web server | Laragon's Apache 2.4, serving `public/` | <http://apes-newsroom.test> |
-| PHP | Laragon's PHP 8.4 (thread-safe build) | |
+| PHP | Laragon's PHP 8.4 (NTS build), run through FastCGI with separate PHP processes per site | |
 | Database | Laragon's MySQL 8.4, database `apes_newsroom_local` | `127.0.0.1:3306` |
 | Live reload | Vite (`npm run dev`) | `http://127.0.0.1:5181`, written to `public/hot` |
 | Mail | `MAIL_MAILER=log`, written to `storage/logs/laravel.log` (or Laragon's Mailpit, see below) | |
@@ -22,8 +22,12 @@ database.
 - Windows 10 or 11 with [Laragon](https://laragon.org/download/) (Full),
   installed at the default `C:\laragon`, with Auto Virtual Hosts on (the
   default) and the `{name}.test` hostname pattern.
-- Laragon's PHP 8.4 thread-safe build. If **Menu > PHP > Version** has no
-  8.4, add it from the same menu.
+- Laragon's PHP 8.4 NTS (non-thread-safe) build, selected in
+  **Menu > PHP > Version**. If the menu has no 8.4 NTS build, add one with
+  **Menu > PHP > Version > Get more**. With an NTS build Laragon runs PHP
+  through FastCGI, so each site gets its own PHP processes and cannot read
+  another project's `.env`
+  ([why](laragon/profile.md#why-the-nts-build-and-fastcgi)).
 - Laragon's Node.js 22 (`C:\laragon\bin\nodejs\node-v22`), the same major
   version as CI.
 - Git.
@@ -51,9 +55,9 @@ The folder name `apes-newsroom` gives the hostname `apes-newsroom.test`.
 2. Choose **Menu > Apache > Reload**. Auto Virtual Hosts creates the
    `apes-newsroom.test` site with `public/` as its document root and adds
    the hosts entry.
-3. Check **Menu > PHP > Version** is 8.4. The setup script also installs a
-   Laragon profile called `apes-newsroom` that pins PHP 8.4, MySQL 8.4 and
-   Node.js 22. You can switch to it with **Menu > Profile > apes-newsroom**.
+3. Check **Menu > PHP > Version** is the 8.4 NTS build. The setup script also
+   installs a Laragon profile called `apes-newsroom` that pins PHP 8.4 NTS,
+   MySQL 8.4 and Node.js 22. You can switch to it with **Menu > Profile > apes-newsroom**.
    A profile is global in Laragon, not per project; see
    [profile.md](laragon/profile.md#the-laragon-profile).
 
@@ -148,7 +152,9 @@ Each APESCIC repo is its own Laragon project: its own folder in
 `C:\laragon\www`, its own `<folder>.test` hostname, its own `_local`
 database and its own Vite port. Laragon's Apache (ports 80 and 443) and MySQL
 (3306) are shared. Laragon runs one PHP version for all sites at a time, and
-every APESCIC Laravel repo accepts PHP 8.4, so keep Laragon on 8.4.
+every APESCIC Laravel repo accepts PHP 8.4, so keep Laragon on the 8.4 NTS
+build. Through FastCGI each site still gets its own PHP processes, so one
+project's `.env` values never reach another.
 
 APES Newsroom's Vite port is 5181 with `strictPort`, so it fails loudly
 instead of moving to another project's port. Ports are listed in
@@ -264,7 +270,8 @@ appears only when OIDC is configured.
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| Setup warns that Apache runs another PHP version | Laragon's PHP is set to something other than 8.4 | **Menu > PHP > Version > php-8.4.x**, or **Menu > Profile > apes-newsroom**, then **Menu > Apache > Reload** |
+| Setup warns that Apache runs another PHP version | Laragon's PHP is set to something other than 8.4 | **Menu > PHP > Version > php-8.4.x-nts**, or **Menu > Profile > apes-newsroom**, then **Menu > Apache > Reload** |
+| A page shows another project's data, or an error names another project's database (for example `myapes_account_local`); setup warns that Apache runs PHP through mod_php | A thread-safe PHP is selected, so Apache shares one PHP across every site and `.env` values leak between projects | **Menu > PHP > Version > php-8.4.x-nts** (Laragon switches Apache to FastCGI), then reload the page |
 | Setup warns that `php` or `node` on `PATH` is not Laragon's | Another PHP or Node.js install comes earlier on Windows `PATH`, so `composer`, `npm run dev` and `npm run build` use it instead of Laragon's PHP 8.4 and Node.js 22 | Run the commands from Laragon's Terminal (**Menu > Laragon > Terminal**). For other terminals and editors, choose **Menu > Tools > Path > Add Laragon to Path**; if `where.exe php` or `where.exe node` still lists another install first, remove that install from `PATH` |
 | `apes-newsroom.test` does not open, or opens Laragon's start page | Virtual host or hosts entry not created yet | Check the folder is `C:\laragon\www\apes-newsroom`, then **Menu > Apache > Reload** (Laragon asks for admin rights to edit the hosts file) |
 | Apache will not start: port 80 or 443 in use | Another web server or IIS is running | Stop the other server (or IIS: `iisreset /stop` in an elevated prompt), or change Laragon's port in **Menu > Preferences > Services & Ports** |

@@ -119,23 +119,34 @@ if (-not (Test-Path (Join-Path $LaragonRoot 'laragon.exe'))) {
 Write-Ok "Laragon at $LaragonRoot"
 
 $phpWanted = [string]$Config.php.version
-$phpDir = Get-VersionFolder (Join-Path $LaragonRoot 'bin\php') ("^php-" + [regex]::Escape($phpWanted) + "\.\d+-Win32")
+$phpBuild = if ($Config.php.threadSafe) { 'thread-safe' } else { 'NTS' }
+$phpPattern = "^php-" + [regex]::Escape($phpWanted) + "\.\d+(-\d+)?-" + $(if ($Config.php.threadSafe) { '' } else { 'nts-' }) + "Win32"
+$phpDir = Get-VersionFolder (Join-Path $LaragonRoot 'bin\php') $phpPattern
 if (-not $phpDir) {
-    Stop-Setup "Laragon has no thread-safe PHP $phpWanted in $LaragonRoot\bin\php. Add it with Menu > PHP > Version > Get more (choose a Thread Safe build)."
+    Stop-Setup "Laragon has no $phpBuild PHP $phpWanted in $LaragonRoot\bin\php. Add it with Menu > PHP > Version > Get more (choose the $phpBuild x64 build)."
 }
 $Php = Join-Path $phpDir.FullName 'php.exe'
 Write-Ok "PHP CLI $($phpDir.Name)"
 
-$modPhp = Join-Path $LaragonRoot 'etc\apache2\mod_php.conf'
-if (Test-Path $modPhp) {
-    $loaded = Select-String -Path $modPhp -Pattern 'php-(\d+\.\d+)\.\d+' | Select-Object -First 1
-    if ($loaded -and $loaded.Matches[0].Groups[1].Value -eq $phpWanted) {
-        Write-Ok "Apache runs PHP $phpWanted"
-    } elseif ($loaded) {
-        Add-Warning ("Laragon's Apache is set to PHP " + $loaded.Matches[0].Groups[1].Value + ", but APES Newsroom needs PHP $phpWanted. In Laragon choose Menu > PHP > Version > $($phpDir.Name), or Menu > Profile > $($Config.laragonProfile), then Menu > Apache > Reload.")
-    }
+$switchPhp = "In Laragon choose Menu > PHP > Version > $($phpDir.Name), or Menu > Profile > $($Config.laragonProfile)."
+$apacheDir = Get-VersionFolder (Join-Path $LaragonRoot 'bin\apache') '^httpd-'
+$httpdConf = if ($apacheDir) { Join-Path $apacheDir.FullName 'conf\httpd.conf' } else { $null }
+$phpInclude = if ($httpdConf -and (Test-Path $httpdConf)) {
+    Select-String -Path $httpdConf -Pattern '^\s*Include\s+"?[^"]*[\\/]etc[\\/]apache2[\\/](mod_php|fcgid)\.conf' | Select-Object -First 1
+}
+if (-not $phpInclude) {
+    Add-Warning "Could not tell how Laragon's Apache runs PHP from $httpdConf. Start Laragon once, then rerun."
+} elseif ($phpInclude.Matches[0].Groups[1].Value -ne [string]$Config.php.apacheHandler) {
+    Add-Warning "Laragon's Apache runs PHP through $($phpInclude.Matches[0].Groups[1].Value), shared by every site, so another project's .env values (such as its database) can leak into APES Newsroom. $switchPhp"
 } else {
-    Add-Warning "Could not read $modPhp to check Apache's PHP version. Start Laragon once, then rerun."
+    $handlerConf = Join-Path $LaragonRoot "etc\apache2\$($Config.php.apacheHandler).conf"
+    $loaded = Select-String -Path $handlerConf -Pattern 'php-(\d+\.\d+)\.\d+' -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($loaded -and $loaded.Matches[0].Groups[1].Value -eq $phpWanted) {
+        Write-Ok "Apache runs PHP $phpWanted through FastCGI, with separate PHP processes per site"
+    } else {
+        $actual = if ($loaded) { $loaded.Matches[0].Groups[1].Value } else { 'an unknown version' }
+        Add-Warning "Laragon's Apache runs PHP $actual, but APES Newsroom needs PHP $phpWanted. $switchPhp"
+    }
 }
 
 $phpModules = Get-NativeOutput $Php @('-m') | ForEach-Object { $_.Trim().ToLowerInvariant() }

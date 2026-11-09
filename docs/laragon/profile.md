@@ -13,7 +13,7 @@ records the project's own Laragon settings. The same values are in
 | Hostname | <http://apes-newsroom.test> (HTTPS: <https://apes-newsroom.test> with Laragon SSL) |
 | Document root | `public/` (Laragon's Auto Virtual Hosts picks it) |
 | Web server | Apache 2.4 (Laragon) |
-| PHP | 8.4, thread-safe build (`php-8.4.*-Win32-vs17-x64`), loaded by Apache's mod_php |
+| PHP | 8.4, NTS build (`php-8.4.*-nts-Win32-vs17-x64`), run by Apache through FastCGI (mod_fcgid), with separate PHP processes per site |
 | PHP extensions | bcmath, curl, exif, fileinfo, gd, intl, mbstring, openssl, pdo_mysql, sodium, zip |
 | Database | MySQL 8.4 at `127.0.0.1:3306`, user `root`, empty password |
 | Database name | `apes_newsroom_local` |
@@ -55,12 +55,26 @@ maintainer's answers on the Laragon GitHub):
   versions for the whole of Laragon. It does not change projects or the
   document root.
 - **Apache runs one PHP version at a time.** Running two sites on different
-  PHP versions at once needs a manual FastCGI setup, which this project does
-  not use.
+  PHP versions at once needs a manual FastCGI setup per site, which this
+  project does not use.
 
 The fallback is that all APESCIC projects run under one active PHP 8.4
 profile. Every APESCIC Laravel repo accepts PHP 8.4, so they can run side by
 side, each with its own hostname, database and Vite port.
+
+## Why the NTS build and FastCGI
+
+With a thread-safe PHP selected, Laragon loads PHP into Apache (mod_php), so
+every site shares the same PHP processes. Laravel copies `.env` values into
+the process environment and never overwrites one that is already set, so a
+request to APES Newsroom can pick up another project's `DB_DATABASE` and fail
+with an error such as `Table 'myapes_account_local.posts' doesn't exist`.
+
+With an NTS PHP selected, Laragon runs PHP through FastCGI (mod_fcgid,
+configured in `C:\laragon\etc\apache2\fcgid.conf`), which starts separate
+`php-cgi.exe` processes for each site, so `.env` values stay with their own
+project. The first request to a site after Laragon starts takes a few seconds
+while its PHP process starts.
 
 ## Virtual host
 
