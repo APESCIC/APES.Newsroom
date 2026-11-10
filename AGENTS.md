@@ -27,50 +27,38 @@ stack.
   changes against the demo data, sign in through the local role preview, and
   keep any new demo records clearly fake (`example.*` emails only).
 
-## Milestone shipping
+## Shipping and versioning
 
-Work ships per GitHub milestone, in four stages, in this order:
+Work ships once per milestone, by the milestone's version (`v1.31.0`), never by
+GitHub's milestone number: one `milestone/vX-Y-Z-<slug>` branch, one PR into
+`main` merged as a merge commit, one `vX.Y.Z` tag and Release, and one deploy
+of that tag. Issue PRs may go into the milestone branch; nothing else goes
+into `main`. The rule is
+[`.cursor/rules/version-shipping.mdc`](.cursor/rules/version-shipping.mdc);
+the skills are
+[`complete-next-version`](.cursor/skills/complete-next-version/SKILL.md) and
+[`release-version`](.cursor/skills/release-version/SKILL.md); the command is
+`/complete-next-version`. Before any change, run the live preview gate in
+[`.cursor/rules/laragon-local-dev.mdc`](.cursor/rules/laragon-local-dev.mdc).
 
-1. **Complete the milestone.** Work on the milestone and complete **all** of
-   its issues before moving to stage 2.
-2. **One merge.** All the milestone's work goes to `main` in **one merge**: a
-   merge commit (`gh pr merge --merge`), never a squash.
-3. **Release.** Tag and release the milestone once, after the merge
-   (`release.yml` publishes the GitHub Release from the `vX.Y.Z` tag; release
-   notes follow [docs/change-log-hub.md](docs/change-log-hub.md)).
-4. **Deploy.** Deploy that release once, with the manual `deploy.yml` workflow.
-
-Commits and pushes on the milestone branch can happen whenever needed, but
-nothing goes to `main`, and nothing is tagged, released or deployed, until
-stage 2. One milestone has one branch and one PR; there are no per-issue PRs
-into `main`.
-
-**Hotfix exception:** a hotfix may skip these stages only with Bambie's written
-approval recorded on the issue.
-
-The Cursor rule [`.cursor/rules/milestone-shipping.mdc`](.cursor/rules/milestone-shipping.mdc)
-applies the same rules to every Cursor session.
+- `composer milestone:next` prints the next milestone, its branch, PR title
+  and Release title. `composer milestone:bump -- vX.Y.Z` creates the release
+  note from its template if no PR has yet. `milestone:check-title`,
+  `milestone:check-branch` and `milestone:check-release` fail with the reason;
+  CI runs the title and branch checks on every pull request.
+- Release: pushing the tag runs `release.yml`, which checks the tag is on
+  `main` and publishes the Release titled `v<version> <milestone name>`.
+- Deploy: `gh workflow run deploy.yml -f tag=vX.Y.Z`. It deploys only a tag on
+  `main` with a published Release (see [docs/deployment.md](docs/deployment.md)).
+- Security checks use GitHub's free features only: Dependabot (into the
+  `dependencies` branch, merged into each milestone branch when it starts),
+  dependency review and CodeQL.
+- **Hotfix exception:** only with Bambie's approval, recorded on the issue.
+- Optional local check before each push: `git config core.hooksPath .githooks`.
 
 ### Definition of done
 
 - An **issue** is done when its acceptance criteria are met and committed on
   its branch. It closes when the milestone PR merges.
-- The **milestone** is done only after the single merge, release and deploy.
-
-## Milestone versioning
-
-Every milestone, branch, PR title, release note, tag and release uses the
-milestone's version (`v1.31.0`), never GitHub's milestone number. The rule is
-[`.cursor/rules/milestone-versioning.mdc`](.cursor/rules/milestone-versioning.mdc).
-
-- `composer milestone:next` prints the next milestone (the lowest open version
-  above the latest tag) and its branch name. `composer milestone:pr-title --
-  <issue>` prints the PR title.
-- `composer milestone:check-title -- "<title>"`, `milestone:check-branch --
-  "<branch>"` and `milestone:check-release -- vX.Y.Z "<release title>"` fail
-  with the reason. CI runs the title and branch checks on every pull request
-  (`.github/workflows/milestone-version-check.yml`).
-- Skills: [`start-next-milestone`](.cursor/skills/start-next-milestone/SKILL.md),
-  [`milestone-release-titles`](.cursor/skills/milestone-release-titles/SKILL.md)
-  and `/next-milestone`. Script: `scripts/milestone-version`.
-- Optional local check before each push: `git config core.hooksPath .githooks`.
+- The **milestone** is done only after the single merge, release and a
+  verified deploy of the tag.
