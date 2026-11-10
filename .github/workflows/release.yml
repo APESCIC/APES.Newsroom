@@ -3,25 +3,69 @@ name: GitHub Release
 # Publish a GitHub Release when a version tag is pushed. This is not a
 # deploy: it never calls Cloudron, never backs up or restarts the app,
 # and never runs on push to main. Deploy stays the manual workflow in
-# deploy.yml (issue #3).
+# deploy.yml (issue #3), run with this tag afterwards.
 on:
   push:
     tags:
       - 'v*.*.*'
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
 
 jobs:
   github-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      issues: read
     steps:
+      - name: Check the tag is on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          status="$(gh api "repos/$GITHUB_REPOSITORY/compare/$GITHUB_SHA...main" --jq '.status')"
+          if [[ "$status" != "ahead" && "$status" != "identical" ]]; then
+            echo "::error::Tag $GITHUB_REF_NAME ($GITHUB_SHA) is not on main ($status)."
+            exit 1
+          fi
+
+      - name: Resolve the release title from the milestone
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          milestone_title="$(gh api "repos/$GITHUB_REPOSITORY/milestones?state=all&per_page=100" --paginate \
+            --jq ".[] | .title | select(startswith(\"v$version \") or startswith(\"v$version:\"))" \
+            | head -n1 || true)"
+          name="${milestone_title#"v${version}"}"
+          name="${name#:}"
+          if [[ "$name" == *:* ]]; then name="${name#*:}"; fi
+          name="$(sed -E 's/^[[:space:]]+|[[:space:]]+$//g' <<<"$name")"
+          echo "RELEASE_TITLE=v${version}${name:+ $name}" >> "$GITHUB_ENV"
+
       - name: Create release from tag
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${{ github.ref_name }}" \
-            --repo "${{ github.repository }}" \
-            --title "${{ github.ref_name }}" \
-            --generate-notes
+          set -euo pipefail
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $GITHUB_REF_NAME already exists; not changed."
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              --repo "$GITHUB_REPOSITORY" \
+              --verify-tag \
+              --title "$RELEASE_TITLE" \
+              --generate-notes
+          fi
+          {
+            echo "## Release $RELEASE_TITLE"
+            echo "- Deploy next: \`gh workflow run deploy.yml -f tag=$GITHUB_REF_NAME\`"
+          } >> "$GITHUB_STEP_SUMMARY"
