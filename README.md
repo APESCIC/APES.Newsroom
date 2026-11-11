@@ -16,7 +16,7 @@ Ghost app stays stopped and recoverable at `ghost-legacy.apesnews.org.uk`.
 
 ## Latest release
 
-**v1.30.3**: see [Releases](https://github.com/APESCIC/APES.Newsroom/releases)
+**v1.30.5**: see [Releases](https://github.com/APESCIC/APES.Newsroom/releases)
 and the [Change Log Hub](https://www.apesnews.org.uk/change-log-hub).
 
 ## Roadmap

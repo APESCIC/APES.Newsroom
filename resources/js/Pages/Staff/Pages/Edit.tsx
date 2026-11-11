@@ -106,6 +106,14 @@ export default function PagesEdit({ page, heroUpload }: { page: PageData | null;
     const errors: FormErrors = { ...pageErrors, ...(formErrors as FormErrors) };
     const titleTouchedSlug = useRef(false);
 
+    // Saves and action buttons reload the same page with a new updated_at; it is
+    // the edit lock for the next save.
+    useEffect(() => {
+        if (page?.updated_at) {
+            setData('expected_updated_at', page.updated_at);
+        }
+    }, [page?.updated_at, setData]);
+
     useEffect(() => {
         if (page || titleTouchedSlug.current || data.slug !== '') {
             return;

@@ -9,7 +9,6 @@ use App\Notifications\MagicLinkNotification;
 use App\Services\Auth\RecentAuthentication;
 use App\Services\EmailTemplates\TemplatedMail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -172,10 +171,9 @@ class EmailTemplateAdminTest extends TestCase
     }
 
     #[Test]
-    public function test_send_uses_mail_fake_and_is_throttled(): void
+    public function test_send_reaches_the_array_mailer_and_is_throttled(): void
     {
-        // Mail::html is forwarded through Mail::fake() to the array transport.
-        Mail::fake();
+        // Mail::fake() drops Mail::html messages, so assert on the array transport instead.
         $admin = User::factory()->admin()->create();
 
         $this->actingAs($admin)->withRecentAuthentication()

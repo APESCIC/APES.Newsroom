@@ -25,6 +25,8 @@ class UserSession extends Model
         'browser',
         'platform',
         'device_type',
+        'country_code',
+        'city',
         'remembered',
         'last_seen_at',
         'revoked_at',

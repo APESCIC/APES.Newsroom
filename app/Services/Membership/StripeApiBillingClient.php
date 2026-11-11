@@ -104,7 +104,7 @@ class StripeApiBillingClient implements StripeBillingClient
         $coupon = $this->stripe->coupons->create($couponParams);
 
         $promoParams = [
-            'coupon' => $coupon->id,
+            'promotion' => ['type' => 'coupon', 'coupon' => $coupon->id],
             'code' => $offer->code,
             'active' => $offer->is_active,
         ];

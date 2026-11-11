@@ -452,6 +452,7 @@ class ExtraSendingDomainsTest extends TestCase
 
     public function test_each_domain_has_a_daily_test_limit_shared_by_its_addresses(): void
     {
+        $this->freezeTime();
         $this->fakeMailgun();
         config(['mailing.test_send.per_domain_per_day' => 2]);
         $first = User::factory()->admin()->create();
