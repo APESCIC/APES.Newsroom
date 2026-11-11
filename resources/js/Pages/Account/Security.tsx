@@ -10,6 +10,7 @@ export type AccountSession = {
     platform: string | null;
     device_type: string | null;
     ip: string | null;
+    location?: string | null;
     last_active_at: string | null;
     remembered: boolean;
     current: boolean;
@@ -75,6 +76,7 @@ function SessionsSection({ sessions }: { sessions: AccountSession[] }) {
                             <p className="text-xs text-muted">
                                 {[
                                     session.device_type ? session.device_type.charAt(0).toUpperCase() + session.device_type.slice(1) : null,
+                                    session.location ? `Near ${session.location}` : null,
                                     session.ip ? `IP ${session.ip}` : null,
                                     `Last active ${formatLastActive(session.last_active_at)}`,
                                     session.remembered ? 'Remembered' : null,
@@ -96,6 +98,14 @@ function SessionsSection({ sessions }: { sessions: AccountSession[] }) {
                     </li>
                 ))}
             </ul>
+            {sessions.some((session) => session.location) && (
+                <p className="mt-2 text-xs text-muted">
+                    Locations are approximate.{' '}
+                    <a href="https://db-ip.com" className="underline" target="_blank" rel="noreferrer">
+                        IP Geolocation by DB-IP
+                    </a>
+                </p>
+            )}
             {hasOthers && (
                 <button
                     type="button"

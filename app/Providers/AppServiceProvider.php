@@ -9,6 +9,8 @@ use App\Policies\NewsletterTemplatePolicy;
 use App\Services\Auth\PendingTwoFactorLogin;
 use App\Services\Auth\RecentAuthentication;
 use App\Services\EmailTemplates\TemplatedMail;
+use App\Services\Geo\DbIpGeoLocator;
+use App\Services\Geo\GeoLocator;
 use App\Services\Integrations\IntegrationSecrets;
 use App\Services\Mail\MailgunApiTransport;
 use App\Services\Mail\MailgunDomainService;
@@ -53,6 +55,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(SettingsRepository::class);
         $this->app->singleton(IntegrationSecrets::class);
         $this->app->scoped(MailgunDomainService::class);
+        $this->app->singleton(GeoLocator::class, fn () => new DbIpGeoLocator((string) config('security.geoip.database')));
 
         $this->app->bind(StripeBillingClient::class, function ($app) {
             $secrets = $app->make(IntegrationSecrets::class);

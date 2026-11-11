@@ -4,6 +4,7 @@ namespace App\Services\Auth;
 
 use App\Models\User;
 use App\Models\UserSession;
+use App\Services\Geo\GeoLocator;
 use DeviceDetector\DeviceDetector;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
@@ -23,6 +24,8 @@ class SessionTracker
     private const TOUCH_INTERVAL_SECONDS = 300;
 
     private const FAMILIAR_DEVICE_DAYS = 90;
+
+    public function __construct(private readonly GeoLocator $geoLocator) {}
 
     public function start(User $user, Request $request, bool $remembered): UserSession
     {
@@ -44,6 +47,7 @@ class SessionTracker
             'remembered' => $remembered,
             'last_seen_at' => now(),
             ...$this->describe($request->userAgent()),
+            ...$this->locate($request->ip()),
         ];
 
         if ($existing !== null) {
@@ -77,10 +81,23 @@ class SessionTracker
             return;
         }
 
+        $ip = $request->ip();
+
         $session->forceFill([
             'last_seen_at' => now(),
-            'ip_address' => $request->ip(),
+            'ip_address' => $ip,
+            ...($ip !== $session->ip_address ? $this->locate($ip) : []),
         ])->save();
+    }
+
+    /**
+     * @return array{country_code: ?string, city: ?string}
+     */
+    public function locate(?string $ip): array
+    {
+        $location = $this->geoLocator->locate($ip);
+
+        return ['country_code' => $location?->countryCode, 'city' => $location?->city];
     }
 
     public function end(UserSession $session): void
