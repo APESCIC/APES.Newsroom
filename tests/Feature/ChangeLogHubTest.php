@@ -723,16 +723,23 @@ class ChangeLogHubTest extends TestCase
             'slug' => 'release-v1-30-3',
             'version' => 'v1.30.3',
             'channel' => 'beta',
+            'is_current' => false,
+            'is_published' => true,
+        ]);
+        $this->assertDatabaseHas('releases', [
+            'slug' => 'release-v1-30-4',
+            'version' => 'v1.30.4',
+            'channel' => 'beta',
             'is_current' => true,
             'is_published' => true,
         ]);
-        $this->assertDatabaseCount('releases', 87);
+        $this->assertDatabaseCount('releases', 88);
 
         $this->get('/change-log-hub')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->has('releases', 87)
-                ->where('current.version', 'v1.30.3')
+                ->has('releases', 88)
+                ->where('current.version', 'v1.30.4')
                 ->where('current.channel', 'beta')
                 ->where('current.channel_label', 'Beta'));
     }
