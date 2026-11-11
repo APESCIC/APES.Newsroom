@@ -274,6 +274,44 @@ describe('post editor autosave', () => {
         expect(getInertiaMock().patch).toHaveBeenCalledTimes(2);
     });
 
+    it('uses the lock timestamp from an action reload such as Unpublish on the next save', () => {
+        const publishedPost: PersistedPost = { ...persistedPost, status: 'published' };
+        const { rerender } = render(<PostEdit post={publishedPost} {...props} />);
+
+        rerender(<PostEdit post={{ ...publishedPost, status: 'draft', updated_at: '2026-08-10T09:05:00+00:00' }} {...props} />);
+        act(() => vi.advanceTimersByTime(8_000));
+        expect(getInertiaMock().patch).not.toHaveBeenCalled();
+
+        fireEvent.change(screen.getByLabelText('Excerpt'), { target: { value: 'Edited after unpublishing' } });
+        act(() => vi.advanceTimersByTime(8_000));
+
+        expect(getInertiaMock().patch).toHaveBeenCalledTimes(1);
+        expect(getInertiaMock().patch.mock.calls[0][2]).toMatchObject({
+            excerpt: 'Edited after unpublishing',
+            expected_updated_at: '2026-08-10T09:05:00+00:00',
+        });
+    });
+
+    it('keeps unsaved edits made before an action reload and saves them with the new lock', () => {
+        const { rerender } = render(<PostEdit post={persistedPost} {...props} />);
+
+        fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Typed before the action' } });
+        rerender(<PostEdit
+            post={{ ...persistedPost, excerpt: 'Changed by the action', updated_at: '2026-08-10T09:05:00+00:00' }}
+            {...props}
+        />);
+
+        expect(screen.getByLabelText('Title')).toHaveValue('Typed before the action');
+        expect(screen.getByLabelText('Excerpt')).toHaveValue('Changed by the action');
+
+        act(() => vi.advanceTimersByTime(8_000));
+        expect(getInertiaMock().patch).toHaveBeenCalledTimes(1);
+        expect(getInertiaMock().patch.mock.calls[0][2]).toMatchObject({
+            title: 'Typed before the action',
+            expected_updated_at: '2026-08-10T09:05:00+00:00',
+        });
+    });
+
     it('renders server errors and stops autosave retries after a conflict', () => {
         setMockPage({
             appName: 'APES Newsroom',

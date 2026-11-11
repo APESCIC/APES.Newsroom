@@ -1,0 +1,27 @@
+{
+  "version": "v1.30.4",
+  "slug": "release-v1-30-4",
+  "released_at": "2026-11-11",
+  "previous_version": "v1.30.3",
+  "theme": "Editor save fix and Actions hygiene",
+  "change_types": ["fixed", "added", "changed", "security"],
+  "topic_tags": ["public-facing", "compliance", "internal-only"],
+  "summary": "Saving a post or page no longer fails with a false \"edited elsewhere\" message after Unpublish or another action button, and the sessions list on your account now shows roughly where each sign-in came from, worked out on our own server. Behind the scenes, dependency updates, security scanning and workflows are tidied up.",
+  "detailed_changes": [
+    "Post editor: after Unpublish, Submit for review or another action button, Save and autosave now use the post's new edit lock, so they no longer report that the post was edited elsewhere. Unsaved edits made before the action are kept (#548).",
+    "Page editor: Save keeps the edit lock up to date after a save or an action button, fixing the same false conflict (#548).",
+    "Account security: each signed-in session shows an approximate location (city and country) next to the masked IP, when one can be found. Locations come from the free DB-IP Lite database stored on our server, so IP addresses are never sent to a third party, and no exact position is kept (#331).",
+    "Privacy notice, data inventory and threat model describe the new session location, its 90-day retention and the DB-IP credit (#331).",
+    "Dependency update pull requests are labelled skip-changelog, and minor and patch updates are grouped into one pull request per ecosystem (#632, #633).",
+    "The finished one-off Ghost image repair workflow is removed, so it can no longer be run against the live site (#634).",
+    "CodeQL now scans main and every pull request, and a moderate denial-of-service advisory in a development-only dependency (minimatch) is resolved (#635)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff/posts/{id}/edit, /staff/pages/{id}/edit, /account/security, /legal/privacy",
+    "User groups affected: staff editing posts and pages; signed-in readers and staff viewing their sessions",
+    "Public impact: the privacy notice explains approximate session locations",
+    "Internal impact: Dependabot, CodeQL and GitHub Actions workflows"
+  ],
+  "pr": 778
+}

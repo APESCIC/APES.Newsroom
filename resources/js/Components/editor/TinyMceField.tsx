@@ -1,5 +1,5 @@
 import { Editor, type IAllProps } from '@tinymce/tinymce-react';
-import { useId, useImperativeHandle, useRef, useState, type Ref } from 'react';
+import { useEffect, useId, useImperativeHandle, useRef, useState, type Ref } from 'react';
 import type { Editor as TinyMceEditor } from 'tinymce';
 import { embedPlaceholderHtml, PLACEHOLDER_CLASS } from './blockPlaceholder';
 import type { EditorFieldHandle } from './EditorField';
@@ -166,7 +166,10 @@ export default function TinyMceField({ initialHtml, onChange, ref }: Props) {
     const helpId = useId();
     const editorRef = useRef<TinyMceEditor | null>(null);
     const onChangeRef = useRef(onChange);
-    onChangeRef.current = onChange;
+
+    useEffect(() => {
+        onChangeRef.current = onChange;
+    }, [onChange]);
     const [initialValue] = useState(initialHtml);
     // TinyMCE re-serialises the initial HTML; reporting that as an edit would
     // mark the form dirty and autosave a revision on every page load.
