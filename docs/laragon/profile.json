@@ -9,7 +9,8 @@
     "laragonProfile": "apes-newsroom",
     "php": {
         "version": "8.4",
-        "threadSafe": true,
+        "threadSafe": false,
+        "apacheHandler": "fcgid",
         "extensions": ["bcmath", "curl", "exif", "fileinfo", "gd", "intl", "mbstring", "openssl", "pdo_mysql", "sodium", "zip"]
     },
     "database": {
