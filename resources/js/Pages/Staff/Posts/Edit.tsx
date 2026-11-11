@@ -286,7 +286,10 @@ export default function PostEdit({
     // TinyMCE is uncontrolled after mount, so its own HTML stays the source of
     // truth for the session; server-rendered editor HTML never replaces it.
     const contentHtml = useRef(data.content_html);
-    contentHtml.current = data.content_html;
+
+    useEffect(() => {
+        contentHtml.current = data.content_html;
+    }, [data.content_html]);
 
     const errors = mergeErrors(pageErrors, formErrors as FormErrors);
     const hasErrors = Object.keys(errors).length > 0;

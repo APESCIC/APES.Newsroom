@@ -53,7 +53,10 @@ export default function EditorJsField({ initialData, onChange, ref }: Props) {
     const holderRef = useRef<HTMLDivElement | null>(null);
     const editorRef = useRef<EditorJS | null>(null);
     const onChangeRef = useRef(onChange);
-    onChangeRef.current = onChange;
+
+    useEffect(() => {
+        onChangeRef.current = onChange;
+    }, [onChange]);
 
     useImperativeHandle(
         ref,

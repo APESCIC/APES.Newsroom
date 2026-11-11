@@ -160,6 +160,10 @@ export default function ChangeLogHubIndex({
         for (const release of releases) {
             initial[release.slug] = release.is_current;
         }
+        const hash = typeof window === 'undefined' ? '' : window.location.hash.replace(/^#/, '');
+        if (hash) {
+            initial[hash] = true;
+        }
         return initial;
     });
 
@@ -169,7 +173,6 @@ export default function ChangeLogHubIndex({
             return;
         }
 
-        setOpenSlugs((prev) => ({ ...prev, [hash]: true }));
         requestAnimationFrame(() => {
             document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });

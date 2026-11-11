@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import HeroImageField, { emptyHeroImage, type HeroImageValue } from '../Components/Staff/HeroImageField';
 import type * as HeroUploadModule from '../Components/Staff/heroImageUpload';
@@ -40,7 +40,10 @@ let latest: HeroImageValue = emptyHeroImage;
 
 function Harness({ initial = emptyHeroImage, errors = {} }: { initial?: HeroImageValue; errors?: Record<string, string> }) {
     const [value, setValue] = useState<HeroImageValue>(initial);
-    latest = value;
+
+    useEffect(() => {
+        latest = value;
+    }, [value]);
 
     return (
         <HeroImageField
