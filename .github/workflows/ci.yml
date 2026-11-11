@@ -183,6 +183,9 @@ jobs:
     name: Changelog gate
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
       - uses: actions/checkout@v7
         with:
@@ -204,10 +207,13 @@ jobs:
           cp .env.example .env
           php artisan key:generate --ansi
 
+      # Labels are read live: Dependabot adds skip-changelog just after opening
+      # a PR, so the event payload can be missing it.
       - name: Require changelog entry (or skip-changelog label)
         env:
-          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
-        run: >
-          php artisan newsroom:check-pr-changelog
-          --base=origin/${{ github.base_ref }}
-          --labels="${PR_LABELS}"
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          labels="$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json labels --jq '[.labels[].name] | join(",")')"
+          php artisan newsroom:check-pr-changelog --base="origin/$BASE_REF" --labels="$labels"
