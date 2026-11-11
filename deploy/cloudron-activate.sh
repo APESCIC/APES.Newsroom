@@ -108,6 +108,10 @@ echo "==> Running database migrations"
 echo "==> Checking for seeded demo accounts (warning only)"
 "${WWW_DATA_PHP[@]}" "${RELEASE_DIR}/artisan" newsroom:check-demo-accounts --no-interaction || true
 
+echo "==> Downloading the GeoIP database if missing (warning only)"
+"${WWW_DATA_PHP[@]}" "${RELEASE_DIR}/artisan" newsroom:geoip-update --if-missing --no-interaction \
+    || echo "WARNING: GeoIP database unavailable; sessions show only the masked IP until the monthly update runs."
+
 echo "==> Syncing Change Log Hub releases from changelog/releases"
 "${WWW_DATA_PHP[@]}" "${RELEASE_DIR}/artisan" newsroom:sync-releases --no-interaction
 

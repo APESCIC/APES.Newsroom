@@ -16,6 +16,7 @@
         "laravel/tinker": "^3.0",
         "league/oauth2-client": "^2.9",
         "matomo/device-detector": "^6.5",
+        "maxmind-db/reader": "^1.12",
         "pragmarx/google2fa": "^9.1",
         "predis/predis": "^3.0",
         "spatie/laravel-passkeys": "^1.8",

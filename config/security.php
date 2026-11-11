@@ -56,4 +56,20 @@ return [
 
     'reauth_code_ttl_minutes' => (int) env('SECURITY_REAUTH_CODE_TTL', 10),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Approximate session location
+    |--------------------------------------------------------------------------
+    |
+    | Sessions are located from a local DB-IP Lite City database (CC BY 4.0),
+    | so no IP address leaves the server. newsroom:geoip-update downloads the
+    | monthly file; without it, sessions show only the masked IP.
+    |
+    */
+
+    'geoip' => [
+        'database' => env('SECURITY_GEOIP_DATABASE', storage_path('app/geoip/dbip-city-lite.mmdb')),
+        'download_url' => env('SECURITY_GEOIP_DOWNLOAD_URL', 'https://download.db-ip.com/free/dbip-city-lite-{month}.mmdb.gz'),
+    ],
+
 ];
