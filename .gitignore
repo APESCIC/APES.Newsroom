@@ -7,6 +7,7 @@
 .phpactor.json
 .phpunit.result.cache
 /.superpowers/
+/.cursor/hooks/state/
 /.idea
 /.nova
 /.phpunit.cache
