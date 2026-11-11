@@ -1,4 +1,5 @@
 name: Deploy to Cloudron (beta)
+run-name: Deploy ${{ inputs.tag }}
 
 # Manually triggered on purpose. Deploys the live Cloudron LAMP Newsroom at
 # https://www.apesnews.org.uk/ (app id 74a2a784-a161-4787-84ff-2b8efc957bc8).  # pragma: allowlist secret
@@ -6,12 +7,13 @@ name: Deploy to Cloudron (beta)
 # environment targets the live app. Ops must set CLOUDRON_APP_ORIGIN_HOST to
 # www.apesnews.org.uk for the health check. Issue #3 requires deployment to be a  # pragma: allowlist secret
 # deliberate, guarded action rather than an automatic side effect of merging to
-# main. Do not add merge-auto-deploy.
+# main. Do not add merge-auto-deploy. It deploys only a release tag on main with
+# a published GitHub Release (.cursor/rules/version-shipping.mdc), never a branch.
 on:
   workflow_dispatch:
     inputs:
-      confirm_branch:
-        description: 'Type the branch you intend to deploy (must be "main")'
+      tag:
+        description: 'Release tag to deploy, for example v1.31.0'
         required: true
 
 permissions:
@@ -28,20 +30,31 @@ jobs:
     runs-on: ubuntu-latest
     environment: beta
     steps:
-      - name: Verify branch and inputs
+      - name: Check the tag is a published release on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
         run: |
-          if [ "${{ inputs.confirm_branch }}" != "main" ]; then
-            echo "::error::confirm_branch must be 'main', got '${{ inputs.confirm_branch }}'"
+          set -euo pipefail
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::tag must look like v1.31.0, got '$TAG'"
             exit 1
           fi
-          if [ "${{ github.ref_name }}" != "main" ]; then
-            echo "::error::This workflow must be run against the main branch (got ${{ github.ref_name }})"
+          sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/$TAG" --jq '.sha')"
+          status="$(gh api "repos/$GITHUB_REPOSITORY/compare/$sha...main" --jq '.status')"
+          if [[ "$status" != "ahead" && "$status" != "identical" ]]; then
+            echo "::error::$TAG ($sha) is not on main ($status)."
+            exit 1
+          fi
+          if [[ "$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq '.isDraft' 2>/dev/null)" != "false" ]]; then
+            echo "::error::$TAG has no published GitHub Release. Push the tag so release.yml publishes it first."
             exit 1
           fi
 
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
+          ref: ${{ inputs.tag }}
+          persist-credentials: false
 
       # Include run_id so re-deploying the same git SHA never sync-pushes into an
       # already-activated release directory (activate replaces storage/app with a
@@ -51,17 +64,27 @@ jobs:
         run: echo "sha=$(git rev-parse --short=12 HEAD)-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: '8.4'
           extensions: mbstring, xml, curl, redis, pdo_mysql, bcmath, intl, zip, gd, opcache
           coverage: none
           tools: composer:v2
 
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-deploy-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-deploy-
+
       - name: Install production PHP dependencies
         run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
           cache: npm
@@ -109,6 +132,9 @@ jobs:
             "$RELEASE_DIR"/storage/framework/cache/data/.gitkeep \
             "$RELEASE_DIR"/bootstrap/cache/.gitkeep
 
+      - name: Pack the release into one archive
+        run: tar -czf release.tar.gz -C release .
+
       - name: Install Cloudron CLI
         run: npm install -g cloudron
 
@@ -117,11 +143,16 @@ jobs:
           cloudron --server "${{ secrets.CLOUDRON_FQDN }}" --token "${{ secrets.CLOUDRON_TOKEN }}"
           backup create --app "${{ secrets.CLOUDRON_APP_ID }}"
 
+      # One archive instead of a many-file sync push; unpacked on the app.
       - name: Upload versioned release
-        run: >
-          cloudron --server "${{ secrets.CLOUDRON_FQDN }}" --token "${{ secrets.CLOUDRON_TOKEN }}"
-          sync push --app "${{ secrets.CLOUDRON_APP_ID }}"
-          ./release/ "/app/data/releases/${{ steps.release.outputs.sha }}/"
+        run: |
+          set -euo pipefail
+          id="${{ steps.release.outputs.sha }}"
+          cloudron --server "${{ secrets.CLOUDRON_FQDN }}" --token "${{ secrets.CLOUDRON_TOKEN }}" \
+            push --app "${{ secrets.CLOUDRON_APP_ID }}" release.tar.gz "/app/data/releases/$id.tar.gz"
+          cloudron --server "${{ secrets.CLOUDRON_FQDN }}" --token "${{ secrets.CLOUDRON_TOKEN }}" \
+            exec --app "${{ secrets.CLOUDRON_APP_ID }}" -- \
+            bash -c "set -e; mkdir -p /app/data/releases/$id; tar -xzf /app/data/releases/$id.tar.gz -C /app/data/releases/$id; rm -f /app/data/releases/$id.tar.gz"
 
       - name: Migrate and activate release
         id: activate

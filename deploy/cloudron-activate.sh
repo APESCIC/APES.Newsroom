@@ -128,6 +128,18 @@ echo "==> Activating release ${RELEASE_SHA} atomically"
 ln -sfn "${RELEASE_DIR}" "${CURRENT_LINK}.new"
 mv -Tf "${CURRENT_LINK}.new" "${CURRENT_LINK}"
 
+# Every backup copies /app/data, so old releases make each pre-deploy backup
+# slower. rm -rf removes the storage and .env symlinks, never their targets.
+KEEP_RELEASES=3
+PREVIOUS_RELEASE_DIR="$(cat "${PREVIOUS_FILE}" 2>/dev/null || true)"
+echo "==> Pruning old releases (keeping the newest ${KEEP_RELEASES}, the current and the previous)"
+ls -1dt "${DATA_DIR}/releases"/*/ | tail -n +$((KEEP_RELEASES + 1)) | while read -r dir; do
+    dir="${dir%/}"
+    if [ "${dir}" != "${RELEASE_DIR}" ] && [ "${dir}" != "${PREVIOUS_RELEASE_DIR}" ]; then
+        rm -rf "${dir}"
+    fi
+done
+
 echo "==> Activated. Previous release recorded at ${PREVIOUS_FILE} (if any) for rollback."
 echo "NOTE: the queue worker and Apache still need an app restart to pick up"
 echo "this release - the caller (deploy.yml) issues 'cloudron restart' next."

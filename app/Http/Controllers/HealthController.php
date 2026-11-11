@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\LocalRevision;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
@@ -30,10 +31,21 @@ class HealthController extends Controller
 
         $healthy = ! in_array(false, $checks, strict: true);
 
-        return response()->json([
+        $body = [
             'status' => $healthy ? 'ok' : 'degraded',
             'checks' => $checks,
-        ], $healthy ? 200 : 503);
+        ];
+
+        // Only the Laragon preview gate reads this; production never shows it.
+        if (app()->environment('local')) {
+            $body['local'] = [
+                'php' => PHP_VERSION,
+                'php_sapi' => PHP_SAPI,
+                'git_revision' => (new LocalRevision(base_path()))->current(),
+            ];
+        }
+
+        return response()->json($body, $healthy ? 200 : 503);
     }
 
     private function checkDatabase(): bool

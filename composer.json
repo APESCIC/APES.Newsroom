@@ -70,6 +70,7 @@
             "@php vendor/bin/pint"
         ],
         "milestone:next": "@php scripts/milestone-version next",
+        "milestone:bump": "@php scripts/milestone-version bump",
         "milestone:branch": "@php scripts/milestone-version branch",
         "milestone:pr-title": "@php scripts/milestone-version pr-title",
         "milestone:check-title": "@php scripts/milestone-version check-title",

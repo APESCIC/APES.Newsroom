@@ -15,39 +15,35 @@ For the APES team: work is planned in milestones (`vX.Y.Z Beta: Name`), every pu
 
 ## How work ships
 
-Work ships once per GitHub milestone, in four stages:
+Work ships once per milestone, by the milestone's version, never by GitHub's
+milestone number: branch `milestone/v1-31-0-seo-social-previews`, issue PR
+title `[v1.31.0] JSON-LD structured data (#671)`, milestone PR
+`v1.31.0: SEO and social previews`, tag `v1.31.0`.
 
-1. Complete **all** of the milestone's issues on its milestone branch.
-2. Merge all of that work into `main` in **one merge** (a merge commit, never a
-   squash).
-3. Release the milestone once.
-4. Deploy that release once.
+1. Before any change, run the Laragon live preview gate:
+   `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\preview.ps1`.
+2. Commit every issue on the milestone branch, or on a short issue branch
+   merged into it. Commit messages follow Conventional Commits and name the
+   issue: `fix: keep the tag filter on reload (Refs #123)`.
+3. The milestone PR merges into `main` once, as a merge commit, after
+   Bambie's ship-gate answer. The `vX.Y.Z` tag publishes the Release, and that
+   tag is deployed with `gh workflow run deploy.yml -f tag=vX.Y.Z`.
 
-You can commit and push to the milestone branch at any time, but nothing goes
-to `main`, and nothing is tagged, released or deployed, until stage 2. A hotfix
-may skip the stages only with Bambie's written approval recorded on the issue.
+A hotfix may skip the stages only with Bambie's written approval recorded on
+the issue.
 
-The full rules, including the definition of done, are in [AGENTS.md](AGENTS.md#milestone-shipping).
-
-## Milestone versioning
-
-Milestones are named and shipped by version, never by GitHub's milestone
-number: branch `milestone/v1-31-0-seo-social-previews`, PR title
-`[v1.31.0] JSON-LD structured data (#671)`, tag `v1.31.0`.
-
-- `composer milestone:next` shows the next milestone's version and branch
-  name; `composer milestone:pr-title -- <issue>` gives the PR title.
+- `composer milestone:next` shows the next milestone's version, branch, PR
+  title and Release title; `composer milestone:pr-title -- <issue>` gives the
+  issue PR title.
 - `composer milestone:check-title -- "<title>"` and
   `composer milestone:check-branch -- "<branch>"` tell you what is wrong. The
   `milestone-version-check` CI job runs them on every pull request.
 - To check your branch name before each push, run
   `git config core.hooksPath .githooks` once.
 
-Cursor agents follow
-[`.cursor/rules/milestone-versioning.mdc`](.cursor/rules/milestone-versioning.mdc)
-and the skills in `.cursor/skills/`. See
-[AGENTS.md](AGENTS.md#milestone-versioning).
-
+The rule is
+[`.cursor/rules/version-shipping.mdc`](.cursor/rules/version-shipping.mdc);
+see also [AGENTS.md](AGENTS.md#shipping-and-versioning).
 ## Licence
 By contributing, you agree your contributions are licensed under the AGPL-3.0 licence of this project.
 
