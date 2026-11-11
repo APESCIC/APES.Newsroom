@@ -98,28 +98,30 @@ export default function TestSendPanel({
     const containerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const triggerRef = useRef<HTMLButtonElement>(null);
-    const moveFocus = useRef<'input' | 'trigger' | null>(initiallyOpen ? 'input' : null);
+    const wasOpen = useRef<boolean | null>(null);
     const shown = newerResult(result, lastTest);
 
-    useEffect(() => {
-        if (initiallyOpen && !disabledReason) {
-            moveFocus.current = 'input';
+    const requestedOpen = initiallyOpen && !disabledReason;
+    const [previousRequestedOpen, setPreviousRequestedOpen] = useState(requestedOpen);
+    if (requestedOpen !== previousRequestedOpen) {
+        setPreviousRequestedOpen(requestedOpen);
+        if (requestedOpen) {
             setOpen(true);
         }
-    }, [initiallyOpen, disabledReason]);
+    }
 
     useEffect(() => {
-        if (moveFocus.current === 'input' && open) {
+        const previous = wasOpen.current;
+        wasOpen.current = open;
+        if (open && previous !== true) {
             containerRef.current?.scrollIntoView?.({ block: 'nearest' });
             inputRef.current?.focus();
-        } else if (moveFocus.current === 'trigger' && !open) {
+        } else if (!open && previous === true) {
             triggerRef.current?.focus();
         }
-        moveFocus.current = null;
     }, [open]);
 
     const toggle = (next: boolean) => {
-        moveFocus.current = next ? 'input' : 'trigger';
         setOpen(next);
     };
 

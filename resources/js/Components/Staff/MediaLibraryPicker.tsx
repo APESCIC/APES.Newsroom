@@ -41,7 +41,10 @@ export default function MediaLibraryPicker({ onPick, disabled = false }: MediaLi
     }, []);
 
     const queryRef = useRef(query);
-    queryRef.current = query;
+
+    useEffect(() => {
+        queryRef.current = query;
+    }, [query]);
 
     useEffect(() => {
         if (open) {
