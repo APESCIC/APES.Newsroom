@@ -11,10 +11,10 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
+    labels: ["dependencies", "skip-changelog"]
     groups:
-      composer:
-        patterns:
-          - '*'
+      composer-minor-and-patch:
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: npm
     directory: /
@@ -23,10 +23,16 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
+    labels: ["dependencies", "skip-changelog"]
     groups:
-      npm:
-        patterns:
-          - '*'
+      npm-minor-and-patch:
+        update-types: ["minor", "patch"]
+    # Planned migrations: Inertia 3 (#793) and TypeScript 7 (#794).
+    ignore:
+      - dependency-name: "@inertiajs/react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /
@@ -35,7 +41,7 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
+    labels: ["dependencies", "skip-changelog"]
     groups:
-      github-actions:
-        patterns:
-          - '*'
+      github-actions-minor-and-patch:
+        update-types: ["minor", "patch"]

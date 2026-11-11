@@ -265,7 +265,11 @@ export default function PostEdit({
     const [confirmDelete, setConfirmDelete] = useState(false);
     const autosaveTimer = useRef<number | null>(null);
     const previousPostId = useRef<number | null>(post?.id ?? null);
+    const lastSeenUpdatedAt = useRef<string | null>(post?.updated_at ?? null);
+    const previousPropUpdatedAt = useRef<string | null>(post?.updated_at ?? null);
     const editorField = useRef<EditorFieldHandle | null>(null);
+    const [initialForm] = useState(() => formFromPost(post, channels, sessionEditor));
+    const savedForm = useRef<PostForm>(initialForm);
 
     const {
         data,
@@ -277,12 +281,15 @@ export default function PostEdit({
         setDefaults,
         isDirty,
         errors: formErrors,
-    } = useForm<PostForm>(formFromPost(post, channels, sessionEditor));
+    } = useForm<PostForm>(initialForm);
 
     // TinyMCE is uncontrolled after mount, so its own HTML stays the source of
     // truth for the session; server-rendered editor HTML never replaces it.
     const contentHtml = useRef(data.content_html);
-    contentHtml.current = data.content_html;
+
+    useEffect(() => {
+        contentHtml.current = data.content_html;
+    }, [data.content_html]);
 
     const errors = mergeErrors(pageErrors, formErrors as FormErrors);
     const hasErrors = Object.keys(errors).length > 0;
@@ -301,10 +308,34 @@ export default function PostEdit({
         }
 
         previousPostId.current = nextPostId;
+        lastSeenUpdatedAt.current = post?.updated_at ?? null;
         const authoritativeForm = { ...formFromPost(post, channels, sessionEditor), content_html: contentHtml.current };
+        savedForm.current = authoritativeForm;
         setData(authoritativeForm);
         setDefaults(authoritativeForm);
         setScheduleAt(post?.scheduled_for ?? '');
+    }, [channels, post, sessionEditor, setData, setDefaults]);
+
+    // Action buttons (Unpublish, Submit for review, ...) reload the same post with a
+    // new updated_at. Adopt it as the edit lock, keeping any unsaved local edits.
+    useEffect(() => {
+        const updatedAt = post?.updated_at ?? null;
+        if (previousPropUpdatedAt.current === updatedAt) {
+            return;
+        }
+
+        previousPropUpdatedAt.current = updatedAt;
+        if (!post || updatedAt === null || lastSeenUpdatedAt.current === updatedAt) {
+            return;
+        }
+
+        lastSeenUpdatedAt.current = updatedAt;
+        const authoritativeForm = { ...formFromPost(post, channels, sessionEditor), content_html: contentHtml.current };
+        const baseline = savedForm.current;
+        savedForm.current = authoritativeForm;
+        setDefaults(authoritativeForm);
+        setData((current) => reconcileSavedForm(current, baseline, authoritativeForm));
+        setScheduleAt(post.scheduled_for ?? '');
     }, [channels, post, sessionEditor, setData, setDefaults]);
 
     const saveExisting = useCallback(
@@ -325,6 +356,8 @@ export default function PostEdit({
                         ...formFromPost(savedPost, channels, sessionEditor),
                         content_html: submittedData.content_html,
                     };
+                    lastSeenUpdatedAt.current = savedPost.updated_at;
+                    savedForm.current = authoritativeForm;
                     setDefaults(authoritativeForm);
                     setData((current) => reconcileSavedForm(current, submittedData, authoritativeForm));
                 },

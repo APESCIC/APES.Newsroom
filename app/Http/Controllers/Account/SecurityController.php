@@ -10,6 +10,7 @@ use App\Services\Auth\RecentAuthentication;
 use App\Services\Auth\SessionTracker;
 use App\Services\Auth\TwoFactor\TwoFactorService;
 use App\Services\Auth\TwoFactorRequirement;
+use App\Services\Geo\GeoLocation;
 use App\Support\IpAddress;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -54,6 +55,7 @@ class SecurityController extends Controller
                     'platform' => $session->platform,
                     'device_type' => $session->device_type,
                     'ip' => IpAddress::mask($session->ip_address),
+                    'location' => GeoLocation::describe($session->country_code, $session->city),
                     'last_active_at' => $session->last_seen_at?->toIso8601String(),
                     'remembered' => $session->remembered,
                     'current' => $session->getKey() === $currentId,

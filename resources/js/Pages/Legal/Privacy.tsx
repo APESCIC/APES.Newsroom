@@ -74,6 +74,19 @@ export default function Privacy() {
                         automatically. Staff see totals per newsletter and email, and the delivery status of an address.
                     </li>
                 </ul>
+                <h2>Sign-ins and devices</h2>
+                <p>
+                    When you sign in, we record the browser, device type, IP address and an approximate location (country and
+                    city, never an exact position) so you can see where your account is signed in and sign out sessions you
+                    do not recognise. The location is worked out on our own server from the free DB-IP Lite database; your
+                    IP address is not sent to anyone else. Our lawful basis is our legitimate interest in keeping accounts
+                    secure. These records are deleted 90 days after the session was last used or signed out, and with your
+                    account.{' '}
+                    <a href="https://db-ip.com" target="_blank" rel="noreferrer">
+                        IP Geolocation by DB-IP
+                    </a>
+                    .
+                </p>
                 <h2>Your rights</h2>
                 <p>
                     See the <Link href="/legal/rights">rights page</Link> for access, export, correction, erasure, and

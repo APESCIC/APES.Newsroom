@@ -1,0 +1,26 @@
+{
+  "version": "v1.30.5",
+  "slug": "release-v1-30-5",
+  "released_at": "2026-11-11",
+  "previous_version": "v1.30.4",
+  "theme": "Dependency updates and PR clean-up",
+  "change_types": ["changed", "fixed", "security"],
+  "topic_tags": ["internal-only"],
+  "summary": "Behind-the-scenes maintenance: the Newsroom moves to the latest Laravel, React, Vite, Stripe and test tooling releases, several flaky or outdated checks are fixed, and offer promotion codes are created in the format Stripe now expects. Nothing changes in how readers, subscribers or staff use the site.",
+  "detailed_changes": [
+    "Framework and libraries: Laravel 13.42, React 19.3, Vite 8.3, Tailwind 4.3, Playwright 1.65 and the other minor and patch updates Dependabot grouped in #779, #780 and #781 (#787).",
+    "Tooling majors: Vitest 5, the React hooks lint rules 7 (with the code they flagged fixed rather than silenced), stripe-php 22, and the current GitHub Actions releases for checkout, cache, setup-node and upload-artifact (#788).",
+    "Membership offers: promotion codes for offers are sent to Stripe in the current promotion format, which newer Stripe versions require (#788).",
+    "Change Log Hub: opening a link to a specific release only matches known releases, closing a code-scanning warning (#788).",
+    "Checks: the Changelog gate reads pull request labels at the time it runs, so dependency updates labelled skip-changelog are no longer blocked (#789), and a time-sensitive email domain test no longer fails at random (#786).",
+    "Inertia 3 and TypeScript 7 are planned as their own upgrades in v1.34.0 (#793, #794), and Dependabot holds those major versions until then (#790)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: none (dependencies, tests and CI)",
+    "User groups affected: none directly; staff creating membership offers get the corrected Stripe promotion format",
+    "Public impact: none",
+    "Internal impact: dependencies, GitHub Actions, CI checks and Dependabot configuration"
+  ],
+  "pr": 792
+}

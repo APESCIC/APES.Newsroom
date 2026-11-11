@@ -138,6 +138,20 @@ describe('account sessions list', () => {
         expect(screen.queryByRole('button', { name: 'Sign out Chrome on Windows' })).not.toBeInTheDocument();
     });
 
+    it('shows an approximate location next to the masked IP, with the DB-IP credit', () => {
+        render(<Security sso_managed={false} has_password sessions={[{ ...sessions[1], location: 'Leeds, United Kingdom' }]} />);
+
+        expect(screen.getByText(/Near Leeds, United Kingdom · IP 203\.0\.113\.x/)).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'IP Geolocation by DB-IP' })).toHaveAttribute('href', 'https://db-ip.com');
+    });
+
+    it('shows only the masked IP when no location is known', () => {
+        render(<Security sso_managed={false} has_password sessions={sessions} />);
+
+        expect(screen.queryByText(/Near /)).not.toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'IP Geolocation by DB-IP' })).not.toBeInTheDocument();
+    });
+
     it('signs out a single session', () => {
         render(<Security sso_managed={false} has_password sessions={sessions} />);
 

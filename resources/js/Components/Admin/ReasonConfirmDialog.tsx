@@ -71,9 +71,11 @@ export default function ReasonConfirmDialog({
         };
     }, [open, onCancel]);
 
-    useEffect(() => {
+    const [previousOpen, setPreviousOpen] = useState(open);
+    if (open !== previousOpen) {
+        setPreviousOpen(open);
         if (!open) setReason('');
-    }, [open]);
+    }
 
     if (!open) return null;
 
