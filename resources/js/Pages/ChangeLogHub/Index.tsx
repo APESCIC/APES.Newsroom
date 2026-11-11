@@ -156,13 +156,10 @@ export default function ChangeLogHubIndex({
     const [query, setQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('all');
     const [openSlugs, setOpenSlugs] = useState<Record<string, boolean>>(() => {
+        const hash = typeof window === 'undefined' ? '' : window.location.hash.replace(/^#/, '');
         const initial: Record<string, boolean> = {};
         for (const release of releases) {
-            initial[release.slug] = release.is_current;
-        }
-        const hash = typeof window === 'undefined' ? '' : window.location.hash.replace(/^#/, '');
-        if (hash) {
-            initial[hash] = true;
+            initial[release.slug] = release.is_current || release.slug === hash;
         }
         return initial;
     });
