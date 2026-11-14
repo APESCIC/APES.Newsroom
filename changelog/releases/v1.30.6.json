@@ -1,0 +1,25 @@
+{
+  "version": "v1.30.6",
+  "slug": "release-v1-30-6",
+  "released_at": "2026-11-14",
+  "previous_version": "v1.30.5",
+  "theme": "Herd local development and milestone tooling",
+  "change_types": ["changed"],
+  "topic_tags": ["internal-only"],
+  "summary": "Behind-the-scenes work: developers now run APES Newsroom on Laravel Herd, releases are named and checked by their milestone version, and deploys ship a published release tag. Nothing changes in how readers, subscribers or staff use the site.",
+  "detailed_changes": [
+    "Local development moves from Laragon to Laravel Herd: the site runs at http://apes-newsroom.test on PHP 8.4 with its own database, local mail is caught by Herd, and a one-step setup script and a live preview check replace the Laragon ones (#803, superseding the Laragon checks in #759 and #761).",
+    "Milestone version tooling: composer milestone:* commands print the next milestone's version, branch, pull request title and release title, and a CI check rejects branch names and titles that use a GitHub milestone number or the wrong version (#757).",
+    "Ship once per milestone: one branch and one merge per milestone, releases titled from their milestone, and the Cloudron deploy workflow ships only a release tag on main with a published GitHub Release, with faster cached builds (#763).",
+    "Security checks use GitHub's free features: Dependabot updates go to a dependencies branch, and dependency review and CodeQL run on pull requests (#763).",
+    "The health endpoint reports the checked-out revision and PHP version only when running locally, for the developer preview; production responses are unchanged (#763)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: none (developer tooling, CI and deploy workflow)",
+    "User groups affected: none",
+    "Public impact: none",
+    "Internal impact: local development, release naming, CI checks and the deploy workflow"
+  ],
+  "pr": 0
+}
