@@ -8,7 +8,7 @@ use Illuminate\Console\Command;
 
 /**
  * Loads (or resets and reloads) the local demo data described in
- * docs/laragon/demo-data.md. Local only: never call it from deploys,
+ * docs/herd/demo-data.md. Local only: never call it from deploys,
  * Cloudron start scripts or production.
  */
 class DemoDataCommand extends Command
@@ -16,7 +16,7 @@ class DemoDataCommand extends Command
     protected $signature = 'newsroom:demo-data
         {--reset : Drop every table in this local database, migrate and reload the demo data}';
 
-    protected $description = 'Load fake demo data into the local Laragon database (APP_ENV=local only)';
+    protected $description = 'Load fake demo data into the local Herd database (APP_ENV=local only)';
 
     public function handle(): int
     {
@@ -50,14 +50,14 @@ class DemoDataCommand extends Command
             $this->warn('public/storage is missing, so demo images will not show. Run: php artisan storage:link');
         }
 
-        $this->info('Demo data loaded. Logins are listed in docs/laragon/demo-data.md.');
+        $this->info('Demo data loaded. Logins are listed in docs/herd/demo-data.md.');
 
         return self::SUCCESS;
     }
 
     /**
      * A reset wipes the database, so it only runs against this project's
-     * own Laragon MySQL database.
+     * own Herd MySQL database.
      */
     private function resetBlocker(): ?string
     {
@@ -67,7 +67,7 @@ class DemoDataCommand extends Command
         $host = (string) ($config['host'] ?? '');
 
         if (($config['driver'] ?? null) !== 'mysql') {
-            return "the database connection is \"{$connection}\", not Laragon's MySQL.";
+            return "the database connection is \"{$connection}\", not Herd's MySQL.";
         }
 
         if (! in_array($host, ['127.0.0.1', 'localhost'], true)) {

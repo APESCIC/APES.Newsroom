@@ -32,7 +32,7 @@ This is the one rule for how work ships in this repository. `AGENTS.md`, `CONTRI
 
 ## The flow: one version ships once
 
-1. **Start.** Run the live preview gate (`laragon-local-dev.mdc`). Then `composer milestone:next`. Create the milestone branch from `origin/main` if it is missing (`git push -u origin HEAD`), otherwise merge `origin/main` into it. Merge `origin/dependencies` into it with a merge commit. Stop on any conflict.
+1. **Start.** Run the live preview gate (`herd-local-dev.mdc`). Then `composer milestone:next`. Create the milestone branch from `origin/main` if it is missing (`git push -u origin HEAD`), otherwise merge `origin/main` into it. Merge `origin/dependencies` into it with a merge commit. Stop on any conflict.
 2. **Work.** Commit every issue in the milestone on the milestone branch, or on a short `<type>/<issue>-<slug>` branch merged into it by an issue PR. Small Conventional Commits with `Refs #<n>`. Open one draft PR into `main` titled `v<version>: <milestone name>`, listing `Closes #<n>` for every issue. Post the Committed comment on each issue when its work is committed (`Add-IssueUpdate.ps1`); it closes when the milestone PR merges.
 3. **Merge.** Run `composer milestone:bump -- vX.Y.Z`, finish `changelog/releases/vX.Y.Z.json` by `docs/change-log-hub.md`, and make that the last commit, `chore: release vX.Y.Z`. `gh pr ready`, wait for CI to go green, then ask the ship-gate question (`ship-gate` skill). On "merge": `gh pr merge --merge`, one merge commit, never a squash or rebase.
 4. **Release.** Push one tag `vX.Y.Z` on that merge commit. `release.yml` checks the tag is on `main` and publishes the GitHub Release titled `v<version> <milestone name>`.

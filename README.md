@@ -87,19 +87,20 @@ TinyMCE is bundled from npm and self-hosted under GPLv2+ (`license_key: 'gpl'`);
 it is never loaded from Tiny Cloud. See [`docs/editors.md`](docs/editors.md) for
 admin and staff guidance.
 
-## Local development with Laragon
+## Local development with Laravel Herd
 
-**Laragon on Windows is the only supported local setup.** APES Newsroom runs
-as its own Laragon project at `http://apes-newsroom.test`, with its own MySQL
-database (`apes_newsroom_local`) and Vite port (5181), so it can run beside
-other APESCIC projects. You need [Laragon](https://laragon.org/download/)
-(Full) with PHP 8.4, MySQL 8.4 and Node.js 22, and Git.
+**Laravel Herd Pro on Windows is the only supported local setup.** APES
+Newsroom runs as its own Herd site at `http://apes-newsroom.test`, with its
+own MySQL database (`apes_newsroom_local`) and Vite port (5181), so it can run
+beside other APESCIC projects. You need
+[Laravel Herd](https://herd.laravel.com/windows) Pro with PHP 8.4, its MySQL
+8.4 service and Node.js 22, and Git.
 
 ```powershell
-git clone https://github.com/APESCIC/APES.Newsroom.git C:\laragon\www\apes-newsroom
-cd C:\laragon\www\apes-newsroom
-# In Laragon: Start All, then Menu > Apache > Reload
-composer setup        # checks Laragon, creates .env and the database, migrates, offers demo data
+git clone https://github.com/APESCIC/APES.Newsroom.git
+cd APES.Newsroom
+Set-ExecutionPolicy -Scope Process Bypass; . .\scripts\herd-env.ps1   # Herd's PHP 8.4 and Node 22 first on PATH
+composer setup        # links the Herd site, creates .env and the database, migrates, offers demo data
 composer demo:seed    # load the fake demo data (composer demo:reset wipes and reloads it)
 npm run dev           # live reload on http://127.0.0.1:5181 (composer dev adds the queue worker)
 ```
@@ -109,8 +110,8 @@ sign in as the demo admin, staff or member.
 
 - Full guide (profile, side-by-side projects, Redis, OIDC, passkeys, common
   fixes): [`docs/local-dev.md`](docs/local-dev.md)
-- This project's Laragon settings: [`docs/laragon/profile.md`](docs/laragon/profile.md)
-- Demo data and test logins: [`docs/laragon/demo-data.md`](docs/laragon/demo-data.md)
+- This project's Herd settings: [`docs/herd/profile.md`](docs/herd/profile.md)
+- Demo data and test logins: [`docs/herd/demo-data.md`](docs/herd/demo-data.md)
 
 For publishing release notes to the public Change Log Hub, follow
 [`docs/change-log-hub.md`](docs/change-log-hub.md). Never commit `.env`, API

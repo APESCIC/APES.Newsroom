@@ -36,7 +36,7 @@ class HealthController extends Controller
             'checks' => $checks,
         ];
 
-        // Only the Laragon preview gate reads this; production never shows it.
+        // Only the Herd preview gate reads this; production never shows it.
         if (app()->environment('local')) {
             $body['local'] = [
                 'php' => PHP_VERSION,

@@ -11,7 +11,7 @@ Thanks for your interest. APES Newsroom is built and run by the Association of P
 ## Code contributions
 We don't usually accept outside pull requests, because the app is planned around APES's own needs. If you'd like to suggest a change, please start a Discussion first so we can talk it through.
 
-For the APES team: work is planned in milestones (`vX.Y.Z Beta: Name`), every pull request needs a changelog entry for the Change Log Hub (or the `skip-changelog` label), and CI must pass before merging. Setup, local development and testing are covered in the [README](README.md). Laragon on Windows is the only supported local setup; see [docs/local-dev.md](docs/local-dev.md).
+For the APES team: work is planned in milestones (`vX.Y.Z Beta: Name`), every pull request needs a changelog entry for the Change Log Hub (or the `skip-changelog` label), and CI must pass before merging. Setup, local development and testing are covered in the [README](README.md). Laravel Herd on Windows is the only supported local setup; see [docs/local-dev.md](docs/local-dev.md).
 
 ## How work ships
 
@@ -20,7 +20,7 @@ milestone number: branch `milestone/v1-31-0-seo-social-previews`, issue PR
 title `[v1.31.0] JSON-LD structured data (#671)`, milestone PR
 `v1.31.0: SEO and social previews`, tag `v1.31.0`.
 
-1. Before any change, run the Laragon live preview gate:
+1. Before any change, run the Herd live preview gate:
    `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\preview.ps1`.
 2. Commit every issue on the milestone branch, or on a short issue branch
    merged into it. Commit messages follow Conventional Commits and name the
@@ -43,7 +43,7 @@ the issue.
 
 The rule is
 [`.cursor/rules/version-shipping.mdc`](.cursor/rules/version-shipping.mdc);
-see also [AGENTS.md](AGENTS.md#shipping-and-versioning).
+see also [AGENTS.md](AGENTS.md#workflow-slots).
 ## Licence
 By contributing, you agree your contributions are licensed under the AGPL-3.0 licence of this project.
 
