@@ -43,8 +43,10 @@ be entered again.
 Activating a release is a symlink swap (`deploy/cloudron-activate.sh`), so
 it is atomic from Apache's point of view. Rolling back
 (`deploy/cloudron-rollback.sh`) swaps it back to whatever `previous_release`
-recorded. Neither script deletes anything, so a bad release stays on disk
-for inspection until manually cleaned up.
+recorded. After activating, `cloudron-activate.sh` deletes all but the three newest
+releases (never the current or the previous one), because every pre-deploy
+backup copies `/app/data`: in November 2026 101 kept releases (6.6 GB) made
+the backup take about 12 minutes of a 14-minute deploy.
 
 ## One-time manual setup
 
@@ -130,22 +132,24 @@ with `--server` / `--token` / `--app`. Restarting the app re-runs
 
 ## What a deploy actually does
 
-Trigger: Actions tab -> "Deploy to Cloudron (beta)" -> Run workflow, typing
-`main` to confirm. Deliberately manual (see the workflow file's comment)
-rather than automatic on every push, while the pipeline is unproven.
+Trigger: after the ship gate, `gh workflow run deploy.yml -f tag=vX.Y.Z`
+(or Actions tab -> "Deploy to Cloudron (beta)" -> Run workflow, entering the
+tag). Deliberately manual rather than automatic on every push. Only a release
+tag is ever deployed, never a branch.
 
-1. Verifies the input branch confirmation matches `main` and that the
-   workflow is actually running against `main`.
+1. Verifies the input is a `vX.Y.Z` tag on `main` with a published GitHub
+   Release, and checks out that tag.
 2. Builds a production artifact in the runner: `composer install --no-dev
-   --optimize-autoloader`, `npm ci && npm run build`. No dependency
+   --optimize-autoloader` (Composer's download cache is kept between runs),
+   `npm ci && npm run build`. No dependency
    installation happens on the Cloudron box itself.
 3. Assembles a clean `release/` directory (no `.git`, tests, `node_modules`,
    or `.env` - matches "do not build dependencies interactively in
    production" and "never commit credentials").
 4. `cloudron backup create --app ...` - one blocking app-level backup
    before anything touches the server.
-5. `cloudron sync push` uploads `release/` to
-   `/app/data/releases/<short-sha>-<run-id>/` (the Actions run id keeps
+5. Packs `release/` into one `.tar.gz`, uploads it with `cloudron push` and
+   unpacks it on the app into `/app/data/releases/<short-sha>-<run-id>/` (the Actions run id keeps
    each deploy path unique so re-running against the same commit does not
    overwrite an already-activated tree whose `storage/app` is a symlink).
 6. `cloudron exec ... deploy/cloudron-activate.sh <id>` - inside the

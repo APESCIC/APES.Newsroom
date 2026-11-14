@@ -7,7 +7,7 @@ use Tests\TestCase;
 
 /**
  * The Vite dev server origin is added to the CSP only in the local
- * environment while public/hot exists (live preview under Laragon).
+ * environment while public/hot exists (live preview under Herd).
  */
 class ViteDevCspTest extends TestCase
 {

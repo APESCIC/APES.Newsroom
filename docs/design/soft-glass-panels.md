@@ -125,7 +125,7 @@ Set `CAPTURE_DIR` (and optionally `CAPTURE_ONLY=public` or `panels`) and run
 `npx playwright test capture` to save desktop and phone screenshots for
 before-and-after evidence on a pull request.
 
-Run locally the way CI does: a separate SQLite database (so the Laragon
+Run locally the way CI does: a separate SQLite database (so the Herd
 database and its demo data are left alone) served on port 8012:
 
 ```powershell

@@ -3,8 +3,8 @@ import laravel from 'laravel-vite-plugin';
 import { defineConfig } from 'vite';
 import tailwindcss from '@tailwindcss/vite';
 
-// Port 5181 is this project's own Vite port (docs/laragon/profile.json), so
-// it can run beside other Laragon projects on the default 5173.
+// Port 5181 is this project's own Vite port (docs/herd/profile.json), so
+// it can run beside other Herd sites on the default 5173.
 export default defineConfig({
     plugins: [
         laravel({

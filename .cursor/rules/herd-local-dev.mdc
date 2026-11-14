@@ -1,0 +1,30 @@
+---
+description: Laravel Herd is the only local set-up - run the live preview gate before any change
+alwaysApply: true
+---
+
+# Herd local development
+
+Laravel Herd Pro is the only supported local set-up (decided by Bambie on 14 November 2026, #803). See `AGENTS.md` and `docs/local-dev.md`; the values are in `docs/herd/profile.json`. Never suggest Docker or any other local web stack, and never use `php artisan serve`.
+
+## Live preview gate (before any change)
+
+1. Run `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\preview.ps1`. It merges `origin/main` into the current milestone branch (never rebases or pushes), runs `composer install` or `npm ci` when a lock file changed, reports pending migrations (ask before running them), checks Herd, nginx and MySQL are running, checks `http://apes-newsroom.test/health` serves this checkout's revision on PHP 8.4 through FastCGI, and starts Vite on port 5181.
+2. Exit 0: open `http://apes-newsroom.test` in Cursor's browser, confirm it loaded, then say "Preview ready, starting work". Exit 3: a decision is needed, ask with AskQuestion. Exit 1: a blocker, report it.
+3. If the site is missing, run `composer setup` (`scripts\herd-setup.ps1`).
+
+## Herd tools
+
+- Agent shells use Herd's global PHP, which is newer than 8.4. Run `. .\scripts\herd-env.ps1` first (or use `herd php` and `herd composer`) before `composer`, `php artisan` or `npm`.
+- The Herd MCP server (`user-herd`) serves this site as `apes-newsroom`: `site` `info`/`error`, `logs` `read`, `insights`, `mail` (local mail goes to Herd's catcher on SMTP 127.0.0.1:2525) and `env` (masks secrets).
+- `herd which-php apes-newsroom` must print Herd's `php84` build. If not: `herd isolate 8.4 --site=apes-newsroom`.
+
+## Ask first
+
+- Running migrations, `composer demo:reset` (it empties the local database), changing `.env`, or installing any system tool (a PHP version or extension, a Herd service such as Redis, a Node version).
+- `composer install` and `npm ci` may run without asking when `vendor/` or `node_modules/` is missing or a lock file changed.
+
+## Notes
+
+- `public/.htaccess` is for Cloudron's Apache (nginx ignores it): no `php_value` or `php_flag` outside `<IfModule php_module>`, and keep the `HTTP_AUTHORIZATION` rule. `HerdProfileTest` checks both.
+- Test against the demo data (`composer demo:seed`, `composer demo:reset`; ask before a reset), signed in through the local role preview. See `docs/herd/demo-data.md`.

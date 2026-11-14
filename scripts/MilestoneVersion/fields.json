@@ -1,0 +1,11 @@
+{
+    "fields": [],
+    "releaseNote": {
+        "template": "changelog/releases/_template.json",
+        "path": "changelog/releases/{tag}.json"
+    },
+    "notes": [
+        "There are no version files: the tag is the version.",
+        "Write the release note by docs/change-log-hub.md; user-facing PRs in the milestone add their entries to it."
+    ]
+}

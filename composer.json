@@ -39,13 +39,14 @@
     },
     "autoload-dev": {
         "psr-4": {
+            "Scripts\\MilestoneVersion\\": "scripts/MilestoneVersion/",
             "Tests\\": "tests/"
         }
     },
     "scripts": {
         "setup": [
             "Composer\\Config::disableProcessTimeout",
-            "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/laragon-setup.ps1"
+            "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/herd-setup.ps1"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
@@ -68,6 +69,13 @@
         "format": [
             "@php vendor/bin/pint"
         ],
+        "milestone:next": "@php scripts/milestone-version next",
+        "milestone:bump": "@php scripts/milestone-version bump",
+        "milestone:branch": "@php scripts/milestone-version branch",
+        "milestone:pr-title": "@php scripts/milestone-version pr-title",
+        "milestone:check-title": "@php scripts/milestone-version check-title",
+        "milestone:check-branch": "@php scripts/milestone-version check-branch",
+        "milestone:check-release": "@php scripts/milestone-version check-release",
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"

@@ -51,7 +51,7 @@ use RuntimeException;
 
 /**
  * Realistic, clearly fake demo data for clicking through the app locally
- * (docs/laragon/demo-data.md). Refuses to run unless APP_ENV=local.
+ * (docs/herd/demo-data.md). Refuses to run unless APP_ENV=local.
  *
  * A fixed Faker seed and a pinned clock make every run produce the same
  * records, and every write is keyed on a natural key, so running it twice
@@ -184,7 +184,7 @@ class DemoDataSeeder extends Seeder
     private function seedMedia(User $uploader): void
     {
         if (! PlaceholderImages::available()) {
-            $this->command?->warn('GD is not enabled, so demo images were skipped (Menu > PHP > Extensions > gd in Laragon).');
+            $this->command?->warn('GD is not enabled, so demo images were skipped (enable extension=gd with "herd ini 8.4", then "herd restart php").');
 
             return;
         }

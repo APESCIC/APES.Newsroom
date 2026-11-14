@@ -36,7 +36,7 @@ class SecurityHeaders
 
     /**
      * The Vite dev server origin from public/hot, allowed only in the local
-     * environment so hot reload works under the Laragon preview. Production
+     * environment so hot reload works under the Herd preview. Production
      * never has a hot file and never runs as local.
      */
     private function viteDevOrigin(): ?string

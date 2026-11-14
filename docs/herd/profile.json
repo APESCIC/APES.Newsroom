@@ -1,15 +1,14 @@
 {
     "project": "apes-newsroom",
-    "laragonRoot": "C:\\laragon",
-    "folder": "C:\\laragon\\www\\apes-newsroom",
+    "herdSite": "apes-newsroom",
     "hostname": "apes-newsroom.test",
     "appUrl": "http://apes-newsroom.test",
     "documentRoot": "public",
-    "webServer": "apache",
-    "laragonProfile": "apes-newsroom",
+    "webServer": "nginx",
     "php": {
         "version": "8.4",
-        "threadSafe": true,
+        "isolated": true,
+        "sapi": "cgi-fcgi",
         "extensions": ["bcmath", "curl", "exif", "fileinfo", "gd", "intl", "mbstring", "openssl", "pdo_mysql", "sodium", "zip"]
     },
     "database": {
@@ -19,7 +18,14 @@
         "port": 3306,
         "username": "root",
         "password": "",
-        "name": "apes_newsroom_local"
+        "name": "apes_newsroom_local",
+        "charset": "utf8mb4",
+        "collation": "utf8mb4_unicode_ci"
+    },
+    "mail": {
+        "mailer": "smtp",
+        "host": "127.0.0.1",
+        "port": 2525
     },
     "node": {
         "version": "22"
@@ -31,10 +37,6 @@
     "redis": {
         "host": "127.0.0.1",
         "port": 6379,
-        "client": "predis"
-    },
-    "mailpit": {
-        "smtpPort": 1025,
-        "uiPort": 8025
+        "client": "phpredis"
     }
 }

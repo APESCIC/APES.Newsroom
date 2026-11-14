@@ -88,7 +88,7 @@ class AppServiceProvider extends ServiceProvider
         $this->configureTemplatedAuthMails();
         $this->configurePasskeyRelyingParty();
 
-        // Laragon's Apache serves the site, so `composer dev` runs only the
+        // Herd's nginx serves the site, so `composer dev` runs only the
         // queue listener and Vite (docs/local-dev.md).
         DevCommands::except('server');
 
