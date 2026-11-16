@@ -90,8 +90,10 @@ Channel accents (unchanged):
 | Item | Visible when |
 |------|----------------|
 | Profile / Account | Any authenticated user |
-| **Admin panel** | `admin` or `super_admin` → primary admin entry (e.g. `/admin/moderation` or agreed admin hub) |
-| **Staff desk** | `staff`, `admin`, or `super_admin` → `/staff` or `/staff/posts` |
+| **Admin panel** | `admin` → primary admin entry (e.g. `/admin/moderation` or agreed admin hub) |
+| **Staff desk** | `staff` or `admin` → `/staff` or `/staff/posts` |
+
+> **Historic note:** this table originally also named `super_admin`. That role was merged into `admin` in v1.28.0 (#713); do not treat it as a live Newsroom role.
 | Sign out | Any authenticated user |
 
 Rules:

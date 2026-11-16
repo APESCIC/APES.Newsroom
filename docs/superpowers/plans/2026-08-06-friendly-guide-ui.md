@@ -133,8 +133,11 @@ export type AuthUser = {
     id: number;
     name: string;
     email: string;
-    role: 'public' | 'staff' | 'admin' | 'super_admin';
+    role: 'public' | 'staff' | 'admin';
 };
+
+// Historic note: an earlier draft included 'super_admin'. That role was merged into
+// 'admin' in v1.28.0 (#713); keep only the three live roles above.
 
 export type SharedAuth = {
     user: AuthUser | null;
@@ -217,17 +220,9 @@ class SharedAuthPropsTest extends TestCase
                 ->where('auth.can.accessAdmin', true));
     }
 
-    public function test_super_admin_can_access_staff_and_admin(): void
-    {
-        $user = User::factory()->superAdmin()->create();
-
-        $this->actingAs($user)
-            ->get('/')
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->where('auth.can.accessStaff', true)
-                ->where('auth.can.accessAdmin', true));
-    }
+    // Historic draft: test_super_admin_can_access_staff_and_admin used
+    // User::factory()->superAdmin(). Super admin was merged into admin in
+    // v1.28.0 (#713); cover the same access with an admin user instead.
 }
 ```
 

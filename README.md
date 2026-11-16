@@ -23,16 +23,15 @@ and the [Change Log Hub](https://www.apesnews.org.uk/change-log-hub).
 
 | Version | Milestone |
 |---------|-----------|
-| v1.29.0 | [System email templates](https://github.com/APESCIC/APES.Newsroom/milestone/35) |
-| v1.30.0 | [Newsletter email templates](https://github.com/APESCIC/APES.Newsroom/milestone/36) |
-| v1.31.0 | [SEO and social previews](https://github.com/APESCIC/APES.Newsroom/milestone/37) |
-| v1.32.0 | [Publish flow wizard](https://github.com/APESCIC/APES.Newsroom/milestone/38) |
-| v1.33.0 | [Social cross-posting via Postiz](https://github.com/APESCIC/APES.Newsroom/milestone/39) |
-| v1.34.0 | [Tiptap editor](https://github.com/APESCIC/APES.Newsroom/milestone/40) |
-| v1.35.0 | [Ghost admin parity](https://github.com/APESCIC/APES.Newsroom/milestone/20) |
+| v1.32.0 | [Roles and permissions](https://github.com/APESCIC/APES.Newsroom/milestone/55) |
+| v1.33.0 | [Publish flow wizard](https://github.com/APESCIC/APES.Newsroom/milestone/38) |
+| v1.34.0 | [Social cross-posting via Postiz](https://github.com/APESCIC/APES.Newsroom/milestone/39) |
+| v1.35.0 | [Tiptap editor](https://github.com/APESCIC/APES.Newsroom/milestone/40) |
+| v1.36.0 | [Tiptap email template editors](https://github.com/APESCIC/APES.Newsroom/milestone/47) |
+| v1.37.0 | [Ghost members CRM and import](https://github.com/APESCIC/APES.Newsroom/milestone/20) |
 | Later | [ActivityPub (Fediverse)](https://github.com/APESCIC/APES.Newsroom/milestone/10) |
 
-v1.28.0 [merged super admin into admin](https://github.com/APESCIC/APES.Newsroom/milestone/41).
+Shipped through **v1.31.0**. v1.28.0 [merged super admin into admin](https://github.com/APESCIC/APES.Newsroom/milestone/41); Super admin is not a live Newsroom role.
 
 ## Roles
 

@@ -23,7 +23,9 @@ allowlist. Mailing lists are per-channel, double opt-in, and queued through
 Cloudron SMTP. Ghost content and members were imported from exported files with
 fail-closed consent handling; no import sent email.
 
-Shared contracts used across multiple issues: `Role` (public/staff/admin/super_admin), `PostStatus` (draft/in_review/scheduled/published/unpublished/deleted), `MailingList` (apes_cic/apes_shelter_rescue/apes_pet_care_clinic), `ModerationStatus` (private/pending/approved/rejected/suspended), `ReactionType` (helpful/support/thank_you).
+Shared contracts used across multiple issues: `Role` (public/staff/admin), `PostStatus` (draft/in_review/scheduled/published/unpublished/deleted), `MailingList` (apes_cic/apes_shelter_rescue/apes_pet_care_clinic), `ModerationStatus` (private/pending/approved/rejected/suspended), `ReactionType` (helpful/support/thank_you).
+
+> **Note (v1.28.0 / #713):** this plan originally listed `super_admin` as a fourth role. That role was merged into `admin`; the live model is Public, Staff and Admin only.
 
 ## Authorization boundary (applies throughout)
 
