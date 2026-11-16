@@ -358,22 +358,27 @@ function ConfirmStep({
     mailingListOptions: Option[];
 }) {
     const form = useForm({});
-    const submitting = useRef(false);
+    const [submitting, setSubmitting] = useState(false);
+    // Synchronous lock for double-clicks before React re-renders; never read during render (#684).
+    const submitLock = useRef(false);
     const visibilityLabel = visibilityOptions.find((o) => o.value === draft.visibility)?.label ?? draft.visibility;
     const lists = mailingListOptions
         .filter((o) => draft.mailing_lists.includes(o.value))
         .map((o) => o.label)
         .join(', ');
+    const publishBusy = form.processing || submitting;
 
     const onPublish = (event: FormEvent) => {
         event.preventDefault();
-        if (submitting.current || form.processing) {
+        if (submitLock.current || form.processing || submitting) {
             return;
         }
-        submitting.current = true;
+        submitLock.current = true;
+        setSubmitting(true);
         form.post(`/staff/posts/${postId}/publish-wizard/confirm`, {
             onFinish: () => {
-                submitting.current = false;
+                submitLock.current = false;
+                setSubmitting(false);
             },
         });
     };
@@ -428,8 +433,8 @@ function ConfirmStep({
                 <PillButton href={`/staff/posts/${postId}/publish-wizard/when`} variant="secondary" icon={ArrowLeft}>
                     Back
                 </PillButton>
-                <PillButton type="submit" disabled={form.processing || submitting.current} icon={Check} data-testid="publish-confirm">
-                    {form.processing ? 'Publishing…' : 'Publish'}
+                <PillButton type="submit" disabled={publishBusy} icon={Check} data-testid="publish-confirm">
+                    {publishBusy ? 'Publishing…' : 'Publish'}
                 </PillButton>
             </div>
         </form>
