@@ -77,9 +77,9 @@ describe('public article hero media and social metadata', () => {
         expect(headEl('meta[name="robots"]')).toBeNull();
 
         expect(structuredData()).toMatchObject({
-            '@type': 'Article',
+            '@type': 'NewsArticle',
             url: 'https://canonical.example/hero-story',
-            image: 'https://example.test/hero.jpg',
+            image: ['https://example.test/hero.jpg'],
         });
         expect(articleCanonicalUrl(article())).toBe('https://canonical.example/hero-story');
     });
@@ -105,7 +105,7 @@ describe('public article hero media and social metadata', () => {
         expect(headEl('meta[property="og:image"]')).toBeNull();
         expect(headEl('meta[name="twitter:url"]')).toHaveAttribute('content', articleUrl);
         expect(headEl('meta[name="twitter:image"]')).toBeNull();
-        expect(headEl('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary');
+        expect(headEl('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
 
         const data = structuredData();
         expect(data.url).toBe(articleUrl);

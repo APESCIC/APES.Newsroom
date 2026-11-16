@@ -19,7 +19,8 @@ export type SettingDefinition =
     | (BaseSetting & { type: 'enum'; value: string })
     | (BaseSetting & { type: 'int'; value: number })
     | (BaseSetting & { type: 'bool'; value: boolean })
-    | (BaseSetting & { type: 'multi_enum'; value: string[] });
+    | (BaseSetting & { type: 'multi_enum'; value: string[] })
+    | (BaseSetting & { type: 'string'; value: string; rows?: number | null });
 
 type SettingValue = SettingDefinition['value'];
 
@@ -173,6 +174,42 @@ export function SettingField({
                     </div>
                     <ErrorText id={errorId} error={error} />
                 </fieldset>
+            );
+        }
+        case 'string': {
+            const id = inputId(setting.key, 'input');
+            const rows = setting.rows ?? null;
+            return (
+                <div>
+                    <label htmlFor={id} className="text-sm font-semibold">
+                        {setting.label}
+                    </label>
+                    {help}
+                    {rows && rows > 1 ? (
+                        <textarea
+                            id={id}
+                            className="form-input mt-2 w-full font-mono text-sm"
+                            rows={rows}
+                            maxLength={setting.max ?? undefined}
+                            value={String(value ?? '')}
+                            aria-describedby={describedBy}
+                            aria-invalid={error ? true : undefined}
+                            onChange={(event) => onChange(event.target.value)}
+                        />
+                    ) : (
+                        <input
+                            id={id}
+                            type="text"
+                            className="form-input mt-2 w-full"
+                            maxLength={setting.max ?? undefined}
+                            value={String(value ?? '')}
+                            aria-describedby={describedBy}
+                            aria-invalid={error ? true : undefined}
+                            onChange={(event) => onChange(event.target.value)}
+                        />
+                    )}
+                    <ErrorText id={errorId} error={error} />
+                </div>
             );
         }
         default: {

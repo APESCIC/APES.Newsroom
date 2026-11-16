@@ -3,12 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
+use App\Services\Seo\PageMetaFactory;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class SearchController extends Controller
 {
+    public function __construct(
+        private readonly PageMetaFactory $meta,
+    ) {}
+
     public function index(Request $request): Response
     {
         $query = trim((string) $request->query('q', ''));
@@ -43,6 +48,6 @@ class SearchController extends Controller
         return Inertia::render('Search/Index', [
             'query' => $query,
             'results' => $posts,
-        ]);
+        ])->withViewData(['meta' => $this->meta->forSearch()]);
     }
 }

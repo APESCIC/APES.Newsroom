@@ -17,12 +17,13 @@ use InvalidArgumentException;
  *     page?: string,
  *     label: string,
  *     help: string,
- *     type: 'enum'|'int'|'bool'|'multi_enum',
+ *     type: 'enum'|'int'|'bool'|'multi_enum'|'string',
  *     default: mixed,
  *     options?: array<string, string>,
  *     min?: int,
  *     max?: int,
  *     unit?: string,
+ *     rows?: int,
  * }
  */
 final class SettingDefinitions
@@ -50,6 +51,32 @@ final class SettingDefinitions
     public const MAIL_SOFT_BOUNCE_LIMIT = 'mail.soft_bounce.limit';
 
     public const MAIL_SOFT_BOUNCE_WINDOW = 'mail.soft_bounce.window_days';
+
+    public const SEO_DEFAULT_DESCRIPTION = 'seo.default_description';
+
+    public const SEO_DEFAULT_SHARE_IMAGE = 'seo.default_share_image';
+
+    public const SEO_TWITTER_HANDLE = 'seo.twitter_handle';
+
+    public const SEO_FACEBOOK_URL = 'seo.facebook_url';
+
+    public const SEO_LINKEDIN_URL = 'seo.linkedin_url';
+
+    public const SEO_YOUTUBE_URL = 'seo.youtube_url';
+
+    public const SEO_INSTAGRAM_URL = 'seo.instagram_url';
+
+    public const SEO_GOOGLE_SITE_VERIFICATION = 'seo.google_site_verification';
+
+    public const SEO_BING_SITE_VERIFICATION = 'seo.bing_site_verification';
+
+    public const SEO_NOINDEX_TAG_PAGES = 'seo.noindex_tag_pages';
+
+    public const SEO_NOINDEX_AUTHOR_PAGES = 'seo.noindex_author_pages';
+
+    public const SEO_ROBOTS_TXT = 'seo.robots_txt';
+
+    public const SEO_TITLE_PATTERN = 'seo.title_pattern';
 
     /** Settings shown on Admin → Settings → Mail sending, changed by admins after a recent sign-in. */
     public const PAGE_MAIL_SENDING = 'mail-sending';
@@ -187,6 +214,110 @@ final class SettingDefinitions
                 'max' => 90,
                 'unit' => 'days',
             ],
+            self::SEO_TITLE_PATTERN => [
+                'section' => 'SEO',
+                'label' => 'Title pattern',
+                'help' => 'How automatic titles are finished. Use {title} for the page title. Default appends “ | APES Newsroom”.',
+                'type' => 'string',
+                'default' => '{title} | APES Newsroom',
+                'max' => 120,
+            ],
+            self::SEO_DEFAULT_DESCRIPTION => [
+                'section' => 'SEO',
+                'label' => 'Default meta description',
+                'help' => 'Used on the home page and anywhere a page has no description of its own.',
+                'type' => 'string',
+                'default' => 'News and updates from APES — Association of Pet Enthusiasts and Sanctuaries.',
+                'max' => 300,
+                'rows' => 3,
+            ],
+            self::SEO_DEFAULT_SHARE_IMAGE => [
+                'section' => 'SEO',
+                'label' => 'Default share image URL',
+                'help' => 'Absolute or site-relative URL for Open Graph and X cards when a page has no hero. Leave blank to use the branded 1200×630 fallback.',
+                'type' => 'string',
+                'default' => '',
+                'max' => 500,
+            ],
+            self::SEO_TWITTER_HANDLE => [
+                'section' => 'SEO',
+                'label' => 'X (Twitter) handle',
+                'help' => 'Site handle without or with @, used as twitter:site and in Organization sameAs.',
+                'type' => 'string',
+                'default' => '',
+                'max' => 64,
+            ],
+            self::SEO_FACEBOOK_URL => [
+                'section' => 'SEO',
+                'label' => 'Facebook profile URL',
+                'help' => 'Public Facebook page URL for structured data.',
+                'type' => 'string',
+                'default' => '',
+                'max' => 500,
+            ],
+            self::SEO_LINKEDIN_URL => [
+                'section' => 'SEO',
+                'label' => 'LinkedIn profile URL',
+                'help' => 'Public LinkedIn page URL for structured data.',
+                'type' => 'string',
+                'default' => '',
+                'max' => 500,
+            ],
+            self::SEO_YOUTUBE_URL => [
+                'section' => 'SEO',
+                'label' => 'YouTube channel URL',
+                'help' => 'Public YouTube channel URL for structured data.',
+                'type' => 'string',
+                'default' => '',
+                'max' => 500,
+            ],
+            self::SEO_INSTAGRAM_URL => [
+                'section' => 'SEO',
+                'label' => 'Instagram profile URL',
+                'help' => 'Public Instagram profile URL for structured data.',
+                'type' => 'string',
+                'default' => '',
+                'max' => 500,
+            ],
+            self::SEO_GOOGLE_SITE_VERIFICATION => [
+                'section' => 'SEO',
+                'label' => 'Google site verification',
+                'help' => 'Content value for the google-site-verification meta tag.',
+                'type' => 'string',
+                'default' => '',
+                'max' => 255,
+            ],
+            self::SEO_BING_SITE_VERIFICATION => [
+                'section' => 'SEO',
+                'label' => 'Bing site verification',
+                'help' => 'Content value for the msvalidate.01 meta tag.',
+                'type' => 'string',
+                'default' => '',
+                'max' => 255,
+            ],
+            self::SEO_NOINDEX_TAG_PAGES => [
+                'section' => 'SEO',
+                'label' => 'Noindex tag archive pages',
+                'help' => 'When on, public tag listing pages send robots noindex,follow.',
+                'type' => 'bool',
+                'default' => false,
+            ],
+            self::SEO_NOINDEX_AUTHOR_PAGES => [
+                'section' => 'SEO',
+                'label' => 'Noindex author archive pages',
+                'help' => 'When on, public author listing pages send robots noindex,follow.',
+                'type' => 'bool',
+                'default' => false,
+            ],
+            self::SEO_ROBOTS_TXT => [
+                'section' => 'SEO',
+                'label' => 'robots.txt',
+                'help' => 'Full robots.txt body. A Sitemap line pointing at /sitemap.xml is added automatically if missing.',
+                'type' => 'string',
+                'default' => "User-agent: *\nDisallow:",
+                'max' => 5000,
+                'rows' => 8,
+            ],
         ];
     }
 
@@ -220,6 +351,7 @@ final class SettingDefinitions
             'multi_enum' => is_array($value) && array_is_list($value)
                 && count($value) === count(array_unique($value))
                 && collect($value)->every(fn ($item) => is_string($item) && array_key_exists($item, $definition['options'])),
+            'string' => is_string($value) && mb_strlen($value) <= ($definition['max'] ?? 255),
         };
     }
 
@@ -241,6 +373,7 @@ final class SettingDefinitions
                 '' => ['sometimes', 'array'],
                 '.*' => ['string', 'distinct', Rule::in(array_keys($definition['options']))],
             ],
+            'string' => ['' => ['sometimes', 'nullable', 'string', 'max:'.($definition['max'] ?? 255)]],
         };
     }
 
@@ -254,6 +387,7 @@ final class SettingDefinitions
             'int' => (int) $value,
             'bool' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
             'multi_enum' => array_values(array_map('strval', (array) $value)),
+            'string' => (string) ($value ?? ''),
         };
     }
 }

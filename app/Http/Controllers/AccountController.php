@@ -14,6 +14,7 @@ use App\Services\Audit\AuditLogger;
 use App\Services\Auth\RecentAuthentication;
 use App\Services\Integrations\IntegrationSecrets;
 use App\Services\Membership\MembershipService;
+use App\Services\Seo\PageMetaFactory;
 use App\Support\EmailAddress;
 use App\Support\Integrations\IntegrationDefinitions;
 use Illuminate\Http\RedirectResponse;
@@ -31,6 +32,7 @@ class AccountController extends Controller
         private readonly AccountEraser $eraser,
         private readonly MembershipService $memberships,
         private readonly IntegrationSecrets $secrets,
+        private readonly PageMetaFactory $meta,
     ) {}
 
     public function show(Request $request): Response
@@ -71,7 +73,7 @@ class AccountController extends Controller
             'can_delete_account' => $deletionBlockReason === null,
             'deletion_block_reason' => $deletionBlockReason,
             'matched_mailing_notice' => $this->matchedMailingNotice($user),
-        ]);
+        ])->withViewData(['meta' => $this->meta->forAccount()]);
     }
 
     /**

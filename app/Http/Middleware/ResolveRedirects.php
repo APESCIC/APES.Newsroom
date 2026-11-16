@@ -20,7 +20,7 @@ class ResolveRedirects
             return $next($request);
         }
 
-        if ($request->is('health', 'up', 'sitemap.xml', 'rss.xml')) {
+        if ($request->is('health', 'up', 'sitemap*.xml', 'robots.txt', 'rss.xml')) {
             return $next($request);
         }
 

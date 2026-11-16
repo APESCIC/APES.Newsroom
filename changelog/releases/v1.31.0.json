@@ -1,0 +1,29 @@
+{
+  "version": "v1.31.0",
+  "slug": "release-v1-31-0",
+  "released_at": "2026-11-16",
+  "previous_version": "v1.30.6",
+  "theme": "SEO and social previews",
+  "change_types": ["added", "changed"],
+  "topic_tags": ["public-facing"],
+  "summary": "Every public page now ships complete search and social previews in the first HTML response: Open Graph and X cards, JSON-LD, sitemaps, and staff controls for site-wide and per-post SEO.",
+  "detailed_changes": [
+    "Article and page HTML includes og:type article, article timing and authorship tags, og:image width/height/alt, twitter:card summary_large_image, og:site_name and og:locale en_GB, matching the React Head output for crawlers (#667).",
+    "Automatic meta titles (max 60 characters plus “ | APES Newsroom”) and descriptions (max 155 characters from the excerpt or first body paragraph) generate live in the staff editor; clearing an override restores the automatic value (#668).",
+    "Admin → Settings gains an SEO section for the default description, share image, X handle, social profile URLs, Google/Bing verification, default noindex for tag/author archives, and an editable robots.txt (audit-logged) (#670).",
+    "Staff post and page editors gain a full SEO and social panel: meta title/description, canonical, noindex, Open Graph and X overrides, character counters, and Google/social preview cards (#669).",
+    "Server HTML embeds NewsArticle, Organization, WebSite with SearchAction, and BreadcrumbList JSON-LD (#671).",
+    "Sitemap index at /sitemap.xml with posts, pages, channels, tags and a Google News sitemap for the last 48 hours; noindex posts and pages are excluded; /robots.txt is admin-managed and always includes the Sitemap line (#672).",
+    "Canonical URLs drop trailing slashes and tracking query noise; search, account and preview pages send noindex; hreflang en-GB is emitted (#673).",
+    "Social cards use the 1200×630 hero crop when available, otherwise a branded fallback under 1 MB with alt text (#674).",
+    "Feature and unit tests cover meta HTML snapshots, MetaGenerator, sitemaps, robots and canonical hygiene without network calls (#675)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: public pages, /sitemap*.xml, /robots.txt, Admin → Settings, staff post/page editors",
+    "User groups affected: readers (richer previews when sharing), staff editors, admins",
+    "Public impact: improved search listings and social share cards",
+    "Internal impact: Admin SEO settings and per-post SEO panel"
+  ],
+  "pr": 809
+}

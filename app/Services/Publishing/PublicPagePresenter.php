@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\EditorJs\BlockRenderer;
 use App\Services\Media\HeroImagePresenter;
 use App\Services\Membership\ContentAccessService;
+use App\Services\Seo\MetaGenerator;
 
 class PublicPagePresenter
 {
@@ -15,6 +16,7 @@ class PublicPagePresenter
         private readonly BlockRenderer $renderer,
         private readonly ContentAccessService $access,
         private readonly HeroImagePresenter $heroImages,
+        private readonly MetaGenerator $metaGenerator,
     ) {}
 
     /**
@@ -47,14 +49,23 @@ class PublicPagePresenter
             'author' => $page->author->name,
             'author_id' => $page->author_id,
             'published_at' => $page->published_at?->toIso8601String(),
-            'meta_title' => $page->meta_title ?? $page->title,
-            'meta_description' => $page->meta_description ?? $page->excerpt,
+            'meta_title' => $this->nullableString($page->meta_title) ?? $this->metaGenerator->title($page->title),
+            'meta_description' => $this->nullableString($page->meta_description)
+                ?? $this->metaGenerator->description($page->excerpt, is_array($page->content) ? $page->content : null),
+            'seo_noindex' => (bool) $page->seo_noindex,
+            'og_title' => $this->nullableString($page->og_title),
+            'og_description' => $this->nullableString($page->og_description),
+            'og_image' => $this->nullableString($page->og_image),
+            'twitter_title' => $this->nullableString($page->twitter_title),
+            'twitter_description' => $this->nullableString($page->twitter_description),
+            'twitter_image' => $this->nullableString($page->twitter_image),
             ...$this->heroImages->present($page),
             'hero_image_alt' => $this->nullableString($page->hero_image_alt),
             'hero_image_caption' => $this->nullableString($page->hero_image_caption),
             'hero_image_credit' => $this->nullableString($page->hero_image_credit),
             'canonical_url' => $this->canonicalUrl($page->canonical_url),
             'url' => $url,
+            'updated_at' => $page->updated_at?->toIso8601String(),
         ];
     }
 

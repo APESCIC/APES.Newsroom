@@ -54,7 +54,7 @@ class InternalTagVisibilityTest extends TestCase
         $rss = $this->get('/tags/news/rss.xml')->assertOk()->getContent();
         $this->assertStringContainsString('/articles/'.$post->slug, $rss);
 
-        $sitemap = $this->get('/sitemap.xml')->assertOk()->getContent();
+        $sitemap = $this->get('/sitemap-tags.xml')->assertOk()->getContent();
         $this->assertStringContainsString('/tags/news', $sitemap);
         $this->assertStringNotContainsString('/tags/internal-notes', $sitemap);
     }

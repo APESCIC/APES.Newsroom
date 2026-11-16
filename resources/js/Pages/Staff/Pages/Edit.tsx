@@ -6,6 +6,7 @@ import EditorField from '../../../Components/editor/EditorField';
 import EditorSessionNotice from '../../../Components/editor/EditorSessionNotice';
 import HeroImageField from '../../../Components/Staff/HeroImageField';
 import MediaLibraryPicker from '../../../Components/Staff/MediaLibraryPicker';
+import SeoFields from '../../../Components/Staff/SeoFields';
 import { PostStatusBadge } from '../../../Components/Staff/PostBadges';
 import type { HeroMediaAsset, HeroUploadLimits } from '../../../Components/Staff/heroImageUpload';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
@@ -35,6 +36,13 @@ type PageData = {
     meta_title: string | null;
     meta_description: string | null;
     canonical_url: string | null;
+    seo_noindex?: boolean;
+    og_title?: string | null;
+    og_description?: string | null;
+    og_image?: string | null;
+    twitter_title?: string | null;
+    twitter_description?: string | null;
+    twitter_image?: string | null;
     updated_at: string | null;
 };
 
@@ -62,6 +70,13 @@ type PageForm = {
     meta_title: string;
     meta_description: string;
     canonical_url: string;
+    seo_noindex: boolean;
+    og_title: string;
+    og_description: string;
+    og_image: string;
+    twitter_title: string;
+    twitter_description: string;
+    twitter_image: string;
     expected_updated_at: string;
 };
 
@@ -86,6 +101,13 @@ function formFromPage(page: PageData | null, editor: EditorDriver): PageForm {
         meta_title: page?.meta_title ?? '',
         meta_description: page?.meta_description ?? '',
         canonical_url: page?.canonical_url ?? '',
+        seo_noindex: page?.seo_noindex ?? false,
+        og_title: page?.og_title ?? '',
+        og_description: page?.og_description ?? '',
+        og_image: page?.og_image ?? '',
+        twitter_title: page?.twitter_title ?? '',
+        twitter_description: page?.twitter_description ?? '',
+        twitter_image: page?.twitter_image ?? '',
         expected_updated_at: page?.updated_at ?? '',
     };
 }
@@ -267,24 +289,29 @@ export default function PagesEdit({ page, heroUpload }: { page: PageData | null;
                         </select>
                     </label>
 
-                    <fieldset className="flex flex-col gap-3 border-t border-border pt-4">
-                        <legend className="text-sm font-semibold text-body">SEO</legend>
-                        {(
-                            [
-                                ['meta_title', 'Meta title'],
-                                ['canonical_url', 'Canonical URL'],
-                            ] as const
-                        ).map(([key, label]) => (
-                            <label key={key} className="block text-sm text-body">
-                                {label}
-                                <input className="form-input mt-1" value={data[key]} onChange={(e) => setData(key, e.target.value)} />
-                            </label>
-                        ))}
-                        <label className="block text-sm text-body">
-                            Meta description
-                            <textarea className="form-input mt-1" rows={2} value={data.meta_description} onChange={(e) => setData('meta_description', e.target.value)} />
-                        </label>
-                    </fieldset>
+                    <SeoFields
+                        values={{
+                            meta_title: data.meta_title,
+                            meta_description: data.meta_description,
+                            canonical_url: data.canonical_url,
+                            seo_noindex: data.seo_noindex,
+                            og_title: data.og_title,
+                            og_description: data.og_description,
+                            og_image: data.og_image,
+                            twitter_title: data.twitter_title,
+                            twitter_description: data.twitter_description,
+                            twitter_image: data.twitter_image,
+                        }}
+                        errors={pageErrors}
+                        title={data.title}
+                        excerpt={data.excerpt}
+                        content={data.content}
+                        publicUrl={page?.slug ? `${window.location.origin}/pages/${page.slug}` : `${window.location.origin}/pages/…`}
+                        heroImage={data.hero_image || null}
+                        onChange={(key, value) => {
+                            setData(key as keyof PageForm, value as never);
+                        }}
+                    />
                 </aside>
             </form>
 

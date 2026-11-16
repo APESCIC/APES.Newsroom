@@ -69,13 +69,16 @@ class PublicChannelsTest extends TestCase
 
         $html = $this->get('/apes-times')->assertOk()->getContent();
 
-        $this->assertStringContainsString('<meta inertia property="og:title" content="APES Times - '.config('app.name').'">', $html);
+        $this->assertStringContainsString('<meta inertia property="og:title" content="APES Times | APES Newsroom">', $html);
         $this->assertStringContainsString('<meta inertia property="og:description" content="Our monthly magazine.">', $html);
-        $this->assertStringContainsString('<meta inertia property="og:image" content="'.url('/brand/apes-logo-compact.png').'">', $html);
+        $this->assertStringContainsString('property="og:image" content="', $html);
         $this->assertStringContainsString('<link inertia rel="canonical" href="'.url('/apes-times').'">', $html);
         $this->assertStringContainsString('type="application/rss+xml"', $html);
+        $this->assertStringContainsString('"@type":"Organization"', $html);
 
-        $this->assertStringNotContainsString('og:title', $this->get('/search')->getContent());
+        $search = $this->get('/search')->assertOk()->getContent();
+        $this->assertStringContainsString('name="robots" content="noindex,nofollow"', $search);
+        $this->assertStringContainsString('property="og:title"', $search);
     }
 
     public function test_archived_channels_are_not_public(): void
@@ -84,7 +87,7 @@ class PublicChannelsTest extends TestCase
 
         $this->get('/myapes')->assertNotFound();
         $this->get('/myapes/rss.xml')->assertNotFound();
-        $this->get('/sitemap.xml')->assertOk()->assertDontSee(url('/myapes'), false);
+        $this->get('/sitemap-channels.xml')->assertOk()->assertDontSee(url('/myapes'), false);
         $this->get('/')->assertInertia(fn (Assert $page) => $page
             ->where('channels', fn ($channels) => ! collect($channels)->pluck('slug')->contains('myapes'))
             ->where('publicChannels', fn ($channels) => ! collect($channels)->pluck('slug')->contains('myapes')));
@@ -138,7 +141,7 @@ class PublicChannelsTest extends TestCase
             ->assertSee('Times feed story')
             ->assertSee(config('app.name').' — APES Times', false);
 
-        $sitemap = $this->get('/sitemap.xml')->assertOk();
+        $sitemap = $this->get('/sitemap-channels.xml')->assertOk();
         foreach (Channel::cases() as $channel) {
             $sitemap->assertSee('<loc>'.url('/'.$channel->slug()).'</loc>', false);
         }

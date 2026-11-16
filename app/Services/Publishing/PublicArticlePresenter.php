@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\EditorJs\BlockRenderer;
 use App\Services\Media\HeroImagePresenter;
 use App\Services\Membership\ContentAccessService;
+use App\Services\Seo\MetaGenerator;
 
 class PublicArticlePresenter
 {
@@ -15,6 +16,7 @@ class PublicArticlePresenter
         private readonly BlockRenderer $renderer,
         private readonly ContentAccessService $access,
         private readonly HeroImagePresenter $heroImages,
+        private readonly MetaGenerator $metaGenerator,
     ) {}
 
     /**
@@ -57,8 +59,16 @@ class PublicArticlePresenter
             ]],
             'featured' => (bool) $post->featured,
             'published_at' => $post->published_at?->toIso8601String(),
-            'meta_title' => $post->meta_title ?? $post->title,
-            'meta_description' => $post->meta_description ?? $post->excerpt,
+            'meta_title' => $this->nullableString($post->meta_title) ?? $this->metaGenerator->title($post->title),
+            'meta_description' => $this->nullableString($post->meta_description)
+                ?? $this->metaGenerator->description($post->excerpt, is_array($post->content) ? $post->content : null),
+            'seo_noindex' => (bool) $post->seo_noindex,
+            'og_title' => $this->nullableString($post->og_title),
+            'og_description' => $this->nullableString($post->og_description),
+            'og_image' => $this->nullableString($post->og_image),
+            'twitter_title' => $this->nullableString($post->twitter_title),
+            'twitter_description' => $this->nullableString($post->twitter_description),
+            'twitter_image' => $this->nullableString($post->twitter_image),
             'tags' => $post->tags
                 ->filter(fn ($tag) => ! $tag->is_internal)
                 ->map(fn ($tag) => [
@@ -71,6 +81,7 @@ class PublicArticlePresenter
             'hero_image_credit' => $this->nullableString($post->hero_image_credit),
             'canonical_url' => $this->canonicalUrl($post->canonical_url),
             'url' => $url,
+            'updated_at' => $post->updated_at?->toIso8601String(),
         ];
     }
 

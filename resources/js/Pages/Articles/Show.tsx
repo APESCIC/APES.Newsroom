@@ -33,8 +33,16 @@ export type Article = HeroImageFields & {
     author: string;
     author_id?: number;
     published_at: string | null;
+    updated_at?: string | null;
     meta_title: string;
     meta_description: string | null;
+    seo_noindex?: boolean;
+    og_title?: string | null;
+    og_description?: string | null;
+    og_image?: string | null;
+    twitter_title?: string | null;
+    twitter_description?: string | null;
+    twitter_image?: string | null;
     tags?: ArticleTag[];
     hero_image: string | null;
     hero_image_alt: string | null;
@@ -51,15 +59,20 @@ export function articleCanonicalUrl(article: Pick<Article, 'canonical_url' | 'ur
 function articleStructuredData(article: Article, canonicalUrl: string): Record<string, unknown> {
     const data: Record<string, unknown> = {
         '@context': 'https://schema.org',
-        '@type': 'Article',
+        '@type': 'NewsArticle',
         headline: article.title,
+        description: article.meta_description,
         author: { '@type': 'Person', name: article.author },
         datePublished: article.published_at,
+        dateModified: article.updated_at || article.published_at,
+        articleSection: article.channel,
+        inLanguage: 'en-GB',
         url: canonicalUrl,
+        mainEntityOfPage: { '@type': 'WebPage', '@id': canonicalUrl },
     };
 
     if (article.hero_image) {
-        data.image = article.hero_image_social ?? article.hero_image;
+        data.image = [article.hero_image_social ?? article.hero_image];
     }
 
     return data;
@@ -132,18 +145,36 @@ export default function ArticleShow({
         <PublicLayout>
             <Head title={article.meta_title}>
                 <meta name="description" content={article.meta_description ?? ''} />
-                {preview && <meta name="robots" content="noindex,nofollow" />}
+                {(preview || article.seo_noindex) && <meta name="robots" content="noindex,nofollow" />}
                 <link rel="canonical" href={canonicalUrl} />
-                <meta property="og:title" content={article.meta_title} />
-                <meta property="og:description" content={article.meta_description ?? ''} />
+                <link rel="alternate" hrefLang="en-GB" href={canonicalUrl} />
+                <meta property="og:title" content={article.og_title || article.meta_title} />
+                <meta property="og:description" content={article.og_description || article.meta_description || ''} />
                 <meta property="og:type" content="article" />
                 <meta property="og:url" content={canonicalUrl} />
-                {socialImage && <meta property="og:image" content={socialImage} />}
-                <meta name="twitter:card" content={socialImage ? 'summary_large_image' : 'summary'} />
-                <meta name="twitter:title" content={article.meta_title} />
-                <meta name="twitter:description" content={article.meta_description ?? ''} />
+                <meta property="og:site_name" content="APES Newsroom" />
+                <meta property="og:locale" content="en_GB" />
+                {(article.og_image || socialImage) && <meta property="og:image" content={article.og_image || socialImage || ''} />}
+                {(article.og_image || socialImage) && <meta property="og:image:width" content="1200" />}
+                {(article.og_image || socialImage) && <meta property="og:image:height" content="630" />}
+                {article.hero_image_alt && <meta property="og:image:alt" content={article.hero_image_alt} />}
+                {article.published_at && <meta property="article:published_time" content={article.published_at} />}
+                {(article.updated_at || article.published_at) && (
+                    <meta property="article:modified_time" content={article.updated_at || article.published_at || ''} />
+                )}
+                <meta property="article:author" content={article.author} />
+                <meta property="article:section" content={article.channel} />
+                {(article.tags ?? []).map((tag) => {
+                    const name = typeof tag === 'string' ? tag : tag.name;
+                    return <meta key={name} property="article:tag" content={name} />;
+                })}
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={article.twitter_title || article.og_title || article.meta_title} />
+                <meta name="twitter:description" content={article.twitter_description || article.og_description || article.meta_description || ''} />
                 <meta name="twitter:url" content={canonicalUrl} />
-                {socialImage && <meta name="twitter:image" content={socialImage} />}
+                {(article.twitter_image || article.og_image || socialImage) && (
+                    <meta name="twitter:image" content={article.twitter_image || article.og_image || socialImage || ''} />
+                )}
                 <script type="application/ld+json">{JSON.stringify(articleStructuredData(article, canonicalUrl))}</script>
             </Head>
             {preview && (

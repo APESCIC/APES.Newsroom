@@ -31,7 +31,8 @@ class PublicNewsroomTest extends TestCase
         $response = $this->get('/sitemap.xml');
 
         $response->assertOk();
-        $response->assertHeader('content-type', 'application/xml');
+        $response->assertHeader('content-type', 'application/xml; charset=UTF-8');
+        $response->assertSee('<sitemapindex', false);
     }
 
     public function test_rss_returns_xml(): void

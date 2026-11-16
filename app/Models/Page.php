@@ -16,7 +16,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'ghost_id', 'author_id', 'title', 'slug', 'excerpt', 'content', 'status', 'visibility',
     'hero_image', 'hero_image_alt', 'hero_image_caption', 'hero_image_credit',
     'hero_media_id', 'hero_focal_x', 'hero_focal_y',
-    'meta_title', 'meta_description', 'canonical_url', 'published_at',
+    'meta_title', 'meta_description', 'canonical_url',
+    'seo_noindex', 'og_title', 'og_description', 'og_image',
+    'twitter_title', 'twitter_description', 'twitter_image',
+    'published_at',
 ])]
 class Page extends Model
 {
@@ -30,6 +33,7 @@ class Page extends Model
             'status' => PostStatus::class,
             'visibility' => ContentVisibility::class,
             'published_at' => 'datetime',
+            'seo_noindex' => 'boolean',
             'hero_focal_x' => 'float',
             'hero_focal_y' => 'float',
         ];

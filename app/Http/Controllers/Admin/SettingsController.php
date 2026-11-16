@@ -41,6 +41,7 @@ class SettingsController extends Controller
                 'min' => $definition['min'] ?? null,
                 'max' => $definition['max'] ?? null,
                 'unit' => $definition['unit'] ?? null,
+                'rows' => $definition['rows'] ?? null,
                 'value' => $values[$key],
             ];
         }
