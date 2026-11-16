@@ -2,7 +2,9 @@
 
 Cursor's user rules and skills set how work is done here (branches, issues, pull requests, merge, release, deploy, ship gate, decisions and safety). This file describes this repository and fills the named slots below. If anything here disagrees with them, Cursor's rules win and this file is corrected in the same milestone.
 
-The owner is Bambie Murphy. Write UK English (organisation, behaviour, colour, licence) in the product, docs, issues and pull requests. Never print, paste or commit secrets.
+Cursor/agent layout standard: https://github.com/apescic-director/cursor/blob/bmurphy/cursor-agent-standard-81b0/docs/cursor-agent-standards.md
+
+The owner is Bambie Murphy. Write UK English (organisation, behaviour, colour, licence) in the product, docs, issues and pull requests. Never print, paste or commit secrets. Secrets live only in APES Vault (Bitwarden) and the deploy environment named below.
 
 ## About the app
 
@@ -93,6 +95,8 @@ Shipping follows Cursor's `github-milestone-completion` and `ship-gate` skills. 
 | Area labels | None; type labels `chore`, `documentation` |
 | Issue title prefix | `[Type] Short title` |
 
+Development is tracked only in GitHub issues, sub-issues and `vMAJOR.MINOR.PATCH` milestones — never Linear.
+
 - `milestone:check-title`, `milestone:check-branch` and `milestone:check-release`
   explain what is wrong; CI runs the title and branch checks on every PR.
 - Repo skills and rule: [`version-shipping.mdc`](.cursor/rules/version-shipping.mdc),
@@ -115,7 +119,7 @@ Shipping follows Cursor's `github-milestone-completion` and `ship-gate` skills. 
 | Auto-deploy couplings | None: merging and releasing do not deploy |
 | Health URL | <https://www.apesnews.org.uk/health> |
 | Version field | None: `/health` returns `status` and `checks`; the green deploy run for the tag is the evidence |
-| Secrets live in | GitHub environment `beta` (`CLOUDRON_FQDN`, `CLOUDRON_TOKEN`, `CLOUDRON_APP_ID`, `CLOUDRON_APP_ORIGIN_HOST`) |
+| Secrets live in | APES Vault (Bitwarden); deploy secrets in GitHub environment `beta` (`CLOUDRON_FQDN`, `CLOUDRON_TOKEN`, `CLOUDRON_APP_ID`, `CLOUDRON_APP_ORIGIN_HOST`) — never commit values |
 
 Release layout, backups and rollback: [docs/deployment.md](docs/deployment.md).
 
