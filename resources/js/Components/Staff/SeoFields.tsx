@@ -147,10 +147,11 @@ export default function SeoFields({
                 </span>
                 <input
                     className="form-input"
-                    placeholder={generatedTitle}
+                    placeholder="Meta title"
                     value={values.meta_title}
                     onChange={(e) => onChange('meta_title', e.target.value)}
                 />
+                <span className="text-xs text-muted">Automatic: {generatedTitle}</span>
                 {errors.meta_title && <span className="text-sm text-danger">{errors.meta_title}</span>}
             </label>
 
@@ -162,10 +163,13 @@ export default function SeoFields({
                 <textarea
                     className="form-input"
                     rows={3}
-                    placeholder={generatedDescription || 'Generated from the excerpt or first paragraph'}
+                    placeholder="Meta description"
                     value={values.meta_description}
                     onChange={(e) => onChange('meta_description', e.target.value)}
                 />
+                <span className="text-xs text-muted">
+                    Automatic: {generatedDescription || 'from the excerpt or first paragraph'}
+                </span>
                 {errors.meta_description && <span className="text-sm text-danger">{errors.meta_description}</span>}
             </label>
 
@@ -173,10 +177,11 @@ export default function SeoFields({
                 <span className="font-medium">Canonical URL</span>
                 <input
                     className="form-input"
-                    placeholder={publicUrl}
+                    placeholder="Canonical URL"
                     value={values.canonical_url}
                     onChange={(e) => onChange('canonical_url', e.target.value)}
                 />
+                <span className="text-xs text-muted">Default: {publicUrl}</span>
                 {errors.canonical_url && <span className="text-sm text-danger">{errors.canonical_url}</span>}
             </label>
 
