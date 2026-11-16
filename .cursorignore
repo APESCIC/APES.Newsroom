@@ -1,0 +1,32 @@
+# Secrets and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+auth.json
+**/credentials.txt
+
+# Dependencies and build output
+vendor/
+node_modules/
+public/build/
+public/hot
+public/storage
+
+# Caches, logs and local runtime
+storage/*.key
+storage/pail
+storage/logs/
+storage/framework/cache/
+storage/framework/sessions/
+storage/framework/views/
+bootstrap/cache/
+.phpunit.cache/
+.phpunit.result.cache
+*.log
+
+# Test and tooling artefacts
+/test-results/
+/playwright-report/
+/coverage/
