@@ -24,6 +24,7 @@ use App\Http\Controllers\Admin\MailgunDomainWebhooksController as AdminMailgunDo
 use App\Http\Controllers\Admin\MailSendingController as AdminMailSendingController;
 use App\Http\Controllers\Admin\MemberController as AdminMemberController;
 use App\Http\Controllers\Admin\ModerationController;
+use App\Http\Controllers\Admin\PermissionMatrixController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\UserSecurityController as AdminUserSecurityController;
@@ -202,6 +203,7 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Admin->value])
     ->name('admin.')
     ->group(function () {
         Route::get('/', AdminDashboardController::class)->name('dashboard');
+        Route::get('/permissions', PermissionMatrixController::class)->name('permissions');
         Route::get('/moderation', [ModerationController::class, 'index'])->name('moderation.index');
         Route::post('/moderation/profiles/{profile}', [ModerationController::class, 'moderateProfile'])->name('moderation.profiles');
         Route::post('/moderation/comments/{comment}', [ModerationController::class, 'moderateComment'])->name('moderation.comments');

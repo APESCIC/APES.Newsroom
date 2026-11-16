@@ -18,6 +18,7 @@ import {
     ScrollText,
     Send,
     Settings,
+    Shield,
     ShieldCheck,
     SquarePen,
     Tag,
@@ -53,6 +54,7 @@ export type WorkspaceActive =
     | 'email-templates'
     | 'mail-sending'
     | 'audit-log'
+    | 'permissions'
     | 'users'
     | 'api-tokens'
     | 'content-api-keys';
@@ -138,6 +140,7 @@ export const navigation: Record<WorkspaceArea, NavGroup[]> = {
         {
             heading: 'System',
             items: [
+                { key: 'permissions', href: '/admin/permissions', label: 'Roles and permissions', icon: Shield, keywords: 'rbac matrix roles access' },
                 { key: 'audit-log', href: '/admin/audit-log', label: 'Audit log', icon: ScrollText, keywords: 'history events security' },
                 { key: 'settings', href: '/admin/settings', label: 'Settings', icon: Settings, keywords: 'site editor configuration' },
             ],
