@@ -94,9 +94,6 @@ class Post extends Model
     }
 
     /**
-     * @return BelongsToMany<Tag, $this>
-     */
-    /**
      * @return BelongsTo<NewsletterSegment, $this>
      */
     public function newsletterSegment(): BelongsTo
@@ -104,6 +101,17 @@ class Post extends Model
         return $this->belongsTo(NewsletterSegment::class);
     }
 
+    /**
+     * @return HasMany<PublishTarget, $this>
+     */
+    public function publishTargets(): HasMany
+    {
+        return $this->hasMany(PublishTarget::class);
+    }
+
+    /**
+     * @return BelongsToMany<Tag, $this>
+     */
     public function tags(): BelongsToMany
     {
         return $this->belongsToMany(Tag::class);

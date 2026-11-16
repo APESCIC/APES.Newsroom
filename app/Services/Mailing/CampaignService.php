@@ -4,7 +4,9 @@ namespace App\Services\Mailing;
 
 use App\Enums\CampaignRecipientStatus;
 use App\Enums\CampaignStatus;
+use App\Enums\ContentVisibility;
 use App\Enums\MailingList;
+use App\Enums\PublishTargetStatus;
 use App\Enums\Role;
 use App\Jobs\SendCampaignRecipientJob;
 use App\Models\Campaign;
@@ -17,6 +19,7 @@ use App\Notifications\CampaignPausedNotification;
 use App\Services\Audit\AuditLogger;
 use App\Services\EditorJs\BlockRenderer;
 use App\Services\EmailTemplates\NewsletterTemplates;
+use App\Services\Publishing\PublishTargetService;
 use App\Support\EmailTemplates\NewsletterTemplateDefaults;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -33,6 +36,8 @@ class CampaignService
         private readonly CampaignSender $sender,
         private readonly AuditLogger $audit,
         private readonly NewsletterTemplates $templates,
+        private readonly MembershipAudienceFilter $membershipAudience,
+        private readonly PublishTargetService $publishTargets,
     ) {}
 
     /**
@@ -43,7 +48,7 @@ class CampaignService
      */
     public function assertSenderVerified(Post $post): void
     {
-        if (! $post->email_on_publish) {
+        if (! $this->publishTargets->wantsEmail($post)) {
             return;
         }
 
@@ -60,15 +65,37 @@ class CampaignService
     }
 
     /**
-     * Create an immutable live campaign from a published post when email_on_publish is set.
+     * Create an immutable live campaign from a published post when email is wanted.
      * Idempotent: returns existing live campaign if one already exists for the post.
+     * Honours an independently scheduled email target (skips until due unless $force).
      */
-    public function createFromPublishedPost(Post $post, User $actor): ?Campaign
+    public function createFromPublishedPost(Post $post, User $actor, bool $force = false): ?Campaign
     {
-        return DB::transaction(function () use ($post, $actor) {
+        return DB::transaction(function () use ($post, $actor, $force) {
             $lockedPost = Post::query()->lockForUpdate()->findOrFail($post->id);
+            $this->publishTargets->ensureTargets($lockedPost);
+            $emailTarget = $this->publishTargets->emailTarget($lockedPost);
 
-            if (! $lockedPost->email_on_publish) {
+            if (! $emailTarget->status->wantsSend() && ! $lockedPost->email_on_publish) {
+                return null;
+            }
+
+            if ($emailTarget->status === PublishTargetStatus::Skipped
+                || $emailTarget->status === PublishTargetStatus::Cancelled) {
+                return null;
+            }
+
+            if ($emailTarget->status === PublishTargetStatus::Sent) {
+                return $emailTarget->campaign_id
+                    ? Campaign::query()->with('recipients')->find($emailTarget->campaign_id)
+                    : null;
+            }
+
+            // Independent delayed send: leave scheduled until due (or forced by the email scheduler).
+            if (! $force
+                && $emailTarget->status === PublishTargetStatus::Scheduled
+                && $emailTarget->scheduled_for !== null
+                && $emailTarget->scheduled_for->gt(now('Europe/London'))) {
                 return null;
             }
 
@@ -82,6 +109,8 @@ class CampaignService
                 : null;
 
             if ($lists === [] && ! $segment) {
+                $this->publishTargets->markEmailFromCampaign($lockedPost, null);
+
                 return null;
             }
 
@@ -97,6 +126,7 @@ class CampaignService
                 if ($legacyCampaign->idempotency_key === null) {
                     $legacyCampaign->update(['idempotency_key' => $idempotencyKey]);
                 }
+                $this->publishTargets->markEmailFromCampaign($lockedPost, $legacyCampaign);
 
                 return $legacyCampaign->load('recipients');
             }
@@ -128,9 +158,14 @@ class CampaignService
 
             if ($campaign->wasRecentlyCreated && ! $senderVerified) {
                 $this->recordBlockedSend($senderNewsletter, $lockedPost, $actor, 'live');
+                $this->publishTargets->markEmailFromCampaign($lockedPost, $campaign);
+
+                return $campaign->load('recipients');
             }
 
-            if (! $campaign->wasRecentlyCreated || ! $senderVerified) {
+            if (! $campaign->wasRecentlyCreated) {
+                $this->publishTargets->markEmailFromCampaign($lockedPost, $campaign);
+
                 return $campaign->load('recipients');
             }
 
@@ -138,14 +173,42 @@ class CampaignService
                 ? $this->consent->confirmedEmailsForSegment($segment)
                 : $this->consent->confirmedEmailsForLists($lists);
 
+            $visibility = $lockedPost->visibility ?? ContentVisibility::Public;
+            $emails = $this->membershipAudience->filter($emails, $visibility);
+
             foreach ($emails as $email) {
                 $this->createRecipient($campaign, $email);
             }
 
             $this->dispatchRecipients($campaign);
+            $fresh = $campaign->fresh(['recipients']);
+            $this->publishTargets->markEmailFromCampaign($lockedPost, $fresh);
 
-            return $campaign->fresh(['recipients']);
+            return $fresh;
         });
+    }
+
+    /**
+     * @return array{total:int,included:int,excluded:int}
+     */
+    public function recipientCountsForPost(Post $post): array
+    {
+        $lists = $this->normalizeListValues($post->mailing_lists ?? []);
+        $segment = $post->newsletter_segment_id
+            ? NewsletterSegment::query()->with('newsletter', 'alsoNewsletter')->find($post->newsletter_segment_id)
+            : null;
+
+        if ($lists === [] && ! $segment) {
+            return ['total' => 0, 'included' => 0, 'excluded' => 0];
+        }
+
+        $emails = $segment
+            ? $this->consent->confirmedEmailsForSegment($segment)
+            : $this->consent->confirmedEmailsForLists($lists);
+
+        $visibility = $post->visibility ?? ContentVisibility::Public;
+
+        return $this->membershipAudience->counts($emails, $visibility);
     }
 
     /**

@@ -28,6 +28,7 @@ class EditorialPostWriter
         private readonly SlackEditorialNotifier $slack,
         private readonly HeroImageInput $heroInput,
         private readonly HeroImageRequirements $heroRequirements,
+        private readonly PublishTargetService $publishTargets,
     ) {}
 
     /**
@@ -145,6 +146,8 @@ class EditorialPostWriter
                 'review_notes' => null,
             ]);
 
+            $this->publishTargets->ensureTargets($lockedPost);
+            $this->publishTargets->markWebsiteSent($lockedPost);
             $this->campaigns->createFromPublishedPost($lockedPost->fresh(), $actor);
             $didPublish = true;
 
