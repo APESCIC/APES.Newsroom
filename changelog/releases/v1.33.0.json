@@ -1,0 +1,27 @@
+{
+  "version": "v1.33.0",
+  "slug": "release-v1-33-0",
+  "previous_version": "v1.32.0",
+  "theme": "Publish flow wizard",
+  "change_types": ["added", "changed"],
+  "topic_tags": ["internal-only", "accessibility"],
+  "summary": "Staff publishing opens a step-by-step wizard for audience, website and email timing, confirmation and results, with free/paid recipient targeting and independently scheduled newsletter sends.",
+  "detailed_changes": [
+    "Publish uses per-channel publish targets (website, email, social placeholder) instead of relying only on the email_on_publish flag; existing posts keep their behaviour after migration (#678).",
+    "Staff Publish opens Audience → When → Confirm → Result (Social reserved for v1.34.0), keeping draft choices when leaving and returning, with nothing going live before Confirm (#679, #680, #682, #684).",
+    "Email audiences can target everyone, free members (all members) or paid members only, with recipient counts shown before send (#681).",
+    "Newsletter email can send with the post, later, or not at all; the scheduler creates the campaign when due and cancelled schedules do not send (#683).",
+    "Result shows per-channel status with Retry and Cancel (audit-logged) and share buttons that use the canonical article URL (#685).",
+    "Wizard steps support keyboard use, aria-current, visible focus and a 320px-wide layout (#686).",
+    "Feature and front-end tests cover the wizard, free/paid targeting and time-travel scheduling (#687).",
+    "Change Log Hub entry for this release (#688)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /staff/posts/{id}/publish-wizard/*, /staff/posts/{id}/edit",
+    "User groups affected: staff and admins who publish posts",
+    "Public impact: none directly (publish timing and email behaviour for new publishes)",
+    "Internal impact: deliberate multi-step publish instead of a single Publish click"
+  ],
+  "pr": 826
+}
