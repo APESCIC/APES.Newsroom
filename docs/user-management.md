@@ -2,7 +2,9 @@
 
 Admins manage account security at **Admin → Users** (`/admin/users`).
 **Admin → Members** (`/admin/members`) is a CRM view of public readers'
-membership plans and reading activity.
+membership plans and reading activity. A read-only summary of the three live
+roles and high-level abilities is at **Admin → Roles and permissions**
+(`/admin/permissions`).
 
 Since v1.21.0 (#567) every person also has a **person page** in the staff
 panel: **Staff → People** (`/staff/people/users/{id}`) for accounts and
@@ -96,3 +98,21 @@ Contact values, email addresses, notes and profile text are never written to
 the audit log. The user page lists recent
 entries and links to the audit log filtered by actor or by subject
 (`?subject_type=User&subject_id={id}`).
+
+## Authorization catalogue (gates and policies)
+
+Named gates (defined in `AppServiceProvider`) and the Feature test that covers
+them:
+
+| Gate | Covered by |
+|------|------------|
+| `access-staff-area` | `AuthzMatrixTest` |
+| `access-admin-area` | `AuthzMatrixTest`, `PermissionMatrixTest` |
+| `manage-newsletter-templates` | `EmailTemplatePermissionsTest` |
+
+Every class under `app/Policies` is covered by `AuthzMatrixTest` for the
+staff and admin routes that use it, except `UserPolicy` (ability matrix in
+`Auth\UserPolicyTest`) and email template policies (`EmailTemplatePermissionsTest`).
+`AuthzGatesCatalogueTest` asserts this catalogue stays complete and that
+wrong-role and guest requests return a 403 or login redirect with the existing
+`Errors/Panel` and `Errors/Show` pages, never a 500.
