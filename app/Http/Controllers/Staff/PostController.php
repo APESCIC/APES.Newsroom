@@ -25,6 +25,7 @@ use App\Services\Mailing\CampaignService;
 use App\Services\Media\HeroImageInput;
 use App\Services\Publishing\HeroImageRequirements;
 use App\Services\Publishing\PublicArticlePresenter;
+use App\Services\Publishing\PublishTargetService;
 use App\Services\Seo\PageMetaFactory;
 use App\Services\Webhooks\OutboundWebhookDispatcher;
 use App\Support\EmailTemplates\NewsletterTemplateChoice;
@@ -49,6 +50,7 @@ class PostController extends Controller
         private readonly PublicChannels $publicChannels,
         private readonly HeroImageInput $heroInput,
         private readonly HeroImageRequirements $heroRequirements,
+        private readonly PublishTargetService $publishTargets,
     ) {}
 
     public function index(Request $request): Response
@@ -293,6 +295,9 @@ class PostController extends Controller
             'scheduled_for' => $request->input('scheduled_for'),
         ]);
 
+        $this->publishTargets->ensureTargets($post);
+        $this->publishTargets->markWebsiteScheduled($post, $post->fresh()->scheduled_for);
+
         return back();
     }
 
@@ -324,6 +329,8 @@ class PostController extends Controller
                 'review_notes' => null,
             ]);
 
+            $this->publishTargets->ensureTargets($lockedPost);
+            $this->publishTargets->markWebsiteSent($lockedPost);
             $this->campaigns->createFromPublishedPost($lockedPost->fresh(), $request->user());
             $didPublish = true;
 

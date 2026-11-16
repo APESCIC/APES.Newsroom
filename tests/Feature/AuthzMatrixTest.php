@@ -199,6 +199,12 @@ class AuthzMatrixTest extends TestCase
         'staff.posts.edit' => Role::Staff,
         'staff.posts.preview' => Role::Staff,
         'staff.posts.publish' => Role::Admin,
+        'staff.posts.publish.show' => Role::Admin,
+        'staff.posts.publish.audience' => Role::Admin,
+        'staff.posts.publish.when' => Role::Admin,
+        'staff.posts.publish.confirm' => Role::Admin,
+        'staff.posts.publish.retry' => Role::Admin,
+        'staff.posts.publish.cancel' => Role::Admin,
         'staff.posts.reject' => Role::Admin,
         'staff.posts.revisions.restore' => Role::Staff,
         'staff.posts.schedule' => Role::Admin,
@@ -480,6 +486,8 @@ class AuthzMatrixTest extends TestCase
                 ]),
                 'fallbackPlaceholder' => 'no-such-page',
                 'target' => 'default',
+                'step' => 'audience',
+                'channel' => 'email',
             };
         }
 

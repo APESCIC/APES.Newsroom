@@ -71,6 +71,7 @@ use App\Http\Controllers\Staff\PageController as StaffPageController;
 use App\Http\Controllers\Staff\PersonController as StaffPersonController;
 use App\Http\Controllers\Staff\PostController as StaffPostController;
 use App\Http\Controllers\Staff\ProfileFieldsController as StaffProfileFieldsController;
+use App\Http\Controllers\Staff\PublishWizardController as StaffPublishWizardController;
 use App\Http\Controllers\Staff\SubscriberController as StaffSubscriberController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\TagRssController;
@@ -370,6 +371,13 @@ Route::middleware(['auth', 'verified', 'role:'.Role::Staff->value])
         Route::get('/posts/{post}/campaign', [StaffCampaignController::class, 'preview'])->name('posts.campaign.preview');
         Route::post('/posts/{post}/campaign/test-send', [StaffCampaignController::class, 'testSend'])->middleware('throttle:10,1')->name('posts.campaign.test');
         Route::post('/posts/{post}/campaign/resume', [StaffCampaignController::class, 'resume'])->middleware(['auth.recent', 'throttle:10,1'])->name('posts.campaign.resume');
+
+        Route::get('/posts/{post}/publish-wizard/{step?}', [StaffPublishWizardController::class, 'show'])->name('posts.publish.show');
+        Route::post('/posts/{post}/publish-wizard/audience', [StaffPublishWizardController::class, 'saveAudience'])->name('posts.publish.audience');
+        Route::post('/posts/{post}/publish-wizard/when', [StaffPublishWizardController::class, 'saveWhen'])->name('posts.publish.when');
+        Route::post('/posts/{post}/publish-wizard/confirm', [StaffPublishWizardController::class, 'confirm'])->middleware('throttle:30,1')->name('posts.publish.confirm');
+        Route::post('/posts/{post}/publish-wizard/retry/{channel}', [StaffPublishWizardController::class, 'retry'])->name('posts.publish.retry');
+        Route::post('/posts/{post}/publish-wizard/cancel/{channel}', [StaffPublishWizardController::class, 'cancel'])->name('posts.publish.cancel');
 
         Route::get('/metrics', StaffMetricsController::class)->name('metrics.index');
         Route::permanentRedirect('/members', '/staff/people')->name('members.legacy');

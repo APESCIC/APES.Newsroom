@@ -1,4 +1,4 @@
-import { router, useForm, usePage } from '@inertiajs/react';
+import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { Eye, FileText, Mail, Trash2 } from 'lucide-react';
 import { FormEventHandler, useCallback, useEffect, useRef, useState } from 'react';
 import type { OutputData } from '@editorjs/editorjs';
@@ -679,13 +679,20 @@ export default function PostEdit({
                                 {!isNew && canPublish && (
                                     <>
                                         <div className="grid grid-cols-2 gap-2">
-                                            <button type="button" className="sg-btn sg-btn-secondary" onClick={() => action(`/staff/posts/${post.id}/publish`)}>
+                                            <Link
+                                                href={`/staff/posts/${post.id}/publish-wizard/audience`}
+                                                className="sg-btn sg-btn-secondary text-center"
+                                                data-testid="open-publish-wizard"
+                                            >
                                                 Publish
-                                            </button>
+                                            </Link>
                                             <button type="button" className="sg-btn sg-btn-secondary" onClick={() => action(`/staff/posts/${post.id}/unpublish`)}>
                                                 Unpublish
                                             </button>
                                         </div>
+                                        <p className="text-xs text-muted">
+                                            Publish opens the audience, timing and confirm wizard. Quick schedule remains available below for website-only timing.
+                                        </p>
                                         <div className="mt-2 flex flex-col gap-2 border-t border-border pt-3">
                                             <label htmlFor="schedule_at" className="text-sm font-semibold text-body">
                                                 Schedule for
