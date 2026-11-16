@@ -1,0 +1,23 @@
+{
+  "version": "v1.32.0",
+  "slug": "release-v1-32-0",
+  "previous_version": "v1.31.0",
+  "theme": "Roles and permissions",
+  "change_types": ["added", "changed"],
+  "topic_tags": ["internal-only"],
+  "summary": "Admins can read a clear, read-only map of who may do what; Super admin leftovers are cleaned from current docs and the wiki; access tests and 403 pages stay consistent for every gate and policy.",
+  "detailed_changes": [
+    "Admin → Roles and permissions (/admin/permissions) shows Public, Staff and Admin descriptions and a read-only ability matrix that matches the policies and gates in code (#817).",
+    "User-facing docs, README roadmap and the staff wiki Roles and Roadmap pages no longer suggest Super admin is a live Newsroom role; historic plans get a short footnote only (#816).",
+    "AuthzGatesCatalogueTest documents every named gate and policy class with its covering Feature test, and asserts staff 403s use Errors/Panel, public 403s use Errors/Show, and guests are redirected to login rather than a 500 (#818).",
+    "Change Log Hub entry for this release (#819)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /admin/permissions, staff wiki Roles and access, Roadmap",
+    "User groups affected: admins (new matrix); staff (unchanged access, clearer 403 copy when opening admin pages)",
+    "Public impact: none",
+    "Internal impact: clearer role documentation and stronger access tests"
+  ],
+  "pr": 822
+}
