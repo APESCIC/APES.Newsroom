@@ -56,6 +56,7 @@ class AuthzMatrixTest extends TestCase
         'admin.content-api-keys.store' => Role::Admin,
         'admin.content-api-keys.destroy' => Role::Admin,
         'admin.dashboard' => Role::Admin,
+        'admin.permissions' => Role::Admin,
         'admin.fallback' => Role::Admin,
         'admin.imports.ghost-content' => Role::Staff,
         'admin.imports.ghost-content.upload' => Role::Staff,
