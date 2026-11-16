@@ -129,7 +129,10 @@ try {
     Write-Step "Herd preview $($p.appUrl)"
     $missing = @('Herd', 'nginx' | Where-Object { -not (Get-Process $_ -ErrorAction SilentlyContinue) })
     if ($missing.Count -gt 0) { Stop-Preview 1 "Not running: $($missing -join ', '). Open Herd." }
-    if (-not (Get-NetTCPConnection -State Listen -LocalPort $p.database.port -ErrorAction SilentlyContinue)) { Stop-Preview 1 "Nothing listens on MySQL's port $($p.database.port). Start Herd's MySQL service (Herd > Services)." }
+    # Herd MySQL often binds ::3306 with an empty State in Get-NetTCPConnection, so -State Listen misses it.
+    $mysqlListening = Get-NetTCPConnection -LocalPort $p.database.port -ErrorAction SilentlyContinue |
+        Where-Object { $_.RemotePort -eq 0 }
+    if (-not $mysqlListening) { Stop-Preview 1 "Nothing listens on MySQL's port $($p.database.port). Start Herd's MySQL service (Herd > Services)." }
     $health = Get-Page "$($p.appUrl)/health" | ConvertFrom-Json
     if ($null -eq $health -or $null -eq $health.local) { Stop-Preview 1 "$($p.appUrl)/health did not answer with the local block. Is APP_ENV=local in .env, and is the site linked ('herd links')? Run scripts\herd-setup.ps1." }
     if ($health.local.git_revision -ne $short) {
