@@ -165,8 +165,19 @@ class DemoDataSeeder extends Seeder
         return 'ZZ'.$this->faker->numberBetween(1, 99).' '.$this->faker->numberBetween(1, 9).strtoupper($this->faker->lexify('??'));
     }
 
+    /**
+     * Re-seed Faker for a named lane so each section stays deterministic even
+     * when an earlier section takes a different number of draws (e.g. GD off).
+     */
+    private function reseed(int $lane): void
+    {
+        $this->faker->seed(self::SEED + $lane);
+    }
+
     private function seedReaders(): void
     {
+        $this->reseed(10);
+
         $readers = [$this->seedPerson('reader@example.test', 'Riley Reader', Role::Public, true)];
 
         for ($i = 1; $i <= self::READERS; $i++) {
@@ -183,6 +194,8 @@ class DemoDataSeeder extends Seeder
 
     private function seedMedia(User $uploader): void
     {
+        $this->reseed(20);
+
         if (! PlaceholderImages::available()) {
             $this->command?->warn('GD is not enabled, so demo images were skipped (enable extension=gd with "herd ini 8.4", then "herd restart php").');
 
@@ -235,6 +248,8 @@ class DemoDataSeeder extends Seeder
      */
     private function seedPosts(array $authors, Collection $tags): void
     {
+        $this->reseed(30);
+
         $paragraphs = DemoContent::paragraphs();
         $published = [];
         $index = 0;
@@ -322,6 +337,8 @@ class DemoDataSeeder extends Seeder
 
     private function seedProfilesAndModeration(): void
     {
+        $this->reseed(40);
+
         $statuses = [
             ...array_fill(0, 10, ModerationStatus::Approved),
             ...array_fill(0, 5, ModerationStatus::Pending),
@@ -329,12 +346,13 @@ class DemoDataSeeder extends Seeder
             ModerationStatus::Suspended,
             ModerationStatus::Private,
         ];
+        $pets = ['two leopard geckos', 'a royal python', 'three tortoises', 'a pair of cockatiels', 'a bearded dragon', 'a chinchilla'];
 
         foreach ($statuses as $i => $status) {
             $reader = $this->readers[$i + 1];
             Profile::query()->updateOrCreate(['user_id' => $reader->id], [
                 'display_name' => Str::before($reader->name, ' ').' '.Str::substr(Str::after($reader->name, ' '), 0, 1).'.',
-                'bio' => 'Keeper of '.$this->faker->randomElement(['two leopard geckos', 'a royal python', 'three tortoises', 'a pair of cockatiels', 'a bearded dragon', 'a chinchilla']).'.',
+                'bio' => 'Keeper of '.$pets[$i % count($pets)].'.',
                 'moderation_status' => $status,
                 'public_opt_in' => $status !== ModerationStatus::Private,
             ]);
@@ -399,6 +417,8 @@ class DemoDataSeeder extends Seeder
 
     private function seedMailing(User $admin): void
     {
+        $this->reseed(50);
+
         $newsletters = Newsletter::query()->whereNotNull('legacy_list')->get()->keyBy(fn (Newsletter $n) => $n->legacy_list->value);
         $lists = MailingList::cases();
         $domains = ['example.com', 'example.org', 'example.test'];
@@ -406,8 +426,10 @@ class DemoDataSeeder extends Seeder
 
         for ($i = 0; $i < self::CONTACTS; $i++) {
             $reader = $i < 20 ? $this->readers[$i + 1] : null;
-            $name = $reader?->name ?? $this->faker->firstName().' '.$this->faker->lastName();
-            $email = $reader?->email ?? Str::slug($name, '.').'.'.($i + 1).'@'.$domains[$i % 3];
+            // Natural keys must not depend on Faker draws — a drifted name used to
+            // mint a new email on the second seed and double mailing_contacts.
+            $email = $reader?->email ?? sprintf('contact%02d@%s', $i + 1, $domains[$i % 3]);
+            $name = $reader?->name ?? sprintf('Demo Contact %02d', $i + 1);
 
             $contact = MailingContact::query()->updateOrCreate(['email' => $email], ['name' => $name, 'user_id' => $reader?->id]);
             $contacts[] = $contact;

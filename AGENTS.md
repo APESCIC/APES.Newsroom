@@ -127,6 +127,7 @@ Release layout, backups and rollback: [docs/deployment.md](docs/deployment.md).
 - An issue is done when its acceptance criteria are met and committed on the milestone branch; it closes when the milestone PR merges. The milestone is done after the single merge, release and a verified deploy of the tag.
 - `scripts/preview.ps1` detects MySQL by any LocalPort listener with RemotePort 0 (Herd MySQL often binds `::3306` with an empty State, so `-State Listen` misses it).
 - Public SEO meta is server-rendered via Blade `$meta` / `PageMetaFactory` (`app/Services/Seo/`). `/sitemap.xml` is a sitemap index; child maps are `/sitemap-posts.xml`, `/sitemap-pages.xml`, `/sitemap-channels.xml`, `/sitemap-tags.xml`, `/sitemap-news.xml`. `/robots.txt` is dynamic (`RobotsController` + Admin SEO setting); do not restore a static `public/robots.txt` or nginx will shadow the route.
+- `DemoDataSeeder` must stay idempotent (`DemoDataSeederTest`): re-seed Faker per section (`reseed($lane)`), and keep mailing-contact emails as stable natural keys (`contactNN@example…`), never derived from Faker names.
 
 ## Where to find things
 

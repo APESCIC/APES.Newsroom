@@ -60,7 +60,7 @@ when `APP_ENV=local`.
 | Moderation reports | 6: 4 open, 1 resolved, 1 dismissed |
 | Reactions | 60 |
 | Page views | About 150 native page views for the analytics screens |
-| Mailing contacts | 76 (the 20 first readers, 55 subscribers without accounts and the member), on 151 subscriptions across the three mailing lists: mostly confirmed, some pending, some unsubscribed |
+| Mailing contacts | 76 (the 20 first readers, 55 account-less `contactNN@example.{com,org,test}` subscribers and the member), on 151 subscriptions across the three mailing lists: mostly confirmed, some pending, some unsubscribed |
 | Suppressions | 5 (bounce, complaint, manual) |
 | Campaigns | 4: 2 completed with 20 recipients each (opens, clicks and one failure), 1 cancelled, 1 draft |
 | Memberships | 12: 5 active, 5 free, 1 past due, 1 cancelled (no real Stripe ids) |
