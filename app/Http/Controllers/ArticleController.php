@@ -7,6 +7,7 @@ use App\Services\Analytics\ContentViewRecorder;
 use App\Services\Engagement\CommentService;
 use App\Services\Engagement\ReactionService;
 use App\Services\Publishing\PublicArticlePresenter;
+use App\Services\Seo\PageMetaFactory;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -20,6 +21,7 @@ class ArticleController extends Controller
         CommentService $comments,
         ReactionService $reactions,
         ContentViewRecorder $views,
+        PageMetaFactory $meta,
     ): Response {
         $post = Post::published()
             ->where('slug', $slug)
@@ -35,6 +37,6 @@ class ArticleController extends Controller
             'canEngage' => $request->user()?->hasVerifiedEmail() ?? false,
             'preview' => false,
             'status' => session('status'),
-        ]);
+        ])->withViewData(['meta' => $meta->forArticle($post)]);
     }
 }

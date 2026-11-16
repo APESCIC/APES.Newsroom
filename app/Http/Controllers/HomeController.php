@@ -6,6 +6,7 @@ use App\Enums\Channel;
 use App\Models\Post;
 use App\Services\Channels\PublicChannels;
 use App\Services\Media\HeroImagePresenter;
+use App\Services\Seo\PageMetaFactory;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -17,6 +18,7 @@ class HomeController extends Controller
     public function __construct(
         private readonly PublicChannels $channels,
         private readonly HeroImagePresenter $heroImages,
+        private readonly PageMetaFactory $meta,
     ) {}
 
     public function __invoke(Request $request): Response
@@ -56,7 +58,7 @@ class HomeController extends Controller
                     ])
                     ->values(),
             ])->values(),
-        ]);
+        ])->withViewData(['meta' => $this->meta->forHome()]);
     }
 
     /**

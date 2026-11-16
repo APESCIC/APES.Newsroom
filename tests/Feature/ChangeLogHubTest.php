@@ -49,7 +49,7 @@ class ChangeLogHubTest extends TestCase
 
     public function test_sitemap_includes_change_log_hub(): void
     {
-        $this->get('/sitemap.xml')
+        $this->get('/sitemap-posts.xml')
             ->assertOk()
             ->assertSee(url('/change-log-hub'), false);
     }

@@ -36,6 +36,13 @@ class StorePageRequest extends FormRequest
             'meta_title' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:500'],
             'canonical_url' => ['nullable', 'url', 'max:2048'],
+            'seo_noindex' => ['sometimes', 'boolean'],
+            'og_title' => ['nullable', 'string', 'max:255'],
+            'og_description' => ['nullable', 'string', 'max:500'],
+            'og_image' => ['nullable', 'string', 'max:2048'],
+            'twitter_title' => ['nullable', 'string', 'max:255'],
+            'twitter_description' => ['nullable', 'string', 'max:500'],
+            'twitter_image' => ['nullable', 'string', 'max:2048'],
             'expected_updated_at' => ['nullable', 'string'],
         ];
     }

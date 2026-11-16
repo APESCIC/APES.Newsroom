@@ -25,6 +25,7 @@ use App\Services\Mailing\CampaignService;
 use App\Services\Media\HeroImageInput;
 use App\Services\Publishing\HeroImageRequirements;
 use App\Services\Publishing\PublicArticlePresenter;
+use App\Services\Seo\PageMetaFactory;
 use App\Services\Webhooks\OutboundWebhookDispatcher;
 use App\Support\EmailTemplates\NewsletterTemplateChoice;
 use Illuminate\Http\RedirectResponse;
@@ -383,9 +384,11 @@ class PostController extends Controller
         return back();
     }
 
-    public function preview(Request $request, Post $post, PublicArticlePresenter $articles): Response
+    public function preview(Request $request, Post $post, PublicArticlePresenter $articles, PageMetaFactory $meta): Response
     {
         $this->authorizeEdit($post);
+
+        $post->loadMissing(['author', 'authors', 'tags', 'heroMedia']);
 
         return Inertia::render('Articles/Show', [
             'article' => $articles->payload($post),
@@ -398,7 +401,7 @@ class PostController extends Controller
                 'mine' => [],
             ],
             'canEngage' => false,
-        ]);
+        ])->withViewData(['meta' => $meta->forArticle($post, preview: true)]);
     }
 
     private function authorizeEdit(Post $post): void
@@ -495,6 +498,13 @@ class PostController extends Controller
             'meta_title' => $post->meta_title,
             'meta_description' => $post->meta_description,
             'canonical_url' => $post->canonical_url,
+            'seo_noindex' => (bool) $post->seo_noindex,
+            'og_title' => $post->og_title,
+            'og_description' => $post->og_description,
+            'og_image' => $post->og_image,
+            'twitter_title' => $post->twitter_title,
+            'twitter_description' => $post->twitter_description,
+            'twitter_image' => $post->twitter_image,
             'scheduled_for' => $post->scheduled_for?->format('Y-m-d\TH:i'),
             'email_on_publish' => $post->email_on_publish,
             'mailing_lists' => $post->mailing_lists ?? [],

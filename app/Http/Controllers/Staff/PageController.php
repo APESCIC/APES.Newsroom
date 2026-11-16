@@ -12,6 +12,7 @@ use App\Services\EditorJs\EditorContent;
 use App\Services\Media\HeroImageInput;
 use App\Services\Publishing\HeroImageRequirements;
 use App\Services\Publishing\PublicPagePresenter;
+use App\Services\Seo\PageMetaFactory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -163,14 +164,16 @@ class PageController extends Controller
         return redirect()->route('staff.pages.index');
     }
 
-    public function preview(Request $request, Page $page, PublicPagePresenter $presenter): Response
+    public function preview(Request $request, Page $page, PublicPagePresenter $presenter, PageMetaFactory $meta): Response
     {
         $this->authorizeEdit($request, $page);
+
+        $page->loadMissing(['author', 'heroMedia']);
 
         return Inertia::render('Pages/Show', [
             'page' => $presenter->payload($page),
             'preview' => true,
-        ]);
+        ])->withViewData(['meta' => $meta->forPage($page, preview: true)]);
     }
 
     private function authorizeEdit(Request $request, Page $page): void
@@ -218,6 +221,13 @@ class PageController extends Controller
             'meta_title' => $page->meta_title,
             'meta_description' => $page->meta_description,
             'canonical_url' => $page->canonical_url,
+            'seo_noindex' => (bool) $page->seo_noindex,
+            'og_title' => $page->og_title,
+            'og_description' => $page->og_description,
+            'og_image' => $page->og_image,
+            'twitter_title' => $page->twitter_title,
+            'twitter_description' => $page->twitter_description,
+            'twitter_image' => $page->twitter_image,
             'published_at' => $page->published_at?->toIso8601String(),
             'updated_at' => $page->updated_at?->toIso8601String(),
         ];

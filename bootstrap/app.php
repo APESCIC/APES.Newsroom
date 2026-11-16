@@ -8,6 +8,7 @@ use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\EnsureTokenAbility;
 use App\Http\Middleware\EnsureTwoFactorEnrolled;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\NormalizePublicRequest;
 use App\Http\Middleware\RequireRecentAuthentication;
 use App\Http\Middleware\ResolveRedirects;
 use App\Http\Middleware\SecurityHeaders;
@@ -44,6 +45,7 @@ return Application::configure(basePath: dirname(__DIR__))
             EnsureAccountNotLocked::class,
             TrackUserSession::class,
             EnsureTwoFactorEnrolled::class,
+            NormalizePublicRequest::class,
             ResolveRedirects::class,
             HandleInertiaRequests::class,
             SecurityHeaders::class,

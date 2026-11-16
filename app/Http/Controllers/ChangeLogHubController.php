@@ -3,11 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Release;
+use App\Services\Seo\PageMetaFactory;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ChangeLogHubController extends Controller
 {
+    public function __construct(
+        private readonly PageMetaFactory $meta,
+    ) {}
+
     public function __invoke(): Response
     {
         $releases = Release::query()
@@ -38,6 +43,6 @@ class ChangeLogHubController extends Controller
                 ['value' => 'public-facing', 'label' => 'Public-facing'],
                 ['value' => 'internal-only', 'label' => 'Internal-only'],
             ],
-        ]);
+        ])->withViewData(['meta' => $this->meta->forChangeLogHub()]);
     }
 }

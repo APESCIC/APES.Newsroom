@@ -7,6 +7,7 @@ import EditorSessionNotice from '../../../Components/editor/EditorSessionNotice'
 import AiAssistPanel from '../../../Components/Staff/AiAssistPanel';
 import HeroImageField from '../../../Components/Staff/HeroImageField';
 import MediaLibraryPicker from '../../../Components/Staff/MediaLibraryPicker';
+import SeoFields from '../../../Components/Staff/SeoFields';
 import { PostStatusBadge } from '../../../Components/Staff/PostBadges';
 import type { HeroMediaAsset, HeroUploadLimits } from '../../../Components/Staff/heroImageUpload';
 import WorkspaceLayout from '../../../Components/Layout/WorkspaceLayout';
@@ -43,6 +44,13 @@ type PostData = {
     meta_title: string | null;
     meta_description: string | null;
     canonical_url: string | null;
+    seo_noindex?: boolean;
+    og_title?: string | null;
+    og_description?: string | null;
+    og_image?: string | null;
+    twitter_title?: string | null;
+    twitter_description?: string | null;
+    twitter_image?: string | null;
     scheduled_for: string | null;
     email_on_publish: boolean;
     mailing_lists: string[];
@@ -80,6 +88,13 @@ type PostForm = {
     meta_title: string;
     meta_description: string;
     canonical_url: string;
+    seo_noindex: boolean;
+    og_title: string;
+    og_description: string;
+    og_image: string;
+    twitter_title: string;
+    twitter_description: string;
+    twitter_image: string;
     email_on_publish: boolean;
     mailing_lists: string[];
     newsletter_segment_id: string;
@@ -113,6 +128,13 @@ const INLINE_ERROR_FIELDS = [
     'meta_title',
     'meta_description',
     'canonical_url',
+    'seo_noindex',
+    'og_title',
+    'og_description',
+    'og_image',
+    'twitter_title',
+    'twitter_description',
+    'twitter_image',
     'email_on_publish',
     'mailing_lists',
     'newsletter_segment_id',
@@ -142,6 +164,13 @@ function formFromPost(post: PostData | null, channels: Channel[], editor: Editor
         meta_title: post?.meta_title ?? '',
         meta_description: post?.meta_description ?? '',
         canonical_url: post?.canonical_url ?? '',
+        seo_noindex: post?.seo_noindex ?? false,
+        og_title: post?.og_title ?? '',
+        og_description: post?.og_description ?? '',
+        og_image: post?.og_image ?? '',
+        twitter_title: post?.twitter_title ?? '',
+        twitter_description: post?.twitter_description ?? '',
+        twitter_image: post?.twitter_image ?? '',
         email_on_publish: post?.email_on_publish ?? false,
         mailing_lists: post?.mailing_lists ?? [],
         newsletter_segment_id: post?.newsletter_segment_id ? String(post.newsletter_segment_id) : '',
@@ -700,31 +729,29 @@ export default function PostEdit({
                             <FieldError message={errors.expected_updated_at} />
                         </div>
 
-                        <fieldset className="flex flex-col gap-3 border-t border-border/60 pt-4">
-                            <legend className="font-medium">SEO</legend>
-                            <input
-                                placeholder="Meta title"
-                                value={data.meta_title}
-                                onChange={(e) => setData('meta_title', e.target.value)}
-                                className="form-input w-full"
-                            />
-                            <FieldError message={errors.meta_title} />
-                            <textarea
-                                placeholder="Meta description"
-                                value={data.meta_description}
-                                onChange={(e) => setData('meta_description', e.target.value)}
-                                rows={2}
-                                className="form-input w-full"
-                            />
-                            <FieldError message={errors.meta_description} />
-                            <input
-                                placeholder="Canonical URL"
-                                value={data.canonical_url}
-                                onChange={(e) => setData('canonical_url', e.target.value)}
-                                className="form-input w-full"
-                            />
-                            <FieldError message={errors.canonical_url} />
-                        </fieldset>
+                        <SeoFields
+                            values={{
+                                meta_title: data.meta_title,
+                                meta_description: data.meta_description,
+                                canonical_url: data.canonical_url,
+                                seo_noindex: data.seo_noindex,
+                                og_title: data.og_title,
+                                og_description: data.og_description,
+                                og_image: data.og_image,
+                                twitter_title: data.twitter_title,
+                                twitter_description: data.twitter_description,
+                                twitter_image: data.twitter_image,
+                            }}
+                            errors={errors}
+                            title={data.title}
+                            excerpt={data.excerpt}
+                            content={data.content}
+                            publicUrl={post?.slug ? `${window.location.origin}/articles/${post.slug}` : `${window.location.origin}/articles/…`}
+                            heroImage={data.hero_image || null}
+                            onChange={(key, value) => {
+                                setData(key as keyof PostForm, value as never);
+                            }}
+                        />
 
                         <fieldset className="flex flex-col gap-3 border-t border-border/60 pt-4">
                             <legend className="font-medium">Email campaign</legend>

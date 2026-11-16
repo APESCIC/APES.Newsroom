@@ -69,9 +69,8 @@ class StaffPageTest extends TestCase
         $this->assertStringContainsString('/articles/news-item', $rss);
         $this->assertStringNotContainsString('/pages/about', $rss);
 
-        $sitemap = $this->get('/sitemap.xml')->assertOk()->getContent();
-        $this->assertStringContainsString('/pages/about', $sitemap);
-        $this->assertStringContainsString('/articles/'.$article->slug, $sitemap);
+        $this->assertStringContainsString('/pages/about', $this->get('/sitemap-pages.xml')->assertOk()->getContent());
+        $this->assertStringContainsString('/articles/'.$article->slug, $this->get('/sitemap-posts.xml')->assertOk()->getContent());
     }
 
     public function test_draft_page_is_not_public(): void
