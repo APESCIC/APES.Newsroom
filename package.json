@@ -9,8 +9,7 @@
         "typecheck": "tsc --noEmit",
         "lint": "eslint resources/js",
         "test:frontend": "vitest run",
-        "test:frontend:watch": "vitest",
-        "test:e2e": "playwright test panels public"
+        "test:frontend:watch": "vitest"
     },
     "dependencies": {
         "@editorjs/delimiter": "^1.4.2",
@@ -34,9 +33,7 @@
         "tinymce": "^8.10.1"
     },
     "devDependencies": {
-        "@axe-core/playwright": "^4.14.0",
         "@eslint/js": "^9.0",
-        "@playwright/test": "^1.65.0",
         "@tailwindcss/vite": "^4.3.5",
         "@testing-library/jest-dom": "^7.0.1",
         "@testing-library/react": "^16.3.3",

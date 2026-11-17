@@ -2,7 +2,7 @@
 
 Cursor's user rules and skills set how work is done here (branches, issues, pull requests, merge, release, deploy, ship gate, decisions and safety). This file describes this repository and fills the named slots below. If anything here disagrees with them, Cursor's rules win and this file is corrected in the same milestone.
 
-Cursor/agent layout standard: https://github.com/apescic-director/Cursor/blob/main/docs/cursor-agent-standards.md
+Cursor user rules and personal skills (Agent Store) own process; this file fills named slots only.
 
 The owner is Bambie Murphy. Write UK English (organisation, behaviour, colour, licence) in the product, docs, issues and pull requests. Never print, paste or commit secrets. Secrets live only in APES Vault (Bitwarden) and the deploy environment named below.
 
@@ -124,6 +124,8 @@ Development is tracked only in GitHub issues, sub-issues and `vMAJOR.MINOR.PATCH
 Release layout, backups and rollback: [docs/deployment.md](docs/deployment.md).
 
 ## Decisions and gotchas
+
+- Playwright e2e was removed; UI checks use Laravel Herd and Cursor's built-in browser only.
 
 - 2026-11-14: Laravel Herd Pro is the local stack for development and testing, decided by Bambie (#803).
 - `public/.htaccess` is for Cloudron's Apache; nginx ignores it locally. Keep PHP settings inside `<IfModule php_module>` and keep the `HTTP_AUTHORIZATION` rule (`HerdProfileTest`).

@@ -122,7 +122,7 @@ the channel accent borders. Data comes from
 `Database\Seeders\VisualRegressionSeeder` on a fresh SQLite database.
 
 Set `CAPTURE_DIR` (and optionally `CAPTURE_ONLY=public` or `panels`) and run
-`npx playwright test capture` to save desktop and phone screenshots for
+`Verify panels on http://apes-newsroom.test in Cursor's browser (Playwright removed).
 before-and-after evidence on a pull request.
 
 Run locally the way CI does: a separate SQLite database (so the Herd
@@ -137,6 +137,6 @@ $env:E2E_BASE_URL = 'http://127.0.0.1:8012'; npm run test:e2e
 ```
 
 Screenshots only match on Linux; on other systems run the axe and layout
-checks with `npx playwright test panels public --grep-invert screenshot`. To refresh
+checks with `Verify panels on http://apes-newsroom.test in Cursor's browser (Playwright removed).
 baselines after an intended change, download the `playwright-results`
 artifact from CI and commit `tests/e2e/__screenshots__/linux`.
