@@ -1,0 +1,22 @@
+{
+  "version": "v1.33.1",
+  "slug": "release-v1-33-1",
+  "previous_version": "v1.33.0",
+  "theme": "Herd-first UI checks",
+  "change_types": ["removed", "changed"],
+  "topic_tags": ["internal-only"],
+  "summary": "Playwright end-to-end tests and CI are removed; UI checks use Laravel Herd and Cursor's built-in browser, with docs updated to match.",
+  "detailed_changes": [
+    "Removed Playwright packages, config, tests/e2e and the CI e2e job; PHPUnit and frontend CI jobs remain (#828, #830, #831).",
+    "AGENTS.md and design docs describe Herd + Cursor browser for UI verification instead of Playwright (#829).",
+    "VisualRegressionSeeder remains for manual demo datasets; comments no longer refer to Playwright (#829)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: none (CI and local verification only)",
+    "User groups affected: developers and agents verifying UI locally",
+    "Public impact: none",
+    "Internal impact: no Playwright install or e2e job in CI; preview UI on http://apes-newsroom.test"
+  ],
+  "pr": 833
+}

@@ -49,8 +49,8 @@ utilities match on both ends.
 - `prefers-reduced-transparency: reduce`: the same solid surfaces and no blur.
 - `prefers-reduced-motion: reduce`: transitions are removed (global rule).
 
-Both fallbacks are checked in `tests/e2e/panels.spec.ts` and
-`tests/e2e/public.spec.ts`.
+Confirm both fallbacks on the Herd preview (toggle reduced transparency /
+motion in the OS or browser) when changing glass surfaces.
 
 ## Shell (`WorkspaceLayout`)
 
@@ -100,8 +100,9 @@ Rules:
 
 ## Accessibility
 
-- axe (WCAG 2.0/2.1 A and AA) reports no serious or critical issues on any
-  staff or admin page; this runs in CI on every pull request.
+- axe (WCAG 2.0/2.1 A and AA) should report no serious or critical issues on
+  staff or admin pages; check with browser tooling on the Herd preview when a
+  layout change warrants it.
 - Contrast on white: ink 15.0:1, muted 6.2:1, teal 6.1:1 (white on teal also
   6.1:1). The spec's `#5A7F81` nav-heading colour measured about 3.6:1 on the
   frosted sidebar, so headings use the muted colour instead.
@@ -109,34 +110,16 @@ Rules:
 - The command palette is a modal dialog with a combobox and listbox,
   `aria-activedescendant`, a focus trap and Escape to close.
 
-## Visual regression
+## Visual verification (Herd + Cursor browser)
 
-`tests/e2e/panels.spec.ts` takes a screenshot of every staff and admin page
-(plus the phone layout, drawer and command palette), and
-`tests/e2e/public.spec.ts` does the same for the public home, channel,
-article, search, signup, login, account and 404 pages and the phone menu. Both
-compare against baselines in `tests/e2e/__screenshots__/linux`, run axe, and
-check there is no sideways scrolling at 375, 768 and 1440px. The public spec
-also checks visible keyboard focus, the skip link, reduced transparency and
-the channel accent borders. Data comes from
-`Database\Seeders\VisualRegressionSeeder` on a fresh SQLite database.
+Playwright e2e was removed. Verify staff, admin and public panels on the Herd
+preview at [http://apes-newsroom.test](http://apes-newsroom.test) in Cursor's
+built-in browser. Check desktop and phone widths (about 1440px and 375px),
+visible focus, the skip link, reduced transparency and channel accent borders
+where they apply. Capture before-and-after screenshots in the browser for pull
+request evidence when a layout change needs them.
 
-Set `CAPTURE_DIR` (and optionally `CAPTURE_ONLY=public` or `panels`) and run
-`Verify panels on http://apes-newsroom.test in Cursor's browser (Playwright removed).
-before-and-after evidence on a pull request.
-
-Run locally the way CI does: a separate SQLite database (so the Herd
-database and its demo data are left alone) served on port 8012:
-
-```powershell
-$env:DB_CONNECTION = 'sqlite'; $env:DB_DATABASE = "$PWD\database\e2e.sqlite"; $env:APP_URL = 'http://127.0.0.1:8012'
-New-Item -ItemType File -Force database\e2e.sqlite | Out-Null
-php artisan migrate:fresh --force --seeder='Database\Seeders\VisualRegressionSeeder'
-php artisan serve --host=127.0.0.1 --port=8012   # in a second terminal with the same variables
-$env:E2E_BASE_URL = 'http://127.0.0.1:8012'; npm run test:e2e
-```
-
-Screenshots only match on Linux; on other systems run the axe and layout
-checks with `Verify panels on http://apes-newsroom.test in Cursor's browser (Playwright removed).
-baselines after an intended change, download the `playwright-results`
-artifact from CI and commit `tests/e2e/__screenshots__/linux`.
+For a fixed, repeatable dataset (instead of the usual demo seed), run
+`Database\Seeders\VisualRegressionSeeder` on a local or testing database, then
+browse the same routes on Herd. Do not use `php artisan serve`; Herd's nginx
+serves the site.

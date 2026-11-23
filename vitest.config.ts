@@ -6,7 +6,7 @@ export default defineConfig({
     test: {
         environment: 'jsdom',
         setupFiles: ['./resources/js/test/setup.ts'],
-        exclude: ['**/node_modules/**', 'tests/e2e/**'],
+        exclude: ['**/node_modules/**'],
         testTimeout: 15_000,
         css: { include: [/resources\/css\/app\.css/] },
     },
