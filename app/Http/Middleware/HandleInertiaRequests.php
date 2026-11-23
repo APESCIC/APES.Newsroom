@@ -5,10 +5,12 @@ namespace App\Http\Middleware;
 use App\Http\Controllers\AnalyticsConsentController;
 use App\Models\Post;
 use App\Models\Release;
+use App\Services\Auth\RecentAuthentication;
 use App\Services\Channels\PublicChannels;
 use App\Services\Mailing\SendingDomainAlerts;
 use App\Services\Settings\SettingsRepository;
 use App\Support\AnalyticsConfig;
+use App\Support\Dev\DevLogin;
 use App\Support\Settings\SettingDefinitions;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -54,7 +56,8 @@ class HandleInertiaRequests extends Middleware
             ],
             'currentRelease' => fn () => $this->currentReleasePayload(),
             'publicChannels' => fn () => $this->publicChannelsPayload(),
-            'devTools' => app()->environment('local'),
+            'devTools' => DevLogin::enabled(),
+            'devLogin' => fn () => $this->devLoginPayload($request),
             'analytics' => fn () => [
                 ...AnalyticsConfig::publicPayload(),
                 'consent' => $request->cookie(AnalyticsConsentController::COOKIE) === '1',
@@ -122,6 +125,31 @@ class HandleInertiaRequests extends Middleware
         return [
             'version' => $release->version,
             'slug' => $release->slug,
+        ];
+    }
+
+    /**
+     * @return array{enabled: bool, profiles: list<array{key: string, label: string, email: string}>, current: string|null, needsConfirm: bool}|null
+     */
+    private function devLoginPayload(Request $request): ?array
+    {
+        if (! DevLogin::enabled()) {
+            return null;
+        }
+
+        $profile = DevLogin::profileFor($request->user());
+        $needsConfirm = false;
+
+        if ($profile !== null && $request->hasSession()) {
+            $needsConfirm = ! app(RecentAuthentication::class)->isRecent($request)
+                || $request->session()->pull(DevLogin::CONFIRM) === true;
+        }
+
+        return [
+            'enabled' => true,
+            'profiles' => DevLogin::picker(),
+            'current' => $profile,
+            'needsConfirm' => $needsConfirm,
         ];
     }
 }

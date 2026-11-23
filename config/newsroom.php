@@ -124,4 +124,16 @@ return [
         'gtm_container_id' => env('NEWSROOM_GTM_CONTAINER_ID'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Local developer sign-in
+    |--------------------------------------------------------------------------
+    |
+    | Explicit flag for the /_dev role preview. Only honoured when APP_ENV=local.
+    | Herd setup turns this on for local sites; never enable it outside local.
+    |
+    */
+
+    'dev_login_enabled' => (bool) env('DEV_LOGIN_ENABLED', false),
+
 ];

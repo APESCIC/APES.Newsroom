@@ -35,16 +35,16 @@ One shared, obviously fake password for every demo account:
 
 | Role | Email | How to sign in |
 | --- | --- | --- |
-| Admin | `admin@example.test` | **Admin** on the local role preview bar, or the Admin button on `/login` |
-| Staff | `staff@example.test` | **Staff** on the role preview bar, or the Staff button on `/login` |
-| Staff (second author) | `writer@example.test` | Not on the role preview bar; used as a post author |
-| Public member | `member@example.test` | `/login` with the password above, or **Public** on the role preview bar |
+| Admin | `admin@example.test` | **Admin** on the developer sign-in bar, or the Admin button on `/login` |
+| Staff | `staff@example.test` | **Staff** on the developer sign-in bar, or the Staff button on `/login` |
+| Staff (second author) | `writer@example.test` | Not on the developer sign-in bar; used as a post author |
+| Public member | `member@example.test` | `/login` with the password above, or **Public** on the developer sign-in bar |
 | Public reader | `reader@example.test` | `/login` with the password above |
 | Public readers | `reader01@example.org` to `reader40@example.org` | `/login` with the password above |
 
 Staff and admin accounts are refused password sign-in in every environment
-(issue #276), so they sign in through the role preview, which only exists
-when `APP_ENV=local`.
+(issue #276), so they sign in through developer sign-in, which only exists
+when `APP_ENV=local` and `DEV_LOGIN_ENABLED=true`.
 
 ## What it contains
 

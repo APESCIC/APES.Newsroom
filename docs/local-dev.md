@@ -124,24 +124,28 @@ installs changed dependencies, reports pending migrations, checks
 `/health` shows the checked-out revision on PHP 8.4 through FastCGI, and starts
 Vite.
 
-## Local role preview
+## Developer sign-in (local role preview)
 
-When `APP_ENV=local`, a floating **Local role preview** bar appears on every
-page. Use it, or the one-click buttons on `/login`, to switch between the
-demo accounts without Cloudron OIDC:
+When `APP_ENV=local` and `DEV_LOGIN_ENABLED=true`, a floating **Developer
+sign-in** bar appears on every page. Use it, the buttons on `/login`
+(`#developer-signin`), or `GET /_dev`, to switch between the demo accounts
+without Cloudron OIDC. `composer setup` / `scripts\herd-setup.ps1 -UpdateEnv`
+turns the flag on for Herd sites.
 
 | Control | User | Default landing |
 |---------|------|-----------------|
-| Guest | signed out | `/` |
+| Sign out | signed out | `/login#developer-signin` |
 | Public | `member@example.test` | `/` |
 | Staff | `staff@example.test` | `/staff` |
 | Admin | `admin@example.test` | `/admin` |
 
 Staff-level accounts are refused password, magic-link and password-reset
-sign-in in every environment (issue #276), so staff and admin always use the
-role preview locally. The endpoints (`POST /_dev/login/{role}`,
-`POST /_dev/logout`) only exist when `APP_ENV=local`, and the controller also
-returns 404 outside local.
+sign-in in every environment (issue #276), so staff and admin always use
+developer sign-in locally. Routes under `/_dev` only exist when
+`APP_ENV=local`, and they return 404 unless `DEV_LOGIN_ENABLED=true` as well.
+Missing demo users are created on sign-in. Off-site `return_to` values are
+ignored; after a switch that lands on a 403/404 the app falls back to that
+role's home with a short notice.
 
 ## Running several APESCIC projects side by side
 

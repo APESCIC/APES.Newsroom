@@ -1,0 +1,23 @@
+{
+  "version": "v1.33.2",
+  "slug": "release-v1-33-2",
+  "previous_version": "v1.33.1",
+  "theme": "Local developer sign-in",
+  "change_types": ["added", "fixed"],
+  "topic_tags": ["internal-only"],
+  "summary": "Local Herd preview gets an Intranet-style developer sign-in and role changer for the three demo accounts, gated by DEV_LOGIN_ENABLED.",
+  "detailed_changes": [
+    "Fixed local role preview 404s when demo users were missing; GET /_dev is available when enabled (#812).",
+    "Developer sign-in requires APP_ENV=local and DEV_LOGIN_ENABLED, with safe return paths, audit logging, post-switch fallback and Herd setup enabling the flag (#813).",
+    "Feature tests cover enablement, create-if-missing, switch, sign-out, return path and audit (#814).",
+    "Change Log Hub entry for this release (#815)."
+  ],
+  "affected_areas": [
+    "Website: APES Newsroom",
+    "Page or route: /_dev, /login (local only)",
+    "User groups affected: developers using Laravel Herd",
+    "Public impact: none (local-only tool)",
+    "Internal impact: reliable Public/Staff/Admin preview without Cloudron OIDC"
+  ],
+  "pr": 835
+}

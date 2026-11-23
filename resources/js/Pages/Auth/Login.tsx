@@ -123,14 +123,26 @@ export default function Login({ staffLoginUrl, staffLoginLabel, rememberDays = 3
                     </div>
                 )}
                 {devTools && (
-                    <div className="mb-6 flex flex-col gap-2 rounded-sg-field border border-warning/40 bg-warning-mist p-3">
-                        <p className="text-xs font-bold tracking-wide text-warning uppercase">Local role preview</p>
+                    <div
+                        id="developer-signin"
+                        className="mb-6 flex flex-col gap-2 rounded-sg-field border border-warning/40 bg-warning-mist p-3"
+                    >
+                        <p className="text-xs font-bold tracking-wide text-warning uppercase">
+                            Developer sign-in
+                            <span className="ml-2 rounded bg-warning/20 px-1.5 py-0.5 text-[10px] font-semibold normal-case">
+                                Local only
+                            </span>
+                        </p>
                         <div className="flex flex-wrap gap-1.5">
                             {DEV_ROLES.map((role) => (
                                 <button
                                     key={role.key}
                                     type="button"
-                                    onClick={() => router.post(`/_dev/login/${role.key}`)}
+                                    onClick={() =>
+                                        router.post('/_dev/login', {
+                                            profile: role.key,
+                                        })
+                                    }
                                     className="button-secondary px-2.5 py-1 text-xs"
                                 >
                                     {role.label}
