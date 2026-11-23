@@ -49,8 +49,8 @@ utilities match on both ends.
 - `prefers-reduced-transparency: reduce`: the same solid surfaces and no blur.
 - `prefers-reduced-motion: reduce`: transitions are removed (global rule).
 
-Both fallbacks are checked in `tests/e2e/panels.spec.ts` and
-`tests/e2e/public.spec.ts`.
+Confirm both fallbacks on the Herd preview (toggle reduced transparency /
+motion in the OS or browser) when changing glass surfaces.
 
 ## Shell (`WorkspaceLayout`)
 
