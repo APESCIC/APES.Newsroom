@@ -13,6 +13,7 @@ use App\Http\Middleware\RequireRecentAuthentication;
 use App\Http\Middleware\ResolveRedirects;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\TrackUserSession;
+use App\Support\Dev\DevLogin;
 use App\Support\PanelErrorPage;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -102,6 +103,11 @@ return Application::configure(basePath: dirname(__DIR__))
             $status = $response->getStatusCode();
             if (! in_array($status, [403, 404, 410, 429, 500, 503], true)) {
                 return $response;
+            }
+
+            $devFallback = DevLogin::fallbackAfterSwitch($request, $status);
+            if ($devFallback !== null) {
+                return $devFallback;
             }
 
             $panel = PanelErrorPage::for($request, $status);

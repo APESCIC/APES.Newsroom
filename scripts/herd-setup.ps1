@@ -210,6 +210,7 @@ $wanted = [ordered]@{
     MAIL_MAILER = [string]$Config.mail.mailer
     MAIL_HOST = [string]$Config.mail.host
     MAIL_PORT = [string]$Config.mail.port
+    DEV_LOGIN_ENABLED = 'true'
 }
 $lines = @(Get-Content $envFile)
 $diffs = @($wanted.Keys | Where-Object { [string](Get-EnvValue $lines $_) -ne $wanted[$_] })
@@ -237,6 +238,9 @@ if ($diffs.Count -eq 0) {
 $lines = @(Get-Content $envFile)
 if ((Get-EnvValue $lines 'APP_ENV') -ne 'local') {
     Add-Warning 'APP_ENV in .env is not local. The role preview and demo data only work with APP_ENV=local.'
+}
+if ((Get-EnvValue @(Get-Content $envFile) 'DEV_LOGIN_ENABLED') -ne 'true') {
+    Add-Warning 'DEV_LOGIN_ENABLED is not true. The developer sign-in panel needs DEV_LOGIN_ENABLED=true with APP_ENV=local (rerun with -UpdateEnv).'
 }
 
 # --- Dependencies ------------------------------------------------------------
