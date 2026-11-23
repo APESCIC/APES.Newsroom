@@ -27,10 +27,10 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 /**
- * Fixed content for the Playwright screenshot and accessibility suite.
+ * Fixed content for manual visual checks on Laravel Herd (Cursor browser).
  *
- * Every value and timestamp is constant so screenshots are stable between
- * runs. Refuses to run outside local and testing.
+ * Every value and timestamp is constant so before-and-after screenshots are
+ * stable between runs. Refuses to run outside local and testing.
  */
 class VisualRegressionSeeder extends Seeder
 {
@@ -185,7 +185,7 @@ class VisualRegressionSeeder extends Seeder
                 'subject_id' => $admin->id,
                 'payload' => ['source' => 'visual-regression'],
                 'ip_address' => '192.0.2.'.($index + 10),
-                'user_agent' => 'Playwright',
+                'user_agent' => 'VisualRegressionSeeder',
             ]);
         }
     }
